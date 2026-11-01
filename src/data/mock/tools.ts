@@ -23,10 +23,10 @@ export const toolWins = [
 ];
 
 export const moreTools = [
-  { icon: "◐", title: "Stress test a big claim", detail: "Knee, bypass, childbirth: who pays what", time: "1 MIN", href: "/stress-test" },
-  { icon: "⇄", title: "Compare top-ups", detail: "Section by section, your cover band", time: "2 MIN", href: "/compare" },
-  { icon: "◔", title: "Premium receipts check", detail: "Find premiums paid twice", time: "1 MIN", href: "/money" },
-  { icon: "●", title: "Hospital near you", detail: "Cashless or best treatment", time: "20 SEC", href: "/emergency" },
+  { icon: "◐", title: "Stress test a big claim", detail: "Knee, bypass, childbirth: who pays what", time: "1 min", href: "/stress-test" },
+  { icon: "⇄", title: "Compare top-ups", detail: "Section by section, your cover band", time: "2 min", href: "/compare" },
+  { icon: "◔", title: "Premium receipts check", detail: "Find premiums paid twice", time: "1 min", href: "/money" },
+  { icon: "●", title: "Hospital near you", detail: "Cashless or best treatment", time: "20 sec", href: "/emergency" },
 ];
 
 export const readNext = [

@@ -83,7 +83,7 @@ describe("every route renders", () => {
     if (MINE.test(t.href)) {
       for (const h of container.querySelectorAll("h1,h2,h3,button,a.k-btn")) {
         const t0 = (h.textContent ?? "").trim();
-        expect(t0 === "" || !/^\p{Ll}/u.test(t0), `lowercase start "${t0}" on ${t.href}`).toBe(true);
+        expect(t0 === "" || /^(iPhone|iPad)/.test(t0) || !/^\p{Ll}/u.test(t0), `lowercase start "${t0}" on ${t.href}`).toBe(true);
       }
     }
     expect(text, `raw intent name on ${t.href}`).not.toMatch(INTENTS);

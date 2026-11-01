@@ -1,7 +1,7 @@
 .card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start; }
 .intro { font: 400 15px/1.5 var(--font-sans); color: var(--graphite); max-width: 640px; margin-top: 8px; }
-.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .tab { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); min-height: 44px; }
 .tab:hover { border-color: var(--ink); }
 .tabOn { border: 2px solid var(--harbour); padding: 13px 15px; background: var(--mist); }
@@ -31,12 +31,12 @@
 .filled { display: flex; align-items: center; gap: 8px; font: 500 13px var(--font-sans); padding: 8px 12px; border-radius: 10px; background: var(--mist); width: fit-content; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--harbour); }
 .bars { display: flex; flex-direction: column; gap: 12px; }
-.barRow { display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px; gap: 12px; align-items: center; font: 400 14px var(--font-sans); }
+.barRow { display: grid; grid-template-columns: minmax(70px, 110px) minmax(0, 1fr) minmax(90px, 150px); gap: 12px; align-items: center; font: 400 14px var(--font-sans); }
 .stack { display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: var(--sunken); }
 .stack span { transition: width var(--t-xslow) var(--ease); }
 .legendRow { display: flex; gap: 16px; font: 400 13px var(--font-sans); color: var(--graphite); flex-wrap: wrap; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
-.opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
 .opt { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); }
 .optOn { border: 2px solid var(--harbour); padding: 13px; background: var(--mist); }
 .optRec { background: var(--rec-bg); color: var(--rec-ink); border-color: var(--rec-border); }
@@ -46,8 +46,8 @@
 .good { color: var(--harbour); font: 500 14px var(--font-sans); }
 .bad { color: var(--signal-ink); font: 500 14px var(--font-sans); }
 .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--sunken); display: inline-flex; align-items: center; justify-content: center; font: 600 13px var(--font-mono); color: var(--ink); }
-.compare { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font: 400 14px var(--font-sans); color: var(--graphite); }
-.advGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.compare { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.advGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .adv { display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); transition: opacity var(--t-base); }
 .advOn { border: 2px solid var(--harbour); padding: 13px; }
 .advTop { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; }
@@ -68,24 +68,24 @@
 .tickOn { background: #6fa79e; }
 .bookBtn { min-height: 46px; border-radius: var(--r-btn); border: 0; background: var(--marker); color: #16130f; font: 600 14px var(--font-sans); }
 .bookBtnDone { background: #6fa79e; }
-.wins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.wins { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .win { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 14px; border-radius: var(--r-md); border: 1px solid #3a352d; background: rgba(247, 245, 240, 0.08); color: #f7f5f0; }
 .winOn { background: #f7f5f0; color: #16130f; }
 .winK { font: 600 13px var(--font-sans); }
 .winV { font: 400 28px/1.1 var(--font-serif); }
 .winD { font: 400 13px var(--font-sans); }
 .say { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font: 400 15px var(--font-serif); }
-.morePanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.morePanel { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
 .more { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); }
 .more:hover { border-color: var(--ink); }
 .moreTop { display: flex; justify-content: space-between; font: 500 13px var(--font-mono); color: var(--graphite); }
 .moreT { font: 600 15px var(--font-sans); }
 .moreD { font: 400 13px var(--font-sans); color: var(--graphite); }
-.reads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.reads { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .read { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--r-md); background: var(--sheet); border: 1px solid var(--line); }
 .readK { font: 500 13px var(--font-mono); color: var(--graphite); }
 .readT { font: 600 15px/1.35 var(--font-sans); }
 .link { font: 500 14px var(--font-sans); color: var(--harbour); }
 .darkCard { background: #16130f; color: #f7f5f0; border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--line); }
 .darkLink { color: #8fc3ba; font: 500 14px var(--font-sans); }
-@media (max-width: 1100px) { .two, .opts, .advGrid, .wins, .morePanel, .tabs { grid-template-columns: 1fr; } .reads { grid-template-columns: repeat(2, minmax(0, 1fr)); } .barRow { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .barRow { grid-template-columns: 1fr; } }

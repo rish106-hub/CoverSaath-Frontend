@@ -48,8 +48,8 @@ export function InflationPlanner() {
     ? `A ${c.label.toLowerCase()} stays inside ${w.label}’s ${formatLakh(w.coverLakh)} cover for the next ${years} years.`
     : `A ${c.label.toLowerCase()} that costs ${formatLakh(c.lakh)} today will cost about ${formatLakh(plan.costAtEndLakh)} in ${endYear}. ${plan.crossOffset === 0 ? "It is already above" : `From ${plan.crossYear} it is above`} the ${formatLakh(w.coverLakh)} cover.`;
   const rec = plan.outOfDate
-    ? `Raise ${w.label}’s cover to about ${formatLakh(plan.needLakh)}${(plan.crossOffset ?? 0) <= 0 ? " now" : ` before ${plan.crossYear}`}. A super top-up does it for far less than a bigger base plan.`
-    : "Cover keeps pace for this case. Check again at each renewal; Knowvia will remind you.";
+    ? `Raise ${w.label}’s cover to about ${formatLakh(plan.needLakh)}${(plan.crossOffset ?? 0) <= 0 ? " now" : ` before ${plan.crossYear}`}.`
+    : "Cover keeps pace for this case.";
 
   const kpis = [
     { k: "Cost today", v: formatLakh(c.lakh), d: c.label, cls: "" },
@@ -61,10 +61,10 @@ export function InflationPlanner() {
   return (
     <div className={`${styles.card} ${styles.plan}`}>
       <div className={styles.planIn}>
-        <div className={styles.planTitle}>Will your cover keep up with hospital prices?</div>
+        <div className={styles.planTitle}>Will your cover keep up?</div>
         <Chips legend="Whose cover" value={who} onPick={setWho} options={planWho.map((x, k) => ({ key: k, label: x.label }))} />
         <Chips legend="Treatment to plan for" value={kase} onPick={setKase} options={planCases.map((x, k) => ({ key: k, label: x.label }))} />
-        <Chips grid legend="Medical inflation a year · change it if you like" value={rate} onPick={setRate} options={RATES_PCT.map((r) => ({ key: r as number, label: `${r}%` }))} />
+        <Chips grid legend="Medical inflation a year" value={rate} onPick={setRate} options={RATES_PCT.map((r) => ({ key: r as number, label: `${r}%` }))} />
         <Chips grid legend="Look ahead" value={years} onPick={setYears} options={YEAR_CHOICES.map((y) => ({ key: y as number, label: `${y} yrs` }))} />
       </div>
       <div className={styles.planOut}>
@@ -101,12 +101,12 @@ export function InflationPlanner() {
         </div>
         <div className={styles.legendRow}>
           <span><span className={styles.sw} style={{ background: "var(--harbour)" }} />Treatment cost, within cover</span>
-          <span><span className={styles.sw} style={{ background: "var(--signal)" }} />above your cover</span>
-          <span><span className={styles.sw} style={{ background: "var(--ochre)" }} />Premium that year (x10 for scale)</span>
+          <span><span className={styles.sw} style={{ background: "var(--signal)" }} />Above your cover</span>
+          <span><span className={styles.sw} style={{ background: "var(--ochre)" }} />Premium that year (10x scale)</span>
         </div>
         <Recommended>
           <span style={{ font: "400 15px var(--font-sans)" }}>{rec}</span>
-          <Link href="/tools#top-up-finder" style={{ font: "600 14px var(--font-sans)" }}>Top-up finder →</Link>
+          <Link href="/tools#top-up-finder" className="k-btn k-btn--primary k-btn--sm">Top-up finder</Link>
         </Recommended>
       </div>
     </div>
