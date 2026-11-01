@@ -1,6 +1,7 @@
 import type { Adapters } from "../types";
-import { AdapterError } from "../types";
 import { delay } from "./delay";
+import { respond } from "@/agent/responder";
+import { webVoice } from "@/agent/voice";
 import { household, policies, receipts, deskCases, hospitals, bloodStock, learnPosts, findings, documents } from "@/data/mock";
 
 // Everything here is a mock. `// backend gap` marks what the backend has no tables for yet.
@@ -43,13 +44,9 @@ export const mockAdapters: Adapters = {
     get: (id) => delay(policies.find((p) => p.id === id) ?? null),
   },
   assistant: {
-    ask: (text, page) =>
-      delay({ reply: `Looking at ${page} for “${text.slice(0, 60)}”.`, steps: ["Understood your question", `Read ${page}`, "Found an answer"] as string[] }),
+    ask: (text, page) => delay(respond(text, page)),
   },
-  voice: {
-    supported: () => false,
-    listen: () => Promise.reject(new AdapterError("VOICE_UNSUPPORTED")),
-  },
+  voice: webVoice,
   email: { scan: () => delay({ found: receipts.length, items: receipts }) }, // backend gap
   reconcile: {
     reconcile: (rs) => {

@@ -40,6 +40,8 @@ export interface AssistantAdapter {
 export interface VoiceAdapter {
   supported(): boolean;
   listen(): Promise<string>;
+  /** Ends listening early; listen() then resolves with what was heard. */
+  stop?(): void;
 }
 export interface EmailAdapter {
   scan(): Promise<S.EmailScan>;

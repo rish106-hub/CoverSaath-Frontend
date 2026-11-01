@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme";
+import { AgentProvider, AgentLayer } from "@/components/agent";
 import { PageHeader } from "./PageHeader";
 import { HomeSidebar } from "./HomeSidebar";
 import styles from "./AppShell.module.css";
@@ -16,6 +17,7 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
   const pathname = given ?? current ?? "/home";
   const home = pathname === "/home";
   return (
+    <AgentProvider>
     <div className={home ? styles.withSidebar : styles.plain}>
       {home ? <HomeSidebar pathname={pathname} /> : null}
       <div className={styles.main}>
@@ -23,7 +25,9 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
         <main className={`${styles.content} route-in`}>{children}</main>
       </div>
       {dock ? <div className={styles.dock}>{dock}</div> : null}
+      <AgentLayer />
       <ThemeToggle />
     </div>
+    </AgentProvider>
   );
 }
