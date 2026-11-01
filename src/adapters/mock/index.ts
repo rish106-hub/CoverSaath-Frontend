@@ -4,6 +4,7 @@ import { detectWalletPlatform } from "@/lib/wallet-detect";
 import { delay } from "./delay";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
+import { summariseReceipts } from "@/lib/reconcile";
 import { household, policies, receipts, deskCases, hospitals, bloodStock, learnPosts, findings, documents } from "@/data/mock";
 
 // Everything here is a mock. `// backend gap` marks what the backend has no tables for yet.
@@ -51,20 +52,7 @@ export const mockAdapters: Adapters = {
   voice: webVoice,
   email: { scan: () => delay({ found: receipts.length, items: receipts }) }, // backend gap
   reconcile: {
-    reconcile: (rs) => {
-      const seen = new Map<string, number>();
-      let dup = 0;
-      let refund = 0;
-      for (const r of rs) {
-        const key = `${r.memberId}:${r.amountRs}:${r.label.replace(/ \(.*\)$/, "")}`;
-        if (seen.has(key)) {
-          dup += 1;
-          refund += r.amountRs;
-        }
-        seen.set(key, 1);
-      }
-      return delay({ matched: rs.length - dup, duplicates: dup, refundRs: refund });
-    },
+    reconcile: (rs) => delay(summariseReceipts(rs)),
   },
   desk: { cases: () => delay(deskCases) }, // backend gap
   hospital: { nearby: () => delay(hospitals) }, // backend gap
