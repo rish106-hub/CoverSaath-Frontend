@@ -8,6 +8,7 @@ import {
   type Band, type Dot, type Kind,
 } from "@/lib/fit";
 import styles from "./Compare.module.css";
+import { usePageShortcuts } from "@/lib/shortcuts";
 
 const DOT: Record<Dot, string> = { good: "var(--harbour)", okay: "var(--ochre)", watch: "var(--signal)" };
 const DOT_LABEL: Record<Dot, string> = { good: "Good for you", okay: "Okay", watch: "Watch out" };
@@ -20,16 +21,7 @@ export function Compare() {
   const [scen, setScen] = useState(0);
   const [weights, setWeights] = useState<Record<number, number>>(DEFAULT_WEIGHTS);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const t = (e.target as HTMLElement | null)?.tagName;
-      if (t === "INPUT" || t === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= 4) setSel(n - 1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  usePageShortcuts(Object.fromEntries([0, 1, 2, 3].map((i) => [`plan-${i + 1}`, () => setSel(i)])));
 
   const list = plans(kind, band);
   const table = rows(band);

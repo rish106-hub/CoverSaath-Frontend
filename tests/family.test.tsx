@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { normaliseIndianMobile, validateAddMember } from "@/components/family/logic";
 
 vi.mock("@/components/shell", () => ({ FamilyOwner: () => <div data-testid="owner-card" /> }));
 
+import { pressPageShortcut } from "@/lib/shortcuts";
 import { FamilyView } from "@/components/family/FamilyView";
 
 afterEach(cleanup);
@@ -30,9 +31,9 @@ describe("FamilyView", () => {
       expect(screen.getByRole("heading", { name: h })).toBeInTheDocument();
     }
     expect(screen.getByRole("heading", { name: "Father at a glance" })).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: "2" });
+    act(() => pressPageShortcut("person-2"));
     expect(screen.getByRole("heading", { name: "Rohan at a glance" })).toBeInTheDocument();
-    expect(screen.getByTestId("remind-row-slot")).toBeInTheDocument();
+    expect(screen.getByText("Put these dates on")).toBeInTheDocument();
   });
   it("add member: validates, goes to step 2, sends, closes on Esc", async () => {
     render(<FamilyView />);

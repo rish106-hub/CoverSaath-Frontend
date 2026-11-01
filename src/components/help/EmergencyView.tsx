@@ -7,6 +7,7 @@ import { BrandLogo } from "@/components/logos/BrandLogo";
 import { emergencyPeople, emergencyIssues } from "@/data/mock/help-pages";
 import ui from "./ui.module.css";
 import s from "./Emergency.module.css";
+import { usePageShortcuts } from "@/lib/shortcuts";
 
 const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(" ");
 const QR = Array.from({ length: 81 }, (_, i) => ((i * 7 + (i % 9) * 3 + Math.floor(i / 9) * 5) % 4 !== 0) || [0, 1, 2, 9, 11, 18, 19, 20].includes(i));
@@ -49,15 +50,7 @@ export function EmergencyView() {
     };
   }, [issue, mode]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const t = (e.target as HTMLElement | null)?.tagName;
-      if (t === "INPUT" || t === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (/^[1-5]$/.test(e.key)) setWho(Number(e.key) - 1);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  usePageShortcuts(Object.fromEntries([0, 1, 2, 3, 4].map((i) => [`person-${i + 1}`, () => setWho(i)])));
 
   const steps = [
     { t: "Show the e-card, ask for cashless", d: "Planned stay: approval before admission. Emergency: within 24 hours.", ref: `${parent ? "Senior plan" : "Group plan"} p.9 §7.2`, warn: false },

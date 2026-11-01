@@ -35,9 +35,3 @@ export const readNext = [
   { kind: "Guide · 5 min", title: "Leaving a job without a cover gap" },
   { kind: "Video · 6:12", title: "Cashless at the hospital desk" },
 ];
-
-export const toolsPageContext = {
-  page: "Tools",
-  reads: "calculators, top-ups and advisors",
-  examples: ["Find a top-up for my parents", "Book a registered advisor", "Test my cover against a big bill"],
-};

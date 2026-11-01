@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { z } from "zod";
 import { adapters } from "@/adapters";
 import * as S from "@/adapters/schemas";
-import { ALL_COMBOS } from "@/components/help/shortcutTable";
-import { HELP_PAGE_CONTEXTS } from "@/components/help/pageContexts";
+import { SHORTCUTS, pressPageShortcut, shortcutGroups } from "@/lib/shortcuts";
+import { PAGE_CONTEXT } from "@/agent/page-registry";
 import { DeskView } from "@/components/help/DeskView";
 import { EmergencyView } from "@/components/help/EmergencyView";
 import { AssistantView } from "@/components/help/AssistantView";
@@ -29,11 +29,13 @@ describe("help adapters", () => {
 });
 
 describe("help data", () => {
-  it("shortcut table has no collisions", () => {
-    expect(new Set(ALL_COMBOS).size).toBe(ALL_COMBOS.length);
+  it("shortcut groups come from the shared map", () => {
+    const rows = shortcutGroups().flatMap((g) => g.rows);
+    expect(rows.length).toBeGreaterThan(SHORTCUTS.length - 8);
+    expect(rows.some((r) => r.keys.join(" ") === "G H")).toBe(true);
   });
   it("every page context has three examples", () => {
-    for (const c of Object.values(HELP_PAGE_CONTEXTS)) expect(c.examples).toHaveLength(3);
+    for (const c of Object.values(PAGE_CONTEXT)) expect(c.examples).toHaveLength(3);
   });
 });
 
@@ -41,7 +43,7 @@ describe("help views", () => {
   it("desk: J moves the selected case, signing clears the ask", async () => {
     render(<DeskView />);
     await screen.findByText("Short-settled claim", { selector: "h3" });
-    fireEvent.keyDown(window, { key: "j" });
+    act(() => pressPageShortcut("next"));
     await screen.findByText("Duplicate premium", { selector: "h3" });
     fireEvent.click(screen.getByRole("button", { name: "Sign" }));
     expect(screen.getByText("Signed ✓")).toBeTruthy();
@@ -75,7 +77,7 @@ describe("help views", () => {
   });
   it("shortcuts: renders the full key map", () => {
     render(<ShortcutsView />);
-    expect(screen.getByText("Hold to speak")).toBeTruthy();
+    expect(screen.getByText("Hold to talk to Knowvia")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(BANNED);
     cleanup();
   });

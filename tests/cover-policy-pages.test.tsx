@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { StressTest } from "@/components/cover/StressTest";
 import { Compare } from "@/components/cover/Compare";
+import { pressPageShortcut } from "@/lib/shortcuts";
 import { PolicyList } from "@/components/cover/PolicyList";
 import { PolicyReader } from "@/components/cover/PolicyReader";
 
@@ -13,9 +14,9 @@ describe("stress test page", () => {
   it("keys 1 to 5 pick the person and the title follows", () => {
     render(<StressTest />);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("If Father needed this, who pays?");
-    fireEvent.keyDown(window, { key: "1" });
+    act(() => pressPageShortcut("person-1"));
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("If Meera needed this, who pays?");
-    fireEvent.keyDown(window, { key: "4" });
+    act(() => pressPageShortcut("person-4"));
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("If Mother needed this, who pays?");
   });
   it("the top-up lever lowers what Father pays and shows as on", () => {
@@ -35,9 +36,9 @@ describe("stress test page", () => {
 describe("compare page", () => {
   it("keys 1 to 4 pick a plan and priority chips change the fit", () => {
     const { container } = render(<Compare />);
-    fireEvent.keyDown(window, { key: "1" });
+    act(() => pressPageShortcut("plan-1"));
     expect(screen.getByText(/Your current cover scores 67%/)).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: "3" });
+    act(() => pressPageShortcut("plan-3"));
     expect(screen.getByText(/Keep your group plan and add Meridian Care/)).toBeInTheDocument();
     const chip = screen.getByRole("button", { name: /^No co-pay, Off/ });
     fireEvent.click(chip);

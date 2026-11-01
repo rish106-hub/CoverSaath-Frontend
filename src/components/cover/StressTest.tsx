@@ -8,6 +8,7 @@ import {
   type Levers, type Person, type Quality, type Scenario,
 } from "@/lib/stress";
 import styles from "./StressTest.module.css";
+import { usePageShortcuts } from "@/lib/shortcuts";
 
 const LEVER_DEFS: { key: keyof Levers; icon: string; title: string; desc: (parent: boolean) => string }[] = [
   { key: "top", icon: "↗", title: "Add a Rs 10L top-up", desc: () => "Pays what’s left after the base plan" },
@@ -24,16 +25,7 @@ export function StressTest() {
   const [sc, setSc] = useState<Scenario>("knee");
   const [levers, setLevers] = useState<Levers>(NO_LEVERS);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const t = (e.target as HTMLElement | null)?.tagName;
-      if (t === "INPUT" || t === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= PEOPLE.length) setWho(PEOPLE[n - 1].name);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  usePageShortcuts(Object.fromEntries(PEOPLE.map((p, i) => [`person-${i + 1}`, () => setWho(p.name)])));
 
   const r = calc(who, sc, levers);
   const pc = (n: number) => Math.max(0, Math.round((n / r.bill) * 100));

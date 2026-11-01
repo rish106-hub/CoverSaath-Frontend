@@ -10,8 +10,8 @@ export type Shortcut = {
   keys: string[];
   label: string;
   section: ShortcutSection;
-  /** Route prefix where the shortcut applies; omitted means everywhere. */
-  scope?: string;
+  /** Route prefix (or prefixes) where the shortcut applies; omitted means everywhere. */
+  scope?: string | string[];
   /** Route to open, for "Go to" shortcuts. */
   href?: string;
 };
@@ -36,10 +36,10 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { id: "next", keys: ["j"], label: "Next item", section: "Move" },
   { id: "prev", keys: ["k"], label: "Previous item", section: "Move" },
   { id: "open", keys: ["enter"], label: "Open item", section: "Move" },
-  ...["1", "2", "3", "4", "5"].map((n): Shortcut => ({ id: `person-${n}`, keys: [n], label: `Person ${n}`, section: "On a page", scope: "/family" })),
-  ...["1", "2", "3", "4"].map((n): Shortcut => ({ id: `plan-${n}`, keys: [n], label: `Plan ${n}`, section: "On a page", scope: "/compare" })),
-  { id: "accept", keys: ["a"], label: "Accept", section: "On a page", scope: "/review" },
-  { id: "change", keys: ["c"], label: "Change", section: "On a page", scope: "/review" },
+  ...["1", "2", "3", "4", "5"].map((n): Shortcut => ({ id: `person-${n}`, keys: [n], label: "Pick a person", section: "On a page", scope: ["/family", "/stress-test", "/emergency"] })),
+  ...["1", "2", "3", "4"].map((n): Shortcut => ({ id: `plan-${n}`, keys: [n], label: "Pick a plan", section: "On a page", scope: "/compare" })),
+  { id: "accept", keys: ["a"], label: "Accept a thing to check", section: "On a page", scope: "/review" },
+  { id: "change", keys: ["c"], label: "Change a thing to check", section: "On a page", scope: "/review" },
 ];
 
 export const isEditable = (el: EventTarget | null): boolean => {
@@ -49,7 +49,8 @@ export const isEditable = (el: EventTarget | null): boolean => {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.isContentEditable === true;
 };
 
-const inScope = (s: Shortcut, pathname: string) => !s.scope || pathname === s.scope || pathname.startsWith(`${s.scope}/`);
+const scopes = (s: Shortcut): string[] => (s.scope === undefined ? [] : Array.isArray(s.scope) ? s.scope : [s.scope]);
+const inScope = (s: Shortcut, pathname: string) => !s.scope || scopes(s).some((sc) => pathname === sc || pathname.startsWith(`${sc}/`));
 
 /** Sequence matcher: `g` arms, the next key within SEQUENCE_MS completes. Pure, so it is easy to test. */
 export function createMatcher(opts: { now?: () => number; ms?: number } = {}) {
@@ -95,4 +96,45 @@ export function useShortcuts(pathname: string, run: (id: string) => void) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [pathname]);
+}
+
+/** Subscribe a page to the keys it owns. `handlers` is keyed by shortcut id (next, prev, open, person-1, plan-2, accept, change). */
+export function usePageShortcuts(handlers: Partial<Record<string, () => void>>) {
+  const ref = useRef(handlers);
+  useEffect(() => { ref.current = handlers; });
+  useEffect(() => {
+    const on = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      ref.current[id]?.();
+    };
+    window.addEventListener(PAGE_SHORTCUT_EVENT, on);
+    return () => window.removeEventListener(PAGE_SHORTCUT_EVENT, on);
+  }, []);
+}
+
+/** Tell the page layer a page-scoped key was pressed (used by the shell, and by tests). */
+export function pressPageShortcut(id: string) {
+  window.dispatchEvent(new CustomEvent(PAGE_SHORTCUT_EVENT, { detail: { id } }));
+}
+
+export type KeyRow = { keys: string[]; label: string };
+export type KeyGroup = { title: string; rows: KeyRow[] };
+
+const CAP: Record<string, string> = { escape: "Esc", enter: "Enter" };
+const cap = (k: string) => CAP[k] ?? (k.length === 1 ? k.toUpperCase() : k);
+
+/** Rows for /shortcuts, built from SHORTCUTS so the page and the overlay never drift from the real keys. */
+export function shortcutGroups(): KeyGroup[] {
+  const sections: ShortcutSection[] = ["Go to", "Act", "Move", "On a page"];
+  return sections.map((title) => {
+    const rows: KeyRow[] = [];
+    const digits: Record<string, string[]> = {};
+    for (const s of SHORTCUTS.filter((x) => x.section === title)) {
+      if (/^(person|plan)-\d$/.test(s.id)) { (digits[s.label] ??= []).push(s.keys[0]); continue; }
+      rows.push({ keys: s.keys.map(cap), label: s.label.replace(/^Go to /, "") });
+      if (s.id === "type") rows.push({ keys: ["⌘K"], label: "Search and actions" });
+    }
+    for (const [label, ks] of Object.entries(digits)) rows.push({ keys: [`${ks[0]}–${ks[ks.length - 1]}`], label: label === "Pick a plan" ? "Pick a plan on Compare" : "Pick a person" });
+    return { title, rows };
+  });
 }

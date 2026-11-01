@@ -10,6 +10,7 @@ import {
 import { AddMemberSheet, type SentInvite } from "./AddMemberSheet";
 import { RemindRowSlot } from "./slots";
 import styles from "./family.module.css";
+import { usePageShortcuts } from "@/lib/shortcuts";
 
 const STATE_LABEL: Record<Invite["state"], string> = { joined: "Joined", sent: "Invite sent", none: "Not invited" };
 const DOTS: Record<Invite["state"], number> = { joined: 3, sent: 1, none: 0 };
@@ -22,16 +23,7 @@ export function FamilyView() {
   const [sharing, setSharing] = useState(sharingRows.map((r) => r.on));
   const person = familyPeople[sel];
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target;
-      if (adding || (t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= familyPeople.length) setSel(n - 1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [adding]);
+  usePageShortcuts(Object.fromEntries(familyPeople.map((_, i) => [`person-${i + 1}`, () => { if (!adding) setSel(i); }])));
 
   const onSent = (s: SentInvite) => {
     setInvites((cur) => {

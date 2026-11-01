@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SectionHeading, SubHeading } from "@/components/type";
 import { inputPaths, paletteDemo } from "@/data/mock/help-pages";
-import { KEY_GROUPS } from "./shortcutTable";
+import { shortcutGroups } from "@/lib/shortcuts";
 import ui from "./ui.module.css";
 import s from "./Shortcuts.module.css";
 
@@ -33,7 +33,7 @@ export function ShortcutsView() {
       <div className={s.col}>
         <SectionHeading title="Keyboard" description="Every key works on every app page when no box is being typed in. Keyboard only, sign-up to emergency:">
           <div className={s.keys}>
-            {KEY_GROUPS.map((g) => (
+            {shortcutGroups().map((g) => (
               <div key={g.title} className={s.kgroup}>
                 <SubHeading>{g.title}</SubHeading>
                 {g.rows.map((r) => (

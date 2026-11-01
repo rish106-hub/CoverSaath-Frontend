@@ -7,6 +7,7 @@ import { deskSteps, deskLadder, deskContacts, deskLive, deskRaise, deskScore } f
 import { RemindRowSlot } from "./slots";
 import ui from "./ui.module.css";
 import s from "./Desk.module.css";
+import { usePageShortcuts } from "@/lib/shortcuts";
 
 const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(" ");
 
@@ -32,17 +33,10 @@ export function DeskView() {
     return () => clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const t = (e.target as HTMLElement | null)?.tagName;
-      if (t === "INPUT" || t === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (!cases.length) return;
-      if (e.key === "j" || e.key === "J") setSel((i) => (i + 1) % cases.length);
-      if (e.key === "k" || e.key === "K") setSel((i) => (i + cases.length - 1) % cases.length);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [cases.length]);
+  usePageShortcuts({
+    next: () => { if (cases.length) setSel((i) => (i + 1) % cases.length); },
+    prev: () => { if (cases.length) setSel((i) => (i + cases.length - 1) % cases.length); },
+  });
 
   const c = cases[sel];
   if (!c) return <p className={ui.small} role="status">Loading your cases</p>;

@@ -70,9 +70,3 @@ export const planCases = [
   { label: "Knee replacement", lakh: 3.8 },
   { label: "ICU, 5 days", lakh: 5.2 },
 ];
-
-export const moneyPageContext = {
-  page: "Money desk",
-  reads: "your receipts, renewals and refunds",
-  examples: ["How much can I claim under 80D?", "Will Rs 3L be enough in 10 years?", "Where is my refund?"],
-};

@@ -6,6 +6,7 @@ import { Kicker, PageTitle, Recommended, SectionHeading } from "@/components/typ
 import { decisions, lookItems, reviewTotal } from "@/data/mock/review";
 import { accept, acceptAll, emptyReview, flag, nextLook, pick, summarize, tick, type ReviewState } from "./review-logic";
 import s from "./ReviewView.module.css";
+import { usePageShortcuts } from "@/lib/shortcuts";
 
 /** Things to check (board Audit). Only items that need the owner are listed; auto-resolved ones never appear. */
 export function ReviewView() {
@@ -18,19 +19,11 @@ export function ReviewView() {
   }, [st]);
 
   // A accepts / C flags the next look item.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const k = e.key.toLowerCase();
-      if (k !== "a" && k !== "c") return;
-      const n = nextLook(stRef.current, lookItems.length);
-      if (n < 0) return;
-      setSt((p) => (k === "a" ? tick(p, n) : flag(p, n)));
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const act = (accept: boolean) => () => {
+    const n = nextLook(stRef.current, lookItems.length);
+    if (n >= 0) setSt((p) => (accept ? tick(p, n) : flag(p, n)));
+  };
+  usePageShortcuts({ accept: act(true), change: act(false) });
 
   const sum = summarize(st, reviewTotal, decisions.length, lookItems.length);
 
