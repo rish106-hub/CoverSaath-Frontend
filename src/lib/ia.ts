@@ -151,6 +151,17 @@ export const PAGES: readonly PageDef[] = [
     title: "Settings", kicker: "Your account",
     sections: [{ heading: "Connected sources" }, { heading: "Account" }],
   },
+  {
+    route: "/profile", href: "/profile", tab: "Profile", group: null,
+    title: "Your profile", kicker: "Your details",
+    sections: [
+      { heading: "You" },
+      { heading: "Registered address (optional)" },
+      { heading: "Location" },
+      { heading: "Connected sources" },
+      { heading: "Your account" },
+    ],
+  },
 ] as const;
 
 export const PUBLIC_ROUTES = ["/", "/signin", "/welcome", "/status"] as const;

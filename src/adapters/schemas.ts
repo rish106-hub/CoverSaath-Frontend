@@ -123,3 +123,57 @@ export type RankedHospital = z.infer<typeof rankedHospitalSchema>;
 
 export const bloodBankSchema = z.object({ name: z.string(), distance: z.string(), units: z.number().int() });
 export type BloodBank = z.infer<typeof bloodBankSchema>;
+
+// F1b (profile): shapes follow the user-data-store spec (household_places, device_permissions).
+export const addressSchema = z.object({
+  line1: z.string().trim().min(1).max(120),
+  line2: z.string().trim().max(120).default(""),
+  landmark: z.string().trim().max(120).default(""),
+  city: z.string().trim().min(1).max(80),
+  state: z.string().trim().min(1).max(60),
+  pincode: z.string().regex(/^[1-9]\d{5}$/),
+  country: z.string().default("IN"),
+});
+export type Address = z.infer<typeof addressSchema>;
+/** Input shape of the address form (before defaults). */
+export type AddressInput = z.input<typeof addressSchema>;
+
+/** +91 and ten digits starting 6 to 9, stored as +91XXXXXXXXXX. */
+export const mobileSchema = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/[\s-]/g, ""))
+  .pipe(z.string().regex(/^(\+91)?[6-9]\d{9}$/))
+  .transform((v) => (v.startsWith("+91") ? v : `+91${v}`));
+
+export const permissionName = z.enum(["location", "notifications", "contacts", "calendar", "microphone", "camera"]);
+export type PermissionName = z.infer<typeof permissionName>;
+export const permissionState = z.enum(["granted", "denied", "dismissed", "revoked"]);
+export type PermissionState = z.infer<typeof permissionState>;
+export const permissionSurface = z.enum(["onboarding", "emergency", "settings", "family", "other"]);
+export type PermissionSurface = z.infer<typeof permissionSurface>;
+
+export const currentLocationSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracyM: z.number().nonnegative(),
+  precision: z.enum(["exact", "coarse"]),
+});
+export type CurrentLocation = z.infer<typeof currentLocationSchema>;
+
+export const placeKind = z.enum(["home", "work"]);
+export type PlaceKind = z.infer<typeof placeKind>;
+export const placeAddressSchema = z.object({ line1: z.string().trim().min(1).max(200), country: z.string().default("IN") });
+export type PlaceAddress = z.input<typeof placeAddressSchema>;
+export const savedPlaceSchema = z.object({ id: z.string(), kind: placeKind, label: z.string(), address: placeAddressSchema });
+export type SavedPlace = z.infer<typeof savedPlaceSchema>;
+
+export const profileSchema = z.object({
+  mobile: z.string().nullable(),
+  address: addressSchema.nullable(),
+  addressSource: z.enum(["user_typed", "digilocker"]).nullable(),
+  permissions: z.partialRecord(permissionName, permissionState),
+  currentLocation: currentLocationSchema.nullable(),
+  places: z.array(savedPlaceSchema),
+});
+export type Profile = z.infer<typeof profileSchema>;

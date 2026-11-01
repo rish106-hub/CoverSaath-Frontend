@@ -2,6 +2,7 @@ import type { Adapters } from "../types";
 import { AdapterError } from "../types";
 import { detectWalletPlatform } from "@/lib/wallet-detect";
 import { delay } from "./delay";
+import { mockProfile } from "./profile";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
 import { summariseReceipts } from "@/lib/reconcile";
@@ -76,4 +77,5 @@ export const mockAdapters: Adapters = {
           : { ok: true, message: channel === "apple-calendar" ? "Calendar file ready" : "We will tell you when it moves" },
       ),
   },
+  profile: mockProfile,
 };

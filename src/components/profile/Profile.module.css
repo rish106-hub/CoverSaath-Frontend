@@ -1,0 +1,28 @@
+.col { display: flex; flex-direction: column; gap: 32px; max-width: 720px; }
+.stack { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 220px; }
+.label { font: 500 14px var(--font-sans); color: var(--ink); }
+.input { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); font: 400 15px var(--font-sans); width: 100%; box-sizing: border-box; }
+.input:focus-visible { outline: 2px solid var(--harbour); outline-offset: 1px; }
+.fieldError { font: 400 13px var(--font-sans); color: var(--coral-ink); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.full { grid-column: 1 / -1; }
+.card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.cardText { font: 400 15px/1.5 var(--font-sans); color: var(--ink); }
+.small { font: 400 13px/1.4 var(--font-sans); color: var(--graphite); }
+.strong { font: 600 15px var(--font-sans); color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 600 14px var(--font-sans); cursor: pointer; }
+.btn:hover { border-color: var(--ink); }
+.btn:disabled { opacity: 0.6; cursor: default; }
+.btnPrimary { background: var(--harbour); color: var(--on-harbour); border-color: var(--harbour); }
+.notice { font: 400 14px/1.45 var(--font-sans); color: var(--ink); background: var(--sunken); border-radius: var(--r-sm); padding: 10px 12px; }
+.list { display: flex; flex-direction: column; }
+.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.item:last-child { border-bottom: 0; }
+.source { display: grid; grid-template-columns: 40px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.source:last-child { border-bottom: 0; }
+.tile { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.status { font: 500 13px var(--font-sans); color: var(--graphite); }
+.statusOn { color: var(--harbour); }
+@media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }

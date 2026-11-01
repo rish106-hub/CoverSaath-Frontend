@@ -79,6 +79,21 @@ export interface NotifyAdapter {
   send(channel: S.NotifyChannel, subject: string): Promise<S.NotifyResult>;
 }
 
+export interface ProfileAdapter {
+  get(): Promise<S.Profile>;
+  saveContact(input: { mobile: string }): Promise<{ mobile: string }>;
+  saveAddress(address: S.AddressInput, source?: "user_typed" | "digilocker"): Promise<S.Address>;
+  deleteAddress(): Promise<void>;
+  /** Returns the address held in the person's DigiLocker. Throws AdapterError when it cannot be reached. */
+  fetchAddressFromDigiLocker(): Promise<S.Address>;
+  setPermission(permission: S.PermissionName, state: S.PermissionState, surface: S.PermissionSurface): Promise<void>;
+  /** `coarse` positions are rounded to 2 decimals (about 1 km) and kept 24 hours. */
+  saveCurrentLocation(input: { lat: number; lng: number; accuracyM: number; precision: "exact" | "coarse" }): Promise<S.CurrentLocation>;
+  clearCurrentLocation(): Promise<void>;
+  savePlace(kind: S.PlaceKind, label: string, address: S.PlaceAddress): Promise<S.SavedPlace>;
+  deletePlace(id: string): Promise<void>;
+}
+
 export type Adapters = {
   auth: AuthAdapter;
   access: AccessAdapter;
@@ -97,4 +112,5 @@ export type Adapters = {
   invite: InviteAdapter;
   wallet: WalletAdapter;
   notify: NotifyAdapter;
+  profile: ProfileAdapter;
 };
