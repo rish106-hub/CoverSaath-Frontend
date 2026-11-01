@@ -10,7 +10,7 @@ const DB = { host: "127.0.0.1", port: "54329", user: "coversaath", name: "knowvi
 const bffUrl = new URL(BFF);
 if (!["127.0.0.1", "localhost", "[::1]"].includes(bffUrl.hostname)) throw new Error("REFUSED: BFF host is not loopback");
 if (bffUrl.port === "8787") throw new Error("REFUSED: port 8787 is the owner's backend");
-if (!/^[a-z0-9_]+$/.test(DB.name) || DB.name === "coversaath_dev") throw new Error("REFUSED: database name");
+if (!/^[a-z0-9_]+$/.test(DB.name) || (DB.name as string) === "coversaath_dev") throw new Error("REFUSED: database name");
 if (!["127.0.0.1", "localhost"].includes(DB.host)) throw new Error("REFUSED: database host is not loopback");
 
 type Status = "PASS" | "FAIL" | "NOT WIRED";
