@@ -1,7 +1,7 @@
-import { PagePlaceholder } from "@/components/shell";
+import { CardsPage } from "@/components/wallet/CardsPage";
 
 export const metadata = { title: "Cards and wallet" };
 
 export default function Page() {
-  return <PagePlaceholder route="/cards" />;
+  return <CardsPage />;
 }
