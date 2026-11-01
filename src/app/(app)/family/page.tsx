@@ -1,5 +1,5 @@
-import { FamilyOwner } from "@/components/shell";
-import { PageTitle, Kicker, SectionHeading } from "@/components/type";
+import { PageTitle, Kicker } from "@/components/type";
+import { FamilyView } from "@/components/family";
 import { pageFor } from "@/lib/ia";
 
 export const metadata = { title: "People and invites" };
@@ -13,11 +13,7 @@ export default function Page() {
         {page.kicker ? <Kicker>{page.kicker}</Kicker> : null}
         <PageTitle>{page.title}</PageTitle>
       </div>
-      {page.sections.map((s) => (
-        <SectionHeading key={s.heading} title={s.heading} description={s.description}>
-          {s.heading === "People" ? <FamilyOwner /> : null}
-        </SectionHeading>
-      ))}
+      <FamilyView />
     </>
   );
 }
