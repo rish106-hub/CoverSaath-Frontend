@@ -17,7 +17,35 @@ button { cursor: pointer; }
 h1, h2, h3, p { margin: 0; }
 :focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@keyframes route-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes route-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .route-in { animation: route-in var(--t-slow) var(--ease) both; }
+
+/* Shared motion helpers. Zero specificity so any module class can override. */
+:where(button, a[class], summary, [role="button"], [role="tab"]) {
+  transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), box-shadow var(--t-base) var(--ease), transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
+}
+@keyframes k-reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* Staggered entrance: put .k-stagger on a parent and style={stagger(i)} on each child (src/lib/motion.ts). */
+.k-stagger > *, .k-reveal { animation: k-reveal var(--t-xslow) var(--ease) both; animation-delay: calc(var(--i, 0) * 45ms); }
+.k-stagger > :nth-child(2) { --i: 1; }
+.k-stagger > :nth-child(3) { --i: 2; }
+.k-stagger > :nth-child(4) { --i: 3; }
+.k-stagger > :nth-child(5) { --i: 4; }
+.k-stagger > :nth-child(6) { --i: 5; }
+.k-stagger > :nth-child(7) { --i: 6; }
+.k-stagger > :nth-child(8) { --i: 7; }
+.k-stagger > :nth-child(9) { --i: 8; }
+.k-stagger > :nth-child(n+10) { --i: 8; }
+/* Lift on hover for clickable cards and tiles. */
+.k-lift { transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease), border-color var(--t-base) var(--ease); }
+.k-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.k-lift:active { transform: translateY(0) scale(0.99); box-shadow: var(--shadow-sm); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+  .k-lift:hover, .k-lift:active { transform: none; }
+}
 /* W5 settings: "Reduce motion" preference mirrors the prefers-reduced-motion token override. */
 html[data-motion="reduced"] { --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-xslow: 1ms; }
+
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+html[data-motion="reduced"] .k-lift:hover, html[data-motion="reduced"] .k-lift:active { transform: none; }

@@ -3,3 +3,9 @@
 .name { font: 500 14px var(--font-sans); color: var(--ink); }
 .chip { text-decoration: none; border-radius: var(--r-sm); min-height: 44px; }
 .chip:hover .name { text-decoration: underline; }
+.chip { min-width: 0; }
+.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 960px) and (max-width: 1199px) {
+  .chip { justify-content: center; padding: 0; }
+  .name { display: none; }
+}

@@ -1,0 +1,6 @@
+.btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--graphite); transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.btn:hover { background: var(--sunken); color: var(--ink); border-color: var(--graphite); }
+.btn:active { transform: scale(0.94); }
+.btn svg { transition: transform var(--t-slow) var(--ease); }
+.btn:hover svg { transform: rotate(18deg); }
+@media (prefers-reduced-motion: reduce) { .btn svg { transition: none; } .btn:hover svg { transform: none; } }
