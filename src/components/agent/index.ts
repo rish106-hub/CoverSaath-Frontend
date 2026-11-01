@@ -4,3 +4,4 @@ export { AskDock } from "./AskDock";
 export { AskStrip } from "./AskStrip";
 export { AskCard } from "./AskCard";
 export { ShortcutsOverlay } from "./ShortcutsOverlay";
+export { AskChat } from "./AskChat";
