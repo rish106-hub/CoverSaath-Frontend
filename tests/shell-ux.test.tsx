@@ -16,6 +16,7 @@ vi.mock("next/navigation", () => ({
 afterEach(() => { cleanup(); document.documentElement.setAttribute("data-theme", "light"); });
 
 const shell = () => render(<ThemeProvider><AppShell pathname="/compare"><p>body</p></AppShell></ThemeProvider>);
+const dockBtn = () => document.querySelector<HTMLElement>("[data-ask-trigger]") as HTMLElement;
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 
 describe("sidebar rail and brand", () => {
@@ -66,7 +67,7 @@ describe("Ask Knowvia panel, voice first", () => {
     installVoice();
     shell();
     await flush();
-    fireEvent.click(screen.getByRole("button", { name: "Ask Knowvia" }));
+    fireEvent.click(dockBtn());
     return await screen.findByRole("dialog", { name: "Ask Knowvia" });
   };
 
@@ -147,7 +148,7 @@ describe("Ask Knowvia panel, entry points", () => {
   it("without speech support the dock opens straight into chat with a short note", async () => {
     shell();
     await flush();
-    fireEvent.click(screen.getByRole("button", { name: "Ask Knowvia" }));
+    fireEvent.click(dockBtn());
     const dialog = await screen.findByRole("dialog", { name: "Ask Knowvia" });
     expect(dialog.getAttribute("data-view")).toBe("chat");
     expect(await within(dialog).findByRole("textbox", { name: "Message to Ask Knowvia" })).toBeInTheDocument();
@@ -168,7 +169,7 @@ describe("Ask Knowvia panel, entry points", () => {
   it("keeps the thread after the panel is closed and reopened", async () => {
     shell();
     await flush();
-    fireEvent.click(screen.getByRole("button", { name: "Ask Knowvia" }));
+    fireEvent.click(dockBtn());
     const dialog = await screen.findByRole("dialog", { name: "Ask Knowvia" });
     const input = await within(dialog).findByRole("textbox");
     fireEvent.change(input, { target: { value: "Hello" } });
@@ -176,7 +177,7 @@ describe("Ask Knowvia panel, entry points", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     fireEvent.keyDown(window, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ask Knowvia" })).toBeNull());
-    fireEvent.click(screen.getByRole("button", { name: "Ask Knowvia" }));
+    fireEvent.click(dockBtn());
     const again = await screen.findByRole("dialog", { name: "Ask Knowvia" });
     expect(await within(again).findByText("Hello")).toBeInTheDocument();
   });
@@ -184,7 +185,7 @@ describe("Ask Knowvia panel, entry points", () => {
   it("offers at most three starter questions", async () => {
     shell();
     await flush();
-    fireEvent.click(screen.getByRole("button", { name: "Ask Knowvia" }));
+    fireEvent.click(dockBtn());
     const dialog = await screen.findByRole("dialog", { name: "Ask Knowvia" });
     await within(dialog).findByRole("textbox");
     expect(dialog.querySelectorAll("button[class*=starter]").length).toBeLessThanOrEqual(3);

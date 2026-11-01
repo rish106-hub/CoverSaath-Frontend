@@ -4,6 +4,7 @@ import { prefersReducedMotion } from "@/lib/use-reduced-motion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { adapters, type AssistantReply } from "@/adapters";
+import { resolveNavigation } from "@/agent/navigate";
 import { holdReducer, initialHold, type Hold } from "@/agent/hold";
 import { isEditable, PAGE_SHORTCUT_EVENT, SHORTCUTS, useShortcuts } from "@/lib/shortcuts";
 import { useTheme } from "@/components/theme";
@@ -122,6 +123,19 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     setThinking(true);
     dispatch({ type: "show" });
     dispatch({ type: "submit" });
+    const nav = resolveNavigation(said);
+    if (nav) {
+      const line = `Opening ${nav.label}`;
+      const r: AssistantReply = { reply: line, steps: ["Navigate", "Found the page", line], pageRef: nav.label };
+      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: line }]);
+      setReply(r);
+      setThinking(false);
+      setDone(3);
+      dispatch({ type: "finish" });
+      if (fromVoice) speak(line);
+      router.push(nav.href);
+      return;
+    }
     adapters.assistant.ask(said, pathRef.current).then((r) => {
       if (id !== run.current || !alive.current) return;
       setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: r.reply, route: r.route, goLabel: r.goLabel }]);
@@ -142,7 +156,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       setNote("That did not work. Try again.");
       dispatch({ type: "rest" });
     });
-  }, [speak]);
+  }, [speak, router]);
 
   const listen = useCallback((held = false) => {
     if (!adapters.voice.supported()) {

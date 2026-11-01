@@ -4,3 +4,4 @@ export { AskDock } from "./AskDock";
 export { AskStrip } from "./AskStrip";
 export { AskPanel } from "./AskPanel";
 export { ShortcutsOverlay } from "./ShortcutsOverlay";
+export { HeaderMic } from "./HeaderMic";
