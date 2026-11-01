@@ -1,6 +1,6 @@
 # Decisions
 
-Short log of choices that go beyond BUILD-SPEC.
+Short log of choices that go beyond [build-spec.md](build-spec.md).
 
 - 2026-11-01 W0: `motion` resolved to v14 (npm latest); spec said v12. API used later is the same (`motion/react`). Revisit if W1 hits a break.
 - `server-only`: marks BFF modules so they cannot reach client bundles. Tiny, official.

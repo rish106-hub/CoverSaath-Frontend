@@ -2,9 +2,9 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error plain .mjs script, no types
-import { analyze, BUDGET_KB } from "../scripts/analyze-size.mjs";
+import { analyze, BUDGET_KB } from "../../scripts/analyze-size.mjs";
 
-const dist = path.resolve(__dirname, "..", ".next");
+const dist = path.resolve(__dirname, "..", "..", ".next");
 
 // Needs a finished `npm run build`; without one there is nothing to measure, so the test says so and passes.
 describe.skipIf(!existsSync(path.join(dist, "BUILD_ID")))("first-load JS budget", () => {

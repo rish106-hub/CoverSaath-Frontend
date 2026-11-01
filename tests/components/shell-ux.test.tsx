@@ -132,7 +132,7 @@ describe("Ask Knowvia panel, voice first", () => {
 
   it("drops the bobbing arrow animation under reduced motion (static, instant switch)", async () => {
     document.documentElement.setAttribute("data-motion", "reduced");
-    const css = readFileSync(path.resolve(__dirname, "../src/components/agent/AskPanel.module.css"), "utf8");
+    const css = readFileSync(path.resolve(__dirname, "../../src/components/agent/AskPanel.module.css"), "utf8");
     expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.chev[^}]*animation: none/);
     expect(css).toMatch(/html\[data-motion="reduced"\] \.chev[^}]*animation: none/);
     expect(css).toMatch(/html\[data-motion="reduced"\] \.chatWrap[^}]*transition: none/);

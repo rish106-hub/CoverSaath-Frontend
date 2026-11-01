@@ -11,7 +11,7 @@ import * as prefs from "@/app/api/app/preferences/route";
 import * as onboarding from "@/app/api/app/onboarding/route";
 import { mapFailure } from "@/server/backend/user-data";
 
-const TOKEN = "tok-1234567890abcdefXYZ";
+const TOKEN = "test-token";
 type Call = { url: string; method: string; headers: Record<string, string>; body: unknown };
 let calls: Call[];
 let reply: { status: number; body: unknown };

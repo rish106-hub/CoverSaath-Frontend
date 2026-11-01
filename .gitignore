@@ -1,9 +1,21 @@
+# dependencies and build output
 node_modules/
 .next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# environment (names only live in .env.example)
 .env*
 !.env.example
-*.tsbuildinfo
+
+# test output
 coverage/
 playwright-report/
 test-results/
-next-env.d.ts
+
+# editor and OS
+.DS_Store
+.idea/
+.vscode/
+*.log

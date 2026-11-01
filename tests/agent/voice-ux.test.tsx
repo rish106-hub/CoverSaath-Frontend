@@ -27,7 +27,7 @@ function installVoice() {
   class Rec { lang = ""; interimResults = false; continuous = false; onresult: unknown = null; onend: (() => void) | null = null; onerror: unknown = null; start() {} stop() { this.onend?.(); } abort() {} }
   (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = Rec;
 }
-const css = (f: string) => readFileSync(path.resolve(__dirname, "../src/components/agent", f), "utf8");
+const css = (f: string) => readFileSync(path.resolve(__dirname, "../../src/components/agent", f), "utf8");
 
 describe("dock", () => {
   it("is a labelled voice button with a mic and a sound wave", async () => {

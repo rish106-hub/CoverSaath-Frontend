@@ -1,6 +1,6 @@
 # Knowvia web app
 
-Health insurance helper for Indian families. Next.js app on port 3200. Phase 1: every screen runs on mock adapters with synthetic data (the Meera Rao household). Beta access and the signed-in person come from the local backend through a server-side BFF.
+Health insurance helper for Indian families. Next.js 16 app on port 3200. Phase 1: every screen runs on mock adapters with synthetic data (the Meera Rao household). Beta access and the signed-in person come from the local backend through a server-side BFF.
 
 ```sh
 npm ci
@@ -57,6 +57,20 @@ Screens import from `src/adapters` only (never `src/adapters/mock/*`). `types.ts
 
 `src/server/backend/*` (server-only) and `src/app/api/app/*` call `knowvia-api` on `KNOWVIA_API_URL`. The backend answers only loopback hosts and refuses browser origins, so nothing calls it from client code. The session lives in a sealed httpOnly cookie. `npm run dry-run` creates Meera Rao's household, reads it back and prints pass or fail per step without tokens.
 
+## Structure
+
+| Path | Holds |
+| --- | --- |
+| `src/app` | Next routes: `(app)` signed-in pages, public pages, `api/app` BFF handlers |
+| `src/components` | UI by area: `agent`, `cover`, `family`, `money`, `help`, `shell`, `ui`, `theme` |
+| `src/adapters`, `src/data/mock` | Adapter interfaces, mock and backend implementations, synthetic data |
+| `src/server/backend` | Server-only BFF client, session cookie, user-data calls |
+| `src/agent`, `src/lib`, `src/styles` | Ask Knowvia logic, pure helpers and calculators, design tokens |
+| `tests` | Vitest, grouped like `src`: `app`, `components`, `agent`, `adapters`, `server`, `lib`, `styles` |
+| `e2e`, `scripts` | Playwright walk; dry run, persistence check, bundle size |
+| `design` | Design boards the UI is built from |
+| `docs` | [build-spec](docs/build-spec.md), [decisions](docs/decisions.md), [persistence-matrix](docs/persistence-matrix.md), [keyboard-walkthrough](docs/keyboard-walkthrough.md) |
+
 ## Checks
 
-Banned-words and route smoke tests render every route (`tests/routes.test.tsx`); contrast tests cover both themes plus the Emergency fixed colours (`tests/tokens.test.ts`); the shortcut map has a collision test (`tests/agent.test.ts`). Keyboard walk: `docs/keyboard-walkthrough.md`. Choices beyond the spec: `docs/decisions.md`.
+Banned-words and route smoke tests render every route (`tests/app/routes.test.tsx`); contrast tests cover both themes plus the Emergency fixed colours (`tests/styles/tokens.test.ts`); the shortcut map has a collision test (`tests/agent/agent.test.ts`). CI runs typecheck, lint, test and build on every push.

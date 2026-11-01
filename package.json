@@ -1,6 +1,14 @@
 {
   "name": "knowvia-frontend",
   "version": "0.1.0",
+  "description": "Knowvia web app: a consent-first health insurance helper for Indian families.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rish106-hub/CoverSaath-Frontend.git"
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev -p 3200",

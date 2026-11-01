@@ -1,6 +1,6 @@
 # Knowvia app: build spec v2 (design approved 2026-11-01)
 
-Source of truth for the build. Read with `design/*.dc.html` (17 boards, synced from canvas v21: https://claude.ai/artifact/1yZpnfUgxYjVR1Uz5kg7si). Where a board and this file differ, this file wins; where this file is silent, copy the board. `PRODUCT.md`, `REFERENCES.md` and `RESEARCH.md` are background from v1 and may still say "CoverSaath" or "Saath": the product name is **Knowvia**, the assistant is **Ask Knowvia**.
+Source of truth for the build. Read with `design/*.dc.html` (17 design boards). Where a board and this file differ, this file wins; where this file is silent, copy the board. The product name is **Knowvia**, the assistant is **Ask Knowvia**.
 
 Phase 1 starts with the **dry run** (section 13): the app talks to the real local backend through a server-side BFF for everything the backend already stores; the rest stays behind mock adapters until the backend has tables for it. Every external dependency sits behind an adapter with a mock, so phase 2 swaps in real APIs (Knowvia backend via a BFF, Gmail, DigiLocker, e-RaktKosh, ABDM HFR, Maps, WhatsApp, calendars) without touching screens.
 
@@ -31,7 +31,7 @@ Phase 1 starts with the **dry run** (section 13): the app talks to the real loca
 - Fonts via `next/font/google`: Newsreader (page titles and hero numbers only), Geist (all UI, section headings, stat numbers), Geist Mono (policy refs like `p.4 §3.2` only).
 - Brand logos: `simple-icons` (npm, CC0) rendered as inline SVG through `<BrandLogo id>`: Google, Apple, Gmail, WhatsApp, Telegram, Google Chat, Signal, Slack, Google Messages, YouTube, Google Maps, Samsung, Google Calendar. Government marks (DigiLocker, ABDM/ABHA, e-RaktKosh) and Microsoft (Outlook, Teams) render as a neutral name tile until the owner drops approved files in `public/logos/` (`<OfficialLogo id>` picks the file up automatically). Insurer, TPA and hospital names are invented.
 - Tests: Vitest + Testing Library. Playwright specs written; run only if browsers are already installed, else report "not run".
-- Any other runtime dependency needs a line in `docs/decisions.md`.
+- Any other runtime dependency needs a line in `decisions.md`.
 
 ---
 
@@ -150,16 +150,15 @@ Phase 2 BFF: same-origin `/api/app/*`, sealed cookies, CSRF marker, server-side 
 - `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build` all pass.
 - Unit tests: classifier, stress math, reconcile, inflation planner, calculators (80D old regime: Rs 25k self; Rs 25k or 50k parents if senior), shortcut map, adapters schema-valid (zod), theme tokens (every text/background pair ≥ 4.5:1 in both themes).
 - Banned-words test over rendered text of every route: sample|demo|preview|draft|placeholder|lorem|not advice|not an insurer|CoverSaath|Saath (except inside "Ask Knowvia" history) and raw intent names.
-- Keyboard-only walk documented in `docs/keyboard-walkthrough.md`.
+- Keyboard-only walk documented in `keyboard-walkthrough.md`.
 - Visual check at 1280×800 and 1440×900: no horizontal scroll, header rows aligned, nothing clipped.
 
 ## 11. Repo and delivery
-- Folder: `/Users/rishavdewan/Developer/Product experiments/Knowvia Frontend` (git on `main`). Build work happens in worktrees under `../Knowvia Frontend.worktrees/`.
-- GitHub: **private** repo `knowvia-frontend`, created **later, only when the owner says so**. Until then: local commits only, no remote, no push.
+- Remote: github.com/rish106-hub/CoverSaath-Frontend.
 - `npm run dev` on port 3200. README: routes, shortcuts, adapters, how to swap to real APIs.
 
 ## 12. Phase 2 (not now)
-Stress test the frontend (Playwright, Lighthouse, usability), then connect auth, beta access (account in the main DB), documents and reading, profile answers, then backend gaps (see `../CoverSaath/jtbd.md` section 19).
+Stress test the frontend (Playwright, Lighthouse, usability), then connect auth, beta access (account in the main DB), documents and reading, profile answers, then backend gaps.
 
 ## 13. Dry run: frontend ↔ backend ↔ database (first build slice)
 
