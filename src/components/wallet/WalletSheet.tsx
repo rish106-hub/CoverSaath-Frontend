@@ -5,6 +5,7 @@ import { adapters } from "@/adapters";
 import type { WalletPlatform } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
 import { WALLET_PASSES, WALLET_PEOPLE, SHARE_CHANNELS } from "@/data/mock";
+import { useSingleFlight } from "@/lib/use-single-flight";
 import { orderWallets } from "@/lib/wallet-detect";
 import { PASS_STYLES, PassCard, useQrClock } from "./PassCard";
 import styles from "./wallet.module.css";
@@ -21,6 +22,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
   const [channel, setChannel] = useState("WhatsApp");
   const { secs, epoch } = useQrClock();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const { run, busy, alive } = useSingleFlight();
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -33,19 +35,21 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
   const card = WALLET_PEOPLE.Meera!;
   const count = Object.values(to).filter(Boolean).length;
 
-  async function add(p: WalletPlatform) {
-    setError("");
-    try {
-      await adapters.wallet.pass(p);
-      setAdded(p);
-    } catch {
-      setError("Couldn’t make the pass just now. Try again in a moment.");
-    }
+  function add(p: WalletPlatform) {
+    return run(async () => {
+      setError("");
+      try {
+        await adapters.wallet.pass(p);
+        if (alive()) setAdded(p);
+      } catch {
+        if (alive()) setError("Couldn’t make the pass just now. Try again in a moment.");
+      }
+    });
   }
   const option = (p: WalletPlatform, recommended: boolean) => {
     const meta = WALLET_PASSES.find((w) => w.id === p)!;
     return (
-      <button key={p} type="button" className={`${styles.wopt} ${recommended ? styles.woptRec : ""} ${added === p ? styles.woptOn : ""}`} onClick={() => add(p)}>
+      <button key={p} type="button" className={`${styles.wopt} ${recommended ? styles.woptRec : ""} ${added === p ? styles.woptOn : ""}`} onClick={() => add(p)} disabled={busy}>
         <BrandLogo id={LOGO[p]} size={40} />
         <span>
           {recommended ? <span className={styles.rec}>Recommended</span> : null}

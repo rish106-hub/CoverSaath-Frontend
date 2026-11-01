@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adapters, AdapterError } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
+import { invalidateMe } from "@/components/shell/useMe";
 import { validateAccess, type AccessErrors } from "@/components/public/validate";
 import styles from "./AccessCard.module.css";
 
@@ -19,40 +20,64 @@ export function AccessCard() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<AccessErrors>({});
   const [state, setState] = useState<State>({ kind: "idle" });
+  const flying = useRef(false); // blocks re-entry within the same tick; state alone is too slow
+  const alive = useRef(true);
+  const nav = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      if (nav.current) clearTimeout(nav.current);
+    };
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (flying.current) return;
     const check = validateAccess(name, email);
     if (!check.ok) {
       setErrors(check.errors);
       return;
     }
     setErrors({});
+    flying.current = true;
     setState({ kind: "busy" });
     try {
       const res = await adapters.access.submit({ name, email });
+      if (!alive.current) return;
       if (!res.ok) {
+        flying.current = false;
         setState({ kind: "error", message: res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : DOWN });
         return;
       }
       const first = res.name ?? name.trim().split(" ")[0];
+      invalidateMe();
       setState({ kind: "done", name: first });
-      setTimeout(() => router.push("/welcome"), 700);
+      nav.current = setTimeout(() => router.push("/welcome"), 700);
     } catch (err) {
+      flying.current = false;
+      if (!alive.current) return;
       setState({ kind: "error", message: err instanceof AdapterError ? DOWN : "Something went wrong. Try again." });
     }
   }
 
   async function withGoogle() {
+    if (flying.current) return;
+    flying.current = true;
     setState({ kind: "busy" });
     try {
       const res = await adapters.auth.signInWithProvider("google");
+      if (!alive.current) return;
       if (!res.ok) {
+        flying.current = false;
         setState({ kind: "error", message: res.message ?? DOWN });
         return;
       }
+      invalidateMe();
       router.push("/welcome");
     } catch {
+      flying.current = false;
+      if (!alive.current) return;
       setState({ kind: "error", message: DOWN });
     }
   }

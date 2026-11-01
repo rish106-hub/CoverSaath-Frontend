@@ -16,12 +16,18 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
   const [via, setVia] = useState<"whatsapp" | "sms">("whatsapp");
   const [errors, setErrors] = useState<{ name?: string; mobile?: string }>({});
   const [busy, setBusy] = useState(false);
+  const flying = useRef(false);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
   const [failed, setFailed] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => nameRef.current?.focus(), []);
 
   const next = async () => {
-    if (busy) return;
+    if (busy || flying.current) return;
     if (step === 1) {
       const e = validateAddMember(name, mobile);
       setErrors(e);
@@ -30,12 +36,15 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
     }
     const normalised = normaliseIndianMobile(mobile);
     if (!normalised) return;
+    flying.current = true;
     setBusy(true);
     setFailed(false);
     try {
       await adapters.invite.invite({ relation, name: name.trim(), mobile: normalised, via });
-      onSent({ name: name.trim(), mobile: normalised, via });
+      if (alive.current) onSent({ name: name.trim(), mobile: normalised, via });
     } catch {
+      flying.current = false;
+      if (!alive.current) return;
       setFailed(true);
       setBusy(false);
     }

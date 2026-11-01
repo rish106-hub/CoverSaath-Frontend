@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } 
 import Link from "next/link";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters } from "@/adapters";
+import { useSingleFlight } from "@/lib/use-single-flight";
+import { invalidateMe } from "@/components/shell/useMe";
 import { BrandLogo } from "@/components/logos";
 import { ThemeToggle } from "@/components/theme";
 import { AUTH_CARDS, AUTH_FILTERS, AUTH_HEADS, AUTH_WHYS, type AuthCard } from "@/data/mock";
@@ -20,21 +22,23 @@ export function SignIn() {
   const [via, setVia] = useState<"phone" | "mail">("phone");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { run: once, busy, alive } = useSingleFlight();
 
-  async function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
-    setBusy(true);
-    setError("");
-    try {
-      const r = await fn();
-      if (r.ok) setStep(next);
-      else setError(r.message ?? DOWN);
-    } catch {
-      setError(DOWN);
-    } finally {
-      setBusy(false);
-    }
+  function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
+    return once(async () => {
+      setError("");
+      try {
+        const r = await fn();
+        if (!alive()) return;
+        if (r.ok) {
+          if (next === "done") invalidateMe();
+          setStep(next);
+        } else setError(r.message ?? DOWN);
+      } catch {
+        if (alive()) setError(DOWN);
+      }
+    });
   }
 
   function send() {

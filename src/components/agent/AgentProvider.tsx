@@ -60,6 +60,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   useEffect(() => { holdRef.current = hold; pathRef.current = pathname; });
 
   const clearTimer = () => { if (timer.current) { clearInterval(timer.current); timer.current = null; } };
+  useEffect(() => () => { run.current += 1; clearTimer(); }, []);
 
   const submit = useCallback((text: string) => {
     const said = text.trim();

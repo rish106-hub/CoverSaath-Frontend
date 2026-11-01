@@ -6,7 +6,8 @@ import { adapters } from "@/adapters";
 import { SectionHeading } from "@/components/type";
 import { BrandLogo } from "@/components/logos";
 import { useTheme } from "@/components/theme";
-import { useMe } from "@/components/shell";
+import { useMe, invalidateMe } from "@/components/shell";
+import { useSingleFlight } from "@/lib/use-single-flight";
 import ui from "./ui.module.css";
 import s from "./Settings.module.css";
 
@@ -51,6 +52,17 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
   const { theme, setTheme } = useTheme();
   const { state: me } = useMe();
   const router = useRouter();
+  const out = useSingleFlight();
+  const signOut = () =>
+    out.run(async () => {
+      try {
+        await adapters.access.signOut();
+      } catch {
+        return;
+      }
+      invalidateMe();
+      if (out.alive()) router.push("/");
+    });
 
   useEffect(() => {
     // Preferences live in this browser only; read them after mount to keep server and client markup equal.
@@ -177,7 +189,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
               <span className={s.name}>{me.status === "ready" ? me.me.owner.displayName : "Your account"}</span>
               <span className={ui.small}>{me.status === "ready" ? (me.me.owner.email ?? me.me.householdName) : "Signed in"}</span>
             </span>
-            <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={() => adapters.access.signOut().then(() => { router.push("/"); })}>Sign out</button>
+            <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={signOut} disabled={out.busy}>Sign out</button>
           </div>
         </div>
       </SectionHeading>
