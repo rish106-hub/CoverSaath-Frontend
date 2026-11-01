@@ -1,6 +1,7 @@
 export { AppShell } from "./AppShell";
 export { PageHeader } from "./PageHeader";
-export { HomeSidebar } from "./HomeSidebar";
+export { AppSidebar } from "./AppSidebar";
+export { AppSidebar as HomeSidebar } from "./AppSidebar";
 export { PagePlaceholder } from "./PagePlaceholder";
 export { UserChip } from "./UserChip";
 export { BackendDown } from "./BackendDown";

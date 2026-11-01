@@ -15,3 +15,17 @@
 .link { font: 500 14px var(--font-sans); color: var(--harbour); }
 .read { display: grid; grid-template-columns: 1fr auto; gap: 8px; font: 400 14px/1.35 var(--font-sans); color: var(--ink); }
 .meta { color: var(--graphite); font-size: 13px; }
+
+.topbar, .scrim, .head .close { display: none; }
+.head { display: flex; align-items: center; justify-content: space-between; }
+.menu, .close { min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
+.topbrand { font: 400 22px var(--font-serif); color: var(--ink); }
+.aside > :last-child { margin-top: auto; }
+@media (max-width: 959px) {
+  .topbar { display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 40; padding: 8px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .head .close { display: inline-flex; align-items: center; }
+  .scrim { display: block; position: fixed; inset: 0; z-index: 50; background: color-mix(in srgb, var(--ink) 45%, transparent); }
+  .aside { position: fixed; top: 0; left: 0; bottom: 0; height: 100dvh; width: min(300px, 86vw); z-index: 60; transform: translateX(-100%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s; }
+  .aside.open { transform: none; visibility: visible; }
+}
+@media (prefers-reduced-motion: reduce) { .aside { transition: none; } }

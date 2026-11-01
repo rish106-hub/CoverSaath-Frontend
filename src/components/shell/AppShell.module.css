@@ -1,6 +1,10 @@
-.withSidebar { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
-.plain { min-height: 100vh; }
-.main { padding: 32px 48px 96px; display: flex; flex-direction: column; gap: 24px; min-width: 0; max-width: 1440px; margin: 0 auto; }
-.withSidebar .main { padding: 24px 40px 96px; max-width: none; margin: 0; }
-.content { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
+.main { padding: 24px 40px 96px; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.content { display: flex; flex-direction: column; gap: 28px; min-width: 0; max-width: 1440px; width: 100%; margin: 0 auto; }
 .dock { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; }
+.skip { position: absolute; left: 8px; top: -64px; z-index: 100; padding: 10px 16px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); font: 600 14px var(--font-sans); }
+.skip:focus { top: 8px; }
+@media (max-width: 959px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .main { padding: 16px 16px 96px; }
+}
