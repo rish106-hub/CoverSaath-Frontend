@@ -1,7 +1,8 @@
-import { PagePlaceholder } from "@/components/shell";
+import { PolicyReader } from "@/components/cover/PolicyReader";
 
-export const metadata = { title: "Policy" };
+export const metadata = { title: "Your policy" };
 
-export default function Page() {
-  return <PagePlaceholder route="/policies/[id]" />;
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <PolicyReader id={id} />;
 }

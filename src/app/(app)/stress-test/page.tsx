@@ -1,7 +1,7 @@
-import { PagePlaceholder } from "@/components/shell";
+import { StressTest } from "@/components/cover/StressTest";
 
 export const metadata = { title: "Stress test" };
 
 export default function Page() {
-  return <PagePlaceholder route="/stress-test" />;
+  return <StressTest />;
 }

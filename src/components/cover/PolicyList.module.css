@@ -1,0 +1,14 @@
+.quiet { margin: 0; font: 400 15px var(--font-sans); color: var(--graphite); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { display: flex; flex-direction: column; gap: 8px; padding: 22px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); text-decoration: none; transition: border-color var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
+.card:hover { border-color: var(--harbour); box-shadow: var(--shadow-md); }
+.card:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.kind { font: 600 13px var(--font-sans); padding: 4px 10px; border-radius: 999px; background: var(--mist); color: var(--harbour); }
+.arrow { color: var(--graphite); }
+.name { font: 400 24px/1.2 var(--font-serif); }
+.ins { font: 500 14px var(--font-sans); color: var(--graphite); }
+.facts { margin: 8px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.facts dt { font: 400 13px var(--font-sans); color: var(--graphite); }
+.facts dd { margin: 2px 0 0; font: 600 14px var(--font-sans); }
+.who { padding-top: 12px; border-top: 1px solid var(--line); font: 400 13px var(--font-sans); color: var(--graphite); }
