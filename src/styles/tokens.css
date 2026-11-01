@@ -1,0 +1,95 @@
+/* Knowvia design tokens (BUILD-SPEC section 3). Light is default; dark is a real token swap. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --paper: #f7f5f0;
+  --sheet: #ffffff;
+  --sunken: #efebe3;
+  --ink: #16130f;
+  --graphite: #5f5a52;
+  --muted: #8c867c; /* decorative only: placeholders, icons. Not used for readable text. */
+  --line: #e6e1d7;
+  --harbour: #0e4f4a;
+  --on-harbour: #f7f5f0;
+  --sea-glass: #6fa79e;
+  --mist: #e3efec;
+  --marker: #f4dc8a;
+  --ochre: #e3b85a;
+  --signal: #e9785d;
+  --signal-ink: #a63d25;
+  --signal-bg: #fce3da;
+  --coral: #f2b9a8;
+  --coral-ink: #8f2f1a;
+
+  --rec-bg: #eae6f2;
+  --rec-ink: #4a3d78;
+  --rec-border: #cfc6ea;
+
+  --g-cover: #0e4f4a;
+  --g-family: #ae503a;
+  --g-money: #8a5a0b;
+  --g-help: #5a4a8c;
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+
+  --shadow-sm: 0 1px 2px rgba(22, 19, 15, 0.06), 0 4px 12px rgba(22, 19, 15, 0.04);
+  --shadow-md: 0 2px 4px rgba(22, 19, 15, 0.05), 0 12px 32px rgba(22, 19, 15, 0.08);
+  --shadow-lg: 0 4px 8px rgba(22, 19, 15, 0.06), 0 24px 56px rgba(22, 19, 15, 0.12);
+
+  --t-fast: 120ms;
+  --t-base: 180ms;
+  --t-slow: 240ms;
+  --t-xslow: 420ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #12100d;
+  --sheet: #1c1915;
+  --sunken: #25211b;
+  --ink: #f3efe7;
+  --graphite: #b9b2a5;
+  --muted: #8c867c;
+  --line: #3a352d;
+  --harbour: #7cc4b8;
+  --on-harbour: #0b1412;
+  --sea-glass: #6fa79e;
+  --mist: #1f3532;
+  --marker: #f4dc8a;
+  --ochre: #e3b85a;
+  --signal: #ef8a70;
+  --signal-ink: #f4a590;
+  --signal-bg: #3d2119;
+  --coral: #5a2f24;
+  --coral-ink: #f6b9a8;
+
+  --rec-bg: #2a2342;
+  --rec-ink: #d3c9f7;
+  --rec-border: #4c4175;
+
+  --g-cover: #6fc0b4;
+  --g-family: #e58c74;
+  --g-money: #dba646;
+  --g-help: #aa9de3;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.45), 0 24px 56px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 1ms;
+    --t-base: 1ms;
+    --t-slow: 1ms;
+    --t-xslow: 1ms;
+  }
+}

@@ -1,0 +1,15 @@
+.toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 40;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--sheet);
+  color: var(--ink);
+  font: 500 14px var(--font-sans);
+  box-shadow: var(--shadow-sm);
+}
+.toggle:hover { border-color: var(--graphite); }
