@@ -65,7 +65,7 @@ export const ONBOARD_WAYS = [
 ] as const;
 export const ONBOARD_TIPS = [
   { i: "✉", t: "Search your email", d: "Type “policy schedule” or your insurer’s name. The PDF is usually attached to the welcome mail.", k: "Most people find it here", tone: "mist" },
-  { i: "◫", t: "Company cover? Ask HR", d: "HR or the benefits portal has the e-card and the group policy. One message is enough.", k: "Knowvia can draft the message", tone: "ochre" },
+  { i: "◫", t: "Company cover? Ask HR", d: "HR or the benefits portal has the e-card and the group policy. One message is enough.", k: "Knowvia can write the message", tone: "ochre" },
   { i: "▣", t: "Look in DigiLocker", d: "Many insurers push policies to DigiLocker under “Issued documents”.", k: "Sign in once, we fetch it", tone: "violet" },
   { i: "⚿", t: "PDF asks for a password?", d: "It is often your date of birth (DDMMYYYY) or the first four letters of your name plus birth year.", k: "Say it; we never store it", tone: "coral" },
 ] as const;

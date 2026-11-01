@@ -48,3 +48,35 @@ it("defines the spec palette in light", () => {
   expect(light.harbour).toBe("#0e4f4a");
   expect(light["rec-bg"]).toBe("#eae6f2");
 });
+
+// Emergency is light by default. Its fixed colours (white e-card, call tiles) must read in both themes.
+const emergency = readFileSync("src/components/help/Emergency.module.css", "utf8");
+const rule = (sel: string) => {
+  const m = emergency.match(new RegExp("^\\" + sel + "\\s*\\{([^}]*)\\}", "m"));
+  if (!m) throw new Error("rule missing " + sel);
+  return m[1];
+};
+const prop = (body: string, name: string) => {
+  const h = body.match(new RegExp("(?:^|[; ])" + name + ":\\s*(#[0-9a-f]{3,6})\\b", "i"))?.[1];
+  return h && h.length === 4 ? "#" + [...h.slice(1)].map((c) => c + c).join("") : h;
+};
+
+describe("emergency fixed colours", () => {
+  it.each([[".c112"], [".c108"], [".ecard"], [".ebtn"], [".ebtnDark"]])("%s text on its own background is at least 4.5:1", (sel) => {
+    const body = rule(sel);
+    const fg = prop(body, "color")!;
+    const bg = prop(body, "background")!;
+    expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+  it("e-card fact labels read on the white card", () => {
+    expect(ratio(prop(rule(".facts dt"), "color")!, "#ffffff")).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each([["light", light], ["dark", dark]] as const)("fixed dark text on marker and sea-glass is readable in %s", (_n, t) => {
+    expect(ratio("#16130f", t.marker)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio("#16130f", t["sea-glass"])).toBeGreaterThanOrEqual(4.5);
+  });
+  it("no emergency rule forces a dark theme", () => {
+    expect(emergency).not.toMatch(/data-theme|color-scheme|invert\(/);
+    expect(readFileSync("src/app/layout.tsx", "utf8")).toMatch(/data-theme="light"/);
+  });
+});
