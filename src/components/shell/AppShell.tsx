@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "@/components/theme";
+import { ThemeButton } from "@/components/theme";
 import { AgentProvider, AgentLayer } from "@/components/agent";
 import { pageFor } from "@/lib/ia";
 import { PageHeader } from "./PageHeader";
@@ -24,12 +24,12 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
       <a href="#main-content" className={styles.skip}>Skip to content</a>
       <AppSidebar pathname={pathname} />
       <div className={styles.main}>
+        <div className={styles.bar}><ThemeButton /></div>
         {home ? null : <PageHeader pathname={pathname} />}
-        <main id="main-content" tabIndex={-1} className={`${styles.content} route-in`}>{children}</main>
+        <main key={pathname} id="main-content" tabIndex={-1} className={`${styles.content} k-stagger`}>{children}</main>
       </div>
       {dock ? <div className={styles.dock}>{dock}</div> : null}
       <AgentLayer />
-      <ThemeToggle />
     </div>
     </AgentProvider>
   );

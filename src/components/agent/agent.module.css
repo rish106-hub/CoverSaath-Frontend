@@ -3,7 +3,9 @@
 .kbd { font: 500 11px var(--font-mono); padding: 2px 7px; border-radius: 6px; background: var(--sunken); color: var(--ink); }
 
 .dock { display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 12px 6px 6px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; text-align: left; box-shadow: 0 20px 40px -22px rgba(22, 19, 15, 0.55); }
-.dock:hover { border-color: var(--harbour); }
+.dock { transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease), border-color var(--t-fast) var(--ease); }
+.dock:hover { border-color: var(--harbour); transform: translateY(-2px); }
+.dock:active { transform: translateY(0) scale(0.99); }
 .dockText b { display: block; font-weight: 600; font-size: 14px; }
 .dockText span { display: block; font-size: 13px; color: var(--graphite); }
 
