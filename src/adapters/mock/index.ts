@@ -5,6 +5,7 @@ import { delay } from "./delay";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
 import { summariseReceipts } from "@/lib/reconcile";
+import { deskBoard, rankHospitals, bloodGroups, bloodBanks } from "@/data/mock/help-pages";
 import { household, policies, receipts, deskCases, hospitals, bloodStock, learnPosts, findings, documents } from "@/data/mock";
 
 // Everything here is a mock. `// backend gap` marks what the backend has no tables for yet.
@@ -54,9 +55,13 @@ export const mockAdapters: Adapters = {
   reconcile: {
     reconcile: (rs) => delay(summariseReceipts(rs)),
   },
-  desk: { cases: () => delay(deskCases) }, // backend gap
-  hospital: { nearby: () => delay(hospitals) }, // backend gap
-  blood: { stock: () => delay(bloodStock) }, // backend gap
+  desk: { cases: () => delay(deskCases), board: () => delay(deskBoard) }, // backend gap
+  hospital: { nearby: () => delay(hospitals), ranked: (issue, mode) => delay(rankHospitals(issue, mode)) }, // backend gap
+  blood: {
+    stock: () => delay(bloodStock),
+    groups: () => delay(bloodGroups),
+    banks: (group) => delay(bloodBanks(group)),
+  }, // backend gap
   learn: { posts: () => delay(learnPosts) }, // backend gap
   invite: { invite: () => delay({ ok: true, state: "sent" as const }) }, // backend gap
   wallet: {

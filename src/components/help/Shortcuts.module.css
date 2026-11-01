@@ -1,0 +1,22 @@
+.layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 24px; }
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mode { text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); min-height: 44px; }
+.modeOn { border-color: var(--harbour); background: var(--mist); box-shadow: 0 0 0 1px var(--harbour); }
+.path { display: flex; flex-direction: column; gap: 6px; }
+.step { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: 14px; }
+.n { width: 20px; font: 400 13px var(--font-mono); color: var(--graphite); }
+.how { font: 500 13px var(--font-mono); color: var(--harbour); text-align: right; }
+.palette { border-radius: var(--r-lg); background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-md); overflow: hidden; }
+.search { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 16px; }
+.results { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.res { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; font-size: 14px; }
+.resOn { background: var(--mist); }
+.icon { width: 28px; height: 28px; border-radius: 8px; background: var(--sunken); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex: none; }
+.group { font-size: 13px; color: var(--graphite); }
+.queries { display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.keys { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.kgroup { display: flex; flex-direction: column; gap: 8px; }
+.krow { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.kcaps { display: inline-flex; gap: 4px; min-width: 70px; }
+@media (max-width: 1100px) { .layout, .keys { grid-template-columns: 1fr; } }
