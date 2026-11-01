@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SectionHeading } from "@/components/type";
+import { SaveState } from "@/components/ui/SaveState";
+import { useScenario } from "@/lib/use-scenario";
+import { roomCodec, taxCodec, type RoomState, type TaxState } from "@/lib/scenario-codecs";
 import { section80D, roomRent, topUpFinder, formatLakhShort, TOPUP_WHO, TOPUP_BASE_LAKH, TOPUP_RISKS, type Regime, type TopUpFit } from "@/lib/calculators";
 import { advisors, advisorTags, exitAsks, toolWins, moreTools, readNext } from "@/data/mock";
 import styles from "./tools.module.css";
@@ -45,14 +48,20 @@ function Tax() {
   const [par, setPar] = useState(38400);
   const [senior, setSenior] = useState(true);
   const r = useMemo(() => section80D({ regime, selfRs: self, parentsRs: par, senior }), [regime, self, par, senior]);
+  const value = useMemo<TaxState>(() => ({ regime, self, par, senior }), [regime, self, par, senior]);
+  const { status, retry, flush } = useScenario<TaxState>({
+    tool: "tax", value, codec: taxCodec,
+    apply: (p) => { if (p.regime) setRegime(p.regime); if (p.self !== undefined) setSelf(p.self); if (p.par !== undefined) setPar(p.par); if (p.senior !== undefined) setSenior(p.senior); },
+  });
   return (
     <div className={styles.two}>
-      <div className={styles.card}>
+      <div className={styles.card} onBlur={flush}>
         <Seg label="Your tax regime" value={regime} onPick={(k) => setRegime(k as Regime)} options={[{ key: "old", label: "Old regime" }, { key: "new", label: "New regime" }]} />
         <Num label="Premium for you, spouse and children (Rs)" value={self} onChange={setSelf} />
         <Num label="Premium for your parents (Rs)" value={par} onChange={setPar} />
         <Seg label="Is a parent 60 or older?" value={senior ? "y" : "n"} onPick={(k) => setSenior(k === "y")} options={[{ key: "y", label: "Yes" }, { key: "n", label: "No" }]} />
         <div className={styles.note}>Premiums your employer paid do not count.</div>
+        <SaveState status={status} onRetry={retry} />
       </div>
       <div className={styles.card} aria-live="polite">
         <div className={styles.note}>You can declare under 80D</div>
@@ -72,13 +81,19 @@ function Room() {
   const [room, setRoom] = useState(8000);
   const [other, setOther] = useState(120000);
   const r = useMemo(() => roomRent({ coverRs: cover, limitPct: pct, roomPerDayRs: room, otherRs: other }), [cover, pct, room, other]);
+  const value = useMemo<RoomState>(() => ({ cover, pct, room, other }), [cover, pct, room, other]);
+  const { status, retry, flush } = useScenario<RoomState>({
+    tool: "hospital_bill", value, codec: roomCodec,
+    apply: (p) => { if (p.cover !== undefined) setCover(p.cover); if (p.pct !== undefined) setPct(p.pct); if (p.room !== undefined) setRoom(p.room); if (p.other !== undefined) setOther(p.other); },
+  });
   return (
     <div className={styles.two}>
-      <div className={styles.card}>
+      <div className={styles.card} onBlur={flush}>
         <Num label="Cover amount (Rs)" value={cover} onChange={setCover} />
         <Num label="Room limit (% of cover per day)" value={pct} onChange={setPct} step={0.5} />
         <Num label="Hospital room (Rs per day)" value={room} onChange={setRoom} />
         <Num label="Other charges on the bill (Rs)" value={other} onChange={setOther} />
+        <SaveState status={status} onRetry={retry} />
       </div>
       <div className={styles.card} aria-live="polite">
                 <div className={styles.head}>{r.over ? "This room is above your limit. Other charges may be cut." : "This room is within your limit."}</div>

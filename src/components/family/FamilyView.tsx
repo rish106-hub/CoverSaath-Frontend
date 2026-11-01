@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { adapters } from "@/adapters";
 import { SectionHeading, SubHeading } from "@/components/type";
 import { FamilyOwner } from "@/components/shell";
 import {
@@ -27,6 +28,30 @@ export function FamilyView() {
     Object.fromEntries(familyPeople.map((p) => [p.id, { id: p.id, name: p.name, relation: p.relation, ...familyContacts[p.id] }])),
   );
   const lastCard = useRef<HTMLElement | null>(null);
+
+  // Link the people shown here to the stored members (you by flag, the rest by first name) and list stored members not shown yet.
+  useEffect(() => {
+    let live = true;
+    adapters.members.list().then((stored) => {
+      if (!live) return;
+      const first = (n: string) => n.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+      const others = stored.filter((m) => !m.isYou && !m.isOwner);
+      setDetails((cur) => {
+        const next = { ...cur };
+        for (const p of familyPeople) {
+          const hit = p.relation === "You" ? stored.find((m) => m.isYou) : others.find((m) => first(m.name) === first(cur[p.id].name));
+          if (hit) next[p.id] = { ...cur[p.id], backendId: hit.id, name: p.relation === "You" ? cur[p.id].name : hit.name, relation: p.relation === "You" ? cur[p.id].relation : hit.relation ?? cur[p.id].relation };
+        }
+        return next;
+      });
+      setInvites((cur) => {
+        const known = new Set([...cur.map((c) => first(c.name)), ...familyPeople.map((p) => first(p.name))]);
+        const extra = others.filter((m) => !known.has(first(m.name))).map<Invite>((m) => ({ id: m.id, name: m.name, initials: m.name.slice(0, 1).toUpperCase(), mobile: "", state: "none", detail: "Added to your household" }));
+        return extra.length ? [...cur, ...extra] : cur;
+      });
+    }).catch(() => undefined); // the page keeps working without the stored list
+    return () => { live = false; };
+  }, []);
   const base = familyPeople[sel];
   const person = { ...base, name: details[base.id].name, relation: details[base.id].relation };
   const closeEdit = () => { setEditing(null); lastCard.current?.focus(); };

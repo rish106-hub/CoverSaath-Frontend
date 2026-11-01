@@ -23,6 +23,7 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
     return () => { alive.current = false; };
   }, []);
   const [failed, setFailed] = useState(false);
+  const stored = useRef(false); // the member is saved once, even when the invite is retried
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => nameRef.current?.focus(), []);
 
@@ -40,6 +41,10 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
     setBusy(true);
     setFailed(false);
     try {
+      if (!stored.current) {
+        await adapters.members.add({ name: name.trim(), relation });
+        stored.current = true;
+      }
       await adapters.invite.invite({ relation, name: name.trim(), mobile: normalised, via });
       if (alive.current) onSent({ name: name.trim(), mobile: normalised, via });
     } catch {
@@ -104,7 +109,7 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
                 <button key={v} type="button" className={styles.chip} data-on={via === v} aria-pressed={via === v} onClick={() => setVia(v)}>{v === "whatsapp" ? "WhatsApp" : "SMS"}</button>
               ))}
             </div>
-            {failed ? <span className={styles.err} role="alert">The invite did not go. Try again.</span> : null}
+            {failed ? <span className={styles.err} role="alert">Could not add them. Try again.</span> : null}
           </div>
         )}
         <div>
