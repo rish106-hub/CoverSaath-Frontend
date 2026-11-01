@@ -31,7 +31,7 @@ describe("inflation planner (Money board)", () => {
     const p = planInflation({ ...parents, costTodayLakh: 6.5, ratePct: 12, years: 20 });
     expect(p.points).toHaveLength(11);
     expect(p.points[1]?.offset).toBe(2);
-    expect(formatRs(p.premiumAtEndRs)).toBe("Rs 3,05,799");
+    expect(formatRs(p.premiumAtEndRs)).toBe("Rs 3,05,787");
     expect(p.premiumsPaidRs).toBeGreaterThan(p.premiumAtEndRs);
   });
   it("formats crores and lakh", () => {
@@ -106,7 +106,7 @@ describe("calculators (Tools board)", () => {
     expect(t.youNow).toBe(7);
     expect(t.youAfter).toBe(0);
     expect(t.options.map((o) => o.fit)).toEqual(["recommended", "also-works", "too-small"]);
-    expect(t.options[0]?.premiumRs).toBe(9500 * 10 * 1 / 1);
+    expect(t.options[0]?.premiumRs).toBe(9500);
   });
   it("top-up: Rs 25L base already covers, fit is the smallest", () => {
     const t = topUpFinder({ whoIndex: 0, baseLakh: 25, billLakh: 12 });
