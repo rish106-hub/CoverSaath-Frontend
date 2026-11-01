@@ -137,8 +137,8 @@ export type BloodBank = z.infer<typeof bloodBankSchema>;
 export const addressSchema = z.object({
   line1: z.string().trim().min(1).max(120),
   line2: z.string().trim().max(120).default(""),
-  landmark: z.string().trim().max(120).default(""),
-  city: z.string().trim().min(1).max(80),
+  landmark: z.string().trim().max(80).default(""),
+  city: z.string().trim().min(1).max(60),
   state: z.string().trim().min(1).max(60),
   pincode: z.string().regex(/^[1-9]\d{5}$/),
   country: z.string().default("IN"),
@@ -172,7 +172,14 @@ export type CurrentLocation = z.infer<typeof currentLocationSchema>;
 
 export const placeKind = z.enum(["home", "work"]);
 export type PlaceKind = z.infer<typeof placeKind>;
-export const placeAddressSchema = z.object({ line1: z.string().trim().min(1).max(200), country: z.string().default("IN") });
+// City, state and pincode are what the backend stores; a saved place is only sent to it when all three are present.
+export const placeAddressSchema = z.object({
+  line1: z.string().trim().min(1).max(120),
+  city: z.string().trim().max(60).optional(),
+  state: z.string().trim().max(60).optional(),
+  pincode: z.string().trim().max(6).optional(),
+  country: z.string().default("IN"),
+});
 export type PlaceAddress = z.input<typeof placeAddressSchema>;
 export const savedPlaceSchema = z.object({ id: z.string(), kind: placeKind, label: z.string(), address: placeAddressSchema });
 export type SavedPlace = z.infer<typeof savedPlaceSchema>;

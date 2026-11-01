@@ -96,6 +96,39 @@ export interface ProfileAdapter {
   deletePlace(id: string): Promise<void>;
 }
 
+// ---- User data that the backend stores (ADR 0015): Settings, onboarding ------------------------------------------------------
+
+/** Settings as the page holds them. The adapter maps this to the backend preference document. */
+export type UiPrefs = {
+  sources: Record<string, boolean>;
+  notify: Record<string, boolean>;
+  sharing: Record<string, boolean>;
+  voice: "en" | "hi" | "both";
+  reduced: boolean;
+  theme: "light" | "dark";
+};
+export interface PreferencesAdapter {
+  /** Stored settings, or null when nothing was saved yet. */
+  get(): Promise<UiPrefs | null>;
+  /** Saves every setting. Rejects with AdapterError; the caller keeps what the person chose. */
+  save(prefs: UiPrefs): Promise<UiPrefs>;
+  /** Changes one setting on top of what is stored (used where the page does not hold all settings, such as the theme toggle). */
+  update(patch: Partial<UiPrefs>): Promise<UiPrefs>;
+}
+export type UiOnboarding = {
+  step?: number;
+  way?: "dl" | "up" | "hr" | "no";
+  /** M, R, K, A: the person toggles on the people step. */
+  people?: Record<string, boolean>;
+  wallet?: "apple" | "google" | "none" | "later";
+  completed: boolean;
+};
+export interface OnboardingAdapter {
+  get(): Promise<UiOnboarding | null>;
+  /** Replaces the stored progress with `next`. */
+  save(next: UiOnboarding): Promise<UiOnboarding>;
+}
+
 export type Adapters = {
   auth: AuthAdapter;
   access: AccessAdapter;
@@ -115,4 +148,6 @@ export type Adapters = {
   wallet: WalletAdapter;
   notify: NotifyAdapter;
   profile: ProfileAdapter;
+  preferences: PreferencesAdapter;
+  onboarding: OnboardingAdapter;
 };
