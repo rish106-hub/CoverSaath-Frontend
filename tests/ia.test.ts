@@ -14,7 +14,7 @@ describe("information architecture", () => {
 
   it("covers every route in BUILD-SPEC section 4", () => {
     const routes = PAGES.map((p) => p.route);
-    for (const r of ["/home", "/policies", "/policies/[id]", "/stress-test", "/compare", "/review", "/family", "/cards", "/money", "/tools", "/desk", "/emergency", "/assistant", "/shortcuts", "/settings"]) expect(routes).toContain(r);
+    for (const r of ["/home", "/policies", "/policies/[id]", "/stress-test", "/compare", "/review", "/family", "/cards", "/money", "/tools", "/desk", "/emergency", "/assistant", "/shortcuts", "/settings", "/profile"]) expect(routes).toContain(r);
   });
 
   it("route patterns are unique", () => expect(new Set(PAGES.map((p) => p.route)).size).toBe(PAGES.length));

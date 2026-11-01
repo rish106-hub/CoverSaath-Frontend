@@ -34,6 +34,7 @@ const PAGE_MODULES: Record<string, () => Promise<{ default: (p: never) => unknow
   "/assistant": () => import("@/app/(app)/assistant/page"),
   "/shortcuts": () => import("@/app/(app)/shortcuts/page"),
   "/settings": () => import("@/app/(app)/settings/page"),
+  "/profile": () => import("@/app/(app)/profile/page"),
 };
 
 type Target = { href: string; route: string };

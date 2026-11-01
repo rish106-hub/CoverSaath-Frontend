@@ -89,6 +89,11 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("Switch to dark mode", ["Theme", "Dark selected", "Press T to switch back"]),
     ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
   ] },
+  "/profile": { route: "/profile", page: "Your profile", reads: "your contact details, address and location choices", examples: [
+    ex("Add my address", ["Profile · address", "DigiLocker or typed by you", "Opening the address section"]),
+    ex("Why do you need my location?", ["Question · location", "Finds hospitals near you", "Kept 24 hours at about 1 km"]),
+    ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
+  ] },
   // Public screens.
   "/": { route: "/", page: "Beta access", reads: "the Knowvia beta page", examples: [
     ex("What does Knowvia do?", ["Question · Knowvia", "Reads your policy, shows what you would pay", "Then handles the follow-up"]),

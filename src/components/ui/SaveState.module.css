@@ -1,0 +1,4 @@
+.state { font: 500 13px var(--font-sans); color: var(--graphite); min-height: 20px; }
+.state[data-status="saved"] { color: var(--harbour); }
+.state[data-status="error"] { color: var(--ink); }
+.retry { background: none; border: 0; padding: 0; font: 600 13px var(--font-sans); color: var(--harbour); text-decoration: underline; cursor: pointer; }

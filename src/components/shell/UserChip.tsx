@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adapters } from "@/adapters";
 import styles from "./UserChip.module.css";
@@ -16,9 +17,9 @@ export function UserChip() {
   }, []);
   const initial = name ? name.charAt(0).toUpperCase() : "·";
   return (
-    <div className={styles.chip}>
+    <Link href="/profile" className={styles.chip} aria-label={`Your profile${name ? `, ${name}` : ""}`}>
       <span className={styles.avatar} aria-hidden>{initial}</span>
       <span className={styles.name}>{name ?? "Your account"}</span>
-    </div>
+    </Link>
   );
 }

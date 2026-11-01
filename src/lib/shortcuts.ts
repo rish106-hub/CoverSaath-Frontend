@@ -26,6 +26,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { id: "go-money", keys: ["g", "m"], label: "Go to Money desk", section: "Go to", href: "/money" },
   { id: "go-desk", keys: ["g", "d"], label: "Go to Claims and insurer talks", section: "Go to", href: "/desk" },
   { id: "go-family", keys: ["g", "f"], label: "Go to People and invites", section: "Go to", href: "/family" },
+  { id: "go-profile", keys: ["g", "u"], label: "Go to Your profile", section: "Go to", href: "/profile" },
   { id: "emergency", keys: ["e"], label: "Emergency", section: "Act", href: "/emergency" },
   { id: "voice", keys: ["v"], label: "Hold to talk to Knowvia", section: "Act" },
   { id: "type", keys: ["/"], label: "Type to Knowvia", section: "Act" },
