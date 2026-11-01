@@ -7,7 +7,7 @@
 .mono { font: 400 13px var(--font-mono); color: var(--graphite); }
 .note { display: block; font: 400 13px/1.4 var(--font-sans); color: var(--graphite); }
 
-.people { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 4px; }
+.people { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-top: 4px; }
 .person { display: flex; flex-direction: column; gap: 12px; text-align: left; padding: 18px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); min-width: 0; }
 .person[data-on="true"] { border: 2px solid var(--harbour); background: var(--mist); padding: 17px; }
 .personTop { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -23,7 +23,7 @@
 .cover { font: 400 30px/1 var(--font-serif); }
 .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--sunken); }
 
-.invites { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+.invites { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 4px; }
 .invite { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--r-lg); background: var(--sunken); min-width: 0; }
 .invite .pname { font-size: 15px; }
 .dots { display: flex; gap: 4px; }
@@ -33,7 +33,7 @@
 .legend { display: inline-flex; gap: 8px; align-items: center; font: 400 13px var(--font-sans); color: var(--graphite); }
 .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px dashed var(--muted); display: inline-block; }
 .swatch[data-on] { background: var(--harbour); border: 0; margin-left: 6px; }
-.matrix { display: grid; grid-template-columns: 200px repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+.matrix { display: grid; grid-template-columns: minmax(120px, 200px) repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 4px; overflow-x: auto; }
 .matrixRow { display: contents; }
 .colHead { padding: 12px 14px; border-radius: var(--r-md); background: var(--mist); }
 .colHead[data-tone="ochre"] { background: color-mix(in srgb, var(--ochre) 22%, var(--sheet)); }
@@ -51,7 +51,7 @@
 .cellOff .cellAct { color: var(--harbour); }
 
 .glance { display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--sheet); margin-top: 4px; }
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 .fact { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--r-md); background: var(--sunken); }
 .factV { font: 400 26px/1 var(--font-serif); }
 .wait { display: grid; grid-template-columns: 1fr 1fr 90px; gap: 12px; align-items: center; font: 400 14px var(--font-sans); }
@@ -75,7 +75,7 @@
 .remind > span { font: 500 13px var(--font-sans); color: var(--graphite); margin-right: 2px; }
 .rbtn { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: var(--r-btn-sm); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
 .rbtn[data-on="true"] { border-color: var(--harbour); background: var(--mist); }
-.dates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .date { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-lg); background: var(--sunken); }
 .cal { width: 56px; border-radius: 10px; overflow: hidden; text-align: center; background: var(--sheet); border: 1px solid var(--line); }
 .calM { display: block; font: 500 13px var(--font-mono); padding: 2px 0; background: var(--coral); color: #16130f; }
@@ -84,7 +84,7 @@
 .calD { display: block; font: 400 24px/1.3 var(--font-serif); }
 
 .share { display: flex; flex-direction: column; margin-top: 4px; }
-.shareRow { display: grid; grid-template-columns: 1fr repeat(3, 72px); gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.shareRow { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, minmax(48px, 72px)); gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
 .shareRow:first-child { border-top: 0; padding-top: 0; }
 .shareH { text-align: center; font: 500 13px var(--font-sans); color: var(--graphite); }
 .shareWho { display: flex; gap: 10px; align-items: center; }
@@ -104,7 +104,7 @@
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip { min-height: 36px; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
 .chip[data-on="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.twoCol { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 6px; font: 400 13px var(--font-sans); color: var(--graphite); }
 .input, .phone { min-height: 46px; display: flex; align-items: center; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--sheet); color: var(--ink); font: 400 15px var(--font-sans); }
 .input:focus, .phone:focus-within { border: 2px solid var(--harbour); padding: 0 13px; outline: none; }
@@ -117,10 +117,14 @@
 .flowT { display: block; font: 600 14px var(--font-sans); }
 .flowD { display: block; font: 400 13px var(--font-sans); color: var(--graphite); }
 .via { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font: 400 13px var(--font-sans); color: var(--graphite); }
+.sheetFoot { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 @media (max-width: 1100px) {
-  .people { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .invites { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .matrix { grid-template-columns: 140px repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .matrix { grid-template-columns: 110px repeat(3, minmax(140px, 1fr)); }
+  .wait { grid-template-columns: 1fr 1fr; }
+  .waitV { grid-column: 1 / -1; text-align: left; }
 }

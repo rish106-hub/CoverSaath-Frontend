@@ -16,8 +16,10 @@ export function WelcomeIntro() {
         <Kicker>Welcome</Kicker>
         <PageTitle>{first ? `You’re in, ${first}.` : "You’re in."}</PageTitle>
       </div>
-      <Link href="/welcome/add" style={{ color: "var(--harbour)", fontWeight: 600 }}>Add your first policy →</Link>
-      <Link href="/home" style={{ color: "var(--graphite)" }}>Go to your home</Link>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Link href="/welcome/add" className="k-btn k-btn--primary">Add your first policy</Link>
+        <Link href="/home" className="k-btn">Go to home</Link>
+      </div>
     </>
   );
 }

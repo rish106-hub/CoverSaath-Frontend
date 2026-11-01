@@ -20,7 +20,7 @@ export function AssistantView() {
   return (
     <div className={s.layout}>
       <div className={s.col}>
-        <SectionHeading title="Try saying" description="Pick one to see how Knowvia reads it, or hold V and say your own.">
+        <SectionHeading title="Try saying">
           <div className={s.tries}>
             {utterances.map((x, k) => (
               <button key={x.say} type="button" className={cx(ui.chip, k === i && ui.chipOn)} aria-pressed={k === i} onClick={() => { setI(k); askKnowvia(x.say); }}>
@@ -30,9 +30,9 @@ export function AssistantView() {
           </div>
           <p className={s.say}>“{u.say}”</p>
           <div className={s.facts}>
-            <span className={cx(s.fact, toneClass[u.tone])}><b>You asked:</b> {u.label}</span>
-            <span className={s.fact}><b>About:</b> {u.person}</span>
-            <span className={s.fact}><b>How sure:</b> {u.conf}</span>
+            <span className={cx(s.fact, toneClass[u.tone])}><b>Request:</b> {u.label}</span>
+            <span className={s.fact}><b>For:</b> {u.person}</span>
+            <span className={s.fact}><b>Confidence:</b> {u.conf}</span>
             <span className={s.fact}><b>Next:</b> {u.route}</span>
           </div>
           <div className={cx(s.answer, u.tone === "urgent" && s.answerUrgent)} aria-live="polite">
@@ -41,7 +41,7 @@ export function AssistantView() {
             {u.ref ? <span className={s.ref}>{u.ref}</span> : null}
             <div className={s.acts}>
               {u.acts.map((a) => (
-                <a key={a.text} href={a.href} className={cx(ui.btn, a.primary && ui.btnPrimary)} style={u.tone === "urgent" ? { background: a.primary ? "#e9785d" : "#f7f5f0", color: "#16130f", borderColor: "transparent" } : undefined}>
+                <a key={a.text} href={a.href} className={cx("k-btn", a.primary && "k-btn--primary")} style={u.tone === "urgent" ? { background: a.primary ? "#e9785d" : "#f7f5f0", color: "#16130f", borderColor: "transparent" } : undefined}>
                   {a.text}
                 </a>
               ))}
@@ -50,7 +50,7 @@ export function AssistantView() {
         </SectionHeading>
       </div>
       <div className={s.col}>
-        <SectionHeading title="How Knowvia understands you" description="Say it any way. It works out which of these you mean.">
+        <SectionHeading title="What Knowvia understands">
           <div className={s.grid}>
             {understanding.map((x) => {
               const on = x.on === i;
@@ -67,7 +67,7 @@ export function AssistantView() {
           </div>
           <div className={s.instant}>
             <span aria-hidden style={{ fontSize: 24 }}>⚡</span>
-            <span>Words like <b>chest pain, ICU, accident, blood</b> open Emergency instantly, before anything else runs.</span>
+            <span>Words like <b>chest pain</b> or <b>accident</b> open Emergency straight away.</span>
           </div>
         </SectionHeading>
       </div>

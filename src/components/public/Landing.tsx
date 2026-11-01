@@ -39,14 +39,14 @@ export function Landing() {
       <div className={`${styles.wrap} ${styles.nav}`}>
         <span className={styles.brand}><BrandMark href="/" size={32} /><span className={styles.beta}>Beta</span></span>
         <div className={styles.navRight}>
-          <Link href="/emergency" className={styles.emerg}>● Emergency</Link>
-          <Link href="/signin" className={styles.signin}>Sign in</Link>
+          <Link href="/emergency" className="k-btn k-btn--sm">Emergency</Link>
+          <Link href="/signin" className="k-btn k-btn--primary k-btn--sm">Sign in</Link>
         </div>
       </div>
       <main className={`${styles.wrap} ${styles.main}`}>
         <div className={styles.left}>
           <div>
-            <Kicker>Private beta · free while in beta</Kicker>
+            <Kicker>Private beta</Kicker>
             <h1 className={styles.h1}>Your health cover, explained in rupees.</h1>
           </div>
           <div className={styles.points}>
@@ -60,12 +60,12 @@ export function Landing() {
           <AccessCard />
         </div>
         <div className={styles.right}>
-          <div className={styles.rowHead}><span className={styles.rowT}>What you will see inside</span><span className={styles.rowS}>20-second tour</span></div>
+          <div className={styles.rowHead}><span className={styles.rowT}>Inside Knowvia</span><span className={styles.rowS}>20-second tour</span></div>
           <Tour scene={scene} tick={tick} play={play} onPick={pick} onToggle={() => setWantPlay(!play)} />
           <section className={styles.stats} aria-label="What Knowvia did for Meera’s family">
             <div className={styles.statsHead}>
-              <h2 className={styles.statsT}>What Knowvia did for Meera’s family this year</h2>
-              <span className={styles.rowS}>Click a number to see it</span>
+              <h2 className={styles.statsT}>Meera’s family this year</h2>
+
             </div>
             <div className={styles.statGrid}>
               {FAMILY_STATS.map((x) => {

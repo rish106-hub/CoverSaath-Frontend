@@ -49,10 +49,10 @@ function Tax() {
     <div className={styles.two}>
       <div className={styles.card}>
         <Seg label="Your tax regime" value={regime} onPick={(k) => setRegime(k as Regime)} options={[{ key: "old", label: "Old regime" }, { key: "new", label: "New regime" }]} />
-        <Num label="Premium you paid for yourself, spouse and children (Rs)" value={self} onChange={setSelf} />
-        <Num label="Premium you paid for your parents (Rs)" value={par} onChange={setPar} />
-        <Seg label="Is either parent 60 or older?" value={senior ? "y" : "n"} onPick={(k) => setSenior(k === "y")} options={[{ key: "y", label: "Yes" }, { key: "n", label: "No" }]} />
-        <div className={styles.note}>Your company group cover does not count if your employer paid the premium.</div>
+        <Num label="Premium for you, spouse and children (Rs)" value={self} onChange={setSelf} />
+        <Num label="Premium for your parents (Rs)" value={par} onChange={setPar} />
+        <Seg label="Is a parent 60 or older?" value={senior ? "y" : "n"} onPick={(k) => setSenior(k === "y")} options={[{ key: "y", label: "Yes" }, { key: "n", label: "No" }]} />
+        <div className={styles.note}>Premiums your employer paid do not count.</div>
       </div>
       <div className={styles.card} aria-live="polite">
         <div className={styles.note}>You can declare under 80D</div>
@@ -60,8 +60,7 @@ function Tax() {
         <div className={styles.resRow}><span>Self, spouse, children (limit Rs 25,000)</span><span>Rs {inr(r.self)}</span></div>
         <div className={styles.resRow}><span>Parents (limit Rs {inr(r.parentCap)})</span><span>Rs {inr(r.parents)}</span></div>
         {!r.available ? <div className={styles.note}>Section 80D is not available under the new tax regime.</div> : null}
-        <div className={styles.note}>Limits: Rs 25,000 for self and family; Rs 25,000 for parents, or Rs 50,000 if a parent is a senior citizen.</div>
-        <Link href="/money" className={styles.cta}>Add receipts to fill this in</Link>
+                <Link href="/money" className="k-btn k-btn--primary">Add receipts</Link>
       </div>
     </div>
   );
@@ -77,19 +76,17 @@ function Room() {
     <div className={styles.two}>
       <div className={styles.card}>
         <Num label="Cover amount (Rs)" value={cover} onChange={setCover} />
-        <Num label="Room limit in your policy (% of cover per day)" value={pct} onChange={setPct} step={0.5} />
-        <Num label="Room the hospital offers (Rs per day)" value={room} onChange={setRoom} />
-        <Num label="Other charges on the bill, e.g. doctor and nursing (Rs)" value={other} onChange={setOther} />
+        <Num label="Room limit (% of cover per day)" value={pct} onChange={setPct} step={0.5} />
+        <Num label="Hospital room (Rs per day)" value={room} onChange={setRoom} />
+        <Num label="Other charges on the bill (Rs)" value={other} onChange={setOther} />
       </div>
       <div className={styles.card} aria-live="polite">
-        <div className={styles.note}>If your policy uses proportionate deduction</div>
-        <div className={styles.head}>{r.over ? "This room is above your limit. Other charges may be cut too." : "This room is within your limit."}</div>
+                <div className={styles.head}>{r.over ? "This room is above your limit. Other charges may be cut." : "This room is within your limit."}</div>
         <div className={styles.resRow}><span>Room limit per day</span><span>Rs {inr(r.eligible)}</span></div>
         <div className={styles.resRow}><span>Room offered per day</span><span>Rs {inr(room)}</span></div>
         <div className={styles.resRow}><span>Share of other charges paid</span><span>{Math.round(r.ratio * 100)}%</span></div>
         <div className={styles.resRow}><span>Other charges you may pay yourself</span><span>Rs {inr(r.youPayOther)}</span></div>
-        <div className={styles.quote}>“associated medical expenses shall be payable in the proportion that the eligible room rent bears to the actual room rent”</div>
-        <Link href="/policies" className={styles.cta}>Check my policy’s wording</Link>
+                <Link href="/policies" className="k-btn k-btn--primary">Check my policy</Link>
       </div>
     </div>
   );
@@ -99,15 +96,14 @@ function Exit() {
   return (
     <div className={styles.two}>
       <div className={styles.card}>
-        <h3 className={styles.head}>Your company cover usually ends on your last working day.</h3>
+        <h3 className={styles.head}>Group cover usually ends on your last day.</h3>
         <div className={styles.quote}>
           <div className={styles.note}>GROUP POLICY · PAGE 14</div>
           11.2 <strong>Cover for a member and dependants ceases on the date the member leaves the employment of the policyholder.</strong> Claims for hospitalisation commencing before that date remain payable.
         </div>
-        <div className={styles.note}>Add your policy to see your own wording. Some group policies allow a move to an individual policy; the wording says if yours does.</div>
       </div>
       <div className={styles.card}>
-        <div className={styles.note}>Before you sign the exit papers, ask</div>
+        <div className={styles.note}>Ask before you sign the exit papers</div>
         {exitAsks.map((q) => (
           <div key={q.n} className={styles.ask}><span className={styles.askN}>{q.n}</span><span><strong>{q.who}</strong> {q.text}</span></div>
         ))}
@@ -117,9 +113,9 @@ function Exit() {
 }
 
 const TABS = [
-  { key: "tax", when: "JAN–MAR · TAX PROOFS", t: "80D in two minutes", heading: "Section 80D" },
-  { key: "room", when: "BEFORE AN ADMISSION", t: "Room rent check", heading: "Room rent" },
-  { key: "job", when: "LEAVING A JOB", t: "When does my cover end?", heading: "Exit-papers checklist" },
+  { key: "tax", when: "Tax proofs", t: "80D in two minutes", heading: "Section 80D" },
+  { key: "room", when: "Before admission", t: "Room rent check", heading: "Room rent" },
+  { key: "job", when: "Leaving a job", t: "When does my cover end?", heading: "Exit checklist" },
 ] as const;
 
 const FIT_LABEL: Record<TopUpFit, string> = { recommended: "Recommended", "also-works": "Also works", "too-small": "Too small" };
@@ -135,8 +131,8 @@ function TopUp() {
   const worry = TOPUP_RISKS[risk]!.label.toLowerCase();
   const head =
     t.youNow === 0
-      ? `Your ${lakh(baseL)} already covers a ${worry} bill. A top-up is a spare for a second big bill in the same year.`
-      : `You have ${lakh(baseL)}. A ${worry} bill of about ${formatLakhShort(bill)} leaves ${formatLakhShort(t.youNow)} on you. ${t.youAfter === 0 ? "This top-up takes it to Rs 0." : `This top-up brings it to ${formatLakhShort(t.youAfter)}.`}`;
+      ? `Your ${lakh(baseL)} already covers a ${worry} bill.`
+      : `A ${worry} bill of about ${formatLakhShort(bill)} leaves ${formatLakhShort(t.youNow)} on you. ${t.youAfter === 0 ? "A top-up takes it to Rs 0." : `A top-up brings it to ${formatLakhShort(t.youAfter)}.`}`;
   const pc = (n: number) => (bill ? (n / bill) * 100 : 0);
   const rows = [
     { t: "Today", a: pc(t.basePays), b: 0, c: pc(t.youNow), you: t.youNow },
@@ -146,17 +142,16 @@ function TopUp() {
   return (
     <div id="top-up-finder" className={styles.two} style={{ scrollMarginTop: 80 }}>
       <div className={styles.card}>
-        <div className={styles.filled}><span className={styles.dot} aria-hidden />Knowvia filled this from your policy. Change anything.</div>
-        <Chips label="Who is it for">
+                <Chips label="Who is it for">
           {TOPUP_WHO.map((w, k) => <button key={w.label} type="button" aria-pressed={who === k} className={`${styles.chip} ${who === k ? styles.chipOn : ""}`} onClick={reset(() => setWho(k))}>{w.label}</button>)}
         </Chips>
         <Chips label="Cover you have today">
           {TOPUP_BASE_LAKH.map((b, k) => <button key={b} type="button" aria-pressed={base === k} className={`${styles.chip} ${base === k ? styles.chipOn : ""}`} onClick={reset(() => setBase(k))}>{lakh(b)}</button>)}
         </Chips>
-        <Chips label="What worries you most">
+        <Chips label="Treatment">
           {TOPUP_RISKS.map((r, k) => (
             <button key={r.label} type="button" aria-pressed={risk === k} className={`${styles.chip} ${risk === k ? styles.chipOn : ""}`} onClick={reset(() => setRisk(k))}>
-              {r.label}<span className={styles.chipSub}>bill about {formatLakhShort(r.billLakh)}</span>
+              {r.label}<span className={styles.chipSub}>About {formatLakhShort(r.billLakh)}</span>
             </button>
           ))}
         </Chips>
@@ -172,7 +167,7 @@ function TopUp() {
                 <span style={{ width: `${r.b}%`, background: "var(--sea-glass)" }} />
                 <span style={{ width: `${r.c}%`, background: "var(--signal)" }} />
               </span>
-              <span style={{ font: "500 14px var(--font-mono)", color: r.you ? "var(--signal-ink)" : "var(--harbour)" }}>you pay {formatLakhShort(r.you)}</span>
+              <span style={{ font: "500 14px var(--font-mono)", color: r.you ? "var(--signal-ink)" : "var(--harbour)" }}>You pay {formatLakhShort(r.you)}</span>
             </div>
           ))}
           <div className={styles.legendRow}>
@@ -186,15 +181,13 @@ function TopUp() {
             <button key={o.name} type="button" aria-pressed={k === t.pick} className={`${styles.opt} ${o.fit === "recommended" ? styles.optRec : ""} ${k === t.pick ? styles.optOn : ""}`} onClick={() => setPick(k)}>
               <span style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}><span className={styles.logo} aria-hidden>{o.logo}</span><span className={styles.badge}>{FIT_LABEL[o.fit]}</span></span>
               <span className={styles.optName}>{o.name}</span>
-              <span className={styles.optName}>{lakh(o.siLakh)} extra</span>
-              <span className={styles.note}>Starts after {lakh(baseL)} · about Rs {inr(o.premiumRs)} a year</span>
+              <span className={styles.note}>{lakh(o.siLakh)} extra · Rs {inr(o.premiumRs)} a year</span>
               <span className={o.covers ? styles.good : styles.bad}>{o.covers ? "Covers this bill fully" : `Leaves ${formatLakhShort(o.leftOnYouLakh)} on you`}</span>
             </button>
           ))}
         </div>
         <div className={styles.compare}>
-          <Link href="/compare" className={styles.cta}>Compare these section by section</Link>
-          <span>or ask an advisor below. Knowvia sends them this exact case.</span>
+          <Link href="/compare" className="k-btn k-btn--primary">Compare top-ups</Link>
         </div>
       </div>
     </div>
@@ -225,7 +218,7 @@ function Advisors() {
                 <span><span className={styles.advName}>{x.name}</span><span className={styles.advRole}>{x.role}</span></span>
                 <span style={{ font: "500 14px var(--font-mono)" }}>★ {x.rating}</span>
               </span>
-              <span className={styles.tags}><span className={`${styles.tag} ${styles.tagOk}`}>✓ Licence checked</span>{x.langs.map((l) => <span key={l} className={styles.tag}>{l}</span>)}</span>
+              <span className={styles.tags}><span className={`${styles.tag} ${styles.tagOk}`}>Licence checked</span>{x.langs.map((l) => <span key={l} className={styles.tag}>{l}</span>)}</span>
               <span className={styles.note}>Next free: <strong>{x.next}</strong></span>
             </button>
           ))}
@@ -239,7 +232,7 @@ function Advisors() {
         <div><span className={styles.bookLbl}>Pick a time</span><div className={styles.bookChips}>{slots.map((t, k) => <button key={t} type="button" aria-pressed={slot === k} className={`${styles.bchip} ${slot === k ? styles.bchipOn : ""}`} onClick={() => { setSlot(k); setBooked(false); }}>{t}</button>)}</div></div>
         <div><span className={styles.bookLbl}>How</span><div className={styles.bookChips}>{["Call", "Video", "WhatsApp"].map((t, k) => <button key={t} type="button" aria-pressed={mode === k} className={`${styles.bchip} ${mode === k ? styles.bchipOn : ""}`} onClick={() => setMode(k)}>{t}</button>)}</div></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span className={styles.bookLbl}>Knowvia will share, only with your OK</span>
+          <span className={styles.bookLbl}>Shared with your OK</span>
           {shares.map((t, k) => (
             <button key={t} type="button" role="checkbox" aria-checked={share[k]} className={styles.share} onClick={() => setShare((s) => s.map((v, i) => (i === k ? !v : v)))}>
               <span className={`${styles.tick} ${share[k] ? styles.tickOn : ""}`} aria-hidden>{share[k] ? "✓" : ""}</span>{t}
@@ -247,7 +240,7 @@ function Advisors() {
           ))}
         </div>
         <button type="button" className={`${styles.bookBtn} ${booked ? styles.bookBtnDone : ""}`} onClick={() => setBooked(true)}>
-          {booked ? "Booked · Knowvia joins to take notes ✓" : `Book with ${a.name.split(" ")[0]}`}
+          {booked ? "Booked" : `Book with ${a.name.split(" ")[0]}`}
         </button>
       </div>
     </div>
@@ -267,8 +260,8 @@ function Wins() {
             </button>
           ))}
         </div>
-        <div className={styles.say}><span>“{w.say}”</span><Link href="/assistant" className={styles.darkLink}>Ask Knowvia →</Link></div>
-        <Link href="/signin" className={styles.darkLink}>Use these with your own policy</Link>
+        <div className={styles.say}><span>“{w.say}”</span><Link href="/assistant" className="k-btn k-btn--sm">Ask Knowvia</Link></div>
+        <Link href="/signin" className="k-btn k-btn--primary">Use with my policy</Link>
       </div>
       <div className={styles.morePanel}>
         {moreTools.map((m) => (
@@ -288,7 +281,6 @@ export function ToolsPage() {
   const cur = TABS.find((t) => t.key === tab)!;
   return (
     <>
-      <p className={styles.intro}>Answers for the moments that matter. Add your policy and every tool uses your exact wording.</p>
       <nav className={styles.tabs} aria-label="Tools">
         {TABS.map((t) => (
           <button key={t.key} type="button" aria-pressed={tab === t.key} className={`${styles.tab} ${tab === t.key ? styles.tabOn : ""}`} onClick={() => setTab(t.key)}>
@@ -299,9 +291,9 @@ export function ToolsPage() {
       <SectionHeading title={cur.heading}>
         {tab === "tax" ? <Tax /> : tab === "room" ? <Room /> : <Exit />}
       </SectionHeading>
-      <SectionHeading title="Top-up finder" description="Case by case: what you have, and what one top-up would change."><TopUp /></SectionHeading>
-      <SectionHeading title="Registered advisors" description="Talk to a person who has read your policy before you call."><Advisors /></SectionHeading>
-      <SectionHeading title="What these tools saved families like yours"><Wins /></SectionHeading>
+      <SectionHeading title="Top-up finder"><TopUp /></SectionHeading>
+      <SectionHeading title="Advisors"><Advisors /></SectionHeading>
+      <SectionHeading title="What these tools save"><Wins /></SectionHeading>
       <SectionHeading title="Read next">
         <div className={styles.reads}>
           {readNext.map((r) => <div key={r.title} className={styles.read}><span className={styles.readK}>{r.kind}</span><span className={styles.readT}>{r.title}</span></div>)}

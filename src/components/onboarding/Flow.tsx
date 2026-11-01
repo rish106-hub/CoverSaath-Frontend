@@ -40,7 +40,7 @@ export function OnboardingFlow({ slug }: { slug: string }) {
             </li>
           ))}
         </ol>
-        <Link href="/home" className={styles.skip}>Skip to home</Link>
+        <Link href="/home" className="k-btn k-btn--sm">Skip to home</Link>
       </header>
       <div className={styles.progress} aria-hidden><div style={{ width: `${((idx + 1) / 4) * 100}%` }} /></div>
       <main className={styles.main}>
@@ -84,11 +84,11 @@ function AddStep() {
       </div>
       <div className={styles.drop}>
         <span aria-hidden style={{ fontSize: 22 }}>⇪</span>
-        <span>Or drop the policy PDF, schedule or e-card anywhere on this page</span>
+        <span>Or drop a PDF, schedule or e-card here</span>
         <span className={styles.dropFmt}>PDF · JPG · PNG</span>
       </div>
       <section aria-label="Can’t find your policy?">
-        <h2 style={{ font: "600 20px/1.25 var(--font-sans)", margin: 0, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>Can’t find your policy? What most people do</h2>
+        <h2 style={{ font: "600 20px/1.25 var(--font-sans)", margin: 0, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>Can’t find your policy?</h2>
         <div className={styles.tips} style={{ marginTop: 16 }}>
           {ONBOARD_TIPS.map((t) => (
             <div key={t.t} className={`${styles.tip} ${tones[t.tone]}`}>
@@ -136,7 +136,7 @@ function ReadingStep() {
     <>
     <div>
       <Kicker>{WELCOME_STEPS[1].kicker}</Kicker>
-      <h1 className={styles.h1}>{n < rows.length ? "Reading. Here’s what we’ve found." : `Done. ${rows.length} things your policy decides.`}</h1>
+      <h1 className={styles.h1}>{n < rows.length ? "Reading your policy" : `${rows.length} key terms found`}</h1>
     </div>
     <div className={styles.read}>
       <div className={styles.doc} aria-hidden>
@@ -147,13 +147,13 @@ function ReadingStep() {
       <div className={styles.found}>
         <div className={styles.foundHead}>
           <span className={styles.foundLab}>Found so far · {n} of {rows.length}</span>
-          <button type="button" className={styles.btn} style={{ minHeight: 36, padding: "0 14px", fontSize: 14 }} onClick={() => setN(n >= rows.length ? 1 : n + 1)}>Next finding</button>
+          <button type="button" className="k-btn k-btn--sm" onClick={() => setN(n >= rows.length ? 1 : n + 1)}>Next finding</button>
         </div>
         <div aria-live="polite" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {shown.map((f) => (
             <div key={f.k} className={styles.frow}>
               <span className={styles.fico} aria-hidden>{f.icon}</span>
-              <div><div className={styles.fk}>{f.k}</div><div className={styles.fv}>{f.v}</div>{f.disagrees ? <div className={styles.disagree}>Pages disagree</div> : null}</div>
+              <div><div className={styles.fk}>{f.k}</div><div className={styles.fv}>{f.v}</div>{f.disagrees ? <div className={styles.disagree}>Details differ between documents</div> : null}</div>
               <span className={styles.fref}>{f.ref}</span>
             </div>
           ))}
@@ -216,8 +216,8 @@ function ReadyStep({ onWallet }: { onWallet: () => void }) {
         ))}
       </div>
       <div className={styles.wallet}>
-        <span>Save your e-card to your phone so it’s ready at any hospital desk.</span>
-        <button type="button" className={styles.walletBtn} onClick={onWallet}>Save card to wallet</button>
+        <span>Save your e-card to your phone.</span>
+        <button type="button" className="k-btn k-btn--primary" onClick={onWallet}>Save card to wallet</button>
       </div>
     </div>
   );

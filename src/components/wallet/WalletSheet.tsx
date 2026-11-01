@@ -42,7 +42,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
         await adapters.wallet.pass(p);
         if (alive()) setAdded(p);
       } catch {
-        if (alive()) setError("Couldn’t make the pass just now. Try again in a moment.");
+        if (alive()) setError("Could not create the card. Try again.");
       }
     });
   }
@@ -56,7 +56,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
           <span className={styles.woptT}>{meta.name}</span>
           <span className={styles.woptD}>{p === "apple" ? "iPhone, Apple Watch, Mac" : p === "google" ? "Android phones" : "Galaxy phones"}</span>
         </span>
-        <span className={styles.woptState}>{added === p ? "Added ✓" : "Add →"}</span>
+        <span className={styles.woptState}>{added === p ? "Added ✓" : "Add"}</span>
       </button>
     );
   };
@@ -68,7 +68,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
         <div className={styles.sheetRight}>
           <div className={styles.sheetHead}>
             <h2 className={styles.sheetT}>Save your e-card</h2>
-            <button ref={closeRef} type="button" className={styles.btn} onClick={onClose}>Close</button>
+            <button ref={closeRef} type="button" className="k-btn k-btn--sm" onClick={onClose}>Close</button>
           </div>
           {option(first, true)}
           <details className={styles.others}>
@@ -77,7 +77,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
           </details>
           {error ? <p role="alert" style={{ color: "var(--signal-ink)", font: "500 14px var(--font-sans)", margin: 0 }}>{error}</p> : null}
           <div className={styles.block}>
-            <div className={styles.blockHead}><span className={styles.blockT}>Share with loved ones</span><span className={styles.blockS}>they get the card, not your documents</span></div>
+            <div className={styles.blockHead}><span className={styles.blockT}>Share with family</span></div>
             <div className={styles.row}>
               {LOVED.map(([id, n]) => (
                 <button key={id} type="button" aria-pressed={!!to[id]} className={`${styles.chip} ${to[id] ? styles.chipOn : ""}`} onClick={() => setTo({ ...to, [id]: !to[id] })}>
@@ -90,7 +90,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
                 <button key={c} type="button" aria-pressed={channel === c} className={`${styles.chip} ${channel === c ? styles.chipOn : ""}`} onClick={() => setChannel(c)}>{c}</button>
               ))}
             </div>
-            <div className={styles.msg} role="status">{count ? `Ready to send on ${channel} to ${count} ${count === 1 ? "person" : "people"}. They can add it to their own wallet.` : "Pick who should have your e-card."}</div>
+            <div className={styles.msg} role="status">{count ? `Ready to send on ${channel} to ${count} ${count === 1 ? "person" : "people"}.` : "Pick who should have your e-card."}</div>
           </div>
         </div>
       </div>

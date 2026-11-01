@@ -64,7 +64,10 @@ export const mockAdapters: Adapters = {
     banks: (group) => delay(bloodBanks(group)),
   }, // backend gap
   learn: { posts: () => delay(learnPosts) }, // backend gap
-  invite: { invite: () => delay({ ok: true, state: "sent" as const }) }, // backend gap
+  invite: {
+    invite: () => delay({ ok: true, state: "sent" as const }),
+    updateMember: (input) => delay(input), // backend gap
+  },
   wallet: {
     detect: () => detectWalletPlatform(typeof navigator === "undefined" ? "" : navigator.userAgent),
     pass: (platform) => delay({ platform, label: "Meera Rao e-card", url: `/cards?pass=${platform}` }),

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { SectionHeading, SubHeading } from "@/components/type";
 import { FamilyOwner } from "@/components/shell";
 import {
-  familyDates, familyInvites, familyPeople, familyPolicies, policyRefs, sharingRows, type Invite,
+  familyContacts, familyDates, familyInvites, familyPeople, familyPolicies, policyRefs, sharingRows, type Invite,
 } from "@/data/mock/family";
 import { AddMemberSheet, type SentInvite } from "./AddMemberSheet";
+import { EditMemberSheet, type MemberDetails } from "./EditMemberSheet";
 import { RemindRowSlot } from "./slots";
 import styles from "./family.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
@@ -21,7 +22,14 @@ export function FamilyView() {
   const [adding, setAdding] = useState(false);
   const [invites, setInvites] = useState<Invite[]>(familyInvites);
   const [sharing, setSharing] = useState(sharingRows.map((r) => r.on));
-  const person = familyPeople[sel];
+  const [editing, setEditing] = useState<string | null>(null);
+  const [details, setDetails] = useState<Record<string, MemberDetails>>(() =>
+    Object.fromEntries(familyPeople.map((p) => [p.id, { id: p.id, name: p.name, relation: p.relation, ...familyContacts[p.id] }])),
+  );
+  const lastCard = useRef<HTMLElement | null>(null);
+  const base = familyPeople[sel];
+  const person = { ...base, name: details[base.id].name, relation: details[base.id].relation };
+  const closeEdit = () => { setEditing(null); lastCard.current?.focus(); };
 
   usePageShortcuts(Object.fromEntries(familyPeople.map((_, i) => [`person-${i + 1}`, () => { if (!adding) setSel(i); }])));
 
@@ -38,20 +46,20 @@ export function FamilyView() {
   return (
     <>
       <div className={styles.toolbar}>
-        <button type="button" className={styles.cta} onClick={() => setAdding(true)}>+ Add family member</button>
-        <Link className={styles.btn} href="/welcome/add">+ Add a document</Link>
+        <button type="button" className="k-btn k-btn--primary" onClick={() => setAdding(true)}>Add family member</button>
+        <Link className="k-btn" href="/welcome/add">Add a document</Link>
       </div>
 
       <SectionHeading title="People">
         <FamilyOwner />
         <div className={styles.people} role="group" aria-label="Pick a person">
           {familyPeople.map((p, k) => (
-            <button key={p.id} type="button" className={styles.person} data-on={k === sel} aria-pressed={k === sel} onClick={() => setSel(k)}>
+            <button key={p.id} type="button" className={styles.person} data-on={k === sel} aria-haspopup="dialog" aria-label={`${details[p.id].name}, ${details[p.id].relation}. Edit details`} onClick={(e) => { lastCard.current = e.currentTarget; setSel(k); setEditing(p.id); }}>
               <span className={styles.personTop}>
-                <span className={styles.avatar} data-on={k === sel}>{p.initials}</span>
+                <span className={styles.avatar} data-on={k === sel}>{details[p.id].name.slice(0, 2)}</span>
                 <span className={styles.badge} data-tone={p.tone}>{p.status}</span>
               </span>
-              <span><span className={styles.pname}>{p.name}</span><span className={styles.prel}>{p.relation}, {p.age}</span></span>
+              <span><span className={styles.pname}>{details[p.id].name}</span><span className={styles.prel}>{details[p.id].relation}, {p.age}</span></span>
               <span className={styles.cover}>{p.cover}</span>
               <span className={styles.bar} aria-hidden>
                 <span style={{ width: `${p.segments.group}%`, background: "var(--harbour)" }} />
@@ -64,7 +72,7 @@ export function FamilyView() {
         </div>
       </SectionHeading>
 
-      <SectionHeading title="Family on Knowvia" description="Add a phone number. They get their own login, and their policies join this file.">
+      <SectionHeading title="Family on Knowvia">
         <div className={styles.invites}>
           {invites.map((v) => (
             <div key={v.id} className={styles.invite}>
@@ -93,12 +101,12 @@ export function FamilyView() {
           ))}
           {familyPeople.map((p, k) => (
             <div key={p.id} className={styles.matrixRow} data-on={k === sel}>
-              <span className={styles.rowHead} data-on={k === sel}><span className={styles.avatarSm}>{p.initials}</span>{p.name}</span>
+              <span className={styles.rowHead} data-on={k === sel}><span className={styles.avatarSm}>{p.initials}</span>{details[p.id].name}</span>
               {p.has.map((h, i) => (
                 <div key={i} className={h ? styles.cell : styles.cellOff} data-tone={POLICY_TONE[i]}>
                   <span><span className={styles.cellT}>{h ? "Covered" : "Not on this policy"}</span>{h ? <span className={styles.mono}>{policyRefs[i]}</span> : null}</span>
-                  {h && k === sel ? <Link href="/policies" className={styles.cellAct}>Open →</Link> : null}
-                  {!h && i === 1 && (k === 1 || k === 2) ? <Link href="/tools" className={styles.cellAct}>Add?</Link> : null}
+                  {h && k === sel ? <Link href="/policies" className="k-btn k-btn--sm">Open</Link> : null}
+                  {!h && i === 1 && (k === 1 || k === 2) ? <Link href="/tools" className="k-btn k-btn--sm">Add</Link> : null}
                 </div>
               ))}
             </div>
@@ -106,7 +114,7 @@ export function FamilyView() {
         </div>
       </SectionHeading>
 
-      <SectionHeading title={`${person.name} at a glance`} actions={<Link className={styles.btn} href="/cards">E-card</Link>}>
+      <SectionHeading title={`${person.name} at a glance`} actions={<Link className="k-btn k-btn--sm" href="/cards">E-card</Link>}>
         <div className={styles.glance}>
           <div className={styles.facts}>
             {["Cover left this year", "Claimed this year", "Claims"].map((k, i) => (
@@ -124,20 +132,20 @@ export function FamilyView() {
         </div>
       </SectionHeading>
 
-      <SectionHeading title="Gaps" description={`Gaps Knowvia found for ${person.name}`} actions={<span className={styles.mono}>{person.gaps.length ? `${person.gaps.length} to fix` : "all clear"}</span>}>
+      <SectionHeading title="Gaps" actions={<span className={styles.mono}>{person.gaps.length ? `${person.gaps.length} to fix` : "all clear"}</span>}>
         <div className={styles.gaps}>
           {person.gaps.map((g) => (
             <div key={g.title} className={styles.gap}>
               <span className={styles.gapIc} aria-hidden>{g.icon}</span>
               <span className={styles.gapBody}><span className={styles.gapT}>{g.title}</span><span className={styles.gapD}>{g.detail}</span></span>
-              <Link href={g.href} className={styles.gapCta}>{g.cta}</Link>
+              <Link href={g.href} className="k-btn k-btn--sm">{g.cta}</Link>
             </div>
           ))}
           {person.gaps.length === 0 ? <div className={styles.gap}>Nothing to fix for {person.name} right now.</div> : null}
         </div>
       </SectionHeading>
 
-      <SectionHeading title="Dates the documents give">
+      <SectionHeading title="Key dates">
         <RemindRowSlot subject="Family insurance dates" />
         <div className={styles.dates}>
           {familyDates.map((d) => (
@@ -150,7 +158,7 @@ export function FamilyView() {
         </div>
       </SectionHeading>
 
-      <SectionHeading title="Who sees what" description="Each adult decides for their own record">
+      <SectionHeading title="Who sees what">
         <div className={styles.share}>
           <div className={styles.shareRow}><span />{["Cover", "E-card", "Claims"].map((h) => <span key={h} className={styles.shareH}>{h}</span>)}</div>
           {sharingRows.map((r, k) => (
@@ -167,6 +175,14 @@ export function FamilyView() {
         </div>
       </SectionHeading>
 
+      {editing ? (
+        <EditMemberSheet
+          key={editing}
+          member={details[editing]}
+          onClose={closeEdit}
+          onSaved={(m) => { setDetails((cur) => ({ ...cur, [m.id]: m })); closeEdit(); }}
+        />
+      ) : null}
       {adding ? <AddMemberSheet onClose={() => setAdding(false)} onSent={onSent} /> : null}
     </>
   );

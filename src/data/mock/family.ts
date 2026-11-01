@@ -19,13 +19,13 @@ export const familyPeople: FamilyPerson[] = [
     gaps: [{ icon: "↗", title: "Add Rohan to the top-up", detail: "A bill above Rs 5L for him isn't covered.", cta: "Compare top-ups", href: "/tools" }] },
   { id: "kabir", name: "Kabir", initials: "K", relation: "Son", age: 8, cover: "Rs 5L", segments: { group: 33, topUp: 0, senior: 0 }, status: "1 gap", tone: "warn", note: "Name spelt differently on the e-card.", has: [true, false, false], facts: ["Rs 5L", "Rs 0", "0"],
     waits: [{ label: "Old illnesses", pct: 100, value: "served" }, { label: "Named surgeries", pct: 100, value: "served" }, { label: "Top-up", pct: 0, value: "not added" }],
-    gaps: [{ icon: "✎", title: "Fix the name on the e-card", detail: "“Kabeer” on the card, “Kabir” on records. Desk is on it.", cta: "Track it", href: "/desk" }] },
+    gaps: [{ icon: "✎", title: "Fix the name on the e-card", detail: "Card says Kabeer, records say Kabir.", cta: "Track it", href: "/desk" }] },
   { id: "mother", name: "Mother", initials: "Ma", relation: "Parent", age: 68, cover: "Rs 3L", segments: { group: 0, topUp: 0, senior: 20 }, status: "2 gaps", tone: "bad", note: "Pays 20% of every claim.", has: [false, false, true], facts: ["Rs 3L", "Rs 3,240", "2"],
     waits: [{ label: "Old illnesses", pct: 66, value: "1 yr left" }, { label: "Cataract", pct: 100, value: "served" }, { label: "Knee replacement", pct: 66, value: "Mar 2027" }],
     gaps: [{ icon: "%", title: "20% co-pay on every claim", detail: "About Rs 8,000 on a cataract.", cta: "Stress test", href: "/stress-test" }, { icon: "✂", title: "Cap on cataract", detail: "Rs 40,000 per eye.", cta: "Read the page", href: "/policies/meridian-senior" }] },
-  { id: "father", name: "Father", initials: "Pa", relation: "Parent", age: 71, cover: "Rs 3L", segments: { group: 0, topUp: 0, senior: 20 }, status: "3 gaps", tone: "bad", note: "Room rent: pages disagree.", has: [false, false, true], facts: ["Rs 1.52L", "Rs 1.48L", "1"],
+  { id: "father", name: "Father", initials: "Pa", relation: "Parent", age: 71, cover: "Rs 3L", segments: { group: 0, topUp: 0, senior: 20 }, status: "3 gaps", tone: "bad", note: "Room rent differs between pages.", has: [false, false, true], facts: ["Rs 1.52L", "Rs 1.48L", "1"],
     waits: [{ label: "Old illnesses", pct: 66, value: "1 yr left" }, { label: "Heart", pct: 100, value: "served" }, { label: "Knee replacement", pct: 66, value: "Mar 2027" }],
-    gaps: [{ icon: "▣", title: "Room rent: pages disagree", detail: "Schedule says Rs 3,000 a day, wording says 1% of cover.", cta: "See both pages", href: "/policies/meridian-senior" }, { icon: "%", title: "20% co-pay on every claim", detail: "Rs 76,000 on a knee replacement.", cta: "Stress test", href: "/stress-test" }, { icon: "⇆", title: "A claim was cut short", detail: "Rs 41,800 taken up with the TPA.", cta: "Open Desk", href: "/desk" }] },
+    gaps: [{ icon: "▣", title: "Room rent differs between pages", detail: "Schedule says Rs 3,000 a day, wording says 1% of cover.", cta: "View both pages", href: "/policies/meridian-senior" }, { icon: "%", title: "20% co-pay on every claim", detail: "Rs 76,000 on a knee replacement.", cta: "Stress test", href: "/stress-test" }, { icon: "⇆", title: "A claim was cut short", detail: "Rs 41,800 taken up with the TPA.", cta: "Open Desk", href: "/desk" }] },
 ];
 
 export const familyPolicies = [
@@ -33,14 +33,14 @@ export const familyPolicies = [
   { name: "Personal top-up", meta: "Kaveri · Rs 10L after Rs 5L", tone: "sea" },
   { name: "Senior citizen plan", meta: "Meridian · Rs 3L each", tone: "ochre" },
 ] as const;
-export const policyRefs = ["sched. p.1", "p.2", "sched. p.1"];
+export const policyRefs = ["Schedule p.1", "Page 2", "Schedule p.1"];
 
 export type Invite = { id: string; name: string; initials: string; mobile: string; state: "joined" | "sent" | "none"; detail: string };
 export const familyInvites: Invite[] = [
   { id: "rohan", name: "Rohan", initials: "R", mobile: "+91 98765 43210", state: "joined", detail: "Group cover linked" },
   { id: "mother", name: "Mother", initials: "Ma", mobile: "+91 94220 55180", state: "joined", detail: "Senior plan linked" },
   { id: "father", name: "Father", initials: "Pa", mobile: "+91 94220 55181", state: "sent", detail: "Sent on WhatsApp, 2 days ago" },
-  { id: "priya", name: "Priya", initials: "P", mobile: "+91 98220 11223", state: "none", detail: "Tap Add family member" },
+  { id: "priya", name: "Priya", initials: "P", mobile: "+91 98220 11223", state: "none", detail: "Not invited yet" },
 ];
 
 export const familyDates = [
@@ -63,3 +63,15 @@ export const addMemberFlow = [
   { icon: "◎", title: "They see only what they share", detail: "Their medical records stay theirs. You see what they allow." },
   { icon: "▣", title: "Their e-card in their wallet", detail: "Apple, Google or Samsung Wallet, set up for them." },
 ];
+
+export type MemberChannel = "whatsapp" | "sms" | "email";
+export type MemberContact = { mobile: string; email: string; channel: MemberChannel };
+/** Contact details per person id. backend gap. */
+export const familyContacts: Record<string, MemberContact> = {
+  meera: { mobile: "+91 98220 10001", email: "meera@example.com", channel: "whatsapp" },
+  rohan: { mobile: "+91 98765 43210", email: "rohan@example.com", channel: "whatsapp" },
+  kabir: { mobile: "", email: "", channel: "whatsapp" },
+  mother: { mobile: "+91 94220 55180", email: "", channel: "whatsapp" },
+  father: { mobile: "+91 94220 55181", email: "", channel: "sms" },
+};
+export const memberRelations = ["You", "Spouse", "Son", "Daughter", "Parent", "Sibling", "Other"];

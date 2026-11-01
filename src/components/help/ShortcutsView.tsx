@@ -31,7 +31,7 @@ export function ShortcutsView() {
   return (
     <div className={s.layout}>
       <div className={s.col}>
-        <SectionHeading title="Keyboard" description="Every key works on every app page when no box is being typed in. Keyboard only, sign-up to emergency:">
+        <SectionHeading title="Keyboard">
           <div className={s.keys}>
             {shortcutGroups().map((g) => (
               <div key={g.title} className={s.kgroup}>
@@ -51,10 +51,10 @@ export function ShortcutsView() {
         </SectionHeading>
       </div>
       <div className={s.col}>
-        <SectionHeading title="Mouse" description="Click anything. Targets are large and nothing needs typing. Mouse only, sign-up to emergency:">
+        <SectionHeading title="Mouse">
           <Path mode="mouse" />
         </SectionHeading>
-        <SectionHeading title="Voice" description="Hold V or tap the orb, in English, Hindi or both. Voice only, sign-up to emergency:">
+        <SectionHeading title="Voice">
           <Path mode="voice" />
         </SectionHeading>
         <div className={s.palette}>

@@ -73,7 +73,7 @@ export function SignIn() {
           <form className={styles.form} onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
             <div>
               <h1 className={styles.h1}>Welcome to Knowvia</h1>
-              <p className={styles.sub}>Sign in or create an account. Same button.</p>
+              <p className={styles.sub}>Sign in or create an account.</p>
             </div>
             <button type="button" className={styles.prov} disabled={busy} onClick={() => run(() => adapters.auth.signInWithProvider("google"), "done")}><BrandLogo id="google" size={24} />Continue with Google</button>
             <button type="button" className={styles.prov} disabled={busy} onClick={() => run(() => adapters.auth.signInWithProvider("apple"), "done")}><BrandLogo id="apple" size={24} />Continue with Apple</button>
@@ -111,8 +111,8 @@ export function SignIn() {
         {step === "mail" ? (
           <div className={styles.form}>
             <h1 className={styles.h1}>Check your inbox</h1>
-            <p className={styles.sub}>A sign-in link is on its way to {email}. It opens Knowvia on this device.</p>
-            <button type="button" className={styles.prov} onClick={() => setStep("done")}>I clicked the link</button>
+            <p className={styles.sub}>A sign-in link was sent to {email}.</p>
+            <button type="button" className={styles.prov} onClick={() => setStep("done")}>I opened the link</button>
             <button type="button" className={styles.prov} onClick={() => setStep("start")}>Use another email</button>
           </div>
         ) : null}
@@ -121,7 +121,7 @@ export function SignIn() {
           <div className={styles.form} role="status">
             <div className={styles.tickBig} aria-hidden>✓</div>
             <h1 className={styles.h1}>You’re in.</h1>
-            <p className={styles.sub}>Next: add your policy. It takes about a minute.</p>
+            <p className={styles.sub}>Next, add your policy.</p>
             <Link href="/welcome/add" className={styles.cta}>Add my policy</Link>
           </div>
         ) : null}

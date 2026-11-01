@@ -80,6 +80,15 @@ export type AssistantReply = z.infer<typeof assistantReplySchema>;
 
 export const inviteInputSchema = z.object({ relation: z.string().min(1), name: z.string().min(1), mobile: z.string().regex(/^\+?\d[\d\s-]{7,14}$/), via: z.enum(["whatsapp", "sms"]) });
 export type InviteInput = z.infer<typeof inviteInputSchema>;
+export const memberUpdateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(2),
+  relation: z.string().min(1),
+  mobile: z.string().regex(/^$|^\+?\d[\d\s-]{7,14}$/),
+  email: z.string().regex(/^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+  channel: z.enum(["whatsapp", "sms", "email"]),
+});
+export type MemberUpdate = z.infer<typeof memberUpdateSchema>;
 export const inviteResultSchema = z.object({ ok: z.boolean(), state: inviteState });
 
 export const walletPlatform = z.enum(["apple", "google", "samsung"]);

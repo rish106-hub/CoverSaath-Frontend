@@ -56,7 +56,7 @@ export function DeskView() {
         </div>
       </div>
 
-      <SectionHeading title="Your cases" description="Pick a case to see where it is and what was said.">
+      <SectionHeading title="Your cases">
         <div className={s.layout}>
           <div className={s.list}>
             {cases.map((x, k) => (
@@ -77,16 +77,15 @@ export function DeskView() {
               <span className={s.needIcon} aria-hidden>✍</span>
               <span style={{ flex: 1 }}>
                 <span className={ui.strong} style={{ display: "block", fontSize: 15 }}>{signed ? "Nothing needs you" : "One thing needs you"}</span>
-                <span className={ui.small}>{signed ? "Father’s claim form is signed." : "Sign Father’s claim form. We filled the rest."}</span>
+                <span className={ui.small}>{signed ? "Father’s claim form is signed." : "Sign Father’s claim form."}</span>
               </span>
-              <button type="button" className={cx(ui.btn, ui.btnDark, ui.btnSm)} onClick={() => setSigned(true)} disabled={signed}>
-                {signed ? "Signed ✓" : "Sign"}
+              <button type="button" className="k-btn k-btn--primary k-btn--sm" onClick={() => setSigned(true)} disabled={signed}>
+                {signed ? "Signed" : "Sign"}
               </button>
             </div>
             <div className={s.raise}>
               <SubHeading>Raise something new</SubHeading>
-              <p className={ui.small}>Say it the way you’d tell a friend. We work out who to call.</p>
-              {deskRaise.map((r, k) => (
+                            {deskRaise.map((r, k) => (
                 <button key={r.say} type="button" className={cx(s.say, k === raise && s.sayOn)} onClick={() => setRaise(k)}>
                   <span className={s.orb} aria-hidden />“{r.say}”
                 </button>
@@ -117,7 +116,7 @@ export function DeskView() {
             </ol>
             <SectionHeading title="Thread">
               <RemindRowSlot
-                label="Tell me when this case moves"
+                label="Notify me of updates"
                 items={[
                   { channel: "whatsapp", label: "WhatsApp", logo: "whatsapp", subject: c.title },
                   { channel: "email", label: "Email", logo: "gmail", subject: c.title },
@@ -136,7 +135,7 @@ export function DeskView() {
               </div>
               <div className={s.docs}>
                 {c.docs.map((d) => (
-                  <span key={d.name} className={cx(s.doc, d.highlighted && s.docHi)}>{d.name} · attached</span>
+                  <span key={d.name} className={cx(s.doc, d.highlighted && s.docHi)}>{d.name} </span>
                 ))}
               </div>
             </SectionHeading>
@@ -146,7 +145,7 @@ export function DeskView() {
 
       <div className={s.bottom}>
         <div style={{ gridColumn: "1 / -1" }}>
-          <SectionHeading title="If they say no, here is where we go next" description={c.title} />
+          <SectionHeading title="Next steps if declined" />
         </div>
         <div className={cx(ui.card)} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <ol className={s.ladder} aria-label="Escalation ladder">
@@ -158,26 +157,26 @@ export function DeskView() {
                 </span>
                 <span className={ui.strong} style={{ fontSize: 14 }}>{l.name}</span>
                 <span className={ui.small}>{l.detail}</span>
-                <span className={ui.small} style={{ color: "var(--harbour)" }}>{c.rung < 0 ? "not needed" : l.when}</span>
+                <span className={ui.small} style={{ color: "var(--harbour)" }}>{c.rung < 0 ? "Not needed" : l.when}</span>
               </li>
             ))}
           </ol>
-          <div className={s.callout}>We move up a step only with your go-ahead. Each step’s letter is prepared from the thread above.</div>
+          <div className={s.callout}>We move up a step only with your approval.</div>
         </div>
         <div className={ui.card}>
-          <SubHeading>Who we’re talking to</SubHeading>
+          <SubHeading>Contacts</SubHeading>
           {deskContacts.map((p) => (
             <div key={p.name} className={s.contact}>
               <span>
                 <span className={ui.strong} style={{ display: "block", fontSize: 14 }}>{p.name}</span>
                 <span className={ui.small}>{p.detail}</span>
               </span>
-              <span className={ui.small} style={{ textAlign: "right" }}>reply due<br /><b>{p.due}</b></span>
+              <span className={ui.small} style={{ textAlign: "right" }}>Reply due<br /><b>{p.due}</b></span>
             </div>
           ))}
         </div>
         <div className={s.live}>
-          <h2 style={{ font: "600 20px var(--font-sans)" }}>Knowvia right now</h2>
+          <h2 style={{ font: "600 20px var(--font-sans)" }}>Live activity</h2>
           {[0, 1, 2, 3].map((k) => (
             <div key={k} className={cx(s.liveRow, k === 0 && s.liveNow)} style={{ opacity: k === 0 ? 1 : 0.8 }}>
               <span className={s.liveDot} aria-hidden />

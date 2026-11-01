@@ -92,8 +92,8 @@ export function MoneyDesk() {
       <div className={styles.head}>
         <div className={styles.tools}>
           <span className={styles.connected}><BrandLogo id="gmail" size={22} />Gmail connected</span>
-          <button type="button" className={styles.btn}>+ Outlook</button>
-          <button type="button" className={styles.cta} onClick={() => runScan(done ? 3 : scan)} disabled={!done}>{done ? "Scan again" : "Scanning…"}</button>
+          <button type="button" className="k-btn">Add Outlook</button>
+          <button type="button" className="k-btn k-btn--primary" onClick={() => runScan(done ? 3 : scan)} disabled={!done}>{done ? "Scan again" : "Scanning…"}</button>
         </div>
       </div>
 
@@ -102,12 +102,12 @@ export function MoneyDesk() {
           <div><div className={styles.statLabel}>Emails scanned</div><div className={styles.stat}>{done ? "1,240" : "612"}</div></div>
           <div><div className={styles.statLabel}>Receipts found</div><div className={styles.stat}>{scan}</div></div>
           <div><div className={styles.statLabel}>Premiums this year</div><div className={styles.stat}>Rs 63,700</div></div>
-          <div><div className={styles.statLabel}>80D-ready total</div><div className={`${styles.stat} ${styles.statGood}`}>Rs 63,700</div></div>
+          <div><div className={styles.statLabel}>Eligible for 80D</div><div className={`${styles.stat} ${styles.statGood}`}>Rs 63,700</div></div>
           <div className={styles.bar} role="progressbar" aria-label="Inbox scan" aria-valuenow={Math.round((scan / TOTAL) * 100)} aria-valuemin={0} aria-valuemax={100}>
             <div className={styles.barFill} style={{ width: `${Math.round((scan / TOTAL) * 100)}%` }} />
           </div>
         </div>
-        {err ? <span role="alert" className={styles.statLabel}>Could not read the inbox just now. Try again.</span> : null}
+        {err ? <span role="alert" className={styles.statLabel}>Could not read the inbox. Try again.</span> : null}
       </div>
 
       <div className={styles.cols}>
@@ -125,7 +125,7 @@ export function MoneyDesk() {
             ))}
             <div className={styles.dash}>
               <b>Paid in cash or by cheque?</b>
-              <span>Snap the receipt or forward it to <span className={styles.mono} style={{ color: "var(--harbour)" }}>meera@in.knowvia.com</span>. Knowvia files it under the right person.</span>
+              <span>Forward the receipt to <span className={styles.mono} style={{ color: "var(--harbour)" }}>meera@in.knowvia.com</span></span>
             </div>
           </div>
         </SectionHeading>
@@ -149,11 +149,11 @@ export function MoneyDesk() {
                 </div>
               );
             })}
-            <button type="button" className={styles.cta} onClick={matchSelected} disabled={!selected}>Match selected</button>
+            <button type="button" className="k-btn k-btn--primary" onClick={matchSelected} disabled={!selected}>Match selected</button>
           </div>
         </SectionHeading>
 
-        <SectionHeading title="Coming up" description="Knowvia reminds you 15 days before">
+        <SectionHeading title="Coming up">
           <div className={styles.card} style={{ padding: 18 }}>
             <RemindRowSlot label="Renewals" subject="Policy renewals" />
             {renewals.map((n) => (
@@ -178,21 +178,21 @@ export function MoneyDesk() {
                 ))}
               </div>
             </div>
-            <button type="button" className={styles.btn} style={{ alignSelf: "flex-start" }}>Download 80D proof pack</button>
+            <button type="button" className="k-btn" style={{ alignSelf: "flex-start" }}>Download 80D pack</button>
           </div>
         </SectionHeading>
-        <SectionHeading title="Hospital bill vs paid">
+        <SectionHeading title="Bill and amount paid">
           <div className={styles.card}>
             <b style={{ font: "500 14px var(--font-sans)" }}>Father · Kothrud Care · Aug</b>
             <div className={styles.split} role="img" aria-label="Paid 78 percent, gap 22 percent"><span style={{ width: "78%", background: "var(--harbour)" }} /><span style={{ width: "22%", background: "var(--signal)" }} /></div>
             <div className={styles.row2}><span>Paid Rs 1,48,200</span><span>Gap Rs 41,800</span></div>
-            <Link href="/desk" className={styles.link}>We’re taking the gap up with the TPA →</Link>
+            <Link href="/desk" className="k-btn k-btn--sm" style={{ alignSelf: "flex-start" }}>Track the gap in Desk</Link>
           </div>
         </SectionHeading>
       </div>
 
       <div className={styles.lowGrid}>
-        <SectionHeading title="Your year, month by month">
+        <SectionHeading title="Premiums by month">
           <div className={styles.card}>
             <div className={styles.months} role="group" aria-label="Months">
               {months.map((m, k) => {
@@ -219,9 +219,9 @@ export function MoneyDesk() {
             ))}
           </div>
         </SectionHeading>
-        <SectionHeading title="What Knowvia did this week">
+        <SectionHeading title="This week">
           <div className={styles.dark}>
-            <div className={styles.darkHead}><span>This week</span><span className={styles.live} aria-hidden /></div>
+            <div className={styles.darkHead}><span>Activity</span><span className={styles.live} aria-hidden /></div>
             {weekLog.map((l) => (
               <div key={l.text} className={styles.logRow}><span className={styles.logAt}>{l.at}</span><span>{l.text}</span></div>
             ))}

@@ -55,6 +55,8 @@ async function element(t: Target): Promise<ReactElement> {
 }
 
 const BANNED = /\b(sample|demo|preview|draft|placeholder|lorem|not advice|not an insurer|CoverSaath|Saath)\b/i;
+const WALLET_JARGON = /\.pkpass|generic (pass|card)/i;
+const MINE = /^\/(family|money|tools|desk|emergency|assistant|settings|profile|shortcuts|cards|signin|welcome)?(\/|$)/;
 const COVER_ROUTES = new Set(["/home", "/review", "/policies", "/stress-test", "/compare"]);
 /** Casual or jargon wording that must not appear on the cover pages. */
 const COVER_JARGON = /\b(disagree\w*|annex|pkpass|gonna|wanna|stuff|tick(ed)?)\b/i;
@@ -80,6 +82,13 @@ describe("every route renders", () => {
     const text = container.textContent ?? "";
     expect(text.trim().length).toBeGreaterThan(20);
     expect(text, `banned word on ${t.href}`).not.toMatch(BANNED);
+    expect(text, `wallet jargon on ${t.href}`).not.toMatch(WALLET_JARGON);
+    if (MINE.test(t.href)) {
+      for (const h of container.querySelectorAll("h1,h2,h3,button,a.k-btn")) {
+        const t0 = (h.textContent ?? "").trim();
+        expect(t0 === "" || /^(iPhone|iPad)/.test(t0) || !/^\p{Ll}/u.test(t0), `lowercase start "${t0}" on ${t.href}`).toBe(true);
+      }
+    }
     if (COVER_ROUTES.has(t.route)) expect(text, `casual wording on ${t.href}`).not.toMatch(COVER_JARGON);
     expect(text, `raw intent name on ${t.href}`).not.toMatch(INTENTS);
     expect(container.innerHTML, `banned word in markup on ${t.href}`).not.toMatch(/CoverSaath|lorem|placeholder="[^"]*(sample|demo)/i);

@@ -11,3 +11,14 @@ export function validateAddMember(name: string, mobile: string): { name?: string
   if (!normaliseIndianMobile(mobile)) errors.mobile = "Enter a 10-digit mobile number.";
   return errors;
 }
+
+export type EditErrors = { name?: string; mobile?: string; email?: string };
+
+/** Mobile and email are optional; when given they must be valid. */
+export function validateEditMember(name: string, mobile: string, email: string): EditErrors {
+  const errors: EditErrors = {};
+  if (name.trim().length < 2) errors.name = "Enter a name.";
+  if (mobile.trim() && !normaliseIndianMobile(mobile)) errors.mobile = "Enter a 10-digit mobile number.";
+  if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = "Enter a valid email address.";
+  return errors;
+}

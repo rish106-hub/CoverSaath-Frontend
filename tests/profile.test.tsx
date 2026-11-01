@@ -101,7 +101,7 @@ describe("profile page", () => {
     view();
     await ready();
     fireEvent.click(screen.getByRole("button", { name: "Fetch from DigiLocker" }));
-    expect(await screen.findByText(/could not reach DigiLocker/)).toBeInTheDocument();
+    expect(await screen.findByText(/Could not reach DigiLocker/)).toBeInTheDocument();
     expect(screen.getByLabelText("Address line 1")).toBeInTheDocument();
     expect(save).not.toHaveBeenCalled();
   });
