@@ -4,7 +4,7 @@
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 24px; align-items: start; }
 .left { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.tabs button, .who button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
+.tabs button, .who button { min-height: 36px; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
 .tabs button[aria-pressed="true"], .who button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .paper { background: var(--sheet); border: 1px solid var(--line); box-shadow: 0 30px 60px -40px rgba(22, 19, 15, 0.35); padding: 40px 48px; display: flex; flex-direction: column; gap: 18px; font: 400 17px/1.75 var(--font-serif); color: var(--ink); }
 .paper p { margin: 0; }

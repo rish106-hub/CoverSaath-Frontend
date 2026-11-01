@@ -1,0 +1,23 @@
+/* One boxy button style. Module classes use the same tokens (--r-btn, --btn-h). */
+.k-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--btn-h); padding: 0 18px;
+  border: 1px solid var(--line); border-radius: var(--r-btn);
+  background: var(--sheet); color: var(--ink);
+  font: 500 14px var(--font-sans); cursor: pointer; text-decoration: none;
+  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.k-btn:hover { background: var(--sunken); border-color: var(--graphite); }
+.k-btn:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
+.k-btn:active { transform: translateY(1px); }
+.k-btn:disabled, .k-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; transform: none; }
+.k-btn--secondary { background: var(--sheet); border-color: var(--graphite); color: var(--ink); }
+.k-btn--primary { background: var(--harbour); border-color: var(--harbour); color: var(--on-harbour); }
+.k-btn--primary:hover { background: var(--harbour); border-color: var(--harbour); filter: brightness(1.08); }
+.k-btn--danger { background: var(--signal-ink); border-color: var(--signal-ink); color: var(--signal-bg); }
+.k-btn--danger:hover { background: var(--signal-ink); border-color: var(--signal-ink); filter: brightness(1.1); }
+.k-btn--sm { min-height: var(--btn-h-sm); padding: 0 14px; font-size: 13px; border-radius: var(--r-btn-sm); }
+
+/* Shared states for every module button class (they do not carry .k-btn). */
+button:not(:disabled):active, a[class*="cta"]:active, a[class*="btn"]:active { transform: translateY(1px); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }

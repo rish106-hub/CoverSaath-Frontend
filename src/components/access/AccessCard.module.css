@@ -5,10 +5,10 @@
 .field input:focus { outline: 2px solid var(--harbour); outline-offset: 0; border-color: var(--harbour); }
 .field input[aria-invalid="true"] { border-color: var(--signal-ink); }
 .fieldErr { color: var(--signal-ink); font: 500 13px var(--font-sans); }
-.btn { min-height: 50px; border-radius: 14px; border: 0; background: var(--ink); color: var(--paper); font: 500 15px var(--font-sans); cursor: pointer; }
+.btn { min-height: 50px; border-radius: var(--r-btn); border: 0; background: var(--ink); color: var(--paper); font: 500 15px var(--font-sans); cursor: pointer; }
 .btn:hover { background: var(--harbour); color: var(--on-harbour); }
 .btn:disabled { opacity: 0.7; cursor: progress; }
-.ghost { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); color: var(--ink); font: 500 15px var(--font-sans); cursor: pointer; }
+.ghost { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 18px; border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--sheet); color: var(--ink); font: 500 15px var(--font-sans); cursor: pointer; }
 .or { display: flex; align-items: center; gap: 10px; color: var(--graphite); font: 400 13px var(--font-sans); }
 .or span { flex: 1; height: 1px; background: var(--line); }
 .err { color: var(--signal-ink); font: 500 14px var(--font-sans); }
@@ -18,4 +18,4 @@
 .tick { width: 52px; height: 52px; border-radius: 50%; background: var(--harbour); color: var(--marker); display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
 .doneT { font: 400 32px/1.1 var(--font-serif); letter-spacing: -0.02em; color: var(--ink); }
 .doneD { font: 400 14px/1.45 var(--font-sans); color: var(--graphite); }
-.cta { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: 14px; background: var(--ink); color: var(--paper); font: 500 15px var(--font-sans); text-decoration: none; }
+.cta { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: var(--r-btn); background: var(--ink); color: var(--paper); font: 500 15px var(--font-sans); text-decoration: none; }

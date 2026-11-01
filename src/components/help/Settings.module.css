@@ -11,7 +11,7 @@
 .switchOn { background: var(--harbour); border-color: var(--harbour); }
 .switchOn::after { transform: translateX(20px); background: var(--on-harbour); }
 .hit { display: inline-flex; align-items: center; min-height: 44px; }
-.seg { display: inline-flex; gap: 4px; padding: 3px; border-radius: 12px; background: var(--sunken); }
-.seg button { min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: var(--graphite); font: 500 14px var(--font-sans); }
+.seg { display: inline-flex; gap: 4px; padding: 3px; border-radius: var(--r-btn); background: var(--sunken); }
+.seg button { min-height: 38px; padding: 0 14px; border-radius: var(--r-btn); border: 0; background: transparent; color: var(--graphite); font: 500 14px var(--font-sans); }
 .seg button[aria-pressed="true"] { background: var(--sheet); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-sm); }
 .tile { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }

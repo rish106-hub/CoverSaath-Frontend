@@ -21,10 +21,10 @@
 .sheetRight { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .sheetHead { display: flex; justify-content: space-between; align-items: center; }
 .sheetT { font: 400 32px var(--font-serif); letter-spacing: -0.02em; margin: 0; }
-.btn { min-height: 38px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
+.btn { min-height: 38px; padding: 0 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
 .btn:focus-visible, .wopt:focus-visible, .chip:focus-visible, .share:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
 .detected { font: 400 14px var(--font-sans); color: var(--graphite); }
-.wopt { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); width: 100%; }
+.wopt { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); width: 100%; }
 .woptOn { border: 2px solid var(--harbour); padding: 15px; }
 .woptRec { border-color: var(--harbour); }
 .woptT { font: 600 16px var(--font-sans); display: block; }
@@ -38,7 +38,7 @@
 .blockT { font: 600 16px var(--font-sans); }
 .blockS { font: 400 13px var(--font-sans); color: var(--graphite); }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
+.chip { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
 .chipOn { border-color: var(--harbour); background: var(--mist); }
 .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--paper); display: inline-flex; align-items: center; justify-content: center; font: 600 13px var(--font-sans); }
 .msg { font: 400 14px/1.4 var(--font-sans); padding: 10px 12px; border-radius: 10px; background: var(--mist); }
@@ -46,8 +46,8 @@
 /* cards page */
 .cards { display: flex; flex-direction: column; gap: 26px; }
 .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
-.seg { display: flex; padding: 4px; border-radius: 12px; background: var(--sunken); }
-.segB { min-height: 36px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; color: var(--graphite); font: 500 14px var(--font-sans); cursor: pointer; }
+.seg { display: flex; padding: 4px; border-radius: var(--r-btn); background: var(--sunken); }
+.segB { min-height: 36px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: transparent; color: var(--graphite); font: 500 14px var(--font-sans); cursor: pointer; }
 .segOn { background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-sm); }
 .devs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 400 14px var(--font-sans); color: var(--graphite); }
 .passes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; align-items: start; }
@@ -61,7 +61,7 @@
 .added { display: flex; gap: 16px; align-items: center; }
 .tick { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--harbour); color: var(--marker); display: flex; align-items: center; justify-content: center; font-size: 22px; }
 .shares { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.share { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; text-align: left; }
+.share { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; text-align: left; }
 .shareOn { border-color: var(--harbour); }
 .back { border-radius: 22px; background: #16130f; color: #f7f5f0; padding: 26px; display: flex; flex-direction: column; gap: 6px; }
 .backT { font: 600 17px var(--font-sans); margin: 0 0 8px; }

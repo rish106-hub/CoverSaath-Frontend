@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/brand/BrandMark";
 import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
@@ -55,7 +56,7 @@ export function SignIn() {
   return (
     <div className={styles.page}>
       <div className={styles.left}>
-        <Link href="/" className={styles.brand}>Knowvia</Link>
+        <BrandMark href="/" size={32} />
         <ol className={styles.journey} style={{ listStyle: "none", padding: 0, marginBottom: 0 }} aria-label="Your first minutes">
           {JOURNEY.map((t, k) => (
             <li key={t} className={styles.jstep}>

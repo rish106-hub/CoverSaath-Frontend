@@ -5,7 +5,7 @@
   z-index: 40;
   min-height: 44px;
   padding: 0 16px;
-  border-radius: 999px;
+  border-radius: var(--r-btn);
   border: 1px solid var(--line);
   background: var(--sheet);
   color: var(--ink);

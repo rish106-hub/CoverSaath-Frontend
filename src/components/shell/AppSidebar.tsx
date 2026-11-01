@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { GROUPS, pageFor, pagesIn } from "@/lib/ia";
 import { readingList } from "@/data/mock/learn";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { UserChip } from "./UserChip";
 import styles from "./AppSidebar.module.css";
 
@@ -61,12 +62,12 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
         <button ref={menuRef} type="button" className={styles.menu} aria-expanded={open} aria-controls="app-sidebar" onClick={() => setOpenAt(pathname)}>
           Menu
         </button>
-        <Link href="/home" className={styles.topbrand}>Knowvia</Link>
+        <BrandMark size={28} />
       </div>
       {open ? <div className={styles.scrim} onClick={close} aria-hidden data-testid="sidebar-scrim" /> : null}
       <aside id="app-sidebar" ref={asideRef} className={`${styles.aside} ${open ? styles.open : ""}`} aria-label="Knowvia">
         <div className={styles.head}>
-          <Link href="/home" className={styles.brand}>Knowvia</Link>
+          <span className={styles.brand}><BrandMark size={32} /></span>
           <button type="button" className={styles.close} onClick={close}>Close</button>
         </div>
         <nav className={styles.groups} aria-label="Knowvia sections">
