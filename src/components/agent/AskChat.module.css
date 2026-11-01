@@ -3,10 +3,10 @@
 .empty p { margin: 0; }
 .starters { display: flex; flex-wrap: wrap; gap: 8px; }
 .starter { min-height: 36px; padding: 6px 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 14px var(--font-sans); text-align: left; cursor: pointer; transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
-.starter:hover { border-color: var(--harbour); background: var(--sunken); }
+.starter:hover { border-color: var(--btn-accent); background: var(--sunken); }
 .msg { max-width: 86%; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 14px; border-radius: var(--r-md); font: 400 14px/1.5 var(--font-sans); overflow-wrap: anywhere; animation: msg-in var(--t-base) var(--ease) both; }
 .msg p { margin: 0; }
-.mine { align-self: flex-end; background: var(--harbour); color: var(--on-harbour); }
+.mine { align-self: flex-end; background: var(--btn-accent); color: var(--btn-accent-ink); }
 .theirs { align-self: flex-start; background: var(--sunken); color: var(--ink); }
 .dots { flex-direction: row; gap: 5px; padding: 14px; }
 .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--graphite); animation: dot 1s infinite; }

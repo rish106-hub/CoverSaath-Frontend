@@ -3,13 +3,13 @@
 .btn:hover { border-color: var(--ink); }
 .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--ink); color: var(--paper); font: 500 14px var(--font-sans); cursor: pointer; }
 .cta:disabled { opacity: 0.6; cursor: default; }
-.btn:focus-visible, .cta:focus-visible, .person:focus-visible, .chip:focus-visible, .sw:focus-visible, .gapCta:focus-visible, .rbtn:focus-visible, .cellAct:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
+.btn:focus-visible, .cta:focus-visible, .person:focus-visible, .chip:focus-visible, .sw:focus-visible, .gapCta:focus-visible, .rbtn:focus-visible, .cellAct:focus-visible { outline: 2px solid var(--btn-accent); outline-offset: 2px; }
 .mono { font: 400 13px var(--font-mono); color: var(--graphite); }
 .note { display: block; font: 400 13px/1.4 var(--font-sans); color: var(--graphite); }
 
 .people { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-top: 4px; }
 .person { display: flex; flex-direction: column; gap: 12px; text-align: left; padding: 18px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); min-width: 0; }
-.person[data-on="true"] { border: 2px solid var(--harbour); background: var(--mist); padding: 17px; }
+.person[data-on="true"] { border: 2px solid var(--btn-accent); background: var(--btn-tint); padding: 17px; }
 .personTop { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--ink); color: var(--paper); display: inline-flex; align-items: center; justify-content: center; font: 600 15px var(--font-sans); }
 .avatar[data-on="true"] { background: var(--harbour); color: var(--marker); }
@@ -74,7 +74,7 @@
 .remind { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .remind > span { font: 500 13px var(--font-sans); color: var(--graphite); margin-right: 2px; }
 .rbtn { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: var(--r-btn-sm); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
-.rbtn[data-on="true"] { border-color: var(--harbour); background: var(--mist); }
+.rbtn[data-on="true"] { border-color: var(--btn-accent); background: var(--btn-tint); }
 .dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .date { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-lg); background: var(--sunken); }
 .cal { width: 56px; border-radius: 10px; overflow: hidden; text-align: center; background: var(--sheet); border: 1px solid var(--line); }
@@ -91,7 +91,7 @@
 .shareWho .pname { font-size: 14px; }
 .shareCell { display: flex; justify-content: center; }
 .sw { position: relative; width: 40px; height: 24px; border-radius: 999px; border: 0; background: var(--line); cursor: pointer; transition: background var(--t-base); }
-.sw[data-on="true"] { background: var(--harbour); }
+.sw[data-on="true"] { background: var(--btn-accent); }
 .sw span { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left var(--t-base); }
 .sw[data-on="true"] span { left: 19px; }
 

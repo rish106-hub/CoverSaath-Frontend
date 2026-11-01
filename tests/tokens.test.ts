@@ -32,6 +32,10 @@ const PAIRS: [string, string][] = [
   ["signal-ink", "signal-bg"], ["signal-ink", "paper"],
   ["coral-ink", "coral"],
   ["g-cover", "paper"], ["g-family", "paper"], ["g-money", "paper"], ["g-help", "paper"],
+  ["on-g", "g-cover"], ["on-g", "g-family"], ["on-g", "g-money"], ["on-g", "g-help"],
+  ["ink", "g-cover-bg"], ["ink", "g-family-bg"], ["ink", "g-money-bg"], ["ink", "g-help-bg"],
+  ["g-cover", "g-cover-bg"], ["g-family", "g-family-bg"], ["g-money", "g-money-bg"], ["g-help", "g-help-bg"],
+  ["ink", "paper"], ["paper", "ink"],
   ["signal-bg", "signal-ink"], ["g-cover", "sheet"], ["g-family", "sheet"], ["g-money", "sheet"], ["g-help", "sheet"],
 ];
 
@@ -41,6 +45,16 @@ describe.each([["light", light], ["dark", dark]] as const)("%s theme contrast", 
     expect(t[bg], `token ${bg}`).toBeDefined();
     expect(ratio(t[fg], t[bg])).toBeGreaterThanOrEqual(4.5);
   });
+});
+
+it("help hue is distinct from the lilac recommendation colour", () => {
+  for (const t of [light, dark]) {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(t["g-help"].slice(i, i + 2), 16));
+    const [rr, rg, rb] = [1, 3, 5].map((i) => parseInt(t["rec-ink"].slice(i, i + 2), 16));
+    expect(b - r).toBeGreaterThan(0);
+    expect(g).toBeGreaterThan(r); // blue-teal side, not violet
+    expect(rr + rb).toBeGreaterThan(rg * 2);
+  }
 });
 
 it("defines the spec palette in light", () => {

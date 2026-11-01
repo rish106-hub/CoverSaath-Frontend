@@ -1,3 +1,11 @@
+/* Colour-coded buttons. Any ancestor with data-group (set by the app shell from the page's group) sets the accent.
+   Ungrouped pages and public pages use neutral ink. Module classes read these variables too. */
+:root, [data-group="none"] { --btn-accent: var(--ink); --btn-accent-ink: var(--paper); --btn-tint: var(--sunken); --btn-tint-ink: var(--ink); }
+[data-group="cover"] { --btn-accent: var(--g-cover); --btn-accent-ink: var(--on-g); --btn-tint: var(--g-cover-bg); --btn-tint-ink: var(--ink); }
+[data-group="family"] { --btn-accent: var(--g-family); --btn-accent-ink: var(--on-g); --btn-tint: var(--g-family-bg); --btn-tint-ink: var(--ink); }
+[data-group="money"] { --btn-accent: var(--g-money); --btn-accent-ink: var(--on-g); --btn-tint: var(--g-money-bg); --btn-tint-ink: var(--ink); }
+[data-group="help"] { --btn-accent: var(--g-help); --btn-accent-ink: var(--on-g); --btn-tint: var(--g-help-bg); --btn-tint-ink: var(--ink); }
+
 /* One boxy button style. Module classes use the same tokens (--r-btn, --btn-h). */
 .k-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -7,14 +15,18 @@
   font: 500 14px var(--font-sans); cursor: pointer; text-decoration: none;
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
-.k-btn:hover { background: var(--sunken); border-color: var(--graphite); }
-.k-btn:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
+.k-btn:hover { background: var(--btn-tint); border-color: var(--btn-accent); }
+.k-btn:focus-visible { outline: 2px solid var(--btn-accent); outline-offset: 2px; }
 .k-btn:active { transform: translateY(1px); }
 .k-btn:disabled, .k-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; transform: none; }
-.k-btn--secondary { background: var(--sheet); border-color: var(--graphite); color: var(--ink); }
-.k-btn--primary { background: var(--harbour); border-color: var(--harbour); color: var(--on-harbour); }
-.k-btn--primary:hover { background: var(--harbour); border-color: var(--harbour); filter: brightness(1.08); }
+.k-btn:disabled:hover, .k-btn[aria-disabled="true"]:hover { filter: none; }
+.k-btn--secondary { background: var(--sheet); border-color: var(--btn-accent); color: var(--ink); }
+.k-btn--secondary:active { background: var(--btn-tint); }
+.k-btn--primary { background: var(--btn-accent); border-color: var(--btn-accent); color: var(--btn-accent-ink); }
+.k-btn--primary:hover { background: var(--btn-accent); border-color: var(--btn-accent); filter: brightness(1.12); }
+.k-btn--primary:focus-visible { outline-color: var(--btn-accent); outline-offset: 3px; }
 .k-btn--danger { background: var(--signal-ink); border-color: var(--signal-ink); color: var(--signal-bg); }
+.k-btn--danger:focus-visible { outline-color: var(--signal-ink); }
 .k-btn--danger:hover { background: var(--signal-ink); border-color: var(--signal-ink); filter: brightness(1.1); }
 .k-btn--sm { min-height: var(--btn-h-sm); padding: 0 14px; font-size: 13px; border-radius: var(--r-btn-sm); }
 

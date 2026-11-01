@@ -4,7 +4,7 @@
 
 .dock { display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 12px 6px 6px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; text-align: left; box-shadow: 0 20px 40px -22px rgba(22, 19, 15, 0.55); }
 .dock { transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease), border-color var(--t-fast) var(--ease); }
-.dock:hover { border-color: var(--harbour); transform: translateY(-2px); }
+.dock:hover { border-color: var(--btn-accent); transform: translateY(-2px); }
 .dock:active { transform: translateY(0) scale(0.99); }
 .dockText b { display: block; font-weight: 600; font-size: 14px; }
 .dockText span { display: block; font-size: 13px; color: var(--graphite); }
@@ -15,11 +15,11 @@
 .stripText { display: flex; flex-direction: column; gap: 3px; }
 .stripText b { font-size: 16px; font-weight: 600; }
 .stripText span { font-size: 13px; color: var(--graphite); }
-.stripMic { width: 44px; height: 44px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--harbour); color: var(--on-harbour); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.stripMic:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
+.stripMic { width: 44px; height: 44px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--btn-accent); color: var(--btn-accent-ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.stripMic:focus-visible { outline: 2px solid var(--btn-accent); outline-offset: 2px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .chip { min-height: 34px; padding: 0 12px; border-radius: var(--r-btn-sm); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 13px var(--font-sans); cursor: pointer; }
-.chip:hover { border-color: var(--harbour); }
+.chip:hover { border-color: var(--btn-accent); }
 .doing { display: flex; flex-direction: column; gap: 2px; padding-left: 18px; border-left: 1px solid var(--line); color: var(--ink); text-decoration: none; min-height: 44px; justify-content: center; }
 .doing span:first-child { font-size: 13px; color: var(--graphite); }
 .doing span:last-child { font-size: 14px; font-weight: 600; }

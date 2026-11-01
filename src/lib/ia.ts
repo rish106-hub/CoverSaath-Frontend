@@ -186,3 +186,8 @@ export function pageFor(pathname: string): PageDef | undefined {
 export function activeTab(pathname: string): string | undefined {
   return pageFor(pathname)?.tab;
 }
+
+/** Accent context for colour-coded buttons: the page's group, or "none" (neutral ink) for profile, settings, shortcuts and public pages. */
+export function groupOf(pathname: string): GroupId | "none" {
+  return pageFor(pathname)?.group ?? "none";
+}

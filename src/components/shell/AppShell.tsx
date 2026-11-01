@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeButton } from "@/components/theme";
 import { AgentProvider, AgentLayer } from "@/components/agent";
-import { pageFor } from "@/lib/ia";
+import { groupOf, pageFor } from "@/lib/ia";
 import { PageHeader } from "./PageHeader";
 import { AppSidebar } from "./AppSidebar";
 import styles from "./AppShell.module.css";
@@ -20,7 +20,7 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
   const home = pageFor(pathname)?.route === "/home";
   return (
     <AgentProvider>
-    <div className={styles.shell}>
+    <div className={styles.shell} data-group={groupOf(pathname)}>
       <a href="#main-content" className={styles.skip}>Skip to content</a>
       <AppSidebar pathname={pathname} />
       <div className={styles.main}>
