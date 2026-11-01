@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { ONBOARDING_ROUTES, PAGES, PUBLIC_ROUTES } from "@/lib/ia";
 import { AgentProvider } from "@/components/agent";
@@ -121,6 +121,7 @@ describe("integration", () => {
     const { AgentLayer } = await import("@/components/agent");
     const { container } = render(<ThemeProvider><AgentProvider>{tree}<AgentLayer /></AgentProvider></ThemeProvider>);
     await act(async () => { window.dispatchEvent(new CustomEvent("knowvia:ask", { detail: { text: "Papa ko chest pain hai" } })); await new Promise((r) => setTimeout(r, 50)); });
-    expect(container.ownerDocument.body.textContent).toContain("Papa ko chest pain hai");
+    // The chat pane is lazy-loaded, so give its chunk a moment before reading the thread.
+    await waitFor(() => expect(container.ownerDocument.body.textContent).toContain("Papa ko chest pain hai"), { timeout: 4000 });
   });
 });
