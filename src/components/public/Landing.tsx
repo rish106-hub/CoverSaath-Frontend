@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/brand/BrandMark";
 import { useState } from "react";
 import { useTicker } from "@/lib/use-ticker";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
@@ -36,7 +37,7 @@ export function Landing() {
   return (
     <div className={styles.page}>
       <div className={`${styles.wrap} ${styles.nav}`}>
-        <Link href="/" className={styles.brand}><span className={styles.brandName}>Knowvia</span><span className={styles.beta}>Beta</span></Link>
+        <span className={styles.brand}><BrandMark href="/" size={32} /><span className={styles.beta}>Beta</span></span>
         <div className={styles.navRight}>
           <Link href="/emergency" className={styles.emerg}>● Emergency</Link>
           <Link href="/signin" className={styles.signin}>Sign in</Link>

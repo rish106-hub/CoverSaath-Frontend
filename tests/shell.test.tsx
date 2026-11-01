@@ -90,3 +90,14 @@ describe("app shell sidebar", () => {
     expect(document.activeElement).toBe(items[items.length - 1]);
   });
 });
+
+describe("brand mark", () => {
+  it("sidebar brand is the K mark image inside a labelled home link", () => {
+    const { container } = shell("/home");
+    const link = container.querySelector('aside a[aria-label="Knowvia home"]');
+    expect(link).not.toBeNull();
+    const img = link!.querySelector("img");
+    expect(img?.getAttribute("src")).toBe("/brand/knowvia-mark.svg");
+    expect(img?.getAttribute("alt")).toBe("");
+  });
+});

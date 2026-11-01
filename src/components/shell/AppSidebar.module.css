@@ -1,5 +1,5 @@
 .aside { border-right: 1px solid var(--line); padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--paper); }
-.brand { font: 400 24px var(--font-serif); padding: 0 12px; color: var(--ink); }
+.brand { padding: 0 12px; display: inline-flex; }
 .groups { display: flex; flex-direction: column; gap: 14px; }
 .group { display: flex; flex-direction: column; gap: 2px; }
 .gname { display: flex; align-items: center; gap: 8px; padding: 0 12px 4px; font: 700 13px var(--font-sans); color: var(--ink); }
@@ -19,7 +19,6 @@
 .topbar, .scrim, .head .close { display: none; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .menu, .close { min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
-.topbrand { font: 400 22px var(--font-serif); color: var(--ink); }
 .aside > :last-child { margin-top: auto; }
 @media (max-width: 959px) {
   .topbar { display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 40; padding: 8px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }
