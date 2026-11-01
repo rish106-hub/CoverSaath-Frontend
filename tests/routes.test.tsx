@@ -55,6 +55,9 @@ async function element(t: Target): Promise<ReactElement> {
 }
 
 const BANNED = /\b(sample|demo|preview|draft|placeholder|lorem|not advice|not an insurer|CoverSaath|Saath)\b/i;
+const COVER_ROUTES = new Set(["/home", "/review", "/policies", "/stress-test", "/compare"]);
+/** Casual or jargon wording that must not appear on the cover pages. */
+const COVER_JARGON = /\b(disagree\w*|annex|pkpass|gonna|wanna|stuff|tick(ed)?)\b/i;
 const INTENTS = /\b(explain_term|ask_policy|claim_help|add_document)\b/;
 
 beforeEach(() => {
@@ -77,6 +80,7 @@ describe("every route renders", () => {
     const text = container.textContent ?? "";
     expect(text.trim().length).toBeGreaterThan(20);
     expect(text, `banned word on ${t.href}`).not.toMatch(BANNED);
+    if (COVER_ROUTES.has(t.route)) expect(text, `casual wording on ${t.href}`).not.toMatch(COVER_JARGON);
     expect(text, `raw intent name on ${t.href}`).not.toMatch(INTENTS);
     expect(container.innerHTML, `banned word in markup on ${t.href}`).not.toMatch(/CoverSaath|lorem|placeholder="[^"]*(sample|demo)/i);
   });

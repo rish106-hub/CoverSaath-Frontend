@@ -86,7 +86,7 @@ export function verdict(you: number): { label: "Manageable" | "Heavy" | "Big gap
 }
 
 export function youNote(r: StressResult): string {
-  if (r.you < 10000) return "Mostly items no policy pays: gloves, admission kit, registration.";
+  if (r.you < 10000) return "Mostly items no policy pays, such as gloves and registration.";
   if (r.parent) return "Most of it is the 20% co-pay" + (r.sub < Infinity ? " and the cap on this treatment." : ".");
   if (r.bill > r.cover && !r.topPays) return "Above the shared Rs 5L group cover.";
   return "Mostly the room limit and items no plan pays.";
@@ -110,13 +110,13 @@ export function waterfall(who: Person, r: StressResult, o: Levers): Step[] {
   const subS = seg(subCut);
   const coS = seg(r.coAmt);
   return [
-    { icon: "₹", title: "Hospital bill", ref: "typical, Pune", x: 0, w: 100, tone: "bill", value: rs(r.bill), zero: false },
-    { icon: "✕", title: "Items no plan pays", ref: "Annex II", ...nonS, tone: "cut", value: "− " + rs(r.nonPay), zero: false },
-    { icon: "▣", title: "Room above the limit", ref: o.room ? "room within limit" : "p.12 room rent", ...roomS, tone: "cut", value: o.room ? "Rs 0" : "− " + rs(r.roomCut), zero: !!o.room },
-    { icon: "✂", title: "Cap on this treatment", ref: r.sub < Infinity ? "p.14 §5.2" : "none on this plan", ...subS, tone: "cut", value: subCut ? "− " + rs(subCut) : "Rs 0", zero: !subCut },
-    { icon: "%", title: "Your co-pay", ref: r.parent ? "20% · p.2" : "none", ...coS, tone: "cut", value: r.coAmt ? "− " + rs(r.coAmt) : "Rs 0", zero: !r.coAmt },
-    { icon: "✓", title: "Insurer pays", ref: r.parent ? "Meridian senior plan" : "Northstar group", x: 0, w: pc(r.ins), tone: "pay", value: rs(r.ins), zero: false },
-    { icon: "↗", title: "Top-up pays", ref: r.topPays ? "Kaveri, after Rs 5L" : "no top-up for " + who, x: pc(r.ins), w: pc(r.topPays), tone: "top", value: rs(r.topPays), zero: !r.topPays },
+    { icon: "₹", title: "Hospital bill, typical Pune", ref: "", x: 0, w: 100, tone: "bill", value: rs(r.bill), zero: false },
+    { icon: "✕", title: "Items no plan pays", ref: "Policy exclusions list", ...nonS, tone: "cut", value: "− " + rs(r.nonPay), zero: false },
+    { icon: "▣", title: "Room above the limit", ref: o.room ? "Room within the limit" : "Policy page 12", ...roomS, tone: "cut", value: o.room ? "Rs 0" : "− " + rs(r.roomCut), zero: !!o.room },
+    { icon: "✂", title: "Cap on this treatment", ref: r.sub < Infinity ? "Policy page 14" : "No cap on this plan", ...subS, tone: "cut", value: subCut ? "− " + rs(subCut) : "Rs 0", zero: !subCut },
+    { icon: "%", title: "Your co-pay", ref: r.parent ? "20%, policy page 2" : "None", ...coS, tone: "cut", value: r.coAmt ? "− " + rs(r.coAmt) : "Rs 0", zero: !r.coAmt },
+    { icon: "✓", title: "Insurer pays", ref: r.parent ? "Meridian senior plan" : "Northstar group plan", x: 0, w: pc(r.ins), tone: "pay", value: rs(r.ins), zero: false },
+    { icon: "↗", title: "Top-up pays", ref: r.topPays ? "Kaveri, after Rs 5L" : "No top-up for " + who, x: pc(r.ins), w: pc(r.topPays), tone: "top", value: rs(r.topPays), zero: !r.topPays },
   ];
 }
 
@@ -125,8 +125,8 @@ export type SectionBar = { title: string; pct: number; rating: Quality };
 
 export function sectionBars(parent: boolean): SectionBar[] {
   const rows: [string, number, Quality][] = parent
-    ? [["Room rent", 40, "Weak"], ["Co-pay", 30, "Weak"], ["Old illnesses", 55, "Okay"], ["Waiting periods", 50, "Okay"], ["Caps on treatments", 35, "Weak"], ["Day-care procedures", 85, "Strong"], ["Refill", 0, "None"], ["Hospitals nearby", 80, "Strong"]]
-    : [["Room rent", 70, "Okay"], ["Co-pay", 100, "Strong"], ["Old illnesses", 100, "Strong"], ["Waiting periods", 100, "Strong"], ["Caps on treatments", 80, "Strong"], ["Maternity", 75, "Strong"], ["Refill", 60, "Okay"], ["Cover size", 45, "Okay"]];
+    ? [["Room rent", 40, "Weak"], ["Co-pay", 30, "Weak"], ["Existing illnesses", 55, "Okay"], ["Waiting periods", 50, "Okay"], ["Caps on treatments", 35, "Weak"], ["Day-care procedures", 85, "Strong"], ["Refill", 0, "None"], ["Hospitals nearby", 80, "Strong"]]
+    : [["Room rent", 70, "Okay"], ["Co-pay", 100, "Strong"], ["Existing illnesses", 100, "Strong"], ["Waiting periods", 100, "Strong"], ["Caps on treatments", 80, "Strong"], ["Maternity", 75, "Strong"], ["Refill", 60, "Okay"], ["Cover size", 45, "Okay"]];
   return rows.map(([title, pct, rating]) => ({ title, pct, rating }));
 }
 
@@ -137,7 +137,7 @@ export function policyFor(parent: boolean) {
 export function prosCons(parent: boolean) {
   return parent
     ? { pros: ["Day-care procedures covered in full", "Most Pune hospitals are cashless", "Diabetes covered after 1 year"], cons: ["20% co-pay on every claim", "Room limited to Rs 3,000 a day", "Caps on knee and cataract"] }
-    : { pros: ["No waiting periods on the group plan", "Old illnesses covered from day one", "Maternity and newborn included"], cons: ["Rs 5L is shared by three people", "Ends when you leave the job", "Room limit of 1% of cover"] };
+    : { pros: ["No waiting periods on the group plan", "Existing illnesses covered from day one", "Maternity and newborn included"], cons: ["Rs 5L is shared by three people", "Ends when you leave the job", "Room limit of 1% of cover"] };
 }
 
 export function familyRow(p: Person, sc: Scenario, o: Levers) {
