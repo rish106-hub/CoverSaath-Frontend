@@ -12,7 +12,7 @@ npm run dev                  # http://localhost:3200
 | --- | --- |
 | `npm run typecheck` / `lint` / `test` / `build` | the four required checks |
 | `npm run dry-run` | end-to-end proof of frontend, BFF, backend and database (needs the backend running on 8787) |
-| `npx playwright test` | keyboard, mouse and voice walks in `e2e/` (needs browsers: `npx playwright install chromium`) |
+| `npx playwright test` | keyboard, mouse and voice walks in `e2e/` on a mock-adapter server at 3201 (needs `npx playwright install chromium`) |
 
 Environment variable names only: `KNOWVIA_API_URL`, `KNOWVIA_BOOTSTRAP_TOKEN`, `SESSION_COOKIE_SECRET`, optional `NEXT_PUBLIC_ADAPTERS=mock`.
 

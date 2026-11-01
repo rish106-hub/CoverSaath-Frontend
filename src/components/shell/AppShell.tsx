@@ -1,12 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { ThemeButton } from "@/components/theme";
 import { AgentProvider, AgentLayer, HeaderMic } from "@/components/agent";
 import { groupOf, pageFor } from "@/lib/ia";
 import { PageHeader } from "./PageHeader";
 import { AppSidebar } from "./AppSidebar";
+import { useMe } from "./useMe";
 import styles from "./AppShell.module.css";
 
 /**
@@ -16,6 +17,12 @@ import styles from "./AppShell.module.css";
  */
 export function AppShell({ pathname: given, children, dock }: { pathname?: string; children: ReactNode; dock?: ReactNode }) {
   const current = usePathname();
+  const router = useRouter();
+  const { state } = useMe();
+  const signedOut = state.status === "signed-out";
+  useEffect(() => {
+    if (signedOut) router.replace("/signin");
+  }, [signedOut, router]);
   const pathname = given ?? current ?? "/home";
   const home = pageFor(pathname)?.route === "/home";
   return (
