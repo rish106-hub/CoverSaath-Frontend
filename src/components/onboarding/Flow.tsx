@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTicker } from "@/lib/use-ticker";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adapters } from "@/adapters";
 import { Kicker } from "@/components/type";
-import { WalletSheet } from "@/components/wallet/WalletSheet";
+import dynamic from "next/dynamic";
+
+// Opens from a button on the last step only.
+const WalletSheet = dynamic(() => import("@/components/wallet/WalletSheet").then((m) => m.WalletSheet), { ssr: false, loading: () => null });
 import { ONBOARD_PEOPLE, ONBOARD_TIPS, ONBOARD_WAYS, ONBOARD_WINS, READING_FINDINGS, READING_SAY, READING_TIPS } from "@/data/mock";
 import { WELCOME_STEPS } from "@/components/access/steps";
 import tones from "@/components/public/tones.module.css";
@@ -119,11 +123,7 @@ function useFindings(): Row[] {
 function useRevealCount(total: number) {
   const reduce = useReducedMotion();
   const [count, setN] = useState(1);
-  useEffect(() => {
-    if (reduce) return;
-    const id = setInterval(() => setN((x) => (x >= total ? total : x + 1)), 1400);
-    return () => clearInterval(id);
-  }, [total, reduce]);
+  useTicker(() => setN((x) => (x >= total ? total : x + 1)), 1400, !reduce);
   return [reduce ? total : Math.min(count, total), setN] as const;
 }
 

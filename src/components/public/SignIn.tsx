@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } 
 import Link from "next/link";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters } from "@/adapters";
+import { useTicker } from "@/lib/use-ticker";
 import { useSingleFlight } from "@/lib/use-single-flight";
 import { invalidateMe } from "@/components/shell/useMe";
 import { BrandLogo } from "@/components/logos";
@@ -193,11 +194,7 @@ function ShowcasePanel() {
   const [pick, setPick] = useState<AuthCard | null>(null);
 
   const reduce = useReducedMotion();
-  useEffect(() => {
-    if (reduce) return;
-    const id = setInterval(() => setH((x) => (x + 1) % AUTH_HEADS.length), 3200);
-    return () => clearInterval(id);
-  }, [reduce]);
+  useTicker(() => setH((x) => (x + 1) % AUTH_HEADS.length), 3200, !reduce);
 
   const pool = filter === "all" ? AUTH_CARDS : AUTH_CARDS.filter((c) => c.tag === filter).concat(AUTH_CARDS.filter((c) => c.tag !== filter)).slice(0, 9);
   const lane = (off: number) => { const a = pool.filter((_, k) => k % 3 === off); return a.concat(a); };

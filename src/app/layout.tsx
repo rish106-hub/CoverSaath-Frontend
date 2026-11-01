@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Newsreader, Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider, themeInitScript } from "@/components/theme";
+import { ThemeProvider, themeInitScript, CapabilityInit } from "@/components/theme";
 import "@/styles/globals.css";
 
 const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader", weight: ["400"], display: "swap" });
@@ -20,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>{children}</ThemeProvider>
+        <CapabilityInit />
       </body>
     </html>
   );

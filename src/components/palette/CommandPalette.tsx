@@ -9,6 +9,9 @@ import { useAgent } from "@/components/agent/AgentProvider";
 import { useTheme } from "@/components/theme";
 import styles from "./palette.module.css";
 
+/** No list in the palette grows past this many rows. */
+const MAX_ROWS = 100;
+
 /** Cmd K / Ctrl K. Go to, Ask Knowvia, Tools, People, Documents, Actions. */
 export function CommandPalette() {
   const { paletteOpen, setPaletteOpen, open, submit } = useAgent();
@@ -21,8 +24,8 @@ export function CommandPalette() {
   useEffect(() => {
     if (!paletteOpen) return;
     let live = true;
-    adapters.household.household().then((h) => live && setPeople(h.members)).catch(() => {});
-    adapters.document.list().then((d) => live && setDocs(d)).catch(() => {});
+    adapters.household.household().then((h) => live && setPeople(h.members.slice(0, MAX_ROWS))).catch(() => {});
+    adapters.document.list().then((d) => live && setDocs(d.slice(0, MAX_ROWS))).catch(() => {});
     return () => { live = false; };
   }, [paletteOpen]);
 

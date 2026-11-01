@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { isLowCapacity, readCapability } from "./capability";
 
 const QUERY = "(prefers-reduced-motion: reduce)";
 const subscribe = (cb: () => void) => {
@@ -10,11 +11,14 @@ const subscribe = (cb: () => void) => {
   return () => m.removeEventListener("change", cb);
 };
 
-/** True when the visitor asked for reduced motion. False on the server. */
+/** Plain (non-hook) check for event handlers: reduced-motion request or a low-capacity device. */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  const asked = typeof window.matchMedia === "function" && window.matchMedia(QUERY).matches;
+  return asked || isLowCapacity(readCapability());
+}
+
+/** True when the visitor asked for reduced motion or the device is low-capacity. False on the server. */
 export function useReducedMotion(): boolean {
-  return useSyncExternalStore(
-    subscribe,
-    () => typeof window.matchMedia === "function" && window.matchMedia(QUERY).matches,
-    () => false,
-  );
+  return useSyncExternalStore(subscribe, prefersReducedMotion, () => false);
 }

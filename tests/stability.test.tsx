@@ -154,3 +154,34 @@ describe("click-spam safety", () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 });
+
+import { isLowCapacity, readCapability, resetCapability } from "@/lib/capability";
+
+describe("capability", () => {
+  afterEach(() => {
+    resetCapability();
+    Object.defineProperty(navigator, "hardwareConcurrency", { value: 8, configurable: true });
+    Object.defineProperty(navigator, "deviceMemory", { value: undefined, configurable: true });
+  });
+  it("flags low memory, few cores, save-data and reduced motion", () => {
+    expect(isLowCapacity({ memoryGb: 8, cores: 8, saveData: false, reducedMotion: false })).toBe(false);
+    expect(isLowCapacity({ memoryGb: 4, cores: 8, saveData: false, reducedMotion: false })).toBe(true);
+    expect(isLowCapacity({ memoryGb: null, cores: 4, saveData: false, reducedMotion: false })).toBe(true);
+    expect(isLowCapacity({ memoryGb: null, cores: null, saveData: true, reducedMotion: false })).toBe(true);
+    expect(isLowCapacity({ memoryGb: null, cores: null, saveData: false, reducedMotion: true })).toBe(true);
+    expect(isLowCapacity({ memoryGb: null, cores: null, saveData: false, reducedMotion: false })).toBe(false);
+  });
+  it("reads navigator once", () => {
+    Object.defineProperty(navigator, "deviceMemory", { value: 2, configurable: true });
+    resetCapability();
+    expect(readCapability().memoryGb).toBe(2);
+  });
+  it("CapabilityInit sets data-motion on a low-capacity device", async () => {
+    Object.defineProperty(navigator, "hardwareConcurrency", { value: 2, configurable: true });
+    resetCapability();
+    document.documentElement.removeAttribute("data-motion");
+    const { CapabilityInit } = await import("@/components/theme/CapabilityInit");
+    render(<CapabilityInit />);
+    expect(document.documentElement.getAttribute("data-motion")).toBe("reduced");
+  });
+});

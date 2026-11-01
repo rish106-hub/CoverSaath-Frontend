@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/type";
 import { BrandLogo } from "@/components/logos";
 import { useTheme } from "@/components/theme";
 import { useMe, invalidateMe } from "@/components/shell";
+import { isLowCapacity } from "@/lib/capability";
 import { useSingleFlight } from "@/lib/use-single-flight";
 import ui from "./ui.module.css";
 import s from "./Settings.module.css";
@@ -77,7 +78,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
     } catch {
       /* ignore */
     }
-    document.documentElement.setAttribute("data-motion", p.reduced ? "reduced" : "normal");
+    document.documentElement.setAttribute("data-motion", p.reduced || isLowCapacity() ? "reduced" : "normal");
   }, [p, ready]);
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) => setP((x) => ({ ...x, [k]: v }));
