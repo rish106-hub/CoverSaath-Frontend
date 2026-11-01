@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useTicker } from "@/lib/use-ticker";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import type { WalletCardData } from "@/data/mock";
 import { qrCells } from "./qr";
@@ -12,11 +13,7 @@ const PERIOD = 30;
 export function useQrClock() {
   const [tick, setTick] = useState(0);
   const reduce = useReducedMotion();
-  useEffect(() => {
-    if (reduce) return;
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
-  }, [reduce]);
+  useTicker(() => setTick((t) => t + 1), 1000, !reduce);
   return { secs: PERIOD - (tick % PERIOD), epoch: Math.floor(tick / PERIOD) };
 }
 

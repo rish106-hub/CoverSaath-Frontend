@@ -5,7 +5,7 @@ export { AppSidebar as HomeSidebar } from "./AppSidebar";
 export { PagePlaceholder } from "./PagePlaceholder";
 export { UserChip } from "./UserChip";
 export { BackendDown } from "./BackendDown";
-export { useMe } from "./useMe";
+export { useMe, invalidateMe } from "./useMe";
 export type { MeState } from "./useMe";
 export { HomeGreeting } from "./HomeGreeting";
 export { FamilyOwner } from "./FamilyOwner";

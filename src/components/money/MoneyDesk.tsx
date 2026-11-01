@@ -24,11 +24,17 @@ export function MoneyDesk() {
   const [err, setErr] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const gen = useRef(0);
+  const asking = useRef(false); // a scan request is in flight: ignore further clicks
   function startTicker() {
     if (timer.current) clearInterval(timer.current);
+    const mine = ++gen.current; // a newer scan (or unmount) orphans this one
+    asking.current = true;
     adapters.email
       .scan()
       .then(() => {
+        if (mine !== gen.current) return;
+        asking.current = false;
         timer.current = setInterval(() => {
           setScan((s) => {
             if (s >= TOTAL) {
@@ -39,16 +45,21 @@ export function MoneyDesk() {
           });
         }, 450);
       })
-      .catch(() => setErr(true));
+      .catch(() => { if (mine === gen.current) { asking.current = false; setErr(true); } });
   }
   function runScan(from: number) {
+    if (asking.current) return;
     setErr(false);
     setScan(from);
     startTicker();
   }
   useEffect(() => {
     startTicker();
+    const g = gen;
+    const a = asking;
     return () => {
+      g.current++;
+      a.current = false;
       if (timer.current) clearInterval(timer.current);
     };
   }, []);

@@ -1,0 +1,14 @@
+.box { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; max-width: 520px; margin: 48px auto; padding: 24px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--sheet); }
+.h { font: 600 20px var(--font-sans); }
+.p { font: 400 15px var(--font-sans); color: var(--graphite); }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.btn { min-height: 44px; padding: 0 18px; border-radius: var(--r-md); border: 0; background: var(--harbour); color: var(--on-harbour); font: 600 14px var(--font-sans); }
+.link { min-height: 44px; display: inline-flex; align-items: center; color: var(--harbour); font: 600 14px var(--font-sans); }
+.skel { display: grid; gap: 14px; padding: 8px 0; }
+.bar { height: 18px; border-radius: 8px; background: var(--line); opacity: .6; }
+.bar:nth-child(1) { width: 40%; height: 32px; }
+.bar:nth-child(2) { width: 70%; }
+.bar:nth-child(3) { width: 55%; }
+.block { height: 220px; border-radius: var(--r-lg); background: var(--line); opacity: .4; }
+@media (prefers-reduced-motion: no-preference) { html:not([data-motion="reduced"]) .bar, html:not([data-motion="reduced"]) .block { animation: pulse 1.4s ease-in-out infinite; } }
+@keyframes pulse { 50% { opacity: .3; } }

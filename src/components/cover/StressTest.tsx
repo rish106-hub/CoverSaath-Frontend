@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { InsurerTile } from "./InsurerTile";
 import {
@@ -27,12 +27,12 @@ export function StressTest() {
 
   usePageShortcuts(Object.fromEntries(PEOPLE.map((p, i) => [`person-${i + 1}`, () => setWho(p.name)])));
 
-  const r = calc(who, sc, levers);
+  const r = useMemo(() => calc(who, sc, levers), [who, sc, levers]);
   const pc = (n: number) => Math.max(0, Math.round((n / r.bill) * 100));
   const v = verdict(r.you);
   const pol = policyFor(r.parent);
-  const steps = waterfall(who, r, levers);
-  const { pros, cons } = prosCons(r.parent);
+  const steps = useMemo(() => waterfall(who, r, levers), [who, r, levers]);
+  const { pros, cons } = useMemo(() => prosCons(r.parent), [r.parent]);
   const insPct = pc(r.ins);
   const topPct = pc(r.topPays);
 

@@ -8,6 +8,8 @@ import { RemindRowSlot } from "./slots";
 import ui from "./ui.module.css";
 import s from "./Desk.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { useTicker } from "@/lib/use-ticker";
 
 const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(" ");
 
@@ -26,12 +28,8 @@ export function DeskView() {
     };
   }, []);
 
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    if (mq?.matches) return;
-    const id = setInterval(() => setTick((t) => t + 1), 2400);
-    return () => clearInterval(id);
-  }, []);
+  const reduce = useReducedMotion();
+  useTicker(() => setTick((t) => t + 1), 2400, !reduce);
 
   usePageShortcuts({
     next: () => { if (cases.length) setSel((i) => (i + 1) % cases.length); },

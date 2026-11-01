@@ -1,5 +1,6 @@
 "use client";
 
+import { prefersReducedMotion } from "@/lib/use-reduced-motion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { adapters, type AssistantReply } from "@/adapters";
@@ -35,7 +36,7 @@ export function useAgent(): Ctx {
   return c;
 }
 
-const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const reduced = prefersReducedMotion;
 
 export function AgentProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/home";
@@ -60,6 +61,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   useEffect(() => { holdRef.current = hold; pathRef.current = pathname; });
 
   const clearTimer = () => { if (timer.current) { clearInterval(timer.current); timer.current = null; } };
+  useEffect(() => () => { run.current += 1; clearTimer(); }, []);
 
   const submit = useCallback((text: string) => {
     const said = text.trim();

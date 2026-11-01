@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "analyze:size": "node scripts/analyze-size.mjs",
     "dry-run": "tsx --conditions=react-server scripts/dry-run.ts"
   },
   "dependencies": {

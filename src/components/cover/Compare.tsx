@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Kicker, PageTitle, Recommended, SectionHeading } from "@/components/type";
 import { InsurerTile } from "./InsurerTile";
 import {
@@ -23,13 +23,13 @@ export function Compare() {
 
   usePageShortcuts(Object.fromEntries([0, 1, 2, 3].map((i) => [`plan-${i + 1}`, () => setSel(i)])));
 
-  const list = plans(kind, band);
-  const table = rows(band);
-  const scores = fitScores(table, weights, list.length);
-  const best = bestIndex(scores);
+  const list = useMemo(() => plans(kind, band), [kind, band]);
+  const table = useMemo(() => rows(band), [band]);
+  const scores = useMemo(() => fitScores(table, weights, list.length), [table, weights, list.length]);
+  const best = useMemo(() => bestIndex(scores), [scores]);
   const cur = sel >= 0 ? sel : best;
   const billL = SCENARIOS[scen].billL;
-  const youL = list.map((p, i) => youPaysL(p, i, billL, kind));
+  const youL = useMemo(() => list.map((p, i) => youPaysL(p, i, billL, kind)), [list, billL, kind]);
   const insPct = (i: number) => Math.max(0, Math.min(100, Math.round(((billL - youL[i]) / billL) * 100)));
 
   return (

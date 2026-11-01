@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSingleFlight } from "@/lib/use-single-flight";
 import { adapters, type NotifyChannel } from "@/adapters";
 import { BrandLogo, type BrandId } from "@/components/logos";
 import { buildIcs, googleCalendarUrl, type RemindItem } from "./ics";
@@ -28,16 +29,21 @@ function download(name: string, text: string) {
 export function RemindRow({ label, items, channels = DEFAULT_CHANNELS }: { label: string; items: RemindItem[]; channels?: NotifyChannel[] }) {
   const [message, setMessage] = useState("");
 
-  async function run(channel: NotifyChannel) {
-    const subject = items.map((i) => i.title).join(", ");
-    try {
-      const res = await adapters.notify.send(channel, subject);
-      if (channel === "google-calendar" && items[0]) window.open(googleCalendarUrl(items[0]), "_blank", "noopener");
-      if (channel === "apple-calendar") download("knowvia-reminders.ics", buildIcs(items));
-      setMessage(res.message);
-    } catch {
-      setMessage("That did not go through. Try again.");
-    }
+  const { run: once, busy, alive } = useSingleFlight();
+
+  function run(channel: NotifyChannel) {
+    return once(async () => {
+      const subject = items.map((i) => i.title).join(", ");
+      try {
+        const res = await adapters.notify.send(channel, subject);
+        if (!alive()) return;
+        if (channel === "google-calendar" && items[0]) window.open(googleCalendarUrl(items[0]), "_blank", "noopener");
+        if (channel === "apple-calendar") download("knowvia-reminders.ics", buildIcs(items));
+        setMessage(res.message);
+      } catch {
+        if (alive()) setMessage("That did not go through. Try again.");
+      }
+    });
   }
 
   return (
@@ -45,7 +51,7 @@ export function RemindRow({ label, items, channels = DEFAULT_CHANNELS }: { label
       <span className={styles.label}>{label}</span>
       <div className={styles.buttons}>
         {channels.map((c) => (
-          <button key={c} type="button" className={styles.btn} onClick={() => run(c)}>
+          <button key={c} type="button" className={styles.btn} onClick={() => run(c)} disabled={busy}>
             <BrandLogo id={CHANNELS[c].logo} size={24} />
             {CHANNELS[c].label}
           </button>

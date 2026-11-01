@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useTicker } from "@/lib/use-ticker";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
 import { AccessCard } from "@/components/access/AccessCard";
 import { ThemeToggle } from "@/components/theme";
 import { Kicker } from "@/components/type";
 import { FAMILY_ALL_YEAR, FAMILY_STATS, LANDING_POINTS } from "@/data/mock";
-import { Tour } from "./Tour";
+import dynamic from "next/dynamic";
+
+// The scene player is below the fold on small screens and heavy on mobile CPUs: load it after first paint,
+// in a box of the same size so the page does not jump.
+const Tour = dynamic(() => import("./Tour").then((m) => m.Tour), {
+  ssr: false,
+  loading: () => <div className={styles.tourSkel} aria-hidden />,
+});
 import styles from "./landing.module.css";
 
 /** Beta page: headline, access card, a 20 second tour built from real mini screens, and Meera's family stats. */
@@ -18,13 +26,7 @@ export function Landing() {
   const reduce = useReducedMotion();
   const play = wantPlay && !reduce;
 
-  useEffect(() => {
-    if (!play) return;
-    const id = setInterval(() => {
-      setPos((p) => (p.tick >= 3 ? { scene: (p.scene + 1) % 5, tick: 0 } : { ...p, tick: p.tick + 1 }));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [play]);
+  useTicker(() => setPos((p) => (p.tick >= 3 ? { scene: (p.scene + 1) % 5, tick: 0 } : { ...p, tick: p.tick + 1 })), 1000, play);
 
   const pick = (i: number) => {
     setPos({ scene: i, tick: 0 });

@@ -8,6 +8,7 @@ import { emergencyPeople, emergencyIssues } from "@/data/mock/help-pages";
 import ui from "./ui.module.css";
 import s from "./Emergency.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(" ");
 const QR = Array.from({ length: 81 }, (_, i) => ((i * 7 + (i % 9) * 3 + Math.floor(i / 9) * 5) % 4 !== 0) || [0, 1, 2, 9, 11, 18, 19, 20].includes(i));
@@ -24,8 +25,26 @@ export function EmergencyView() {
   const [banks, setBanks] = useState<{ name: string; distance: string; units: number }[]>([]);
   const [qr, setQr] = useState(false);
   const [sent, setSent] = useState(false);
+  const flight = useSingleFlight();
 
   const p = emergencyPeople[who];
+  const sendCard = () =>
+    flight.run(async () => {
+      try {
+        await adapters.notify.send("whatsapp", `${p.full} e-card`);
+        if (flight.alive()) setSent(true);
+      } catch {
+        /* the button re-enables; nothing was sent */
+      }
+    });
+  const sendRoute = (name: string) =>
+    flight.run(async () => {
+      try {
+        await adapters.notify.send("whatsapp", `Route to ${name}`);
+      } catch {
+        /* the button re-enables */
+      }
+    });
   const parent = p.plan === "senior";
 
   useEffect(() => {
@@ -118,7 +137,7 @@ export function EmergencyView() {
               ) : null}
               <div className={s.ecardBtns}>
                 <button type="button" className={cx(s.ebtn, s.ebtnDark)} onClick={() => setQr((v) => !v)}>{qr ? "Hide QR" : "Show QR"}</button>
-                <button type="button" className={s.ebtn} onClick={() => adapters.notify.send("whatsapp", `${p.full} e-card`).then(() => setSent(true))}>
+                <button type="button" className={s.ebtn} onClick={sendCard} disabled={flight.busy}>
                   <BrandLogo id="whatsapp" size={22} />{sent ? "Sent on WhatsApp" : "Send to WhatsApp"}
                 </button>
               </div>
@@ -197,7 +216,7 @@ export function EmergencyView() {
                           <BrandLogo id="google-maps" size={20} />Open in Google Maps
                         </a>
                         <a className={cx(ui.btn, ui.btnSm)} href="tel:+912055500101">Call ER</a>
-                        <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={() => adapters.notify.send("whatsapp", `Route to ${h.name}`)}>Send route to Rohan</button>
+                        <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={() => sendRoute(h.name)} disabled={flight.busy}>Send route to Rohan</button>
                       </div>
                     </div>
                   ))}

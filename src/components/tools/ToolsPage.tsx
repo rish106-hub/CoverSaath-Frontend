@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SectionHeading } from "@/components/type";
 import { section80D, roomRent, topUpFinder, formatLakhShort, TOPUP_WHO, TOPUP_BASE_LAKH, TOPUP_RISKS, type Regime, type TopUpFit } from "@/lib/calculators";
@@ -44,7 +44,7 @@ function Tax() {
   const [self, setSelf] = useState(6200);
   const [par, setPar] = useState(38400);
   const [senior, setSenior] = useState(true);
-  const r = section80D({ regime, selfRs: self, parentsRs: par, senior });
+  const r = useMemo(() => section80D({ regime, selfRs: self, parentsRs: par, senior }), [regime, self, par, senior]);
   return (
     <div className={styles.two}>
       <div className={styles.card}>
@@ -72,7 +72,7 @@ function Room() {
   const [pct, setPct] = useState(1);
   const [room, setRoom] = useState(8000);
   const [other, setOther] = useState(120000);
-  const r = roomRent({ coverRs: cover, limitPct: pct, roomPerDayRs: room, otherRs: other });
+  const r = useMemo(() => roomRent({ coverRs: cover, limitPct: pct, roomPerDayRs: room, otherRs: other }), [cover, pct, room, other]);
   return (
     <div className={styles.two}>
       <div className={styles.card}>
@@ -131,7 +131,7 @@ function TopUp() {
   const [pick, setPick] = useState(-1);
   const bill = TOPUP_RISKS[risk]!.billLakh;
   const baseL = TOPUP_BASE_LAKH[base]!;
-  const t = topUpFinder({ whoIndex: who, baseLakh: baseL, billLakh: bill, pick });
+  const t = useMemo(() => topUpFinder({ whoIndex: who, baseLakh: baseL, billLakh: bill, pick }), [who, baseL, bill, pick]);
   const worry = TOPUP_RISKS[risk]!.label.toLowerCase();
   const head =
     t.youNow === 0

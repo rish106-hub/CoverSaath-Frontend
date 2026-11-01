@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { prefersReducedMotion } from "@/lib/use-reduced-motion";
 import type { Stat } from "@/data/mock/home";
 
 export function formatStat(s: Stat, v: number = s.value): string {
@@ -12,7 +13,7 @@ export function formatStat(s: Stat, v: number = s.value): string {
 export function CountUp({ stat }: { stat: Stat }) {
   const [v, setV] = useState(stat.value);
   useEffect(() => {
-    if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
     let raf = 0;
     const t0 = performance.now();
     const step = (now: number) => {
