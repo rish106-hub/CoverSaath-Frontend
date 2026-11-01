@@ -1,0 +1,22 @@
+.stack { display: flex; flex-direction: column; gap: 24px; }
+.card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.wrap { flex-wrap: wrap; }
+.small { font: 400 13px/1.4 var(--font-sans); color: var(--graphite); }
+.body { font: 400 15px/1.5 var(--font-sans); color: var(--ink); }
+.strong { font-weight: 600; color: var(--ink); }
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); color: var(--ink); font: 500 15px var(--font-sans); }
+.pill:hover { border-color: var(--ink); }
+.pillOn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); }
+.chip:hover { border-color: var(--ink); }
+.chipOn { border-color: var(--harbour); background: var(--mist); color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 600 14px var(--font-sans); }
+.btn:hover { border-color: var(--ink); }
+.btnPrimary { background: var(--harbour); color: var(--on-harbour); border-color: var(--harbour); }
+.btnDark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btnSm { min-height: 36px; padding: 0 14px; font-size: 13px; font-weight: 500; border-radius: 999px; }
+.key { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 7px; background: var(--sunken); color: var(--ink); font: 500 12px var(--font-mono); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (max-width: 1000px) { .grid2 { grid-template-columns: 1fr; } }

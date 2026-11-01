@@ -18,3 +18,5 @@ h1, h2, h3, p { margin: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @keyframes route-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 .route-in { animation: route-in var(--t-slow) var(--ease) both; }
+/* W5 settings: "Reduce motion" preference mirrors the prefers-reduced-motion token override. */
+html[data-motion="reduced"] { --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-xslow: 1ms; }

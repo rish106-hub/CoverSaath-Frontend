@@ -1,0 +1,24 @@
+.layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 24px; }
+.say { font: 400 32px/1.2 var(--font-serif); letter-spacing: -0.02em; text-align: center; max-width: 620px; margin: 0 auto; }
+.facts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.fact { font: 400 13px var(--font-sans); padding: 6px 14px; border-radius: 999px; background: var(--sunken); color: var(--ink); }
+.factUrgent { background: var(--signal-bg); color: var(--signal-ink); }
+.factCover { background: var(--mist); color: var(--ink); }
+.factNumber { background: var(--marker); color: #16130f; }
+.factWord { background: var(--rec-bg); color: var(--rec-ink); }
+.answer { border-radius: var(--r-lg); padding: 24px; display: flex; flex-direction: column; gap: 14px; background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+.answerUrgent { background: #16130f; color: #f7f5f0; border-color: #16130f; }
+.answerUrgent .kick { color: #f4a590; }
+.kick { font: 600 14px var(--font-sans); color: var(--graphite); }
+.answerText { font: 400 28px/1.2 var(--font-serif); letter-spacing: -0.02em; }
+.ref { align-self: flex-start; background: var(--marker); color: #16130f; padding: 2px 8px; border-radius: 4px; font: 400 14px var(--font-sans); }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.tries { display: flex; gap: 8px; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.item { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: var(--r-md); background: var(--paper); border: 1px solid transparent; }
+.itemOn { background: var(--mist); border-color: var(--harbour); }
+.glyph { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--sunken); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font: 600 14px var(--font-sans); }
+.glyphOn { background: var(--harbour); color: var(--on-harbour); }
+.instant { background: var(--harbour); color: var(--on-harbour); border-radius: var(--r-lg); padding: 20px; display: flex; gap: 14px; align-items: center; font-size: 14px; line-height: 1.5; }
+@media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }

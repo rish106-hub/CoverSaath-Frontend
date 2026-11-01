@@ -97,3 +97,29 @@ export type EmailScan = z.infer<typeof emailScanSchema>;
 
 export const healthSchema = z.object({ ok: z.boolean(), health: z.boolean(), ready: z.boolean(), householdId: z.string().optional() });
 export type BackendStatus = z.infer<typeof healthSchema>;
+
+// W5 (help): richer desk, emergency and blood shapes. Appended.
+export const deskBoardCaseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  who: z.string(),
+  amount: z.string(),
+  next: z.string(),
+  ref: z.string(),
+  /** 0 Raised, 1 With TPA, 2 Documents, 3 Resolved. */
+  stage: z.number().int().min(0).max(3),
+  stateLabel: z.string(),
+  /** Escalation rung in progress, or -1 when no escalation is needed. */
+  rung: z.number().int().min(-1).max(3),
+  thread: z.array(z.object({ from: z.string(), at: z.string(), text: z.string(), side: z.enum(["knowvia", "other", "you"]) })),
+  docs: z.array(z.object({ name: z.string(), highlighted: z.boolean() })),
+});
+export type DeskBoardCase = z.infer<typeof deskBoardCaseSchema>;
+
+export const rankedHospitalSchema = z.object({
+  pin: z.string(), name: z.string(), distance: z.string(), why: z.string(), tag: z.string(), x: z.number(), y: z.number(), top: z.boolean(),
+});
+export type RankedHospital = z.infer<typeof rankedHospitalSchema>;
+
+export const bloodBankSchema = z.object({ name: z.string(), distance: z.string(), units: z.number().int() });
+export type BloodBank = z.infer<typeof bloodBankSchema>;

@@ -49,12 +49,19 @@ export interface ReconcileAdapter {
 }
 export interface DeskAdapter {
   cases(): Promise<S.DeskCase[]>;
+  /** Cases with steps, thread and escalation rung (W5). */
+  board(): Promise<S.DeskBoardCase[]>;
 }
 export interface HospitalAdapter {
   nearby(): Promise<S.Hospital[]>;
+  /** Ranked list for an issue, cashless on the person's plan or best treatment (W5). */
+  ranked(issue: string, mode: "cashless" | "best"): Promise<S.RankedHospital[]>;
 }
 export interface BloodAdapter {
   stock(): Promise<S.BloodStock[]>;
+  /** Units per blood group within 10 km (W5). */
+  groups(): Promise<Record<string, number>>;
+  banks(group: string): Promise<S.BloodBank[]>;
 }
 export interface LearnAdapter {
   posts(): Promise<S.LearnPost[]>;

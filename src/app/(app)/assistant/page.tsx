@@ -1,7 +1,13 @@
-import { PagePlaceholder } from "@/components/shell";
+import { HelpHead } from "@/components/help/HelpHead";
+import { AssistantView } from "@/components/help/AssistantView";
 
 export const metadata = { title: "Ask Knowvia" };
 
 export default function Page() {
-  return <PagePlaceholder route="/assistant" />;
+  return (
+    <>
+      <HelpHead route="/assistant" />
+      <AssistantView />
+    </>
+  );
 }
