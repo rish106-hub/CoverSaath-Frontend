@@ -1,4 +1,5 @@
 import type * as S from "./schemas";
+import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 
 export class AdapterError extends Error {
   constructor(public code: string, public retryable = false) {
@@ -150,4 +151,6 @@ export type Adapters = {
   profile: ProfileAdapter;
   preferences: PreferencesAdapter;
   onboarding: OnboardingAdapter;
+  scenarios: ScenarioAdapter;
+  members: MemberAdapter;
 };

@@ -1,0 +1,69 @@
+.sheet { --spring: cubic-bezier(0.3, 1.12, 0.5, 1); position: fixed; z-index: 45; left: 50%; bottom: 86px; transform: translateX(-50%); width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 110px); display: flex; flex-direction: column; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-lg); overflow: hidden; font: 400 14px var(--font-sans); animation: sheet-in var(--t-slow) var(--ease) both; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); min-width: 0; }
+.headText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.headText b { font-weight: 600; font-size: 16px; }
+.reads { font-size: 13px; color: var(--graphite); overflow-wrap: anywhere; }
+
+/* Chat expands upward: the row grows from 0 to 1 while the mic row stays put underneath. */
+.chatWrap { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows var(--t-xslow, 420ms) var(--spring), opacity var(--t-base) var(--ease), visibility 0s linear var(--t-xslow, 420ms); }
+.chatWrap[data-open="true"] { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+.chatInner { min-height: 0; overflow: hidden; }
+.chatBody { display: flex; flex-direction: column; height: min(380px, calc(100dvh - 330px)); }
+
+.voice { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 16px 16px; min-width: 0; }
+.status { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; }
+.label { font-size: 13px; font-weight: 600; color: var(--harbour); }
+.say { font-family: var(--font-serif); font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+.reply { font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
+.note { font-size: 13px; color: var(--signal-ink); }
+.steps { width: 100%; display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.step { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--graphite); }
+.step i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; background: var(--sunken); color: var(--graphite); }
+.stepDone { color: var(--ink); }
+.stepDone i { background: var(--harbour); color: var(--on-harbour); }
+.go { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-btn); background: var(--harbour); color: var(--on-harbour); font-weight: 600; text-decoration: none; }
+
+.controls { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mic { position: relative; width: 76px; height: 76px; border-radius: 22px; border: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--harbour); color: var(--on-harbour); cursor: pointer; transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); box-shadow: 0 10px 24px -12px rgba(22, 19, 15, 0.5); }
+.mic:hover { transform: translateY(-1px); }
+.mic:active { transform: scale(0.97); }
+.mic:focus-visible, .arrow:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+.micRing { position: absolute; inset: -6px; border-radius: 26px; border: 2px solid var(--harbour); opacity: 0; pointer-events: none; }
+[data-state="listening"] .micRing { animation: ring 1.4s var(--ease) infinite; }
+[data-state="speaking"] .micRing { opacity: 0.5; }
+[data-state="thinking"] .mic { opacity: 0.85; }
+.arrow { width: 44px; height: 44px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
+.arrow:hover { border-color: var(--harbour); background: var(--sunken); }
+.chev { transition: transform var(--t-slow) var(--spring); animation: bob 1.8s ease-in-out infinite; }
+.arrow[aria-expanded="true"] .chev { transform: rotate(180deg); animation: none; }
+.arrow[aria-expanded="true"] { animation: none; }
+
+.examples { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.tryLabel { font-size: 13px; font-weight: 600; color: var(--graphite); }
+.ex { text-align: left; min-height: 36px; padding: 6px 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 14px var(--font-sans); cursor: pointer; overflow-wrap: anywhere; }
+.ex:hover { border-color: var(--harbour); }
+
+/* Chat view: the mic shrinks to a toolbar row beside the arrow. */
+[data-view="chat"] .voice { flex-direction: row; justify-content: space-between; gap: 12px; padding: 10px 16px 14px; border-top: 1px solid var(--line); }
+[data-view="chat"] .status { align-items: flex-start; text-align: left; flex: 1; }
+[data-view="chat"] .controls { flex-direction: row; gap: 10px; }
+[data-view="chat"] .mic { width: 44px; height: 44px; border-radius: var(--r-btn); }
+[data-view="chat"] .mic svg { width: 22px; height: 22px; }
+[data-view="chat"] .micRing { inset: -4px; border-radius: 14px; }
+
+@keyframes sheet-in { from { opacity: 0; transform: translate(-50%, 14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes sheet-in-mobile { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes ring { 0% { opacity: 0.7; transform: scale(0.96); } 100% { opacity: 0; transform: scale(1.18); } }
+
+@media (max-width: 640px) {
+  .sheet { left: 0; right: 0; bottom: 0; width: 100%; max-height: 92dvh; transform: none; border-radius: var(--r-xl) var(--r-xl) 0 0; border-bottom: 0; animation-name: sheet-in-mobile; }
+  .chatBody { height: min(380px, calc(100dvh - 300px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .micRing, .chev { animation: none !important; }
+  .chatWrap, .chev, .mic { transition: none !important; }
+}
+html[data-motion="reduced"] .sheet, html[data-motion="reduced"] .micRing, html[data-motion="reduced"] .chev { animation: none !important; }
+html[data-motion="reduced"] .chatWrap, html[data-motion="reduced"] .chev, html[data-motion="reduced"] .mic { transition: none !important; }

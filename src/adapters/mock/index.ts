@@ -4,6 +4,7 @@ import { detectWalletPlatform } from "@/lib/wallet-detect";
 import { delay } from "./delay";
 import { mockProfile } from "./profile";
 import { mockPreferences, mockOnboarding } from "./user-data";
+import { mockMembers, mockScenarios } from "./scenarios";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
 import { summariseReceipts } from "@/lib/reconcile";
@@ -67,7 +68,7 @@ export const mockAdapters: Adapters = {
   learn: { posts: () => delay(learnPosts) }, // backend gap
   invite: {
     invite: () => delay({ ok: true, state: "sent" as const }),
-    updateMember: (input) => delay(input), // backend gap
+    updateMember: (input) => delay(input), // backend gap: mobile, e-mail and channel have no backend field
   },
   wallet: {
     detect: () => detectWalletPlatform(typeof navigator === "undefined" ? "" : navigator.userAgent),
@@ -84,4 +85,6 @@ export const mockAdapters: Adapters = {
   profile: mockProfile,
   preferences: mockPreferences,
   onboarding: mockOnboarding,
+  scenarios: mockScenarios,
+  members: mockMembers,
 };

@@ -22,6 +22,7 @@ export function AskKnowviaStripSlot() {
         <span className={s.orb} aria-hidden />
         <b>Ask Knowvia anything</b>
       </button>
+      <button type="button" className={s.chip} aria-label="Talk to Knowvia" onClick={() => open(ref.current, { anchor: "strip" })}>Talk</button>
       <div className={s.chips}>
         {ctx.examples.slice(0, 2).map((e) => (
           <button key={e.say} type="button" className={s.chip} onClick={() => ask(e.say)}>{e.say}</button>

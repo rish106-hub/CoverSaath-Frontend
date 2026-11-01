@@ -7,9 +7,9 @@ import { usePageContext } from "@/agent/page-context";
 import { useAgent } from "./AgentProvider";
 import styles from "./AskChat.module.css";
 
-/** Text chat with Ask Knowvia: a settled thread, one input, Enter to send, Esc to close. Loaded on first open. */
-export function AskChat() {
-  const { chatOpen, thread, thinking, submit, closeChat, dictate } = useAgent();
+/** The chat half of the Ask Knowvia panel: shared thread, one input, mic for dictation. Loaded on first expand. */
+export function AskChatPane() {
+  const { chatOpen, thread, thinking, hold, submit, close, toggleMic } = useAgent();
   const ctx = usePageContext();
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -17,9 +17,7 @@ export function AskChat() {
   const canSpeak = typeof window !== "undefined" && adapters.voice.supported();
 
   useEffect(() => { if (chatOpen) input.current?.focus(); }, [chatOpen]);
-  useEffect(() => { end.current?.scrollIntoView?.({ block: "end" }); }, [thread.length, thinking]);
-
-  if (!chatOpen) return null;
+  useEffect(() => { end.current?.scrollIntoView?.({ block: "end" }); }, [thread.length, thinking, chatOpen]);
 
   const send = () => {
     const said = text.trim();
@@ -29,12 +27,7 @@ export function AskChat() {
   };
 
   return (
-    <section role="dialog" aria-label="Ask Knowvia chat" className={styles.panel}>
-      <header className={styles.head}>
-        <h2 className={styles.title}>Ask Knowvia</h2>
-        <button type="button" className="k-btn k-btn--sm" onClick={closeChat}>Close</button>
-      </header>
-
+    <>
       <div className={styles.thread} role="log" aria-live="polite" aria-label="Conversation">
         {thread.length === 0 ? (
           <div className={styles.empty}>
@@ -50,7 +43,7 @@ export function AskChat() {
           <div key={m.id} className={`${styles.msg} ${m.role === "user" ? styles.mine : styles.theirs}`}>
             <p>{m.text}</p>
             {m.route ? (
-              <Link href={m.route} className="k-btn k-btn--sm" onClick={closeChat}>{m.goLabel ?? "Open"}</Link>
+              <Link href={m.route} className="k-btn k-btn--sm" onClick={close}>{m.goLabel ?? "Open"}</Link>
             ) : null}
           </div>
         ))}
@@ -60,9 +53,13 @@ export function AskChat() {
 
       <form className={styles.form} onSubmit={(e) => { e.preventDefault(); send(); }}>
         <input ref={input} className={styles.input} value={text} onChange={(e) => setText(e.target.value)} placeholder="Type your question" aria-label="Message to Ask Knowvia" autoComplete="off" />
-        {canSpeak ? <button type="button" className="k-btn" onClick={dictate} aria-label="Speak your question">Speak</button> : null}
+        {canSpeak ? (
+          <button type="button" className="k-btn" aria-pressed={hold.state === "listening"} onClick={toggleMic} aria-label="Speak your question">
+            {hold.state === "listening" ? "Stop" : "Speak"}
+          </button>
+        ) : null}
         <button type="submit" className="k-btn k-btn--primary" disabled={!text.trim()}>Send</button>
       </form>
-    </section>
+    </>
   );
 }
