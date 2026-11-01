@@ -6,6 +6,8 @@ export type HoldEvent =
   | { type: "open" }
   | { type: "submit" }
   | { type: "finish" }
+  | { type: "show" }
+  | { type: "rest" }
   | { type: "escape" };
 
 export type Hold = { state: HoldState; open: boolean; held: boolean };
@@ -25,6 +27,10 @@ export function holdReducer(h: Hold, e: HoldEvent): Hold {
       return h.open ? { state: "working", open: true, held: false } : h;
     case "finish":
       return h.state === "working" ? { ...h, state: "done" } : h;
+    case "show":
+      return h.open ? h : { state: "idle", open: true, held: false };
+    case "rest":
+      return h.open ? { state: "idle", open: true, held: false } : h;
     case "escape":
       return initialHold;
   }
