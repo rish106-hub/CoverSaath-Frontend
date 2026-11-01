@@ -108,10 +108,10 @@ export const WALLET_PEOPLE: Record<string, WalletCardData> = {
   Father: { full: "Suresh Rao", no: "SNR/2026/048213", mid: "MC-048213", valid: "13 Mar 2027", left: "Rs 2,62,000", tpa: "Meridian desk", line: "1800 111 1111", insurerShort: "MERIDIAN CARE", blood: "B+", room: "Rs 3,000 a day", copay: "20% of each claim" },
 };
 export const WALLET_PASSES = [
-  { id: "apple", name: "Apple Wallet", fmt: ".pkpass · generic", note: "iPhone and Mac: added automatically after sign-in; lock-screen ready near hospitals." },
-  { id: "google", name: "Google Wallet", fmt: "Generic pass", note: "Android: one tap from the dashboard or the share sheet." },
-  { id: "samsung", name: "Samsung Wallet", fmt: "Generic card", note: "Galaxy phones: Add to Samsung Wallet button and link." },
+  { id: "apple", name: "Apple Wallet", note: "iPhone and Mac. Opens from the lock screen." },
+  { id: "google", name: "Google Wallet", note: "Android. One tap to add." },
+  { id: "samsung", name: "Samsung Wallet", note: "Galaxy phones. One tap to add." },
 ] as const;
-export const SHARE_APPLE = ["AirDrop", "WhatsApp", "Telegram", "Email", "Messages", "Google Chat", "Slack", "Download .pkpass"];
-export const SHARE_OTHER = ["WhatsApp", "Telegram", "Email", "Google Chat", "Signal", "Teams", "Scan with phone", "Download PDF"];
+export const SHARE_APPLE = ["AirDrop", "WhatsApp", "Telegram", "Email", "Messages", "Google Chat", "Slack", "Download"];
+export const SHARE_OTHER = ["WhatsApp", "Telegram", "Email", "Google Chat", "Signal", "Teams", "Scan with phone", "Download"];
 export const SHARE_CHANNELS = ["WhatsApp", "SMS", "Email", "Telegram", "Google Chat", "Copy link"];
