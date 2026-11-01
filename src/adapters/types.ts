@@ -70,6 +70,8 @@ export interface LearnAdapter {
 }
 export interface InviteAdapter {
   invite(input: S.InviteInput): Promise<{ ok: boolean; state: "joined" | "sent" | "none" }>;
+  /** Saves a member's details. */
+  updateMember(input: S.MemberUpdate): Promise<S.MemberUpdate>;
 }
 export interface WalletAdapter {
   detect(): S.WalletPlatform;
