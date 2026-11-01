@@ -4,10 +4,10 @@
 .group { display: flex; flex-direction: column; gap: 2px; }
 .gname { display: flex; align-items: center; gap: 8px; padding: 0 12px 4px; font: 700 13px var(--font-sans); color: var(--ink); }
 .gname i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.item, .on { display: flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: var(--r-sm); font: 500 14px var(--font-sans); color: var(--graphite); }
+.item, .on { display: flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: var(--r-btn); font: 500 14px var(--font-sans); color: var(--graphite); }
 .item:hover { background: var(--sunken); color: var(--ink); }
 .on { background: var(--mist); color: var(--ink); font-weight: 600; }
-.emergency { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: var(--r-sm); background: var(--signal-bg); color: var(--signal-ink); font: 600 14px var(--font-sans); }
+.emergency { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: var(--r-btn); background: var(--signal-bg); color: var(--signal-ink); font: 600 14px var(--font-sans); }
 .rule { border: 0; border-top: 1px solid var(--line); margin: 0 12px; width: calc(100% - 24px); }
 .block { padding: 0 12px; display: flex; flex-direction: column; gap: 8px; }
 .label { font: 600 13px var(--font-sans); color: var(--graphite); }
@@ -18,7 +18,7 @@
 
 .topbar, .scrim, .head .close { display: none; }
 .head { display: flex; align-items: center; justify-content: space-between; }
-.menu, .close { min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
+.menu, .close { min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; }
 .aside > :last-child { margin-top: auto; }
 @media (max-width: 959px) {
   .topbar { display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 40; padding: 8px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }

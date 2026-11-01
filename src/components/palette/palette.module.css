@@ -4,5 +4,5 @@
 .list { max-height: 55vh; overflow: auto; padding: 8px; }
 .empty { padding: 16px; font-size: 14px; color: var(--graphite); }
 .panel [cmdk-group-heading] { padding: 10px 10px 4px; font-size: 13px; font-weight: 600; color: var(--graphite); }
-.panel [cmdk-item] { display: flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 10px; font-size: 15px; cursor: pointer; }
+.panel [cmdk-item] { display: flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: var(--r-btn); font-size: 15px; cursor: pointer; }
 .panel [cmdk-item][data-selected="true"] { background: var(--mist); color: var(--ink); }

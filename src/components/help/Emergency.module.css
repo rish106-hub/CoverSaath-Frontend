@@ -2,7 +2,7 @@
 .live { font: 600 13px var(--font-sans); color: var(--signal-ink); letter-spacing: 0.04em; }
 .people { display: flex; gap: 8px; flex-wrap: wrap; }
 .calls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.big { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 96px; padding: 0 24px; border-radius: var(--r-lg); font-family: var(--font-sans); border: 1px solid transparent; text-align: left; }
+.big { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 96px; padding: 0 24px; border-radius: var(--r-btn); font-family: var(--font-sans); border: 1px solid transparent; text-align: left; }
 .bigT { font: 400 32px/1.1 var(--font-serif); letter-spacing: -0.02em; }
 .bigS { font-size: 14px; }
 .c112 { background: #e9785d; color: #16130f; }
@@ -18,7 +18,7 @@
 .facts dt { color: #5f5a52; font-size: 13px; }
 .facts dd { margin: 0; font: 500 14px var(--font-mono); }
 .ecardBtns { display: flex; gap: 8px; flex-wrap: wrap; }
-.ebtn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #d8d2c6; background: #fff; color: #16130f; font: 500 14px var(--font-sans); }
+.ebtn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-btn); border: 1px solid #d8d2c6; background: #fff; color: #16130f; font: 500 14px var(--font-sans); }
 .ebtnDark { background: #16130f; color: #f7f5f0; border-color: #16130f; }
 .qr { display: grid; grid-template-columns: repeat(9, 10px); gap: 2px; padding: 10px; background: #fff; border: 1px solid #e6e1d7; border-radius: 10px; width: fit-content; }
 .qr i { width: 10px; height: 10px; background: #16130f; display: block; }

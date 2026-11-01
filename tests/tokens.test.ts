@@ -32,7 +32,7 @@ const PAIRS: [string, string][] = [
   ["signal-ink", "signal-bg"], ["signal-ink", "paper"],
   ["coral-ink", "coral"],
   ["g-cover", "paper"], ["g-family", "paper"], ["g-money", "paper"], ["g-help", "paper"],
-  ["g-cover", "sheet"], ["g-family", "sheet"], ["g-money", "sheet"], ["g-help", "sheet"],
+  ["signal-bg", "signal-ink"], ["g-cover", "sheet"], ["g-family", "sheet"], ["g-money", "sheet"], ["g-help", "sheet"],
 ];
 
 describe.each([["light", light], ["dark", dark]] as const)("%s theme contrast", (_n, t) => {

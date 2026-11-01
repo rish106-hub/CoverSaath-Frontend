@@ -1,4 +1,4 @@
 .box { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--sheet); }
 .h { font: 600 17px var(--font-sans); }
 .p { font: 400 14px var(--font-sans); color: var(--graphite); }
-.btn { min-height: 44px; padding: 0 18px; border-radius: var(--r-md); border: 0; background: var(--harbour); color: var(--on-harbour); font: 600 14px var(--font-sans); }
+.btn { min-height: 44px; padding: 0 18px; border-radius: var(--r-btn); border: 0; background: var(--harbour); color: var(--on-harbour); font: 600 14px var(--font-sans); }
