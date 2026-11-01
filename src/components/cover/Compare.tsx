@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Kicker, PageTitle, Recommended, SectionHeading } from "@/components/type";
 import { InsurerTile } from "./InsurerTile";
@@ -11,7 +12,7 @@ import styles from "./Compare.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
 
 const DOT: Record<Dot, string> = { good: "var(--harbour)", okay: "var(--ochre)", watch: "var(--signal)" };
-const DOT_LABEL: Record<Dot, string> = { good: "Good for you", okay: "Okay", watch: "Watch out" };
+const DOT_LABEL: Record<Dot, string> = { good: "Good", okay: "Okay", watch: "Needs care" };
 const DIRECT = [{ logo: "KG", name: "Kaveri General" }, { logo: "MC", name: "Meridian Care" }, { logo: "IS", name: "Indus Shield Health" }];
 
 export function Compare() {
@@ -37,7 +38,7 @@ export function Compare() {
       <div className={styles.titleRow}>
         <div>
           <Kicker>Compare plans</Kicker>
-          <PageTitle>Which plan fits your family, not the brochure.</PageTitle>
+          <PageTitle>Which plan fits your family?</PageTitle>
         </div>
         <div className={styles.segs}>
           <div className={styles.seg} role="group" aria-label="Kind of plan">
@@ -54,7 +55,7 @@ export function Compare() {
       </div>
 
       <div className={styles.two}>
-        <SectionHeading title="What matters to you" description="Knowvia picked these from your policies">
+        <SectionHeading title="What matters to you">
           <div className={styles.prios}>
             {PRIORITIES.map((p) => {
               const w = weights[p.id] || 0;
@@ -72,7 +73,7 @@ export function Compare() {
           </div>
         </SectionHeading>
 
-        <SectionHeading title="Fit for Meera’s family" description="Changes as you pick">
+        <SectionHeading title="Fit for Meera’s family">
           <div className={styles.fit} role="group" aria-label="Fit scores">
             {list.map((p, i) => (
               <button key={p.name} type="button" className={styles.fitRow} aria-pressed={cur === i} onClick={() => setSel(i)}>
@@ -103,7 +104,7 @@ export function Compare() {
               </span>
               <span><span className={styles.price}>{p.price}</span> <span className={styles.sub}>{p.per}</span></span>
               <span className={styles.youBlock}>
-                <span className={styles.youRow}><span>You’d pay on {SCENARIOS[scen].name.toLowerCase()}</span><span className={styles.mono} style={{ color: youL[i] > 1 ? "var(--signal-ink)" : "var(--harbour)" }}>{lakh(youL[i])}</span></span>
+                <span className={styles.youRow}><span>You pay, {SCENARIOS[scen].name.toLowerCase()}</span><span className={styles.mono} style={{ color: youL[i] > 1 ? "var(--signal-ink)" : "var(--harbour)" }}>{lakh(youL[i])}</span></span>
                 <span className={styles.split} aria-hidden><span style={{ width: `${insPct(i)}%`, background: "var(--harbour)" }} /><span style={{ width: `${100 - insPct(i)}%`, background: "var(--signal)" }} /></span>
               </span>
             </>
@@ -147,7 +148,7 @@ export function Compare() {
 
       <div className={styles.two}>
         <SectionHeading
-          title="Same bill, four plans"
+          title="Same bill, each plan"
           actions={
             <div className={styles.chips} role="group" aria-label="Typical bill">
               {SCENARIOS.map((x, k) => <button key={x.name} type="button" aria-pressed={scen === k} onClick={() => setScen(k)}>{x.name}</button>)}
@@ -155,7 +156,7 @@ export function Compare() {
           }
         >
           <div className={styles.card}>
-            <p className={styles.sub}>Typical bill in Pune: <strong className={styles.strong}>{lakh(billL)}</strong></p>
+            <p className={styles.sub}>Typical Pune bill: <strong className={styles.strong}>{lakh(billL)}</strong></p>
             {list.map((p, i) => (
               <div key={p.name} className={styles.billRow}>
                 <span className={styles.name} style={{ fontWeight: cur === i ? 600 : 400 }}>{p.name}</span>
@@ -172,10 +173,10 @@ export function Compare() {
             <div className={`${styles.card} ${styles.advisor}`}>
               <span className={styles.adv} aria-hidden>AK</span>
               <span className={styles.grow}>
-                <span className={styles.name}>Talk this comparison through, first 15 minutes free</span>
-                <span className={styles.sub}>Knowvia sends them this table, with your OK.</span>
+                <span className={styles.name}>Talk it through with an advisor</span>
+                <span className={styles.sub}>First 15 minutes free</span>
               </span>
-              <a className={styles.cta} href="/tools">Book</a>
+              <Link className="k-btn k-btn--primary" href="/tools">Book a call</Link>
             </div>
           </SectionHeading>
           <SectionHeading title="Buy direct from the insurer">
@@ -184,7 +185,7 @@ export function Compare() {
                 <a key={d.logo} href="#direct" className={styles.dcard}>
                   <InsurerTile code={d.logo} size={32} />
                   <span className={styles.name}>{d.name}</span>
-                  <span className={styles.link}>Insurer site ↗</span>
+                  <span className="k-btn k-btn--secondary k-btn--sm">Visit site</span>
                 </a>
               ))}
             </div>

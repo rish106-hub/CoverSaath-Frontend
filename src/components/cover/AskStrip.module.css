@@ -1,0 +1,7 @@
+.strip { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 18px; border-radius: 20px; border: 1px solid var(--line); background: var(--sheet); }
+.main { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--ink); font: 600 16px var(--font-sans); cursor: pointer; text-align: left; }
+.main:focus-visible, .chip:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
+.orb { flex: none; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #bfd8d3, #6fa79e 40%, #0e4f4a 78%); box-shadow: 0 0 0 5px rgba(111, 167, 158, 0.22); }
+.chips { display: flex; flex: 1 1 260px; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.chip { min-height: 36px; max-width: 100%; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 13px var(--font-sans); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip:hover { border-color: var(--harbour); }

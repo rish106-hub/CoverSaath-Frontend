@@ -4,10 +4,17 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adapters, type Member, type Policy } from "@/adapters";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PeopleChips } from "./PeopleChips";
 import styles from "./PolicyList.module.css";
 
 const KIND: Record<Policy["kind"], string> = { group: "Group", "top-up": "Top-up", senior: "Senior", individual: "Individual" };
 const inr = (n: number) => "Rs " + n.toLocaleString("en-IN");
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** 2027-03-31 becomes 31 Mar 2027; anything else is shown as it came. */
+const day = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : iso;
+};
 
 export function PolicyList() {
   const [policies, setPolicies] = useState<Policy[] | null>(null);
@@ -23,30 +30,31 @@ export function PolicyList() {
       live = false;
     };
   }, []);
-  const name = (id: string) => members.find((m) => m.id === id)?.name ?? id;
+  const people = (ids: string[]) => ids.map((id) => members.find((m) => m.id === id) ?? { name: id, relation: id });
 
   return (
     <>
       <div>
-        <Kicker>Answers for your family</Kicker>
+        <Kicker>Your family’s cover</Kicker>
         <PageTitle>My policies</PageTitle>
       </div>
-      <SectionHeading title="Your policies" description="Open one to read the answer next to the clause it came from.">
-        {policies === null ? <p className={styles.quiet} role="status">Loading your policies…</p> : null}
-        {policies?.length === 0 ? <p className={styles.quiet}>No policies yet. Add one from Documents.</p> : null}
+      <SectionHeading title="Your policies">
+        {policies === null ? <p className={styles.quiet} role="status">Loading your policies...</p> : null}
+        {policies?.length === 0 ? <p className={styles.quiet}>No policies yet.</p> : null}
         <div className={styles.grid}>
           {policies?.map((p) => (
             <Link key={p.id} href={`/policies/${p.id}`} className={styles.card}>
-              <span className={styles.top}><span className={styles.kind}>{KIND[p.kind]}</span><span className={styles.arrow} aria-hidden>→</span></span>
+              <span className={styles.kind}>{KIND[p.kind]}</span>
               <span className={styles.name}>{p.name}</span>
               <span className={styles.ins}>{p.insurer}</span>
               <dl className={styles.facts}>
                 <div><dt>Cover</dt><dd>{inr(p.sumInsuredRs)}</dd></div>
-                <div><dt>Premium</dt><dd>{p.premiumRs ? inr(p.premiumRs) + " a year" : "Paid by employer"}</dd></div>
+                <div><dt>Premium</dt><dd>{p.premiumRs ? inr(p.premiumRs) + " a year" : "Employer pays"}</dd></div>
                 <div><dt>Co-pay</dt><dd>{p.coPayPct ? `${p.coPayPct}%` : "None"}</dd></div>
-                <div><dt>Renews</dt><dd>{p.renewsOn}</dd></div>
+                <div><dt>Renews</dt><dd>{day(p.renewsOn)}</dd></div>
               </dl>
-              <span className={styles.who}>Covers {p.memberIds.map(name).join(", ")}</span>
+              <span className={styles.who}><PeopleChips people={people(p.memberIds)} /></span>
+              <span className={`k-btn k-btn--secondary k-btn--sm ${styles.open}`}>Open policy</span>
             </Link>
           ))}
         </div>

@@ -31,9 +31,8 @@ export function ReviewView() {
     <>
       <div className={s.top}>
         <div className={s.titleBlock}>
-          <Kicker>Your review · 1 Nov 2026</Kicker>
+          <Kicker>Review, 1 Nov 2026</Kicker>
           <PageTitle>{sum.headline}</PageTitle>
-          <p className={s.lede}>Nothing gets built until you say go.</p>
         </div>
         <div className={s.panel}>
           <div className={s.ring} style={{ background: `conic-gradient(#f4dc8a 0 ${sum.pct}%, rgba(247,245,240,.16) ${sum.pct}% 100%)` }}>
@@ -43,16 +42,15 @@ export function ReviewView() {
             </div>
           </div>
           <div className={s.panelText}>
-            <b>Knowvia handled {sum.done} of your {reviewTotal} requests on its own.</b>
-            <span>Gaps it found along the way were fixed too. Nothing there needs you.</span>
+            <b>Knowvia handled {sum.done} of {reviewTotal} requests.</b>
           </div>
         </div>
       </div>
 
       <div className={s.cols}>
         <SectionHeading
-          title="Recommended, check and edit"
-          actions={sum.open ? <button type="button" className={s.btn} onClick={() => setSt((p) => acceptAll(p, decisions.length))}>Accept all {sum.open}</button> : null}
+          title="Decisions"
+          actions={sum.open ? <button type="button" className="k-btn k-btn--primary k-btn--sm" onClick={() => setSt((p) => acceptAll(p, decisions.length))}>Accept all {sum.open}</button> : null}
         >
           <div className={s.stack}>
             {decisions.map((d, i) => {
@@ -64,14 +62,14 @@ export function ReviewView() {
                     <span className={`${s.mark} ${has ? s.markDone : ""}`} aria-hidden>{has ? "✓" : i + 1}</span>
                     <span className={s.q}>
                       <b>{d.q}</b>
-                      <span className={s.cur}>{has ? "✓ " : "Knowvia recommends: "}{d.options[chosen]}</span>
+                      <span className={s.cur}>{has ? "Chosen: " : "Recommended: "}{d.options[chosen]}</span>
                     </span>
                     {has ? (
-                      <button type="button" className={s.btn} onClick={() => setOpen(open === i ? -1 : i)}>Change</button>
+                      <button type="button" className="k-btn k-btn--secondary k-btn--sm" onClick={() => setOpen(open === i ? -1 : i)}>Change</button>
                     ) : (
                       <>
-                        <button type="button" className={s.cta} onClick={() => { setSt((p) => accept(p, i)); setOpen(-1); }}>Accept</button>
-                        <button type="button" className={s.btn} onClick={() => setOpen(open === i ? -1 : i)}>Edit</button>
+                        <button type="button" className="k-btn k-btn--primary k-btn--sm" onClick={() => { setSt((p) => accept(p, i)); setOpen(-1); }}>Accept</button>
+                        <button type="button" className="k-btn k-btn--secondary k-btn--sm" onClick={() => setOpen(open === i ? -1 : i)}>Edit</button>
                       </>
                     )}
                   </div>
@@ -97,7 +95,7 @@ export function ReviewView() {
         </SectionHeading>
 
         <div className={s.right}>
-          <SectionHeading title="New this round" description="Have a look">
+          <SectionHeading title="To check">
             <div className={s.stack}>
               {lookItems.map((l, i) => {
                 const ok = !!st.ok[i];
@@ -108,20 +106,20 @@ export function ReviewView() {
                     <span className={`${s.mark} ${ok ? s.markDone : ch ? s.markCh : isNext ? s.markNext : ""}`} aria-hidden>{ok ? "✓" : ch ? "!" : i + 1}</span>
                     <span className={s.q}>
                       <b>{l.t}</b>
-                      <span className={s.where}>⌖ {l.where}</span>
+                      <span className={s.where}>{l.where}</span>
                     </span>
                     <span className={s.acts}>
-                      <Link href={l.href} className={s.btn}>Open</Link>
-                      <button type="button" className={s.btn} aria-pressed={ok} aria-label={`Mark ${l.t} as checked`} onClick={() => setSt((p) => tick(p, i))}>✓</button>
-                      <button type="button" className={`${s.btn} ${s.danger}`} onClick={() => setSt((p) => flag(p, i))}>Change</button>
+                      <Link href={l.href} className="k-btn k-btn--secondary k-btn--sm">Open</Link>
+                      <button type="button" className={`k-btn k-btn--secondary k-btn--sm ${s.tickBtn}`} aria-pressed={ok} aria-label={`Mark ${l.t} as checked`} onClick={() => setSt((p) => tick(p, i))}>{ok ? "Checked" : "Mark checked"}</button>
+                      <button type="button" className={`k-btn k-btn--secondary k-btn--sm ${s.danger}`} onClick={() => setSt((p) => flag(p, i))}>Needs change</button>
                     </span>
                   </div>
                 );
               })}
               <div className={s.go}>
                 <span className={s.orb} aria-hidden />
-                <span className={s.goText}>When everything here is ticked, say “go”. Knowvia writes the build plan and the prompts for you to read first.</span>
-                <button type="button" className={s.cta} onClick={() => setWent(true)}>{went ? "Noted ✓" : "Go"}</button>
+                <span className={s.goText}>Everything checked? Continue.</span>
+                <button type="button" className="k-btn k-btn--primary" onClick={() => setWent(true)}>{went ? "Confirmed" : "Continue"}</button>
               </div>
             </div>
           </SectionHeading>

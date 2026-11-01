@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { InsurerTile } from "./InsurerTile";
@@ -11,9 +12,9 @@ import styles from "./StressTest.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
 
 const LEVER_DEFS: { key: keyof Levers; icon: string; title: string; desc: (parent: boolean) => string }[] = [
-  { key: "top", icon: "↗", title: "Add a Rs 10L top-up", desc: () => "Pays what’s left after the base plan" },
-  { key: "net", icon: "✚", title: "Use a cashless network hospital", desc: () => "Fewer items you pay at the desk" },
-  { key: "room", icon: "▣", title: "Pick a room within the limit", desc: (p) => (p ? "Up to Rs 3,000 a day" : "Up to Rs 5,000 a day") },
+  { key: "top", icon: "↗", title: "Add a Rs 10L top-up", desc: () => "Pays after the base plan" },
+  { key: "net", icon: "✚", title: "Choose a cashless hospital", desc: () => "Fewer bills at the desk" },
+  { key: "room", icon: "▣", title: "Choose a room within the limit", desc: (p) => (p ? "Up to Rs 3,000 a day" : "Up to Rs 5,000 a day") },
 ];
 
 const BAR_TONE: Record<Quality, string> = { Strong: "var(--harbour)", Okay: "var(--ochre)", Weak: "var(--signal)", None: "var(--signal)" };
@@ -41,7 +42,7 @@ export function StressTest() {
       <div className={styles.titleRow}>
         <div>
           <Kicker>Stress test</Kicker>
-          <PageTitle>If {who} needed this, who pays?</PageTitle>
+          <PageTitle>Who pays if {who} needs this?</PageTitle>
         </div>
         <div className={styles.persons} role="group" aria-label="Who is it for">
           {PEOPLE.map((p, i) => (
@@ -58,20 +59,20 @@ export function StressTest() {
           <button key={k} type="button" className={styles.scenario} aria-pressed={sc === k} onClick={() => setSc(k)}>
             <span className={styles.ic} aria-hidden>{SCENARIOS[k].icon}</span>
             <span className={styles.scTitle}>{SCENARIOS[k].title}</span>
-            <span className={styles.scBill}>bill {shortBill(calc(who, k, levers).bill)}</span>
+            <span className={styles.scBill}>Bill {shortBill(calc(who, k, levers).bill)}</span>
           </button>
         ))}
       </div>
 
       <div className={styles.two}>
-        <SectionHeading title="The bill, step by step" actions={<span className={styles.policy}><InsurerTile code={pol.logo} size={30} />{pol.name}</span>}>
+        <SectionHeading title="Bill step by step" actions={<span className={styles.policy}><InsurerTile code={pol.logo} size={30} />{pol.name}</span>}>
           <div className={`${styles.card} ${styles.steps}`}>
             {steps.map((s) => (
               <div key={s.title} className={styles.step}>
                 <span className={`${styles.ic} ${s.tone === "cut" ? styles.icCut : s.tone === "bill" ? "" : styles.icPay}`} aria-hidden>{s.icon}</span>
                 <span>
                   <span className={styles.stepTitle}>{s.title}</span>
-                  <span className={styles.stepRef}>{s.ref}</span>
+                  {s.ref ? <span className={styles.stepRef}>{s.ref}</span> : null}
                 </span>
                 <span className={styles.track} aria-hidden>
                   <span className={styles.fill} style={{ left: `${s.x}%`, width: `${s.w}%`, background: STEP_TONE[s.tone] }} />
@@ -79,7 +80,6 @@ export function StressTest() {
                 <span className={styles.stepVal} style={{ color: s.zero ? "var(--graphite)" : s.tone === "cut" ? "var(--signal-ink)" : "var(--ink)", fontWeight: s.tone === "bill" || s.tone === "pay" ? 600 : 400 }}>{s.value}</span>
               </div>
             ))}
-            <p className={styles.hint}>Every line links to the page it came from. Tap one to read it in the Reading room.</p>
           </div>
         </SectionHeading>
 
@@ -97,7 +97,7 @@ export function StressTest() {
             </div>
             <div className={styles.note}>{youNote(r)}</div>
           </div>
-          <SectionHeading title="Try what changes it">
+          <SectionHeading title="What could change it" actions={<Link href="/compare" className="k-btn k-btn--secondary k-btn--sm">Compare top-ups</Link>}>
             <div className={`${styles.card} ${styles.levers}`}>
               {LEVER_DEFS.map((l) => {
                 const on = levers[l.key];
@@ -109,7 +109,7 @@ export function StressTest() {
                       <span className={styles.stepTitle}>{l.title}</span>
                       <span className={styles.stepRef}>{l.desc(r.parent)}</span>
                     </span>
-                    <span className={styles.save}>{on ? "on" : sv ? `− Rs ${inr(sv)}` : "no change"}</span>
+                    <span className={styles.save}>{on ? "On" : sv ? `Saves Rs ${inr(sv)}` : "No change"}</span>
                     <button type="button" role="switch" aria-checked={on} aria-label={l.title} className={styles.sw} onClick={() => setLevers({ ...levers, [l.key]: !on })}>
                       <span />
                     </button>
@@ -121,7 +121,7 @@ export function StressTest() {
         </div>
       </div>
 
-      <SectionHeading title="Same treatment, whole family" description={SCENARIOS[sc].title}>
+      <SectionHeading title="Same treatment, whole family">
         <div className={styles.family}>
           {PEOPLE.map((p) => {
             const f = familyRow(p.name, sc, levers);
@@ -153,10 +153,10 @@ export function StressTest() {
           </div>
         </SectionHeading>
         <div className={styles.right}>
-          <SectionHeading title="Strong">
+          <SectionHeading title="Strengths">
             <ul className={`${styles.list} ${styles.good}`}>{pros.map((p) => <li key={p}><span className={`${styles.mark} ${styles.markGood}`} aria-hidden>＋</span>{p}</li>)}</ul>
           </SectionHeading>
-          <SectionHeading title="Watch out">
+          <SectionHeading title="Things to watch">
             <ul className={`${styles.list} ${styles.watch}`}>{cons.map((p) => <li key={p}><span className={`${styles.mark} ${styles.markWatch}`} aria-hidden>−</span>{p}</li>)}</ul>
           </SectionHeading>
         </div>

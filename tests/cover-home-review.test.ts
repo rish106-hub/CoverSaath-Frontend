@@ -63,3 +63,13 @@ describe("home stats", () => {
     expect(formatStat({ prefix: "Rs ", value: 5308, group: true }, 1000.4)).toBe("Rs 1,000");
   });
 });
+
+describe("people grouping", () => {
+  it("groups mother and father as Parents and capitalises names", async () => {
+    const { groupPeople, headCount } = await import("@/components/cover/people");
+    const g = groupPeople([{ name: "meera" }, { name: "Mother", relation: "mother" }, { name: "Father", relation: "father" }]);
+    expect(g.map((x) => x.label)).toEqual(["Meera", "Parents"]);
+    expect(headCount(g)).toBe(3);
+    expect(groupPeople([{ name: "Mother", relation: "mother" }]).map((x) => x.label)).toEqual(["Mother"]);
+  });
+});

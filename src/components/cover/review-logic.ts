@@ -21,7 +21,7 @@ export function summarize(s: ReviewState, total: number, nDecisions: number, nLo
     pct: Math.round((done / total) * 100),
     open: nDecisions - decided,
     next,
-    headline: left ? `${left} ${left === 1 ? "thing needs" : "things need"} you. Knowvia handled the rest.` : "All set. Say go when you’re ready.",
+    headline: left ? `${left} ${left === 1 ? "thing needs" : "things need"} you. Knowvia handled the rest.` : "All set. Ready to continue.",
   };
 }
 

@@ -13,11 +13,11 @@ afterEach(cleanup);
 describe("stress test page", () => {
   it("keys 1 to 5 pick the person and the title follows", () => {
     render(<StressTest />);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("If Father needed this, who pays?");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Who pays if Father needs this?");
     act(() => pressPageShortcut("person-1"));
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("If Meera needed this, who pays?");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Who pays if Meera needs this?");
     act(() => pressPageShortcut("person-4"));
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("If Mother needed this, who pays?");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Who pays if Mother needs this?");
   });
   it("the top-up lever lowers what Father pays and shows as on", () => {
     render(<StressTest />);
@@ -28,7 +28,7 @@ describe("stress test page", () => {
   });
   it("has the three board sections and no banned words", () => {
     const { container } = render(<StressTest />);
-    for (const h of ["The bill, step by step", "Same treatment, whole family", "Section by section"]) expect(screen.getByRole("heading", { name: h })).toBeInTheDocument();
+    for (const h of ["Bill step by step", "Same treatment, whole family", "Section by section"]) expect(screen.getByRole("heading", { name: h })).toBeInTheDocument();
     expect(container.textContent).not.toMatch(BANNED);
   });
 });
@@ -61,14 +61,14 @@ describe("policies", () => {
     const { container } = render(<PolicyReader id="northstar-floater" />);
     await waitFor(() => expect(screen.getByText("Room rent, boarding and nursing: up to 1% of the sum insured per day.")).toBeInTheDocument());
     await act(async () => fireEvent.click(screen.getByRole("button", { name: /^ICU/ })));
-    expect(screen.getByText("Your documents disagree")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Where the documents disagree" })).toBeInTheDocument();
+    expect(screen.getByText("Details differ between documents")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Needs review" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Policy schedule" }));
     expect(container.textContent).toContain("Schedule of cover");
     expect(container.textContent).not.toMatch(BANNED);
   });
   it("reader: unknown policy says so", async () => {
     render(<PolicyReader id="nope" />);
-    await waitFor(() => expect(screen.getByText("We could not find that policy")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Policy not found")).toBeInTheDocument());
   });
 });

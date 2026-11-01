@@ -1,0 +1,10 @@
+.row { display: inline-flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%; }
+.stack { display: inline-flex; flex: none; }
+.av { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin-left: -8px; border-radius: 50%; border: 2px solid var(--sheet); font: 600 13px var(--font-sans); color: #16130f; }
+.av:first-child { margin-left: 0; }
+.t0 { background: var(--marker); }
+.t1 { background: var(--sea-glass); }
+.t2 { background: var(--coral); }
+.t3 { background: var(--mist); }
+.more { background: var(--sunken); color: var(--graphite); }
+.count { font: 400 13px var(--font-sans); color: var(--graphite); white-space: nowrap; }
