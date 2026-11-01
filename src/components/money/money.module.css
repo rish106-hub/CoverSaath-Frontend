@@ -6,7 +6,7 @@
 .btn { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); }
 .btn:hover { border-color: var(--ink); }
 .cta { border: 0; background: var(--ink); color: var(--paper); align-self: flex-start; }
-.cta:hover { background: var(--harbour); color: var(--on-harbour); }
+.cta:hover { background: var(--btn-accent); color: var(--btn-accent-ink); }
 .card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; align-items: center; }
 .statLabel { font: 400 13px var(--font-sans); color: var(--graphite); }
@@ -17,7 +17,7 @@
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; align-items: start; }
 .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .rc { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); animation: fly var(--t-slow) var(--ease) both; }
-.rcOn { border-color: var(--harbour); background: var(--mist); }
+.rcOn { border-color: var(--btn-accent); background: var(--btn-tint); }
 .rcTitle { display: block; font: 500 14px var(--font-sans); }
 .rcSub { font: 400 13px var(--font-sans); color: var(--graphite); }
 .mono { font: 400 14px var(--font-mono); white-space: nowrap; }

@@ -41,8 +41,11 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
       try {
         await adapters.wallet.pass(p);
         if (alive()) setAdded(p);
+        // Remember the wallet in the stored onboarding progress. Android wallets (Google, Samsung) share one value.
+        const saved = await adapters.onboarding.get();
+        await adapters.onboarding.save({ ...(saved ?? { completed: false }), wallet: p === "apple" ? "apple" : "google" });
       } catch {
-        if (alive()) setError("Could not create the card. Try again.");
+        if (alive()) setError("Could not save that. Try again.");
       }
     });
   }

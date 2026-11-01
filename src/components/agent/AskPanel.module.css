@@ -21,19 +21,19 @@
 .step i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; background: var(--sunken); color: var(--graphite); }
 .stepDone { color: var(--ink); }
 .stepDone i { background: var(--harbour); color: var(--on-harbour); }
-.go { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-btn); background: var(--harbour); color: var(--on-harbour); font-weight: 600; text-decoration: none; }
+.go { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-btn); background: var(--btn-accent); color: var(--btn-accent-ink); font-weight: 600; text-decoration: none; }
 
 .controls { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.mic { position: relative; width: 76px; height: 76px; border-radius: 22px; border: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--harbour); color: var(--on-harbour); cursor: pointer; transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); box-shadow: 0 10px 24px -12px rgba(22, 19, 15, 0.5); }
+.mic { position: relative; width: 76px; height: 76px; border-radius: 22px; border: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--btn-accent); color: var(--btn-accent-ink); cursor: pointer; transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); box-shadow: 0 10px 24px -12px rgba(22, 19, 15, 0.5); }
 .mic:hover { transform: translateY(-1px); }
 .mic:active { transform: scale(0.97); }
-.mic:focus-visible, .arrow:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
-.micRing { position: absolute; inset: -6px; border-radius: 26px; border: 2px solid var(--harbour); opacity: 0; pointer-events: none; }
+.mic:focus-visible, .arrow:focus-visible { outline: 2px solid var(--btn-accent); outline-offset: 3px; }
+.micRing { position: absolute; inset: -6px; border-radius: 26px; border: 2px solid var(--btn-accent); opacity: 0; pointer-events: none; }
 [data-state="listening"] .micRing { animation: ring 1.4s var(--ease) infinite; }
 [data-state="speaking"] .micRing { opacity: 0.5; }
 [data-state="thinking"] .mic { opacity: 0.85; }
 .arrow { width: 44px; height: 44px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
-.arrow:hover { border-color: var(--harbour); background: var(--sunken); }
+.arrow:hover { border-color: var(--btn-accent); background: var(--sunken); }
 .chev { transition: transform var(--t-slow) var(--spring); animation: bob 1.8s ease-in-out infinite; }
 .arrow[aria-expanded="true"] .chev { transform: rotate(180deg); animation: none; }
 .arrow[aria-expanded="true"] { animation: none; }
@@ -41,7 +41,7 @@
 .examples { width: 100%; display: flex; flex-direction: column; gap: 6px; }
 .tryLabel { font-size: 13px; font-weight: 600; color: var(--graphite); }
 .ex { text-align: left; min-height: 36px; padding: 6px 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 14px var(--font-sans); cursor: pointer; overflow-wrap: anywhere; }
-.ex:hover { border-color: var(--harbour); }
+.ex:hover { border-color: var(--btn-accent); }
 
 /* Chat view: the mic shrinks to a toolbar row beside the arrow. */
 [data-view="chat"] .voice { flex-direction: row; justify-content: space-between; gap: 12px; padding: 10px 16px 14px; border-top: 1px solid var(--line); }

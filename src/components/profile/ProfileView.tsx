@@ -17,7 +17,6 @@ const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(" ")
 type Form = { line1: string; line2: string; landmark: string; city: string; state: string; pincode: string };
 const EMPTY: Form = { line1: "", line2: "", landmark: "", city: "", state: "", pincode: "" };
 const fromAddress = (a: Address): Form => ({ line1: a.line1, line2: a.line2, landmark: a.landmark, city: a.city, state: a.state, pincode: a.pincode });
-const SETTINGS_KEY = "knowvia-settings";
 
 function Field({ id, label, error, children }: { id: string; label: string; error?: string; children: ReactNode }) {
   return (
@@ -217,6 +216,9 @@ function LocationSection({ profile }: { profile: Profile }) {
   const [message, setMessage] = useState("");
   const [kind, setKind] = useState<"home" | "work">("home");
   const [text, setText] = useState("");
+  const [placeCity, setPlaceCity] = useState("");
+  const [placeState, setPlaceState] = useState("");
+  const [placePin, setPlacePin] = useState("");
   const [placeError, setPlaceError] = useState("");
   const allow = useSave();
   const clear = useSave();
@@ -284,11 +286,15 @@ function LocationSection({ profile }: { profile: Profile }) {
 
   const addPlace = (e: FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) { setPlaceError("Enter the address."); return; }
+    if (!text.trim() || !placeCity.trim() || !placeState || !/^[1-9]\d{5}$/.test(placePin)) {
+      setPlaceError("Enter the address, city, state and a 6-digit pincode.");
+      return;
+    }
     setPlaceError("");
     void add.save(async () => {
-      const p = await adapters.profile.savePlace(kind, kind === "home" ? "Home" : "Work", { line1: text.trim(), country: "IN" });
-      setPlaces((x) => [...x, p]); setText("");
+      const p = await adapters.profile.savePlace(kind, kind === "home" ? "Home" : "Work", { line1: text.trim(), city: placeCity.trim(), state: placeState, pincode: placePin, country: "IN" });
+      // One place per kind: saving Home again replaces the old Home.
+      setPlaces((x) => [...x.filter((q) => q.id !== p.id), p]); setText(""); setPlaceCity(""); setPlaceState(""); setPlacePin("");
     });
   };
   const removePlace = (id: string) =>
@@ -325,7 +331,7 @@ function LocationSection({ profile }: { profile: Profile }) {
               <div key={p.id} className={s.item}>
                 <span>
                   <span className={s.strong}>{p.label}</span>
-                  <span className={s.cardText} style={{ display: "block" }}>{p.address.line1}</span>
+                  <span className={s.cardText} style={{ display: "block" }}>{[p.address.line1, p.address.city, p.address.pincode].filter(Boolean).join(", ")}</span>
                 </span>
                 <button type="button" className="k-btn" onClick={() => removePlace(p.id)} disabled={drop.busy} aria-label={`Remove ${p.label}`}>Remove</button>
               </div>
@@ -347,6 +353,20 @@ function LocationSection({ profile }: { profile: Profile }) {
             </Field>
           </div>
           <div className={s.row}>
+            <Field id="pl-city" label="Place city">
+              <input id="pl-city" className={s.input} value={placeCity} onChange={(e) => { setPlaceCity(e.target.value); add.reset(); }} />
+            </Field>
+            <Field id="pl-state" label="Place state">
+              <select id="pl-state" className={s.input} value={placeState} onChange={(e) => { setPlaceState(e.target.value); add.reset(); }}>
+                <option value="">Choose a state</option>
+                {INDIAN_STATES.map((st) => <option key={st} value={st}>{st}</option>)}
+              </select>
+            </Field>
+            <Field id="pl-pin" label="Place pincode">
+              <input id="pl-pin" className={s.input} inputMode="numeric" maxLength={6} value={placePin} onChange={(e) => { setPlacePin(e.target.value.replace(/\D/g, "")); add.reset(); }} />
+            </Field>
+          </div>
+          <div className={s.row}>
             <button type="submit" className="k-btn" disabled={add.busy}>Add place</button>
             <SaveState status={add.status} />
           </div>
@@ -357,17 +377,12 @@ function LocationSection({ profile }: { profile: Profile }) {
 }
 
 function SourcesSection({ logos }: { logos: { digilocker: ReactNode; abha: ReactNode } }) {
-  // Read-only view of what Settings holds (same browser key; defaults match Settings).
+  // Read-only view of what Settings stores (the backend preferences; defaults until they load).
   const [on, setOn] = useState<Record<string, boolean>>({ gmail: true, digilocker: true, abha: false });
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(SETTINGS_KEY);
-      const saved = raw ? (JSON.parse(raw) as { sources?: Record<string, boolean> }).sources : undefined;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (saved) setOn((x) => ({ ...x, ...saved }));
-    } catch {
-      /* storage unavailable: defaults */
-    }
+    let live = true;
+    adapters.preferences.get().then((saved) => { if (live && saved) setOn((x) => ({ ...x, ...saved.sources })); }, () => undefined);
+    return () => { live = false; };
   }, []);
   const rows = [
     { id: "gmail", name: "Gmail", detail: "Finds premium receipts and insurer emails", logo: <BrandLogo id="gmail" size={40} /> },

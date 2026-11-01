@@ -2,7 +2,7 @@
 .h { font: 600 20px var(--font-sans); }
 .p { font: 400 15px var(--font-sans); color: var(--graphite); }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.btn { min-height: 44px; padding: 0 18px; border-radius: var(--r-btn); border: 0; background: var(--harbour); color: var(--on-harbour); font: 600 14px var(--font-sans); }
+.btn { min-height: 44px; padding: 0 18px; border-radius: var(--r-btn); border: 0; background: var(--btn-accent); color: var(--btn-accent-ink); font: 600 14px var(--font-sans); }
 .link { min-height: 44px; display: inline-flex; align-items: center; color: var(--harbour); font: 600 14px var(--font-sans); }
 .skel { display: grid; gap: 14px; padding: 8px 0; }
 .bar { height: 18px; border-radius: 8px; background: var(--line); opacity: .6; }

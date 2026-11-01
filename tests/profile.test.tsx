@@ -227,12 +227,15 @@ describe("location", () => {
     view();
     await ready();
     fireEvent.click(screen.getByRole("button", { name: "Add place" }));
-    expect(await screen.findByText("Enter the address.")).toBeInTheDocument();
+    expect(await screen.findByText(/Enter the address, city, state/)).toBeInTheDocument();
     type("Address", "7, Green Lane");
+    type("Place city", "Pune");
+    fireEvent.change(screen.getByLabelText("Place state"), { target: { value: "Maharashtra" } });
+    type("Place pincode", "411001");
     fireEvent.click(screen.getByRole("button", { name: "Add place" }));
-    expect(await screen.findByText("7, Green Lane")).toBeInTheDocument();
+    expect(await screen.findByText("7, Green Lane, Pune, 411001")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Remove Home" }));
-    await waitFor(() => expect(screen.queryByText("7, Green Lane")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/7, Green Lane/)).not.toBeInTheDocument());
   });
 });
 
