@@ -1,0 +1,8 @@
+.scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-start; justify-content: center; padding-top: 14vh; background: rgba(22, 19, 15, 0.4); }
+.panel { width: 560px; max-width: calc(100vw - 32px); background: var(--sheet); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-lg); overflow: hidden; }
+.input { width: 100%; box-sizing: border-box; min-height: 52px; padding: 0 18px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: 400 16px var(--font-sans); outline: none; }
+.list { max-height: 55vh; overflow: auto; padding: 8px; }
+.empty { padding: 16px; font-size: 14px; color: var(--graphite); }
+.panel [cmdk-group-heading] { padding: 10px 10px 4px; font-size: 13px; font-weight: 600; color: var(--graphite); }
+.panel [cmdk-item] { display: flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 10px; font-size: 15px; cursor: pointer; }
+.panel [cmdk-item][data-selected="true"] { background: var(--mist); color: var(--ink); }

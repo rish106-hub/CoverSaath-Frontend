@@ -75,7 +75,7 @@ export type BloodStock = z.infer<typeof bloodSchema>;
 export const learnPostSchema = z.object({ id: z.string(), kind: z.enum(["Video", "Guide", "News"]), title: z.string(), why: z.string(), minutes: z.number() });
 export type LearnPost = z.infer<typeof learnPostSchema>;
 
-export const assistantReplySchema = z.object({ reply: z.string(), steps: z.array(z.string()).length(3), route: z.string().optional() });
+export const assistantReplySchema = z.object({ reply: z.string(), steps: z.array(z.string()).length(3), route: z.string().optional(), goLabel: z.string().optional(), pageRef: z.string().optional() });
 export type AssistantReply = z.infer<typeof assistantReplySchema>;
 
 export const inviteInputSchema = z.object({ relation: z.string().min(1), name: z.string().min(1), mobile: z.string().regex(/^\+?\d[\d\s-]{7,14}$/), via: z.enum(["whatsapp", "sms"]) });

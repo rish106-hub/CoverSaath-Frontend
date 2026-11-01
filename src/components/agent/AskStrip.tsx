@@ -1,0 +1,45 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { adapters } from "@/adapters";
+import { usePageContext } from "@/agent/page-context";
+import { useAgent } from "./AgentProvider";
+import styles from "./agent.module.css";
+
+/** Home row: orb, invitation, 3 example chips, and what Knowvia is doing for you. Exported for other branches. */
+export function AskStrip() {
+  const { open, submit } = useAgent();
+  const ctx = usePageContext();
+  const ref = useRef<HTMLButtonElement>(null);
+  const [counts, setCounts] = useState<{ progress: number; needs: number } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    adapters.desk.cases().then((cs) => {
+      if (live) setCounts({ progress: cs.filter((c) => c.status === "In progress").length, needs: cs.filter((c) => c.status === "Needs you").length });
+    }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+
+  return (
+    <div className={styles.strip}>
+      <button ref={ref} type="button" className={styles.stripMain} aria-label="Ask Knowvia, hold V" onClick={() => open(ref.current, { anchor: "strip", mode: "text" })}>
+        <span className={styles.orb} aria-hidden />
+        <span className={styles.stripText}>
+          <b>Ask Knowvia anything</b>
+          <span>It reads your policies and whatever page you are on. Hold <kbd className={styles.kbd}>V</kbd> and talk.</span>
+        </span>
+      </button>
+      <div className={styles.chips}>
+        {ctx.examples.map((e) => (
+          <button key={e.say} type="button" className={styles.chip} onClick={() => { open(ref.current, { anchor: "strip", mode: "text" }); submit(e.say); }}>“{e.say}”</button>
+        ))}
+      </div>
+      <Link href="/desk" className={styles.doing}>
+        <span>Doing for you</span>
+        <span>{counts ? <>{counts.progress} in progress · <span className={styles.needs}>{counts.needs} needs you</span> →</> : "Open Claims and insurer talks →"}</span>
+      </Link>
+    </div>
+  );
+}
