@@ -62,3 +62,18 @@ Browser adapter `scenarios` and `members` (`src/adapters/scenarios.ts`) call the
 Limits of the stress encoding (no dedicated fields in `stress_levers`): add-a-top-up is stored as `sumInsuredPct` 100 or 200, cashless as `claimDelayDays` 0 or 14, room within the limit as `roomUpgrade` false or true. The "Dengue" treatment has no value in the `scenario` enum, so it is not stored and a reload shows the default treatment. `who` is the person's name because the screen has no member ids yet.
 
 Scenario delete is not offered: the backend has no delete route for scenarios.
+
+---
+
+## Verifying persistence end to end (`npm run verify:persistence`)
+
+Local proof that what the app collects reaches the backend sealed. It signs up a synthetic person ("Persist Check <timestamp>", `example.com` e-mail) through the live BFF, performs every wired write through `/api/app/*`, reads it back through the BFF and through a second cookie jar (refresh survival), then reads Postgres directly with `psql` and checks rows, `enc1.`/`enc2.` sealing, and that no marker string, number or e-mail local part appears in plaintext in `device_permissions`, `household_places`, `adult_preferences`, `onboarding_progress` or `tool_scenarios`. It also checks erasure (revoking location deletes the current location; removing a member deletes it) and that a second household sees nothing. It prints a field to route to table to sealed to status matrix and exits non-zero if a wired field fails. Known gaps print as NOT WIRED.
+
+Needs: the BFF on `127.0.0.1:3200` (override with `VERIFY_BFF_URL`, loopback only), the backend it points at, and a local database `knowvia_dryrun` on `127.0.0.1:54329` as role `coversaath` (`psql` on the PATH). The script refuses any non-loopback host, the `coversaath_dev` database and port 8787. Run it with a throwaway env file only if your `psql` needs a password (`PGPASSWORD`); it never prints tokens or cookies.
+
+```sh
+node --env-file=<throwaway.env> node_modules/tsx/dist/cli.mjs --conditions=react-server scripts/verify-persistence.ts
+# or: npm run verify:persistence
+```
+
+Not covered: member place rows (no BFF route writes them, so the cascade is not exercised) and a true second sign-in (the backend has no login yet; the second jar reuses the session cookie).
