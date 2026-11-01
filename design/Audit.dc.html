@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audit v6</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+*{box-sizing:border-box}
+a{color:#0E4F4A;text-decoration:none;font-weight:500}a:hover{color:#16130F}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(111,167,158,.55)}100%{box-shadow:0 0 0 12px rgba(111,167,158,0)}}
+.serif{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-0.02em}
+.mono{font-family:'Geist Mono',monospace}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.rec{background:#EAE6F2;color:#4A3D78}
+.card{background:#FFFFFF;border:1px solid #E6E1D7;border-radius:20px;padding:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:0 14px;border:1px solid #D8D2C6;border-radius:999px;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer}
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:0 16px;border:0;border-radius:999px;background:#16130F;color:#F7F5F0;font:500 13px Geist,system-ui,sans-serif;cursor:pointer}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+
+.vdock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:25;display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:6px 8px 6px 6px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 20px 40px -22px rgba(22,19,15,.55);text-align:left}
+.vdock b{display:block;font-weight:600;font-size:14px}.vdock .vsub{display:block;font-size:12px;color:#5F5A52}
+.vdock kbd,.vcard kbd,.vstrip kbd{font:500 11px 'Geist Mono',monospace;padding:2px 7px;border-radius:6px;background:#EFEBE3;color:#16130F}
+.vorb{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#BFD8D3,#6FA79E 40%,#0E4F4A 78%);box-shadow:0 0 0 5px rgba(111,167,158,.22)}
+.vcard{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:40;width:460px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:24px;border:1px solid #E5E0D6;background:#FFFFFF;color:#16130F;box-shadow:0 40px 90px -30px rgba(22,19,15,.45);font:400 14px Geist,system-ui,sans-serif}
+.vcard.vtop{top:250px;bottom:auto}
+.vcard .vread{font-size:12px;padding:4px 10px;border-radius:999px;background:#E3EFEC;color:#0E4F4A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.vcard .vx{min-height:30px;padding:0 10px;border-radius:999px;border:1px solid #E5E0D6;background:transparent;color:#16130F;font:500 12px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vlbl{font-size:11px;font-weight:600;letter-spacing:.06em;color:#0E4F4A}
+.vcard .vsay{font-size:24px;line-height:1.2}
+.vcard .vstep{display:flex;gap:10px;align-items:center;font-size:13px}
+.vcard .vstep i{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.vcard .vgo{display:flex;justify-content:space-between;align-items:center;min-height:42px;padding:0 14px;border-radius:12px;background:#0E4F4A;color:#F7F5F0;font-weight:600}
+.vcard .vex{text-align:left;min-height:36px;padding:0 12px;border-radius:10px;border:1px solid #E5E0D6;background:#F7F5F0;color:#16130F;font:400 13px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vfoot{display:flex;gap:14px;font-size:12px;color:#5F5A52;padding-top:12px;border-top:1px solid #EFEBE3}
+
+/* section headings: solid, sized, ruled */
+.eyebrow{display:block!important;width:auto!important;padding:0!important;border-radius:0!important;background:none!important;font:600 17px/1.3 Geist,system-ui,sans-serif!important;letter-spacing:-.01em!important;color:inherit}
+.eyebrow::before{display:none!important;content:none!important}
+.eyebrow[data-g]{font-size:20px!important}
+.secline{padding-bottom:12px;border-bottom:1px solid #E6E1D7}
+.secdesc{margin-top:4px;font:400 14px/1.45 Geist,system-ui,sans-serif;color:#5F5A52}
+.kicker{font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+/* page header: breadcrumb + group switch, then sibling tabs */
+.phead{display:flex;flex-direction:column;gap:14px;grid-column:1/-1;flex:0 0 100%;box-sizing:border-box}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.crumbs{display:flex;align-items:center;gap:8px;font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+.crumbs a{color:#5F5A52}.crumbs b{color:#16130F;font-weight:600}
+.crumbs .dot{width:10px;height:10px;border-radius:50%}
+.gsw{display:inline-flex;padding:3px;border-radius:12px;background:#EFEBE3;gap:2px}
+.gsw a{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 14px;border-radius:9px;font:500 13px Geist,system-ui,sans-serif;color:#5F5A52}
+.gsw a i{width:8px;height:8px;border-radius:50%}
+.gsw a.on{background:#FFFFFF;color:#16130F;font-weight:600;box-shadow:0 1px 3px rgba(22,19,15,.12)}
+.ptabs{display:flex;align-items:flex-end;gap:28px;border-bottom:1px solid #E6E1D7}
+.ptabs a{display:inline-flex;align-items:center;min-height:40px;margin-bottom:-1px;border-bottom:2px solid transparent;font:500 15px Geist,system-ui,sans-serif;color:#5F5A52}
+.ptabs a:hover{color:#16130F}
+.ptabs a.on{color:#16130F;font-weight:600}
+.ptabs .keys{margin-left:auto;align-self:center;font:400 12px 'Geist Mono',monospace;color:#8C867C}
+/* reminders */
+.remind{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.remind>span{font:500 13px Geist,system-ui,sans-serif;color:#5F5A52;margin-right:2px}
+.rbtn{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:0 12px 0 6px;border-radius:999px;border:1px solid #E6E1D7;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer}
+.rbtn .logo{width:22px!important;height:22px!important;border-radius:6px!important;border:0}
+.rbtn.on{border-color:#0E4F4A;background:#E3EFEC}
+.logo.lg-GCAL{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Calendar%3C/title%3E%3Cpath d='M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zm-7.207 6.25v-.065c.272-.144.5-.349.687-.617s.279-.595.279-.982c0-.379-.099-.72-.3-1.025a2.05 2.05 0 0 0-.832-.714 2.703 2.703 0 0 0-1.197-.257c-.6 0-1.094.156-1.481.467-.386.311-.65.671-.793 1.078l1.085.452c.086-.249.224-.461.413-.633.189-.172.445-.257.767-.257.33 0 .602.088.816.264a.86.86 0 0 1 .322.703c0 .33-.12.589-.36.778-.24.19-.535.284-.886.284h-.567v1.085h.633c.407 0 .748.109 1.02.327.272.218.407.499.407.843 0 .336-.129.614-.387.832s-.565.327-.924.327c-.351 0-.651-.103-.897-.311-.248-.208-.422-.502-.521-.881l-1.096.452c.178.616.505 1.082.977 1.401.472.319.984.478 1.538.477a2.84 2.84 0 0 0 1.293-.291c.382-.193.684-.458.902-.794.218-.336.327-.72.327-1.149 0-.429-.115-.797-.344-1.105a2.067 2.067 0 0 0-.881-.689zm2.093-1.931l.602.913L15 10.045v5.744h1.187V8.446h-.827l-2.158 1.557zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="background: #F7F5F0; color: #16130F; font-family: Geist, system-ui, sans-serif; padding: 40px 48px 72px; display: flex; flex-direction: column; gap: 24px; min-height: 1300px">
+<header class="phead" style="padding: 0">
+<div class="prow"><div class="crumbs"><a href="Home.dc.html">Knowvia</a><span>/</span><span class="dot" style="background: #0E4F4A"></span><a href="Home.dc.html">My cover</a><span>/</span><b>Things to check</b></div><nav class="gsw" aria-label="Knowvia groups"><a class="on" href="Home.dc.html"><i style="background: #0E4F4A"></i>My cover</a><a class="" href="Family.dc.html"><i style="background: #B4553D"></i>My family</a><a class="" href="Money.dc.html"><i style="background: #8A5A0B"></i>My money</a><a class="" href="Desk.dc.html"><i style="background: #5A4A8C"></i>Help</a></nav></div>
+<nav class="ptabs" aria-label="My cover"><a class="" href="Home.dc.html">Overview</a><a class="" href="Reading.dc.html">My policies</a><a class="" href="Policy.dc.html">Stress test</a><a class="" href="Compare.dc.html">Compare plans</a><a class="on" href="Audit.dc.html" style="border-color: #0E4F4A">Things to check</a></nav>
+</header>
+
+<header style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch">
+<div style="display: flex; flex-direction: column; justify-content: flex-end; gap: 14px">
+<div class="eyebrow">Your review · 1 Nov 2026</div>
+<h1 class="serif" style="margin: 0; font-size: 52px; line-height: 1">{{headline}}</h1>
+<p style="margin: 0; font-size: 16px; color: #5F5A52">Nothing gets built until you say go.</p>
+</div>
+<div style="border-radius: 22px; background: #0E4F4A; color: #F7F5F0; padding: 22px; display: flex; gap: 20px; align-items: center">
+<div style="flex: none; width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(#F4DC8A 0 {{donePct}}%, rgba(247,245,240,.16) {{donePct}}% 100%); display: flex; align-items: center; justify-content: center"><div style="width: 92px; height: 92px; border-radius: 50%; background: #0E4F4A; display: flex; flex-direction: column; align-items: center; justify-content: center"><span class="serif" style="font-size: 34px; line-height: 1">{{done}}</span><span style="font-size: 11px; color: #BFD8D3">of {{total}}</span></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 18px; font-weight: 600">Knowvia handled {{done}} of your {{total}} requests on its own.</span>
+<span style="font-size: 14px; color: #BFD8D3">Gaps it found along the way were fixed too. Nothing there needs you.</span>
+</div>
+</div>
+</header>
+
+<section style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><div class="eyebrow rec">Recommended · check and edit</div><button class="btn" onClick="{{acceptAll}}">Accept all {{nRec}}</button></div>
+<sc-for list="{{recs}}" as="d" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: {{d.bg}}; border: 1px solid {{d.line}}">
+<div style="display: flex; gap: 12px; align-items: center">
+<span style="flex: none; width: 34px; height: 34px; border-radius: 50%; background: {{d.dot}}; color: {{d.dotInk}}; display: inline-flex; align-items: center; justify-content: center; font-size: 14px">{{d.mark}}</span>
+<span style="flex: 1"><span style="display: block; font-size: 15px; font-weight: 600">{{d.q}}</span><span style="font-size: 13px; color: #4A3D78">{{d.cur}}</span></span>
+<sc-if value="{{d.pending}}" hint-placeholder-val="{{ true }}"><button class="cta" style="background: #4A3D78" onClick="{{d.accept}}">Accept</button><button class="btn" onClick="{{d.edit}}">Edit</button></sc-if>
+<sc-if value="{{d.decided}}" hint-placeholder-val="{{ false }}"><button class="btn" onClick="{{d.edit}}">Change</button></sc-if>
+</div>
+<sc-if value="{{d.isOpen}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px; padding-left: 46px"><sc-for list="{{d.opts}}" as="o" hint-placeholder-count="2"><button onClick="{{o.pick}}" style="display: flex; justify-content: space-between; gap: 10px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid {{o.line}}; background: {{o.bg}}; font: 400 13px Geist, system-ui, sans-serif; color: #16130F; cursor: pointer"><span>{{o.t}}</span><span class="mono" style="font-size: 10px; color: #4A3D78">{{o.rec}}</span></button></sc-for></div></sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><div class="eyebrow">New this round · have a look</div></div>
+<sc-for list="{{looks}}" as="l" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: {{l.bg}}; border: 1px solid {{l.line}}">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: {{l.dot}}; color: {{l.dotInk}}; display: inline-flex; align-items: center; justify-content: center; font-size: 14px">{{l.mark}}</span>
+<span><span style="display: block; font-size: 14px; font-weight: 600">{{l.t}}</span><span style="font-size: 12px; color: #5F5A52">⌖ {{l.where}}</span></span>
+<span style="display: flex; gap: 6px; align-items: center"><a href="{{l.href}}" class="btn" style="min-height: 32px; font-size: 12px">Open</a><button class="btn" style="min-height: 32px; font-size: 12px" onClick="{{l.ok}}">✓</button><button class="btn" style="min-height: 32px; font-size: 12px; color: #9A2F14" onClick="{{l.change}}">Change</button></span>
+</div>
+</sc-for>
+<div class="card" style="display: flex; gap: 14px; align-items: center; padding: 16px">
+<span style="flex: none; width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6FA79E, #0E4F4A 70%); animation: pulse 1.8s ease-out infinite"></span>
+<span style="flex: 1; font-size: 14px">When everything here is ticked, say “go”. Knowvia writes the build plan and the prompts for you to read first.</span>
+<button class="cta" onClick="{{go}}">{{goLabel}}</button>
+</div>
+</div>
+</section>
+<button class="vdock" onClick="{{vOpen}}" aria-label="Ask Knowvia, hold V"><span class="vorb"></span><span><b>Ask Knowvia</b><span class="vsub">Reads this page · {{vPage}}</span></span><kbd>Hold V</kbd></button>
+<sc-if value="{{vShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{vCls}}" role="dialog" aria-label="Ask Knowvia">
+<div style="display: flex; align-items: center; gap: 12px"><button class="vorb" onClick="{{vTalk}}" aria-label="Hold to talk" style="cursor: pointer; box-shadow: 0 0 0 {{vRa}}px rgba(111,167,158,.25), 0 0 0 {{vRb}}px rgba(111,167,158,.12)"></button><div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0"><span style="font-weight: 600">Ask Knowvia</span><span class="vread">Reading {{vReads}}</span></div><button class="vx" onClick="{{vClose}}">Esc</button></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="vlbl">{{vLbl}}</span><div class="serif vsay">“{{vSay}}”</div></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><sc-for list="{{vSteps}}" as="x" hint-placeholder-count="3"><div class="vstep" style="color: {{x.ink}}"><i style="background: {{x.bg}}; color: {{x.mk}}">{{x.m}}</i>{{x.t}}</div></sc-for></div>
+<sc-for list="{{vGo}}" as="g" hint-placeholder-count="1"><a class="vgo" href="{{g.href}}">{{g.t}}<span>→</span></a></sc-for>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #5F5A52">Try saying, on this page</span><sc-for list="{{vEx}}" as="e" hint-placeholder-count="3"><button class="vex" onClick="{{e.pick}}">“{{e.t}}”</button></sc-for></div>
+<div class="vfoot"><span><kbd>V</kbd> hold to talk</span><span><kbd>Esc</kbd> close</span><span>English, Hindi or both</span></div>
+</div>
+</sc-if>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 1300}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  __voice() {
+    const V = {"page": "Audit", "reads": "the open decisions on this page", "at": "bottom", "ex": [{"say": "Accept everything you recommend", "st": ["6 recommendations", "Accepted all six", "Nothing left that needs you"], "href": null, "go": null}, {"say": "Why do you need my Gmail?", "st": ["Question · Gmail", "Used only to find receipts", "You can revoke it any time"], "href": "Money.dc.html", "go": "See what it found"}, {"say": "Take me home", "st": ["Navigate", "Saving your choices", "Opening Home"], "href": "Home.dc.html", "go": "Go to Home"}]}; const s = this.state || {};
+    const e = V.ex[(s.__ve || 0) % V.ex.length]; const t = s.__vt || 0; const hold = !!s.__vh;
+    const done = hold ? 0 : Math.min(3, Math.max(0, t - 1)); const listening = hold || t < 1;
+    return {
+      vPage: V.page, vReads: V.reads, vShow: !!s.__vo, vCls: (s.__vat || V.at) === 'top' ? 'vcard vtop' : 'vcard',
+      vOpen: () => this.setState({ __vo: true, __vt: 0, __vat: V.at }),
+      vClose: () => this.setState({ __vo: false, __vh: false }),
+      vTalk: () => this.setState({ __ve: (s.__ve || 0) + 1, __vt: 0 }),
+      vLbl: listening ? 'LISTENING…' : done < 3 ? 'WORKING ON IT' : 'DONE · SAY THE NEXT THING',
+      vSay: e.say, vRa: listening ? 8 : 4, vRb: listening ? 16 : 8,
+      vSteps: e.st.map((x, k) => ({ t: x, m: k < done ? '✓' : String(k + 1), bg: k < done ? '#0E4F4A' : '#EFEBE3', mk: k < done ? '#F7F5F0' : '#8C867C', ink: k < done ? '#16130F' : '#8C867C' })),
+      vGo: e.href && done >= 3 ? [{ href: e.href, t: e.go }] : [],
+      vEx: V.ex.map((x, k) => ({ t: x.say, pick: () => this.setState({ __ve: k, __vt: 1, __vh: false }) }))
+    };
+  }
+  __vmount() {
+    this.__vi = setInterval(() => { if (this.state && this.state.__vo && !this.state.__vh) this.setState({ __vt: Math.min(4, (this.state.__vt || 0) + 1) }); }, 650);
+    this.__vd = (ev) => { const tg = ev.target && ev.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return; if ((ev.key === 'v' || ev.key === 'V') && !ev.repeat) this.setState({ __vo: true, __vh: true, __vt: 0 }); if (ev.key === 'Escape') this.setState({ __vo: false, __vh: false }); };
+    this.__vu = (ev) => { if ((ev.key === 'v' || ev.key === 'V') && this.state && this.state.__vh) this.setState({ __vh: false, __vt: 1, __ve: (this.state.__ve || 0) + 1 }); };
+    window.addEventListener('keydown', this.__vd); window.addEventListener('keyup', this.__vu);
+  }
+  __vunmount() { clearInterval(this.__vi); window.removeEventListener('keydown', this.__vd); window.removeEventListener('keyup', this.__vu); }
+
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }, this.__voice()); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__vmount(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); this.__vunmount(); window.removeEventListener('keydown', this.__kh); }
+
+  constructor(p) { super(p); this.state = { dec: {}, open: -1, ok: {}, ch: {}, go: false }; }
+  __cdm() {
+    this.__ak = (e) => { const t = e.target && e.target.tagName; if (t === 'INPUT' || t === 'TEXTAREA') return; const nx = this.__rv().__next; if (nx < 0) return; if (e.key === 'a' || e.key === 'A') this.setState({ ok: Object.assign({}, this.state.ok, { [nx]: true }) }); if (e.key === 'c' || e.key === 'C') this.setState({ ch: Object.assign({}, this.state.ch, { [nx]: true }) }); };
+    window.addEventListener('keydown', this.__ak);
+  }
+  __cwu() { window.removeEventListener('keydown', this.__ak); }
+  __rv() {
+    const s = this.state;
+    const TOTAL = 44;
+    const D = [
+      ['Logos for DigiLocker, ABDM, e-RaktKosh', ['Show the official name until written permission arrives', 'Use the marks now and ask later']],
+      ['Wallet accounts', ['Google Wallet first (free), Apple once the developer account is bought', 'All three at launch']],
+      ['What the e-card QR opens', ['A signed link that expires, showing the e-card', 'Plain policy text']],
+      ['Reading receipts from email', ['Forward-to-address first, Gmail and Outlook sign-in after app review', 'Gmail sign-in from day one']],
+      ['Who talks to the TPA', ['Knowvia drafts, a person on our team sends', 'Knowvia sends after you approve each message']],
+      ['Advisor calls', ['First call free, flat fee after; advisors see only what you share', 'Advisors paid by insurers']]
+    ];
+    const LK = [
+      ['Beta page, short and simple', 'Landing · whole board', 'Landing'],
+      ['Speak to Knowvia sheet', 'Home · yellow button in the dark panel', 'Home'],
+      ['Cover at a glance, bigger', 'Home · top row', 'Home'],
+      ['Real logos: Google, Apple, WhatsApp, wallets', 'Sign in, Wallet, Money', 'Wallet'],
+      ['Knowvia name everywhere', 'Every board', 'Home'],
+      ['Emergency in light mode', 'Emergency · whole board', 'Emergency'],
+      ['Add family by phone number', 'Family · Add family member', 'Family'],
+      ['Compare, Stress test, Family redesigns', 'Compare, Stress test, Family', 'Compare']
+    ];
+    const decided = D.filter((d, i) => s.dec[i] !== undefined).length;
+    const reviewed = LK.filter((l, i) => s.ok[i]).length;
+    const done = TOTAL - (D.length - decided) - (LK.length - reviewed);
+    const nx = LK.findIndex((l, i) => !s.ok[i] && !s.ch[i]);
+    const left = (D.length - decided) + (LK.length - reviewed);
+    return {
+      __next: nx,
+      headline: left ? left + ' things need you. Knowvia handled the rest.' : 'All set. Say go when you’re ready.',
+      total: TOTAL, done: done, donePct: Math.round(done / TOTAL * 100), nRec: D.length - decided,
+      acceptAll: () => { const o = Object.assign({}, s.dec); D.forEach((d, i) => { if (o[i] === undefined) o[i] = 0; }); this.setState({ dec: o, open: -1 }); },
+      recs: D.map((d, i) => { const has = s.dec[i] !== undefined; const ch = has ? s.dec[i] : 0; return { q: d[0], cur: (has ? '✓ ' : 'Knowvia recommends: ') + d[1][ch], mark: has ? '✓' : String(i + 1), pending: !has, decided: has, isOpen: s.open === i, bg: has ? '#FFFFFF' : '#F5F2FA', line: has ? '#E6E1D7' : '#CFC6EA', dot: has ? '#0E4F4A' : '#4A3D78', dotInk: has ? '#F4DC8A' : '#F7F5F0', accept: () => this.setState({ dec: Object.assign({}, s.dec, { [i]: 0 }), open: -1 }), edit: () => this.setState({ open: s.open === i ? -1 : i }), opts: d[1].map((o, j) => ({ t: o, rec: j === 0 ? 'RECOMMENDED' : '', bg: ch === j && has ? '#EAE6F2' : '#FFFFFF', line: ch === j && has ? '#4A3D78' : '#E6E1D7', pick: () => this.setState({ dec: Object.assign({}, s.dec, { [i]: j }), open: -1 }) })) }; }),
+      looks: LK.map((l, i) => { const ok = !!s.ok[i], c = !!s.ch[i]; return { t: l[0], where: l[1], href: l[2] + '.dc.html', mark: ok ? '✓' : c ? '!' : String(i + 1), dot: ok ? '#0E4F4A' : c ? '#E9785D' : i === nx ? '#16130F' : '#EFEBE3', dotInk: ok || c || i === nx ? '#F7F5F0' : '#5F5A52', bg: ok ? '#FAFCFB' : c ? '#FFF7F4' : '#FFFFFF', line: i === nx ? '#16130F' : ok ? '#BFD8D3' : c ? '#F2B9A8' : '#E6E1D7', ok: () => this.setState({ ok: Object.assign({}, s.ok, { [i]: !ok }), ch: Object.assign({}, s.ch, { [i]: false }) }), change: () => this.setState({ ch: Object.assign({}, s.ch, { [i]: true }), ok: Object.assign({}, s.ok, { [i]: false }) }) }; }),
+      go: () => this.setState({ go: true }), goLabel: s.go ? 'Noted ✓' : 'Go'
+    };
+  }
+}
+</script>
+</body>
+</html>

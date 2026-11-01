@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+*{box-sizing:border-box}
+a{color:#0E4F4A;text-decoration:none}a:hover{color:#16130F}
+@keyframes up{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+@keyframes down{0%{transform:translateY(-50%)}100%{transform:translateY(0)}}
+@keyframes fade{0%{transform:translateY(8px)}100%{opacity:1;transform:none}}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(111,167,158,.5)}100%{box-shadow:0 0 0 16px rgba(111,167,158,0)}}
+.serif{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-0.02em}
+.mono{font-family:'Geist Mono',monospace}
+.prov{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;border:1px solid #D8D2C6;border-radius:14px;background:#FFFFFF;color:#16130F;font:500 15px Geist,system-ui,sans-serif;cursor:pointer}
+.prov:hover{border-color:#16130F}
+.cta{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:0;border-radius:14px;background:#16130F;color:#F7F5F0;font:500 15px Geist,system-ui,sans-serif;cursor:pointer}
+.cta:hover{background:#0E4F4A;color:#F7F5F0}
+.logo{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#EFEBE3;color:#5F5A52;font:600 10px Geist,system-ui,sans-serif}
+.field{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border:1px solid #D8D2C6;border-radius:14px;background:#FFFFFF;font:400 16px Geist,system-ui,sans-serif}
+.otp{width:52px;height:60px;border:1px solid #D8D2C6;border-radius:12px;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;font:500 24px 'Geist Mono',monospace}
+.otpon{border:2px solid #0E4F4A}
+.tab{flex:1;min-height:40px;border:0;border-radius:10px;background:transparent;font:500 14px Geist,system-ui,sans-serif;color:#5F5A52;cursor:pointer}
+.tabon{background:#FFFFFF;color:#16130F;box-shadow:0 1px 2px rgba(22,19,15,.12)}
+.lane{display:flex;flex-direction:column;gap:12px}
+.lane:hover{animation-play-state:paused}
+.ic{border:0;text-align:left;cursor:pointer;width:100%;border-radius:18px;padding:18px;font-family:Geist,system-ui,sans-serif;display:flex;flex-direction:column;gap:8px;transition:transform .24s cubic-bezier(.2,.7,.2,1)}
+.ic:hover{transform:scale(1.03)}
+.step{display:flex;align-items:center;gap:10px;font-size:13px;color:#5F5A52}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.logo.lg-G{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle%3C/title%3E%3Cpath d='M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-AP{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23000000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EApple%3C/title%3E%3Cpath d='M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GM{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23EA4335' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGmail%3C/title%3E%3Cpath d='M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-WA{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2325D366' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EWhatsApp%3C/title%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-TG{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2326A5E4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ETelegram%3C/title%3E%3Cpath d='M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GC{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2334A853' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Chat%3C/title%3E%3Cpath d='M1.637 0C.733 0 0 .733 0 1.637v16.5c0 .904.733 1.636 1.637 1.636h3.955v3.323c0 .804.97 1.207 1.539.638l3.963-3.96h11.27c.903 0 1.636-.733 1.636-1.637V5.592L18.408 0Zm3.955 5.592h12.816v8.59H8.455l-2.863 2.863Z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SW{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%231428A0' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ESamsung%3C/title%3E%3Cpath d='M19.8166 10.2808l.0459 2.6934h-.023l-.7793-2.6934h-1.2837v3.3925h.8481l-.0458-2.785h.023l.8366 2.785h1.2264v-3.3925zm-16.149 0l-.6418 3.427h.9284l.4699-3.1175h.0229l.4585 3.1174h.9169l-.6304-3.4269zm5.1805 0l-.424 2.6132h-.023l-.424-2.6132H6.5788l-.0688 3.427h.8596l.023-3.0832h.0114l.573 3.0831h.8711l.5731-3.083h.023l.0228 3.083h.8596l-.0802-3.4269zm-7.2664 2.4527c.0343.0802.0229.1949.0114.2522-.0229.1146-.1031.2292-.3324.2292-.2177 0-.3438-.126-.3438-.3095v-.3323H0v.2636c0 .7679.6074.9971 1.2493.9971.6189 0 1.1346-.2178 1.2149-.7794.0458-.298.0114-.4928 0-.5616-.1605-.722-1.467-.9283-1.5588-1.3295-.0114-.0688-.0114-.1375 0-.1834.023-.1146.1032-.2292.3095-.2292.2063 0 .321.126.321.3095v.2063h.8595v-.2407c0-.745-.6762-.8596-1.1576-.8596-.6074 0-1.1117.2063-1.2034.7564-.023.149-.0344.2866.0114.4585.1376.7106 1.364.9169 1.5358 1.3524m11.152 0c.0343.0803.0228.1834.0114.2522-.023.1146-.1032.2292-.3324.2292-.2178 0-.3438-.126-.3438-.3095v-.3323h-.917v.2636c0 .7564.596.9857 1.2379.9857.6189 0 1.1232-.2063 1.2034-.7794.0459-.298.0115-.4814 0-.5616-.1375-.7106-1.4327-.9284-1.5243-1.318-.0115-.0688-.0115-.1376 0-.1835.0229-.1146.1031-.2292.3094-.2292.1948 0 .321.126.321.3095v.2063h.848v-.2407c0-.745-.6647-.8596-1.146-.8596-.6075 0-1.1004.1948-1.192.7564-.023.149-.023.2866.0114.4585.1376.7106 1.341.9054 1.513 1.3524m2.8882.4585c.2407 0 .3094-.1605.3323-.2522.0115-.0343.0115-.0917.0115-.126v-2.533h.871v2.4642c0 .0688 0 .1948-.0114.2292-.0573.6419-.5616.8482-1.192.8482-.6303 0-1.1346-.2063-1.192-.8482 0-.0344-.0114-.1604-.0114-.2292v-2.4642h.871v2.533c0 .0458 0 .0916.0115.126 0 .0917.0688.2522.3095.2522m7.1518-.0344c.2522 0 .3324-.1605.3553-.2522.0115-.0343.0115-.0917.0115-.126v-.4929h-.3553v-.5043H24v.917c0 .0687 0 .1145-.0115.2292-.0573.6303-.596.8481-1.2034.8481-.6075 0-1.1461-.2178-1.2034-.8481-.0115-.1147-.0115-.1605-.0115-.2293v-1.444c0-.0574.0115-.172.0115-.2293.0802-.6419.596-.8482 1.2034-.8482s1.1347.2063 1.2034.8482c.0115.1031.0115.2292.0115.2292v.1146h-.8596v-.1948s0-.0803-.0115-.1261c-.0114-.0802-.0802-.2521-.3438-.2521-.2521 0-.321.1604-.3438.2521-.0115.0458-.0115.1032-.0115.1605v1.5702c0 .0458 0 .0916.0115.126 0 .0917.0917.2522.3323.2522'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GW{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle%3C/title%3E%3Cpath d='M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-AW{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23000000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EApple%3C/title%3E%3Cpath d='M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SL{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234A154B' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ESlack%3C/title%3E%3Cpath d='M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SG{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%233B45FD' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ESignal%3C/title%3E%3Cpath d='M12 0q-.934 0-1.83.139l.17 1.111a11 11 0 0 1 3.32 0l.172-1.111A12 12 0 0 0 12 0M9.152.34A12 12 0 0 0 5.77 1.742l.584.961a10.8 10.8 0 0 1 3.066-1.27zm5.696 0-.268 1.094a10.8 10.8 0 0 1 3.066 1.27l.584-.962A12 12 0 0 0 14.848.34M12 2.25a9.75 9.75 0 0 0-8.539 14.459c.074.134.1.292.064.441l-1.013 4.338 4.338-1.013a.62.62 0 0 1 .441.064A9.7 9.7 0 0 0 12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25m-7.092.068a12 12 0 0 0-2.59 2.59l.909.664a11 11 0 0 1 2.345-2.345zm14.184 0-.664.909a11 11 0 0 1 2.345 2.345l.909-.664a12 12 0 0 0-2.59-2.59M1.742 5.77A12 12 0 0 0 .34 9.152l1.094.268a10.8 10.8 0 0 1 1.269-3.066zm20.516 0-.961.584a10.8 10.8 0 0 1 1.27 3.066l1.093-.268a12 12 0 0 0-1.402-3.383M.138 10.168A12 12 0 0 0 0 12q0 .934.139 1.83l1.111-.17A11 11 0 0 1 1.125 12q0-.848.125-1.66zm23.723.002-1.111.17q.125.812.125 1.66c0 .848-.042 1.12-.125 1.66l1.111.172a12.1 12.1 0 0 0 0-3.662M1.434 14.58l-1.094.268a12 12 0 0 0 .96 2.591l-.265 1.14 1.096.255.36-1.539-.188-.365a10.8 10.8 0 0 1-.87-2.35m21.133 0a10.8 10.8 0 0 1-1.27 3.067l.962.584a12 12 0 0 0 1.402-3.383zm-1.793 3.848a11 11 0 0 1-2.345 2.345l.664.909a12 12 0 0 0 2.59-2.59zm-19.959 1.1L.357 21.48a1.8 1.8 0 0 0 2.162 2.161l1.954-.455-.256-1.095-1.953.455a.675.675 0 0 1-.81-.81l.454-1.954zm16.832 1.769a10.8 10.8 0 0 1-3.066 1.27l.268 1.093a12 12 0 0 0 3.382-1.402zm-10.94.213-1.54.36.256 1.095 1.139-.266c.814.415 1.683.74 2.591.961l.268-1.094a10.8 10.8 0 0 1-2.35-.869zm3.634 1.24-.172 1.111a12.1 12.1 0 0 0 3.662 0l-.17-1.111q-.812.125-1.66.125a11 11 0 0 1-1.66-.125'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-MS{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2334DA50' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EiMessage%3C/title%3E%3Cpath d='M5.285 0A5.273 5.273 0 0 0 0 5.285v13.43A5.273 5.273 0 0 0 5.285 24h13.43A5.273 5.273 0 0 0 24 18.715V5.285A5.273 5.273 0 0 0 18.715 0ZM12 4.154a8.809 7.337 0 0 1 8.809 7.338A8.809 7.337 0 0 1 12 18.828a8.809 7.337 0 0 1-2.492-.303A8.656 7.337 0 0 1 5.93 19.93a9.929 7.337 0 0 0 1.54-2.155 8.809 7.337 0 0 1-4.279-6.283A8.809 7.337 0 0 1 12 4.154'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-YT{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23FF0000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EYouTube%3C/title%3E%3Cpath d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GMAP{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Maps%3C/title%3E%3Cpath d='M19.527 4.799c1.212 2.608.937 5.678-.405 8.173-1.101 2.047-2.744 3.74-4.098 5.614-.619.858-1.244 1.75-1.669 2.727-.141.325-.263.658-.383.992-.121.333-.224.673-.34 1.008-.109.314-.236.684-.627.687h-.007c-.466-.001-.579-.53-.695-.887-.284-.874-.581-1.713-1.019-2.525-.51-.944-1.145-1.817-1.79-2.671L19.527 4.799zM8.545 7.705l-3.959 4.707c.724 1.54 1.821 2.863 2.871 4.18.247.31.494.622.737.936l4.984-5.925-.029.01c-1.741.601-3.691-.291-4.392-1.987a3.377 3.377 0 0 1-.209-.716c-.063-.437-.077-.761-.004-1.198l.001-.007zM5.492 3.149l-.003.004c-1.947 2.466-2.281 5.88-1.117 8.77l4.785-5.689-.058-.05-3.607-3.035zM14.661.436l-3.838 4.563a.295.295 0 0 1 .027-.01c1.6-.551 3.403.15 4.22 1.626.176.319.323.683.377 1.045.068.446.085.773.012 1.22l-.003.016 3.836-4.561A8.382 8.382 0 0 0 14.67.439l-.009-.003zM9.466 5.868L14.162.285l-.047-.012A8.31 8.31 0 0 0 11.986 0a8.439 8.439 0 0 0-6.169 2.766l-.016.018 3.665 3.084z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SMS{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%231A73E8' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Messages%3C/title%3E%3Cpath d='M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zM4.911 7.089h11.456a2.197 2.197 0 0 1 2.165 2.19v5.863a2.213 2.213 0 0 1-2.177 2.178H8.04c-1.174 0-2.04-.99-2.04-2.178v-4.639L4.503 7.905c-.31-.42-.05-.816.408-.816zm3.415 2.19c-.347 0-.68.21-.68.544 0 .334.333.544.68.544h7.905c.346 0 .68-.21.68-.544 0-.334-.334-.545-.68-.545zm0 2.177c-.347 0-.68.21-.68.544 0 .334.333.544.68.544h7.905c.346 0 .68-.21.68-.544 0-.334-.334-.544-.68-.544zm-.013 2.19c-.346 0-.68.21-.68.544 0 .334.334.544.68.544h5.728c.347 0 .68-.21.68-.544 0-.334-.333-.545-.68-.545z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.cs.dark .logo[class*='lg-']{filter:invert(1) hue-rotate(180deg)}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+
+/* section headings: solid, sized, ruled */
+.eyebrow{display:block!important;width:auto!important;padding:0!important;border-radius:0!important;background:none!important;font:600 17px/1.3 Geist,system-ui,sans-serif!important;letter-spacing:-.01em!important;color:inherit}
+.eyebrow::before{display:none!important;content:none!important}
+.eyebrow[data-g]{font-size:20px!important}
+.secline{padding-bottom:12px;border-bottom:1px solid #E6E1D7}
+.secdesc{margin-top:4px;font:400 14px/1.45 Geist,system-ui,sans-serif;color:#5F5A52}
+.kicker{font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="display: grid; grid-template-columns: 1fr 1.1fr; min-height: 960px; font-family: Geist, system-ui, sans-serif; color: #16130F; background: #F7F5F0">
+
+<div style="padding: 40px 64px 40px; display: flex; flex-direction: column; gap: 0">
+<div style="display: flex; justify-content: space-between; align-items: center"><a href="Landing.dc.html" class="serif" style="font-size: 26px; color: #16130F">Knowvia</a></div>
+<div style="margin-top: 40px; max-width: 440px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px"><sc-for list="{{journey}}" as="j" hint-placeholder-count="4"><span style="display: flex; flex-direction: column; gap: 8px"><span style="height: 4px; border-radius: 2px; background: {{j.bar}}"></span><span class="step"><span style="width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; background: {{j.bg}}; color: {{j.ink}}">{{j.n}}</span>{{j.t}}</span></span></sc-for></div>
+<div style="margin-top: 40px; display: flex">
+<div style="width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 20px">
+
+<sc-if value="{{isStart}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 18px; animation: fade .42s both">
+<div><h1 class="serif" style="margin: 0; font-size: 48px; line-height: 1">Welcome to Knowvia</h1><p style="margin: 12px 0 0; color: #5F5A52; font-size: 16px">Sign in or create an account. Same button.</p></div>
+<button class="prov" onClick="{{done}}"><span class="logo lg-G">G</span>Continue with Google</button>
+<button class="prov" onClick="{{done}}"><span class="logo lg-AP"></span>Continue with Apple</button>
+<div style="display: flex; align-items: center; gap: 12px; color: #8C867C; font-size: 13px"><span style="flex: 1; height: 1px; background: #E6E1D7"></span>or<span style="flex: 1; height: 1px; background: #E6E1D7"></span></div>
+<div style="display: flex; padding: 4px; border-radius: 12px; background: #EFEBE3"><button class="{{phoneCls}}" onClick="{{usePhone}}">Phone</button><button class="{{mailCls}}" onClick="{{useMail}}">Email</button></div>
+<sc-if value="{{byPhone}}" hint-placeholder-val="{{ true }}"><div class="field"><span style="color: #5F5A52">+91</span><span style="width: 1px; height: 24px; background: #E6E1D7"></span><span>98765 43210</span></div></sc-if>
+<sc-if value="{{byMail}}" hint-placeholder-val="{{ false }}"><div class="field"><span>meera.rao@company.com</span></div></sc-if>
+<button class="cta" onClick="{{send}}">{{sendLabel}}</button>
+<button class="prov" onClick="{{done}}" style="border-style: dashed">Use a passkey</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isOtp}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 18px; animation: fade .42s both">
+<div><h1 class="serif" style="margin: 0; font-size: 48px; line-height: 1">Enter the code</h1><p style="margin: 12px 0 0; color: #5F5A52; font-size: 16px">Sent to +91 98765 43210. <a href="#" onClick="{{back}}">Change</a></p></div>
+<div style="display: flex; gap: 10px"><sc-for list="{{otp}}" as="o" hint-placeholder-count="6"><button class="{{o.cls}}" onClick="{{type}}">{{o.d}}</button></sc-for></div>
+<button class="cta" onClick="{{done}}">Verify</button>
+<div style="font-size: 14px; color: #5F5A52">Resend in 0:24 · <a href="#">Get it on WhatsApp</a></div>
+</div>
+</sc-if>
+
+<sc-if value="{{isMail}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 18px; animation: fade .42s both">
+<h1 class="serif" style="margin: 0; font-size: 48px; line-height: 1">Check your inbox</h1>
+<p style="margin: 0; color: #5F5A52; font-size: 16px">A sign-in link is on its way to meera.rao@company.com. It opens Knowvia on this device.</p>
+<button class="prov" onClick="{{done}}">I clicked the link</button>
+<button class="prov" onClick="{{back}}">Use another email</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 18px; animation: fade .42s both">
+<div style="width: 56px; height: 56px; border-radius: 50%; background: #0E4F4A; color: #F4DC8A; display: flex; align-items: center; justify-content: center; font-size: 24px; animation: ring 1.2s ease-out infinite">✓</div>
+<h1 class="serif" style="margin: 0; font-size: 48px; line-height: 1">You’re in, Meera.</h1>
+<p style="margin: 0; color: #5F5A52; font-size: 16px">Next: add your policy. It takes about a minute.</p>
+<a class="cta" href="Onboarding.dc.html">Add my policy</a>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+<div style="margin-top: auto; padding-top: 32px; max-width: 440px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px">
+<sc-for list="{{whys}}" as="w" hint-placeholder-count="3"><div style="padding: 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D7; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 18px; color: #0E4F4A">{{w.i}}</span><span style="font-size: 13px; font-weight: 500">{{w.t}}</span><span style="font-size: 12px; color: #5F5A52">{{w.d}}</span></div></sc-for>
+</div>
+<div style="margin-top: 12px; max-width: 440px; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #16130F; color: #F7F5F0">
+<span style="width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6FA79E, #0E4F4A 70%); flex: none"></span>
+<span style="flex: 1; font-size: 13px">Stuck? Just say it. “I didn’t get the code.”</span>
+<span class="mono" style="font-size: 11px; padding: 2px 6px; border-radius: 5px; background: #2E2923">hold V</span>
+</div>
+<div style="margin-top: 12px; font-size: 12px; color: #8C867C">By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
+</div>
+
+<div style="background: #0E4F4A; color: #F7F5F0; padding: 40px 40px 0; display: flex; flex-direction: column; gap: 22px; overflow: hidden; position: relative">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div class="eyebrow">What you’ll see in a minute</div>
+<div style="display: flex; gap: 6px"><sc-for list="{{heads}}" as="h" hint-placeholder-count="3"><button onClick="{{h.pick}}" aria-label="{{h.t}}" style="width: {{h.w}}px; height: 8px; border-radius: 4px; border: 0; cursor: pointer; background: {{h.bg}}"></button></sc-for></div>
+</div>
+<div class="serif" style="font-size: 52px; line-height: 1.02; animation: fade .42s both">{{head1}}<br><span style="font-style: italic; color: #F4DC8A">{{head2}}</span></div>
+
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button onClick="{{f.pick}}" style="min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid {{f.line}}; background: {{f.bg}}; color: {{f.ink}}; font: 500 13px Geist, system-ui, sans-serif; cursor: pointer">{{f.t}}</button></sc-for></div>
+
+<div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; height: 560px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent)">
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="3">
+<div class="lane" style="animation: {{l.anim}} {{l.dur}}s linear infinite">
+<sc-for list="{{l.cards}}" as="c" hint-placeholder-count="8">
+<button class="ic" onClick="{{c.pick}}" style="background: {{c.bg}}; color: {{c.ink}}; outline: {{c.ring}}">
+<span class="mono" style="font-size: 10px; letter-spacing: .06em; opacity: .8">{{c.k}}</span>
+<span class="serif" style="font-size: 26px; line-height: 1.05">{{c.v}}</span>
+<span style="font-size: 12px; opacity: .85">{{c.d}}</span>
+<span style="height: 4px; border-radius: 2px; background: rgba(22,19,15,.12)"><span style="display: block; height: 4px; width: {{c.bar}}%; border-radius: 2px; background: {{c.barC}}"></span></span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+
+<sc-if value="{{hasPick}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 40px; right: 40px; bottom: 28px; padding: 18px 20px; border-radius: 18px; background: #F7F5F0; color: #16130F; box-shadow: 0 30px 60px -20px rgba(0,0,0,.5); display: flex; gap: 16px; align-items: center; animation: fade .3s both">
+<div style="flex: 1"><div class="mono" style="font-size: 11px; color: #5F5A52">{{pick.k}} · {{pick.ref}}</div><div style="font-size: 15px; margin-top: 4px">{{pick.more}}</div></div>
+<button onClick="{{clearPick}}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #D8D2C6; background: #FFFFFF; font: 500 13px Geist, system-ui, sans-serif; cursor: pointer">Close</button>
+</div>
+</sc-if>
+</div>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 960}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); window.removeEventListener('keydown', this.__kh); }
+
+  constructor(p) { super(p); this.state = { step: 'start', via: 'phone', h: 0, f: 'all', pick: null, digits: 3 }; }
+  __cdm() { this.t = setInterval(() => this.setState({ h: (this.state.h + 1) % 3 }), 3200); }
+  __cwu() { clearInterval(this.t); }
+  __rv() {
+    const s = this.state;
+    const H = [['Your cover, in numbers.', 'Not in 60 pages.'], ['Every person, every policy.', 'One screen.'], ['What you’d pay,', 'before the hospital asks.']];
+    const C = [
+      { k: 'YOUR COVER', v: 'Rs 5,00,000', d: 'Shared by 3 people', ref: 'Schedule p.1', more: 'One floater for you, Rohan and Kabir. It refills once a year if a claim uses it up.', tag: 'cover', bar: 70, bg: '#F7F5F0', ink: '#16130F', barC: '#0E4F4A' },
+      { k: 'ROOM LIMIT', v: 'Rs 5,000/day', d: 'A single private room', ref: 'p.12 §4.1', more: 'Pick a room within this and every other charge is paid in full.', tag: 'cover', bar: 50, bg: '#F4DC8A', ink: '#16130F', barC: '#0E4F4A' },
+      { k: 'TAX YOU CAN SAVE', v: 'Rs 75,000', d: '80D, old regime', ref: 'Premium receipts', more: 'Rs 25,000 for your family plus Rs 50,000 for parents over 60.', tag: 'money', bar: 100, bg: '#F2B9A8', ink: '#16130F', barC: '#16130F' },
+      { k: 'CO-PAY · PARENTS', v: '20%', d: 'Of every claim', ref: 'Senior plan p.2', more: 'On a Rs 1,00,000 bill your parents pay Rs 20,000.', tag: 'family', bar: 20, bg: '#16130F', ink: '#F7F5F0', barC: '#E9785D' },
+      { k: 'NEXT RENEWAL', v: '13 Mar', d: 'Parents’ senior plan', ref: 'Schedule p.1', more: 'We’ll compare plans in February so you can decide early.', tag: 'family', bar: 35, bg: '#BFD8D3', ink: '#16130F', barC: '#0E4F4A' },
+      { k: 'KNEE SURGERY · FATHER', v: 'Rs 2.2L', d: 'You’d pay this today', ref: 'Stress test', more: 'A sub-limit plus 20% co-pay. A super top-up cuts it to about Rs 76,000.', tag: 'money', bar: 58, bg: '#F7F5F0', ink: '#16130F', barC: '#E9785D' },
+      { k: 'RECEIPTS FOUND', v: '6', d: 'In your Gmail', ref: 'Money desk', more: 'One premium looks paid twice. We open a refund case for you.', tag: 'money', bar: 80, bg: '#E3B85A', ink: '#16130F', barC: '#16130F' },
+      { k: 'CASHLESS NEAR YOU', v: '7 min', d: 'Kothrud Care Hospital', ref: 'Network list', more: 'Your e-card works there. ICU beds and a 24×7 insurance desk.', tag: 'family', bar: 90, bg: '#F7F5F0', ink: '#16130F', barC: '#0E4F4A' },
+      { k: 'WAITING PERIOD', v: 'Waived', d: 'Group plan', ref: 'p.8 §3', more: 'Old conditions are covered from day one on your employer’s plan.', tag: 'cover', bar: 100, bg: '#BFD8D3', ink: '#16130F', barC: '#0E4F4A' }
+    ];
+    const MORE = [
+      { k: 'BLOOD NEAR YOU', v: '23 units', d: 'B+ within 10 km', ref: 'Blood bank stock', more: 'Father is B+. Three blood banks near Kothrud have stock right now.', tag: 'family', bar: 76, bg: '#16130F', ink: '#F7F5F0', barC: '#6FA79E' },
+      { k: 'E-CARD', v: 'In your wallet', d: 'Apple · Google · Samsung', ref: 'Wallet pass', more: 'Open it from the lock screen at any hospital desk. The QR refreshes every 30 seconds.', tag: 'cover', bar: 100, bg: '#F4DC8A', ink: '#16130F', barC: '#16130F' },
+      { k: 'WE’RE HANDLING', v: 'Rs 41,800', d: 'Short-settled claim', ref: 'Desk', more: 'We reopened Father’s claim with the TPA. Next update on Tuesday.', tag: 'money', bar: 50, bg: '#BFD8D3', ink: '#16130F', barC: '#0E4F4A' }
+    ];
+    const shown = s.f === 'all' ? C : C.filter((c) => c.tag === s.f);
+    const pool = s.f === 'all' ? C.concat(MORE) : (shown.length >= 6 ? shown : shown.concat(MORE.filter((c) => c.tag === s.f)).concat(C.filter((c) => c.tag !== s.f)).slice(0, 9));
+    const deco = (c, k) => Object.assign({}, c, { pick: () => this.setState({ pick: c }), ring: s.pick && s.pick.k === c.k ? '3px solid #F4DC8A' : 'none' });
+    const lane = (off) => { const a = pool.filter((c, k) => k % 3 === off).map(deco); return a.concat(a); };
+    return {
+      isStart: s.step === 'start', isOtp: s.step === 'otp', isMail: s.step === 'mail', isDone: s.step === 'done',
+      byPhone: s.via === 'phone', byMail: s.via === 'mail',
+      phoneCls: s.via === 'phone' ? 'tab tabon' : 'tab', mailCls: s.via === 'mail' ? 'tab tabon' : 'tab',
+      usePhone: () => this.setState({ via: 'phone' }), useMail: () => this.setState({ via: 'mail' }),
+      sendLabel: s.via === 'phone' ? 'Send code' : 'Email me a link',
+      send: () => this.setState({ step: s.via === 'phone' ? 'otp' : 'mail' }),
+      back: () => this.setState({ step: 'start' }), done: () => this.setState({ step: 'done' }),
+      otp: [4, 8, 2, 0, 7, 1].map((d, k) => ({ d: k < s.digits ? String(d) : '', cls: k === s.digits ? 'otp otpon' : 'otp' })),
+      type: () => s.digits >= 6 ? this.setState({ step: 'done' }) : this.setState({ digits: s.digits + 1 }),
+      journey: ['Sign in', 'Add policy', 'Reading', 'Home'].map((t, k) => { const at = s.step === 'done' ? 1 : 0; return { n: k < at ? '✓' : String(k + 1), t: t, bg: k <= at ? '#0E4F4A' : '#E6E1D7', ink: k <= at ? '#F7F5F0' : '#5F5A52', bar: k < at ? '#0E4F4A' : k === at ? '#6FA79E' : '#E6E1D7' }; }),
+      whys: [{ i: '◎', t: 'One minute to answers', d: 'Drop a PDF or use DigiLocker' }, { i: '⌘', t: 'Keyboard, mouse or voice', d: 'Finish with whichever you started' }, { i: '◈', t: 'AES-256 encrypted', d: 'You choose who sees what' }],
+      head1: H[s.h][0], head2: H[s.h][1],
+      heads: H.map((x, k) => ({ t: x[0], w: k === s.h ? 28 : 8, bg: k === s.h ? '#F4DC8A' : 'rgba(247,245,240,.35)', pick: () => this.setState({ h: k }) })),
+      filters: [['all', 'Everything'], ['cover', 'My cover'], ['family', 'My family'], ['money', 'Money']].map((f) => ({ t: f[1], bg: s.f === f[0] ? '#F7F5F0' : 'transparent', ink: s.f === f[0] ? '#16130F' : '#F7F5F0', line: s.f === f[0] ? '#F7F5F0' : 'rgba(247,245,240,.35)', pick: () => this.setState({ f: f[0], pick: null }) })),
+      lanes: [{ anim: 'up', dur: 38, cards: lane(0) }, { anim: 'down', dur: 46, cards: lane(1) }, { anim: 'up', dur: 42, cards: lane(2) }],
+      hasPick: !!s.pick, pick: s.pick || { k: '', ref: '', more: '' }, clearPick: () => this.setState({ pick: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Assistant</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+*{box-sizing:border-box}
+a{color:#0E4F4A;text-decoration:none}
+.serif{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-0.02em}
+.mono{font-family:'Geist Mono',monospace}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.chip{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1px solid #E6E1D7;border-radius:999px;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer}
+.chip:hover{border-color:#16130F}
+.chipon{background:#16130F;color:#F7F5F0;border-color:#16130F}
+.cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:0;border-radius:999px;background:#16130F;color:#F7F5F0;font:500 14px Geist,system-ui,sans-serif;cursor:pointer}
+.orb{width:120px;height:120px;border-radius:50%;border:0;cursor:pointer;background:radial-gradient(circle at 35% 30%,#6FA79E,#0E4F4A 70%);box-shadow:0 0 0 14px rgba(14,79,74,.12),0 0 0 30px rgba(14,79,74,.06);color:#F7F5F0;font-size:34px}
+.term{border-bottom:1.5px dotted #0E4F4A;cursor:help}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+
+.vdock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:25;display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:6px 8px 6px 6px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 20px 40px -22px rgba(22,19,15,.55);text-align:left}
+.vdock b{display:block;font-weight:600;font-size:14px}.vdock .vsub{display:block;font-size:12px;color:#5F5A52}
+.vdock kbd,.vcard kbd,.vstrip kbd{font:500 11px 'Geist Mono',monospace;padding:2px 7px;border-radius:6px;background:#EFEBE3;color:#16130F}
+.vorb{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#BFD8D3,#6FA79E 40%,#0E4F4A 78%);box-shadow:0 0 0 5px rgba(111,167,158,.22)}
+.vcard{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:40;width:460px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:24px;border:1px solid #E5E0D6;background:#FFFFFF;color:#16130F;box-shadow:0 40px 90px -30px rgba(22,19,15,.45);font:400 14px Geist,system-ui,sans-serif}
+.vcard.vtop{top:250px;bottom:auto}
+.vcard .vread{font-size:12px;padding:4px 10px;border-radius:999px;background:#E3EFEC;color:#0E4F4A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.vcard .vx{min-height:30px;padding:0 10px;border-radius:999px;border:1px solid #E5E0D6;background:transparent;color:#16130F;font:500 12px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vlbl{font-size:11px;font-weight:600;letter-spacing:.06em;color:#0E4F4A}
+.vcard .vsay{font-size:24px;line-height:1.2}
+.vcard .vstep{display:flex;gap:10px;align-items:center;font-size:13px}
+.vcard .vstep i{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.vcard .vgo{display:flex;justify-content:space-between;align-items:center;min-height:42px;padding:0 14px;border-radius:12px;background:#0E4F4A;color:#F7F5F0;font-weight:600}
+.vcard .vex{text-align:left;min-height:36px;padding:0 12px;border-radius:10px;border:1px solid #E5E0D6;background:#F7F5F0;color:#16130F;font:400 13px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vfoot{display:flex;gap:14px;font-size:12px;color:#5F5A52;padding-top:12px;border-top:1px solid #EFEBE3}
+
+/* section headings: solid, sized, ruled */
+.eyebrow{display:block!important;width:auto!important;padding:0!important;border-radius:0!important;background:none!important;font:600 17px/1.3 Geist,system-ui,sans-serif!important;letter-spacing:-.01em!important;color:inherit}
+.eyebrow::before{display:none!important;content:none!important}
+.eyebrow[data-g]{font-size:20px!important}
+.secline{padding-bottom:12px;border-bottom:1px solid #E6E1D7}
+.secdesc{margin-top:4px;font:400 14px/1.45 Geist,system-ui,sans-serif;color:#5F5A52}
+.kicker{font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+/* page header: breadcrumb + group switch, then sibling tabs */
+.phead{display:flex;flex-direction:column;gap:14px;grid-column:1/-1;flex:0 0 100%;box-sizing:border-box}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.crumbs{display:flex;align-items:center;gap:8px;font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+.crumbs a{color:#5F5A52}.crumbs b{color:#16130F;font-weight:600}
+.crumbs .dot{width:10px;height:10px;border-radius:50%}
+.gsw{display:inline-flex;padding:3px;border-radius:12px;background:#EFEBE3;gap:2px}
+.gsw a{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 14px;border-radius:9px;font:500 13px Geist,system-ui,sans-serif;color:#5F5A52}
+.gsw a i{width:8px;height:8px;border-radius:50%}
+.gsw a.on{background:#FFFFFF;color:#16130F;font-weight:600;box-shadow:0 1px 3px rgba(22,19,15,.12)}
+.ptabs{display:flex;align-items:flex-end;gap:28px;border-bottom:1px solid #E6E1D7}
+.ptabs a{display:inline-flex;align-items:center;min-height:40px;margin-bottom:-1px;border-bottom:2px solid transparent;font:500 15px Geist,system-ui,sans-serif;color:#5F5A52}
+.ptabs a:hover{color:#16130F}
+.ptabs a.on{color:#16130F;font-weight:600}
+.ptabs .keys{margin-left:auto;align-self:center;font:400 12px 'Geist Mono',monospace;color:#8C867C}
+/* reminders */
+.remind{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.remind>span{font:500 13px Geist,system-ui,sans-serif;color:#5F5A52;margin-right:2px}
+.rbtn{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:0 12px 0 6px;border-radius:999px;border:1px solid #E6E1D7;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer}
+.rbtn .logo{width:22px!important;height:22px!important;border-radius:6px!important;border:0}
+.rbtn.on{border-color:#0E4F4A;background:#E3EFEC}
+.logo.lg-GCAL{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Calendar%3C/title%3E%3Cpath d='M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zm-7.207 6.25v-.065c.272-.144.5-.349.687-.617s.279-.595.279-.982c0-.379-.099-.72-.3-1.025a2.05 2.05 0 0 0-.832-.714 2.703 2.703 0 0 0-1.197-.257c-.6 0-1.094.156-1.481.467-.386.311-.65.671-.793 1.078l1.085.452c.086-.249.224-.461.413-.633.189-.172.445-.257.767-.257.33 0 .602.088.816.264a.86.86 0 0 1 .322.703c0 .33-.12.589-.36.778-.24.19-.535.284-.886.284h-.567v1.085h.633c.407 0 .748.109 1.02.327.272.218.407.499.407.843 0 .336-.129.614-.387.832s-.565.327-.924.327c-.351 0-.651-.103-.897-.311-.248-.208-.422-.502-.521-.881l-1.096.452c.178.616.505 1.082.977 1.401.472.319.984.478 1.538.477a2.84 2.84 0 0 0 1.293-.291c.382-.193.684-.458.902-.794.218-.336.327-.72.327-1.149 0-.429-.115-.797-.344-1.105a2.067 2.067 0 0 0-.881-.689zm2.093-1.931l.602.913L15 10.045v5.744h1.187V8.446h-.827l-2.158 1.557zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="min-height: 1100px; background: #F7F5F0; font-family: Geist, system-ui, sans-serif; color: #16130F; padding: 40px 48px 72px; display: grid; grid-template-columns: 1.35fr 1fr; gap: 28px">
+<header class="phead" style="padding: 0">
+<div class="prow"><div class="crumbs"><a href="Home.dc.html">Knowvia</a><span>/</span><span class="dot" style="background: #5A4A8C"></span><a href="Desk.dc.html">Help</a><span>/</span><b>Ask Knowvia</b></div><nav class="gsw" aria-label="Knowvia groups"><a class="" href="Home.dc.html"><i style="background: #0E4F4A"></i>My cover</a><a class="" href="Family.dc.html"><i style="background: #B4553D"></i>My family</a><a class="" href="Money.dc.html"><i style="background: #8A5A0B"></i>My money</a><a class="on" href="Desk.dc.html"><i style="background: #5A4A8C"></i>Help</a></nav></div>
+<nav class="ptabs" aria-label="Help"><a class="" href="Desk.dc.html">Claims and insurer talks</a><a class="" href="Emergency.dc.html">Emergency</a><a class="on" href="Assistant.dc.html" style="border-color: #5A4A8C">Ask Knowvia</a></nav>
+</header>
+
+<div style="background: #FFFFFF; border-radius: 28px; box-shadow: 0 60px 120px -60px rgba(22,19,15,.5); padding: 40px; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; justify-content: space-between; align-items: center"><div class="serif" style="font-size: 22px">Ask Knowvia</div><div style="display: flex; gap: 8px; align-items: center"><span class="chip" style="min-height: 30px">English</span><span class="chip" style="min-height: 30px">हिंदी</span><a href="Home.dc.html" class="chip" style="min-height: 30px">Esc</a></div></div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 12px 0">
+<button class="orb" onClick="{{next}}" aria-label="Hold to speak">🎙</button>
+<div style="display: flex; gap: 4px; align-items: center; height: 28px"><sc-for list="{{wave}}" as="w" hint-placeholder-count="24"><span style="width: 4px; height: {{w}}px; border-radius: 2px; background: #0E4F4A; opacity: .7"></span></sc-for></div>
+<div class="serif" style="font-size: 34px; text-align: center; line-height: 1.2; max-width: 620px">“{{u.say}}”</div>
+</div>
+
+<div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap">
+<span style="font-size: 13px; padding: 7px 14px; border-radius: 999px; background: {{u.intentBg}}; color: {{u.intentInk}}"><b style="font-weight: 600">You asked:</b> {{u.label}}</span>
+<span style="font-size: 13px; padding: 7px 14px; border-radius: 999px; background: #F1EDE5"><b style="font-weight: 600">About:</b> {{u.person}}</span>
+<span style="font-size: 13px; padding: 7px 14px; border-radius: 999px; background: #F1EDE5"><b style="font-weight: 600">How sure:</b> {{u.conf}}</span>
+<span style="font-size: 13px; padding: 7px 14px; border-radius: 999px; background: #F1EDE5"><b style="font-weight: 600">Next:</b> {{u.route}}</span>
+</div>
+
+<div style="border-radius: 20px; background: {{u.cardBg}}; color: {{u.cardInk}}; padding: 26px; display: flex; flex-direction: column; gap: 14px">
+<div class="eyebrow" style="color: {{u.subInk}}">{{u.kicker}}</div>
+<div class="serif" style="font-size: 30px; line-height: 1.15">{{u.answer}}</div>
+<sc-if value="{{u.hasRef}}" hint-placeholder-val="{{ true }}"><div style="font-size: 14px"><span style="background: #F4DC8A; color: #16130F; padding: 2px 6px; border-radius: 3px">{{u.ref}}</span></div></sc-if>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><sc-for list="{{u.acts}}" as="a" hint-placeholder-count="2"><a href="{{a.href}}" class="cta" style="background: {{a.bg}}; color: {{a.ink}}">{{a.t}}</a></sc-for></div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="eyebrow">Try saying</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><sc-for list="{{tries}}" as="t" hint-placeholder-count="4"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.t}}</button></sc-for></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div style="background: #FFFFFF; border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 14px">
+<div class="eyebrow">Plain-language helper</div>
+<div style="font-size: 16px; line-height: 1.7">Your parents’ plan has a <span class="term" style="background: #E3EFEC">co-pay</span> of 20% and a <span class="term">sub-limit</span> on cataract. The <span class="term">waiting period</span> for knee surgery ends in March.</div>
+<div style="background: #16130F; color: #F7F5F0; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-weight: 600">Co-pay</span><span style="font-size: 12px; color: #B7B0A4">🔊 Listen</span></div>
+<div style="color: #CFC9BE; font-size: 14px">The part of every hospital bill you pay yourself. With 20%, on a Rs 1,00,000 bill you pay Rs 20,000.</div>
+<div style="font-size: 13px; padding-top: 8px; border-top: 1px solid #3A352D"><span style="color: #F4DC8A">In your family:</span> Mother and Father, senior plan p.2</div>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #0E4F4A; border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 30px 60px -40px rgba(14,79,74,.6)">
+<div style="display: flex; gap: 12px; align-items: center"><span style="flex: none; width: 40px; height: 40px; border-radius: 50%; background: #0E4F4A; color: #F4DC8A; display: inline-flex; align-items: center; justify-content: center; font-size: 18px">◎</span><span><span style="display: block; font-size: 20px; font-weight: 600">How Knowvia understands you</span><span style="font-size: 13px; color: #5F5A52">Say it any way. It works out which of these you mean.</span></span></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<sc-for list="{{intents}}" as="i" hint-placeholder-count="8">
+<div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 14px; background: {{i.bg}}; border: 1px solid {{i.line}}">
+<span style="flex: none; width: 30px; height: 30px; border-radius: 50%; background: {{i.dot}}; color: {{i.dotInk}}; display: inline-flex; align-items: center; justify-content: center; font-size: 14px">{{i.i}}</span>
+<span><span style="display: block; font-size: 14px; font-weight: 600; color: #16130F">{{i.k}}</span><span style="font-size: 12px; color: #5F5A52; line-height: 1.4">{{i.d}}</span></span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="background: #0E4F4A; color: #F7F5F0; border-radius: 22px; padding: 22px; display: flex; gap: 14px; align-items: center">
+<span style="font-size: 26px">⚡</span><div style="font-size: 14px; line-height: 1.5">Words like <b>chest pain, ICU, accident, blood</b> open Emergency instantly, before anything else runs.</div>
+</div>
+</div>
+<button class="vdock" onClick="{{vOpen}}" aria-label="Ask Knowvia, hold V"><span class="vorb"></span><span><b>Ask Knowvia</b><span class="vsub">Reads this page · {{vPage}}</span></span><kbd>Hold V</kbd></button>
+<sc-if value="{{vShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{vCls}}" role="dialog" aria-label="Ask Knowvia">
+<div style="display: flex; align-items: center; gap: 12px"><button class="vorb" onClick="{{vTalk}}" aria-label="Hold to talk" style="cursor: pointer; box-shadow: 0 0 0 {{vRa}}px rgba(111,167,158,.25), 0 0 0 {{vRb}}px rgba(111,167,158,.12)"></button><div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0"><span style="font-weight: 600">Ask Knowvia</span><span class="vread">Reading {{vReads}}</span></div><button class="vx" onClick="{{vClose}}">Esc</button></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="vlbl">{{vLbl}}</span><div class="serif vsay">“{{vSay}}”</div></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><sc-for list="{{vSteps}}" as="x" hint-placeholder-count="3"><div class="vstep" style="color: {{x.ink}}"><i style="background: {{x.bg}}; color: {{x.mk}}">{{x.m}}</i>{{x.t}}</div></sc-for></div>
+<sc-for list="{{vGo}}" as="g" hint-placeholder-count="1"><a class="vgo" href="{{g.href}}">{{g.t}}<span>→</span></a></sc-for>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #5F5A52">Try saying, on this page</span><sc-for list="{{vEx}}" as="e" hint-placeholder-count="3"><button class="vex" onClick="{{e.pick}}">“{{e.t}}”</button></sc-for></div>
+<div class="vfoot"><span><kbd>V</kbd> hold to talk</span><span><kbd>Esc</kbd> close</span><span>English, Hindi or both</span></div>
+</div>
+</sc-if>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 1100}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  __voice() {
+    const V = {"page": "Ask Knowvia", "reads": "everything you have shared", "at": "bottom", "ex": [{"say": "What can you do for me?", "st": ["Help", "Read policies, track claims, find hospitals", "Just say it"], "href": null, "go": null}, {"say": "Show my open cases", "st": ["Desk", "5 open, 1 needs you", "Opening Desk"], "href": "Desk.dc.html", "go": "Go to Desk"}, {"say": "Is Rohan on the top-up?", "st": ["Rohan · top-up", "Checked Kaveri member list", "No, add him for about Rs 2,100 a year"], "href": null, "go": null}]}; const s = this.state || {};
+    const e = V.ex[(s.__ve || 0) % V.ex.length]; const t = s.__vt || 0; const hold = !!s.__vh;
+    const done = hold ? 0 : Math.min(3, Math.max(0, t - 1)); const listening = hold || t < 1;
+    return {
+      vPage: V.page, vReads: V.reads, vShow: !!s.__vo, vCls: (s.__vat || V.at) === 'top' ? 'vcard vtop' : 'vcard',
+      vOpen: () => this.setState({ __vo: true, __vt: 0, __vat: V.at }),
+      vClose: () => this.setState({ __vo: false, __vh: false }),
+      vTalk: () => this.setState({ __ve: (s.__ve || 0) + 1, __vt: 0 }),
+      vLbl: listening ? 'LISTENING…' : done < 3 ? 'WORKING ON IT' : 'DONE · SAY THE NEXT THING',
+      vSay: e.say, vRa: listening ? 8 : 4, vRb: listening ? 16 : 8,
+      vSteps: e.st.map((x, k) => ({ t: x, m: k < done ? '✓' : String(k + 1), bg: k < done ? '#0E4F4A' : '#EFEBE3', mk: k < done ? '#F7F5F0' : '#8C867C', ink: k < done ? '#16130F' : '#8C867C' })),
+      vGo: e.href && done >= 3 ? [{ href: e.href, t: e.go }] : [],
+      vEx: V.ex.map((x, k) => ({ t: x.say, pick: () => this.setState({ __ve: k, __vt: 1, __vh: false }) }))
+    };
+  }
+  __vmount() {
+    this.__vi = setInterval(() => { if (this.state && this.state.__vo && !this.state.__vh) this.setState({ __vt: Math.min(4, (this.state.__vt || 0) + 1) }); }, 650);
+    this.__vd = (ev) => { const tg = ev.target && ev.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return; if ((ev.key === 'v' || ev.key === 'V') && !ev.repeat) this.setState({ __vo: true, __vh: true, __vt: 0 }); if (ev.key === 'Escape') this.setState({ __vo: false, __vh: false }); };
+    this.__vu = (ev) => { if ((ev.key === 'v' || ev.key === 'V') && this.state && this.state.__vh) this.setState({ __vh: false, __vt: 1, __ve: (this.state.__ve || 0) + 1 }); };
+    window.addEventListener('keydown', this.__vd); window.addEventListener('keyup', this.__vu);
+  }
+  __vunmount() { clearInterval(this.__vi); window.removeEventListener('keydown', this.__vd); window.removeEventListener('keyup', this.__vu); }
+
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }, this.__voice()); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__vmount(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); this.__vunmount(); window.removeEventListener('keydown', this.__kh); }
+
+  constructor(p) { super(p); this.state = { i: 0 }; }
+  __rv() {
+    const s = this.state;
+    const U = [
+      { say: 'Papa ko chest pain ho raha hai', intent: 'emergency', label: 'Help in an emergency', person: 'Father', conf: 'Certain', route: 'Open Emergency for Father', intentBg: '#FCE3DA', intentInk: '#9A2F14', kicker: 'Opening Emergency for Father', answer: 'Call 112 now. Kothrud Care Hospital is 7 minutes away and cashless on his plan.', hasRef: false, ref: '', cardBg: '#16130F', cardInk: '#F7F5F0', subInk: '#E9785D', acts: [{ t: 'Call 112', href: 'tel:112', bg: '#E9785D', ink: '#16130F' }, { t: 'Open Emergency', href: 'Emergency.dc.html', bg: '#F7F5F0', ink: '#16130F' }] },
+      { say: 'Is cataract covered for my mother?', intent: 'ask', label: 'A question about your cover', person: 'Mother', conf: 'Very sure', route: 'Answer with the exact clause', intentBg: '#E3EFEC', intentInk: '#0E4F4A', kicker: 'From Mother’s senior plan', answer: 'Yes, up to Rs 40,000 per eye. She pays 20% of that as co-pay.', hasRef: true, ref: 'Senior plan p.14 §5.2', cardBg: '#F7F5F0', cardInk: '#16130F', subInk: '#5F5A52', acts: [{ t: 'See the clause', href: 'Reading.dc.html', bg: '#16130F', ink: '#F7F5F0' }, { t: 'Stress test it', href: 'Policy.dc.html', bg: '#FFFFFF', ink: '#16130F' }] },
+      { say: 'How much tax can I save this year?', intent: 'calc', label: 'Work out a number', person: 'Whole family', conf: 'Very sure', route: 'Open the tax calculator, filled in', intentBg: '#F4E6C4', intentInk: '#6B4E12', kicker: '80D, old regime, pre-filled', answer: 'Rs 75,000: Rs 25,000 for your family and Rs 50,000 for your parents.', hasRef: true, ref: 'Premium receipts on file · 2', cardBg: '#F7F5F0', cardInk: '#16130F', subInk: '#5F5A52', acts: [{ t: 'Open calculator', href: 'Tools.dc.html', bg: '#16130F', ink: '#F7F5F0' }, { t: 'Download proof', href: '#', bg: '#FFFFFF', ink: '#16130F' }] },
+      { say: 'What does restore benefit mean?', intent: 'term', label: 'What a word means', person: 'Everyone', conf: 'Very sure', route: 'Explain it in plain words', intentBg: '#EAE6F2', intentInk: '#4A3D78', kicker: 'In plain words', answer: 'If you use up your cover in a year, the insurer refills it once for a new illness.', hasRef: true, ref: 'Your group plan: once a year · p.18', cardBg: '#F7F5F0', cardInk: '#16130F', subInk: '#5F5A52', acts: [{ t: 'Explain like a bill', href: '#', bg: '#16130F', ink: '#F7F5F0' }] }
+    ];
+    const u = U[s.i % U.length];
+    const seed = [6, 14, 22, 12, 26, 18, 9, 24, 28, 16, 10, 20, 26, 14, 8, 18, 24, 12, 20, 28, 16, 10, 22, 8];
+    return {
+      u: u,
+      next: () => this.setState({ i: s.i + 1 }),
+      wave: seed.map((h, k) => ((h + s.i * 7 + k * 3) % 26) + 4),
+      tries: U.map((x, k) => ({ t: x.say, cls: s.i % U.length === k ? 'chip chipon' : 'chip', pick: () => this.setState({ i: k }) })),
+      intents: [
+        ['emergency', '✚', 'Help in an emergency', 'Opens Emergency at once for the person you name.'],
+        ['ask', '?', 'A question about your cover', 'Answered from your own policy, with the page.'],
+        ['term', 'Aa', 'What a word means', 'Plain meaning, then what your policy says.'],
+        ['calc', '%', 'Work out a number', 'Tax, co-pay, room rent: filled in for you.'],
+        ['compare', '⇄', 'Compare plans', 'Side by side, for your family only.'],
+        ['add', '+', 'Add a document', 'Upload, photo, or DigiLocker.'],
+        ['money', '₹', 'Money and receipts', 'Finds payments, refunds and tax proof.'],
+        ['go', '→', 'Take me somewhere', 'Opens any screen you name.']
+      ].map((x) => { const on = x[0] === u.intent; return { i: x[1], k: x[2], d: x[3], bg: on ? '#F1F7F5' : '#FAF8F4', line: on ? '#0E4F4A' : 'transparent', dot: on ? '#0E4F4A' : '#EFEBE3', dotInk: on ? '#F4DC8A' : '#5F5A52' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>
