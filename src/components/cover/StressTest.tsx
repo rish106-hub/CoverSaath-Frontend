@@ -8,6 +8,9 @@ import {
   PEOPLE, SCENARIOS, SCENARIO_KEYS, NO_LEVERS, calc, familyRow, inr, leverSaving, policyFor, prosCons, rs, sectionBars, shortBill, verdict, waterfall, youNote,
   type Levers, type Person, type Quality, type Scenario,
 } from "@/lib/stress";
+import { SaveState } from "@/components/ui/SaveState";
+import { useScenario } from "@/lib/use-scenario";
+import { stressCodec, type StressState } from "@/lib/scenario-codecs";
 import styles from "./StressTest.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
 
@@ -27,6 +30,12 @@ export function StressTest() {
   const [levers, setLevers] = useState<Levers>(NO_LEVERS);
 
   usePageShortcuts(Object.fromEntries(PEOPLE.map((p, i) => [`person-${i + 1}`, () => setWho(p.name)])));
+
+  const value = useMemo<StressState>(() => ({ who, sc, levers }), [who, sc, levers]);
+  const { status, retry, flush } = useScenario<StressState>({
+    tool: "stress_levers", value, codec: stressCodec,
+    apply: (p) => { if (p.who) setWho(p.who); if (p.sc) setSc(p.sc); if (p.levers) setLevers(p.levers); },
+  });
 
   const r = useMemo(() => calc(who, sc, levers), [who, sc, levers]);
   const pc = (n: number) => Math.max(0, Math.round((n / r.bill) * 100));
@@ -97,8 +106,8 @@ export function StressTest() {
             </div>
             <div className={styles.note}>{youNote(r)}</div>
           </div>
-          <SectionHeading title="What could change it" actions={<Link href="/compare" className="k-btn k-btn--secondary k-btn--sm">Compare top-ups</Link>}>
-            <div className={`${styles.card} ${styles.levers}`}>
+          <SectionHeading title="What could change it" actions={<><SaveState status={status} onRetry={retry} /><Link href="/compare" className="k-btn k-btn--secondary k-btn--sm">Compare top-ups</Link></>}>
+            <div className={`${styles.card} ${styles.levers}`} onBlur={flush}>
               {LEVER_DEFS.map((l) => {
                 const on = levers[l.key];
                 const sv = leverSaving(who, sc, levers, l.key);

@@ -8,6 +8,9 @@ import {
   BANDS, DEFAULT_WEIGHTS, PRIORITIES, SCENARIOS, WEIGHT_LABELS, bestIndex, cycleWeight, fitScores, lakh, plans, rows, verdictText, youPaysL,
   type Band, type Dot, type Kind,
 } from "@/lib/fit";
+import { SaveState } from "@/components/ui/SaveState";
+import { useScenario } from "@/lib/use-scenario";
+import { compareCodec, type CompareState } from "@/lib/scenario-codecs";
 import styles from "./Compare.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
 
@@ -23,6 +26,17 @@ export function Compare() {
   const [weights, setWeights] = useState<Record<number, number>>(DEFAULT_WEIGHTS);
 
   usePageShortcuts(Object.fromEntries([0, 1, 2, 3].map((i) => [`plan-${i + 1}`, () => setSel(i)])));
+
+  // backend gap: the cover band (Rs 5L, 10L, 25L) has no field in the compare_weights contract, so it is not saved.
+  const value = useMemo<CompareState>(() => ({ kind, scen, weights }), [kind, scen, weights]);
+  const { status, retry, flush } = useScenario<CompareState>({
+    tool: "compare_weights", value, codec: compareCodec,
+    apply: (p) => {
+      if (p.kind) setKind(p.kind);
+      if (p.scen !== undefined && SCENARIOS[p.scen]) setScen(p.scen);
+      if (p.weights) setWeights((cur) => ({ ...cur, ...p.weights }));
+    },
+  });
 
   const list = useMemo(() => plans(kind, band), [kind, band]);
   const table = useMemo(() => rows(band), [band]);
@@ -55,8 +69,8 @@ export function Compare() {
       </div>
 
       <div className={styles.two}>
-        <SectionHeading title="What matters to you">
-          <div className={styles.prios}>
+        <SectionHeading title="What matters to you" actions={<SaveState status={status} onRetry={retry} />}>
+          <div className={styles.prios} onBlur={flush}>
             {PRIORITIES.map((p) => {
               const w = weights[p.id] || 0;
               return (
