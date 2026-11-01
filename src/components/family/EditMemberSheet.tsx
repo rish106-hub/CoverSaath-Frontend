@@ -7,7 +7,8 @@ import { memberRelations, type MemberChannel } from "@/data/mock/family";
 import { normaliseIndianMobile, validateEditMember, type EditErrors } from "./logic";
 import styles from "./family.module.css";
 
-export type MemberDetails = { id: string; name: string; relation: string; mobile: string; email: string; channel: MemberChannel };
+/** `backendId` is the stored member this person maps to; absent until their details are first saved. */
+export type MemberDetails = { id: string; name: string; relation: string; mobile: string; email: string; channel: MemberChannel; backendId?: string };
 
 const CHANNELS: { id: MemberChannel; label: string }[] = [
   { id: "whatsapp", label: "WhatsApp" },
@@ -32,10 +33,17 @@ export function EditMemberSheet({ member, onClose, onSaved }: { member: MemberDe
     setErrors(e);
     if (e.name || e.mobile || e.email) return;
     const next: MemberDetails = {
-      id: member.id, name: name.trim(), relation, channel, email: email.trim(),
+      id: member.id, name: name.trim(), relation, channel, email: email.trim(), backendId: member.backendId,
       mobile: mobile.trim() ? (normaliseIndianMobile(mobile) ?? "") : "",
     };
-    const ok = await save(() => adapters.invite.updateMember(next)); // backend gap
+    const ok = await save(async () => {
+      // Name and relation are stored in the backend. backend gap: mobile, e-mail and channel have no field yet and stay on the mock adapter.
+      const stored = next.backendId
+        ? await adapters.members.update(next.backendId, { name: next.name, relation: next.relation })
+        : await adapters.members.add({ name: next.name, relation: next.relation });
+      next.backendId = stored.id;
+      await adapters.invite.updateMember(next);
+    });
     if (ok) onSaved(next);
   };
 

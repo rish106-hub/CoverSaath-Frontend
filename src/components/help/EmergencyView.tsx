@@ -9,6 +9,9 @@ import ui from "./ui.module.css";
 import s from "./Emergency.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
 import { useSingleFlight } from "@/lib/use-single-flight";
+import { SaveState, useSave } from "@/components/ui/SaveState";
+
+// Legal review: location wording on this page is not final.
 
 const cx = (...a: (string | false | undefined)[]) => a.filter(Boolean).join(" ");
 const QR = Array.from({ length: 81 }, (_, i) => ((i * 7 + (i % 9) * 3 + Math.floor(i / 9) * 5) % 4 !== 0) || [0, 1, 2, 9, 11, 18, 19, 20].includes(i));
@@ -26,6 +29,7 @@ export function EmergencyView() {
   const [qr, setQr] = useState(false);
   const [sent, setSent] = useState(false);
   const flight = useSingleFlight();
+  const where = useSave();
 
   const p = emergencyPeople[who];
   const sendCard = () =>
@@ -80,8 +84,32 @@ export function EmergencyView() {
   const doneCount = Object.values(done).filter(Boolean).length;
   const progress = ["Got your location", `Matched “${emergencyIssues[issue].label}” to the right department`, `Checked ${p.name}’s cashless network`, "Ranked by distance, ICU and expertise"];
 
+  /** Asks the browser for a position, records the permission and keeps the exact position (Emergency is the one exact surface). */
+  const shareLocation = () =>
+    new Promise<void>((resolve, reject) => {
+      const geo = typeof navigator === "undefined" ? undefined : navigator.geolocation;
+      if (!geo) {
+        resolve(); // the search carries on without a position
+        return;
+      }
+      geo.getCurrentPosition(
+        (pos) => {
+          adapters.profile
+            .setPermission("location", "granted", "emergency")
+            .then(() => adapters.profile.saveCurrentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracyM: Math.round(pos.coords.accuracy), precision: "exact" }))
+            .then(() => resolve(), reject);
+        },
+        (err) => {
+          // Denied is a decision to record; no signal or a timeout is not.
+          if (err.code === 1) adapters.profile.setPermission("location", "denied", "emergency").then(() => resolve(), reject);
+          else resolve();
+        },
+        { maximumAge: 60_000, timeout: 10_000, enableHighAccuracy: true },
+      );
+    });
   function allow() {
     setLoc(1);
+    void where.save(shareLocation);
   }
   useEffect(() => {
     if (loc < 1 || loc >= 5) return;
@@ -180,6 +208,7 @@ export function EmergencyView() {
                   <button type="button" className="k-btn k-btn--primary" onClick={allow}>Allow location</button>
                 </div>
               ) : null}
+              {loc >= 1 ? <SaveState status={where.status} onRetry={() => void where.save(shareLocation)} /> : null}
               {loc >= 1 && loc < 5 ? (
                 <div className={s.prog} role="status" aria-live="polite">
                   {progress.map((t, k) => (

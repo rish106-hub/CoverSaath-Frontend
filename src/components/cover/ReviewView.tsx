@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Kicker, PageTitle, Recommended, SectionHeading } from "@/components/type";
 import { decisions, lookItems, reviewTotal } from "@/data/mock/review";
 import { accept, acceptAll, emptyReview, flag, nextLook, pick, summarize, tick, type ReviewState } from "./review-logic";
+import { SaveState } from "@/components/ui/SaveState";
+import { useScenario } from "@/lib/use-scenario";
+import { reviewCodec, type ReviewCodec } from "@/lib/scenario-codecs";
 import s from "./ReviewView.module.css";
 import { usePageShortcuts } from "@/lib/shortcuts";
 
@@ -17,6 +20,16 @@ export function ReviewView() {
   useEffect(() => {
     stRef.current = st;
   }, [st]);
+
+  const value = useMemo<ReviewCodec>(() => ({ st }), [st]);
+  const { status, retry, flush } = useScenario<ReviewCodec>({
+    tool: "review_state", value, codec: reviewCodec,
+    apply: ({ st: saved }) => {
+      if (!saved) return;
+      const keep = (m: Record<number, unknown>, n: number) => Object.fromEntries(Object.entries(m).filter(([k]) => Number(k) < n));
+      setSt({ dec: keep(saved.dec, decisions.length) as ReviewState["dec"], ok: keep(saved.ok, lookItems.length) as ReviewState["ok"], ch: keep(saved.ch, lookItems.length) as ReviewState["ch"] });
+    },
+  });
 
   // A accepts / C flags the next look item.
   const act = (accept: boolean) => () => {
@@ -33,6 +46,7 @@ export function ReviewView() {
         <div className={s.titleBlock}>
           <Kicker>Review, 1 Nov 2026</Kicker>
           <PageTitle>{sum.headline}</PageTitle>
+          <SaveState status={status} onRetry={retry} />
         </div>
         <div className={s.panel}>
           <div className={s.ring} style={{ background: `conic-gradient(#f4dc8a 0 ${sum.pct}%, rgba(247,245,240,.16) ${sum.pct}% 100%)` }}>
@@ -47,7 +61,7 @@ export function ReviewView() {
         </div>
       </div>
 
-      <div className={s.cols}>
+      <div className={s.cols} onBlur={flush}>
         <SectionHeading
           title="Decisions"
           actions={sum.open ? <button type="button" className="k-btn k-btn--primary k-btn--sm" onClick={() => setSt((p) => acceptAll(p, decisions.length))}>Accept all {sum.open}</button> : null}

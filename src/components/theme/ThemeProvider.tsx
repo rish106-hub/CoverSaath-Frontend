@@ -1,11 +1,13 @@
 "use client";
 
+import { adapters } from "@/adapters";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type Theme = "light" | "dark";
 export const THEME_KEY = "knowvia-theme";
 
-type Ctx = { theme: Theme; setTheme: (t: Theme) => void; toggle: () => void };
+/** `persist: false` is for a caller that saves the theme itself (the Settings page, which shows the save state). */
+type Ctx = { theme: Theme; setTheme: (t: Theme, opts?: { persist?: boolean }) => void; toggle: () => void };
 const ThemeContext = createContext<Ctx>({ theme: "light", setTheme: () => {}, toggle: () => {} });
 
 /** Inline script run before paint so the stored theme applies with no flash. */
@@ -21,7 +23,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (current === "dark") setThemeState("dark");
   }, []);
 
-  const setTheme = useCallback((t: Theme) => {
+  const setTheme = useCallback((t: Theme, opts?: { persist?: boolean }) => {
     setThemeState(t);
     document.documentElement.setAttribute("data-theme", t);
     try {
@@ -29,6 +31,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* storage unavailable: theme still applies for this visit */
     }
+    // localStorage above is only a cache that avoids a flash; the stored preference is the backend's. Signed out: nothing to save.
+    if (opts?.persist !== false) adapters.preferences.update({ theme: t }).catch(() => undefined);
   }, []);
 
   const toggle = useCallback(() => setTheme(theme === "dark" ? "light" : "dark"), [theme, setTheme]);

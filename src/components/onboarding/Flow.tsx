@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTicker } from "@/lib/use-ticker";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { adapters } from "@/adapters";
+import { adapters, type UiOnboarding } from "@/adapters";
+import { SaveState } from "@/components/ui/SaveState";
+import { useAutosave } from "@/lib/use-autosave";
 import { Kicker } from "@/components/type";
 import dynamic from "next/dynamic";
 
@@ -25,6 +27,7 @@ export function OnboardingFlow({ slug }: { slug: string }) {
   const step = WELCOME_STEPS[idx]!;
   const [walletOpen, setWalletOpen] = useState(false);
   const last = idx === WELCOME_STEPS.length - 1;
+  const ob = useOnboarding(idx);
   const go = (i: number) => router.push(`/welcome/${WELCOME_STEPS[i]!.slug}`);
 
   return (
@@ -50,14 +53,14 @@ export function OnboardingFlow({ slug }: { slug: string }) {
             <h1 className={styles.h1}>{step.title}</h1>
           </div>
         )}
-        {slug === "add" ? <AddStep /> : null}
+        {slug === "add" ? <AddStep way={ob.state.way ?? "dl"} onWay={(way) => ob.patch({ way })} status={ob.status} onRetry={ob.retry} /> : null}
         {slug === "reading" ? <ReadingStep /> : null}
-        {slug === "people" ? <PeopleStep /> : null}
+        {slug === "people" ? <PeopleStep people={ob.state.people} onToggle={(id, v) => ob.patch({ people: { ...defaultPeople(), ...ob.state.people, [id]: v } })} status={ob.status} onRetry={ob.retry} /> : null}
         {slug === "ready" ? <ReadyStep onWallet={() => setWalletOpen(true)} /> : null}
         <div className={styles.nav}>
           <button type="button" className={`${styles.btn} ${idx === 0 ? styles.btnHidden : ""}`} onClick={() => go(idx - 1)} tabIndex={idx === 0 ? -1 : 0}>Back</button>
           {last ? (
-            <Link href="/home" className={`${styles.btn} ${styles.btnPrimary}`}>Go to my home</Link>
+            <Link href="/home" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => ob.patch({ completed: true })}>Go to my home</Link>
           ) : (
             <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => go(idx + 1)}>{idx === 0 ? "Read it" : idx === 1 ? "Continue" : "Looks right"}</button>
           )}
@@ -68,13 +71,50 @@ export function OnboardingFlow({ slug }: { slug: string }) {
   );
 }
 
-function AddStep() {
-  const [way, setWay] = useState("dl");
+const defaultPeople = (): Record<string, boolean> => Object.fromEntries(ONBOARD_PEOPLE.map((p) => [p.id, p.on]));
+
+/** Onboarding progress lives in the backend: loaded on mount, saved on every choice and on each step. */
+function useOnboarding(idx: number) {
+  const [state, setState] = useState<UiOnboarding>({ completed: false });
+  const [loaded, setLoaded] = useState(false);
+  const latest = useRef(state);
+  const touched = useRef<Partial<UiOnboarding>>({}); // what the person did before the stored progress arrived
+  const sv = useAutosave<UiOnboarding>((next) => adapters.onboarding.save(next));
+  const { push } = sv;
+  const patch = useCallback((p: Partial<UiOnboarding>) => {
+    touched.current = { ...touched.current, ...p };
+    const next = { ...latest.current, ...p };
+    latest.current = next;
+    setState(next);
+    push(next);
+  }, [push]);
+  useEffect(() => {
+    let live = true;
+    adapters.onboarding.get().then(
+      (saved) => {
+        if (!live) return;
+        if (saved) { latest.current = { ...saved, ...touched.current }; setState(latest.current); }
+        setLoaded(true);
+      },
+      () => live && setLoaded(true), // nothing stored or the backend is down: start from the defaults
+    );
+    return () => { live = false; };
+  }, []);
+  useEffect(() => {
+    // Remember the step this page is. Saved once the stored progress has loaded, so it never overwrites it with defaults.
+    if (loaded && latest.current.step !== idx) patch({ step: idx });
+  }, [loaded, idx, patch]);
+  return { state, patch, status: sv.status, retry: sv.retry };
+}
+
+type StepSave = { status: ReturnType<typeof useAutosave>["status"]; onRetry: () => void };
+
+function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl" | "up" | "hr" | "no") => void } & StepSave) {
   return (
     <div className={styles.col}>
       <div className={styles.ways} role="radiogroup" aria-label="How to add your policy">
         {ONBOARD_WAYS.map((w) => (
-          <button key={w.id} type="button" role="radio" aria-checked={way === w.id} className={`${styles.opt} ${way === w.id ? styles.optOn : ""}`} onClick={() => setWay(w.id)}>
+          <button key={w.id} type="button" role="radio" aria-checked={way === w.id} className={`${styles.opt} ${way === w.id ? styles.optOn : ""}`} onClick={() => onWay(w.id)}>
             <span className={styles.optLogo} aria-hidden>{w.logo}</span>
             <span className={styles.optT}>{w.t}</span>
             <span className={styles.optD}>{w.d}</span>
@@ -82,6 +122,7 @@ function AddStep() {
           </button>
         ))}
       </div>
+      <SaveState status={status} onRetry={onRetry} />
       <div className={styles.drop}>
         <span aria-hidden style={{ fontSize: 22 }}>⇪</span>
         <span>Or drop a PDF, schedule or e-card here</span>
@@ -179,8 +220,8 @@ function ReadingStep() {
   );
 }
 
-function PeopleStep() {
-  const [on, setOn] = useState<Record<string, boolean>>(Object.fromEntries(ONBOARD_PEOPLE.map((p) => [p.id, p.on])));
+function PeopleStep({ people, onToggle, status, onRetry }: { people?: Record<string, boolean>; onToggle: (id: string, v: boolean) => void } & StepSave) {
+  const on = { ...defaultPeople(), ...people };
   return (
     <div className={styles.col}>
       <div className={styles.policy}>
@@ -190,7 +231,7 @@ function PeopleStep() {
       </div>
       <div className={styles.people}>
         {ONBOARD_PEOPLE.map((p) => (
-          <button key={p.id} type="button" aria-pressed={!!on[p.id]} className={`${styles.person} ${on[p.id] ? styles.personOn : ""}`} onClick={() => setOn({ ...on, [p.id]: !on[p.id] })}>
+          <button key={p.id} type="button" aria-pressed={!!on[p.id]} className={`${styles.person} ${on[p.id] ? styles.personOn : ""}`} onClick={() => onToggle(p.id, !on[p.id])}>
             <span className={styles.ava} aria-hidden>{p.id}</span>
             <span><span className={styles.pn}>{p.n}</span><span className={styles.pr}>{p.rel}</span></span>
             <span className={styles.pm} aria-hidden>{on[p.id] ? "✓" : "+"}</span>
@@ -198,6 +239,7 @@ function PeopleStep() {
         ))}
         <button type="button" className={`${styles.person} ${styles.personAdd}`}><span className={`${styles.ava} ${styles.avaAdd}`} aria-hidden>+</span>Add parents or someone else</button>
       </div>
+      <SaveState status={status} onRetry={onRetry} />
     </div>
   );
 }

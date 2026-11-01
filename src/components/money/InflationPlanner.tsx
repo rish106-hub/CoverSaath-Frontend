@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { planInflation, formatLakh, formatRs, RATES_PCT, DEFAULT_RATE_PCT, YEAR_CHOICES, START_YEAR } from "@/lib/inflation";
 import { planWho, planCases } from "@/data/mock";
 import { Recommended } from "@/components/type";
+import { SaveState } from "@/components/ui/SaveState";
+import { useScenario } from "@/lib/use-scenario";
+import { inflationCodec, type InflationState } from "@/lib/scenario-codecs";
 import styles from "./money.module.css";
 
 const W = 680;
@@ -33,6 +36,17 @@ export function InflationPlanner() {
   const [rate, setRate] = useState<number>(DEFAULT_RATE_PCT);
   const [years, setYears] = useState<number>(10);
 
+  const value = useMemo<InflationState>(() => ({ who, kase, rate, years }), [who, kase, rate, years]);
+  const { status, retry, flush } = useScenario<InflationState>({
+    tool: "inflation", value, codec: inflationCodec,
+    apply: (p) => {
+      if (p.who !== undefined && planWho[p.who]) setWho(p.who);
+      if (p.kase !== undefined && planCases[p.kase]) setKase(p.kase);
+      if (p.rate !== undefined) setRate(p.rate);
+      if (p.years !== undefined) setYears(p.years);
+    },
+  });
+
   const w = planWho[who]!;
   const c = planCases[kase]!;
   const plan = planInflation({ coverLakh: w.coverLakh, costTodayLakh: c.lakh, ratePct: rate, years, premiumRs: w.premiumRs, premiumGrowth: w.growth + (who === 1 ? 0.02 : 0) });
@@ -60,12 +74,13 @@ export function InflationPlanner() {
 
   return (
     <div className={`${styles.card} ${styles.plan}`}>
-      <div className={styles.planIn}>
+      <div className={styles.planIn} onBlur={flush}>
         <div className={styles.planTitle}>Will your cover keep up?</div>
         <Chips legend="Whose cover" value={who} onPick={setWho} options={planWho.map((x, k) => ({ key: k, label: x.label }))} />
         <Chips legend="Treatment to plan for" value={kase} onPick={setKase} options={planCases.map((x, k) => ({ key: k, label: x.label }))} />
         <Chips grid legend="Medical inflation a year" value={rate} onPick={setRate} options={RATES_PCT.map((r) => ({ key: r as number, label: `${r}%` }))} />
         <Chips grid legend="Look ahead" value={years} onPick={setYears} options={YEAR_CHOICES.map((y) => ({ key: y as number, label: `${y} yrs` }))} />
+        <SaveState status={status} onRetry={retry} />
       </div>
       <div className={styles.planOut}>
         <div className={styles.head2} aria-live="polite">{head}</div>
