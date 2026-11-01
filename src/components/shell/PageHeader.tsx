@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GROUPS, groupById, pagesIn, pageFor, type GroupId } from "@/lib/ia";
+import { groupById, pagesIn, pageFor, type GroupId } from "@/lib/ia";
 import styles from "./PageHeader.module.css";
 
 /** Header at the top of every app page except /home (board Compare: .phead). */
@@ -22,14 +22,6 @@ export function PageHeader({ pathname }: { pathname: string }) {
           ) : null}
           <span aria-hidden>/</span>
           <b aria-current="page">{page?.tab ?? "Knowvia"}</b>
-        </nav>
-        <nav className={styles.gsw} aria-label="Knowvia groups">
-          {GROUPS.map((g) => (
-            <Link key={g.id} href={g.home} className={g.id === groupId ? styles.on : undefined} aria-current={g.id === groupId ? "true" : undefined}>
-              <i style={{ background: g.color }} aria-hidden />
-              {g.label}
-            </Link>
-          ))}
         </nav>
       </div>
       {group ? (

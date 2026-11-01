@@ -4,12 +4,7 @@
 .crumbs a:hover { color: var(--ink); }
 .crumbs b { color: var(--ink); font-weight: 600; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.gsw { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--sunken); gap: 2px; }
-.gsw a { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 14px; border-radius: 9px; font: 500 13px var(--font-sans); color: var(--graphite); }
-.gsw a i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.gsw a:hover { color: var(--ink); }
-.gsw a.on { background: var(--sheet); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(22, 19, 15, 0.12); }
-.ptabs { display: flex; align-items: flex-end; gap: 28px; border-bottom: 1px solid var(--line); }
+.ptabs { display: flex; overflow-x: auto; max-width: 100%; align-items: flex-end; gap: 28px; border-bottom: 1px solid var(--line); }
 .ptabs a { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: -1px; border-bottom: 2px solid transparent; font: 500 15px var(--font-sans); color: var(--graphite); }
 .ptabs a:hover { color: var(--ink); }
 .ptabs a.tabOn { color: var(--ink); font-weight: 600; }
