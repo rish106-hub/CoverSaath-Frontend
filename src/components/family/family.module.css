@@ -1,14 +1,14 @@
 .toolbar { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; text-decoration: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--sheet); color: var(--ink); font: 500 14px var(--font-sans); cursor: pointer; text-decoration: none; }
 .btn:hover { border-color: var(--ink); }
-.cta { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--ink); color: var(--paper); font: 500 14px var(--font-sans); cursor: pointer; }
+.cta { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--ink); color: var(--paper); font: 500 14px var(--font-sans); cursor: pointer; }
 .cta:disabled { opacity: 0.6; cursor: default; }
 .btn:focus-visible, .cta:focus-visible, .person:focus-visible, .chip:focus-visible, .sw:focus-visible, .gapCta:focus-visible, .rbtn:focus-visible, .cellAct:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
 .mono { font: 400 13px var(--font-mono); color: var(--graphite); }
 .note { display: block; font: 400 13px/1.4 var(--font-sans); color: var(--graphite); }
 
 .people { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 4px; }
-.person { display: flex; flex-direction: column; gap: 12px; text-align: left; padding: 18px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); min-width: 0; }
+.person { display: flex; flex-direction: column; gap: 12px; text-align: left; padding: 18px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); min-width: 0; }
 .person[data-on="true"] { border: 2px solid var(--harbour); background: var(--mist); padding: 17px; }
 .personTop { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--ink); color: var(--paper); display: inline-flex; align-items: center; justify-content: center; font: 600 15px var(--font-sans); }
@@ -69,11 +69,11 @@
 .gapBody { flex: 1; min-width: 0; }
 .gapT { display: block; font: 600 15px var(--font-sans); }
 .gapD { display: block; font: 400 13px var(--font-sans); opacity: 0.85; }
-.gapCta { flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 999px; background: var(--on-harbour); color: var(--harbour); font: 500 13px var(--font-sans); text-decoration: none; }
+.gapCta { flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: var(--r-btn-sm); background: var(--on-harbour); color: var(--harbour); font: 500 13px var(--font-sans); text-decoration: none; }
 
 .remind { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .remind > span { font: 500 13px var(--font-sans); color: var(--graphite); margin-right: 2px; }
-.rbtn { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
+.rbtn { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: var(--r-btn-sm); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
 .rbtn[data-on="true"] { border-color: var(--harbour); background: var(--mist); }
 .dates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .date { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-lg); background: var(--sunken); }
@@ -102,7 +102,7 @@
 .sheetQ { font: 400 32px/1.1 var(--font-serif); }
 .stack { display: flex; flex-direction: column; gap: 14px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
+.chip { min-height: 36px; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
 .chip[data-on="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 6px; font: 400 13px var(--font-sans); color: var(--graphite); }

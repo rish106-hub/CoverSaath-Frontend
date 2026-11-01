@@ -1,12 +1,12 @@
 .titleRow { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
 .persons { display: flex; gap: 8px; flex-wrap: wrap; }
-.person { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 72px; min-height: 44px; padding: 8px 10px; border-radius: 16px; border: 2px solid transparent; background: transparent; color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
+.person { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 72px; min-height: 44px; padding: 8px 10px; border-radius: var(--r-btn); border: 2px solid transparent; background: transparent; color: var(--ink); font: 500 13px var(--font-sans); cursor: pointer; }
 .person[aria-pressed="true"] { border-color: var(--harbour); background: var(--sheet); }
 .avatar { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--sunken); color: var(--graphite); font: 600 13px var(--font-sans); }
 .person[aria-pressed="true"] .avatar, .fcard[aria-pressed="true"] .avatar { background: var(--harbour); color: var(--marker); }
 .fcard .avatar { width: 32px; height: 32px; }
 .scenarios { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.scenario { display: flex; flex-direction: column; gap: 10px; text-align: left; min-height: 44px; padding: 16px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
+.scenario { display: flex; flex-direction: column; gap: 10px; text-align: left; min-height: 44px; padding: 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
 .scenario[aria-pressed="true"] { border: 2px solid var(--ink); background: var(--ink); color: var(--paper); padding: 15px; }
 .scenario[aria-pressed="true"] .ic { background: var(--marker); color: #16130f; }
 .scTitle { font: 600 15px/1.25 var(--font-sans); }
@@ -47,7 +47,7 @@
 .sw[aria-checked="true"] span { left: 21px; }
 .sw:focus-visible, .person:focus-visible, .scenario:focus-visible, .fcard:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
 .family { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.fcard { display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 16px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
+.fcard { display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
 .fcard[aria-pressed="true"] { border: 2px solid var(--harbour); background: var(--mist); padding: 15px; }
 .fname { display: flex; gap: 10px; align-items: center; font: 600 14px var(--font-sans); }
 .fval { font: 400 28px var(--font-serif); }

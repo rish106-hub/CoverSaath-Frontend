@@ -12,7 +12,7 @@
 .h1 { margin: 12px 0 0; font: 400 clamp(40px, 4vw, 54px)/1 var(--font-serif); letter-spacing: -0.02em; }
 .col { display: flex; flex-direction: column; gap: 28px; }
 .ways { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.opt { display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 20px; border-radius: 18px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
+.opt { display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 20px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
 .optOn { border: 2px solid var(--harbour); padding: 19px; background: var(--mist); }
 .opt:focus-visible, .person:focus-visible, .btn:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
 .optLogo { width: 36px; height: 36px; border-radius: 10px; background: var(--sunken); display: inline-flex; align-items: center; justify-content: center; font: 600 13px var(--font-sans); }
@@ -50,7 +50,7 @@
 .said { font: 400 15px var(--font-sans); padding: 10px 12px; border-radius: 10px; background: #24201a; }
 .filed { font: 400 14px/1.4 var(--font-sans); padding: 10px 12px; border-radius: 10px; background: #0e4f4a; }
 .sayChips { display: flex; gap: 6px; flex-wrap: wrap; }
-.sayChip { min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #3a352d; background: transparent; color: #f7f5f0; font: 500 13px var(--font-sans); cursor: pointer; }
+.sayChip { min-height: 32px; padding: 0 12px; border-radius: var(--r-btn-sm); border: 1px solid #3a352d; background: transparent; color: #f7f5f0; font: 500 13px var(--font-sans); cursor: pointer; }
 .know { border-radius: 18px; background: var(--sheet); border: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 6px; }
 .knowT { font: 600 14px var(--font-sans); color: var(--graphite); }
 .knowD { font: 400 14px/1.5 var(--font-sans); }
@@ -60,7 +60,7 @@
 .policyD { font: 400 14px var(--font-sans); color: var(--graphite); }
 .readTag { font: 500 13px var(--font-sans); padding: 4px 10px; border-radius: 999px; background: var(--mist); color: var(--harbour); }
 .people { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.person { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font: 400 15px var(--font-sans); }
+.person { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font: 400 15px var(--font-sans); }
 .personOn { border: 2px solid var(--harbour); padding: 13px 15px; background: var(--mist); }
 .personAdd { border-style: dashed; color: var(--graphite); }
 .ava { width: 40px; height: 40px; border-radius: 50%; background: #16130f; color: #f7f5f0; display: inline-flex; align-items: center; justify-content: center; font: 600 14px var(--font-sans); flex: none; }
@@ -76,9 +76,9 @@
 .wr { font: 400 13px var(--font-sans); opacity: 0.8; }
 .wallet { display: flex; gap: 12px; align-items: center; padding: 18px 22px; border-radius: 16px; background: #16130f; color: #f7f5f0; }
 .wallet span { flex: 1; }
-.walletBtn { min-height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: #f7f5f0; color: #16130f; font: 500 15px var(--font-sans); cursor: pointer; }
+.walletBtn { min-height: 40px; padding: 0 18px; border-radius: var(--r-btn); border: 0; background: #f7f5f0; color: #16130f; font: 500 15px var(--font-sans); cursor: pointer; }
 .nav { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: 14px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 15px var(--font-sans); cursor: pointer; text-decoration: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 15px var(--font-sans); cursor: pointer; text-decoration: none; }
 .btnPrimary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .btnPrimary:hover { background: var(--harbour); color: var(--on-harbour); }
 .btnHidden { visibility: hidden; }

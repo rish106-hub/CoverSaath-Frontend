@@ -1,0 +1,3 @@
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.mark { display: block; flex: none; border-radius: 6px; }
+.word { font: 600 22px var(--font-sans); letter-spacing: -0.01em; color: var(--ink); }

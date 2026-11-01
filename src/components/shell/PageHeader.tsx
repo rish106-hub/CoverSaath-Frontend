@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand/BrandMark";
 import Link from "next/link";
 import { groupById, pagesIn, pageFor, type GroupId } from "@/lib/ia";
 import styles from "./PageHeader.module.css";
@@ -12,7 +13,7 @@ export function PageHeader({ pathname }: { pathname: string }) {
     <header className={styles.phead}>
       <div className={styles.prow}>
         <nav className={styles.crumbs} aria-label="Breadcrumb">
-          <Link href="/home">Knowvia</Link>
+          <BrandMark size={20} compact />
           {group ? (
             <>
               <span aria-hidden>/</span>

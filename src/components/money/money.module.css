@@ -2,7 +2,7 @@
 .head { display: flex; justify-content: flex-end; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
 .tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .connected { display: inline-flex; align-items: center; gap: 8px; font: 500 13px var(--font-sans); padding: 8px 12px; border-radius: 999px; background: var(--mist); color: var(--ink); }
-.btn, .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 999px; font: 500 14px var(--font-sans); transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
+.btn, .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: var(--r-btn); font: 500 14px var(--font-sans); transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
 .btn { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); }
 .btn:hover { border-color: var(--ink); }
 .cta { border: 0; background: var(--ink); color: var(--paper); align-self: flex-start; }
@@ -33,7 +33,7 @@
 .stateOk { background: var(--harbour); color: var(--on-harbour); }
 .stateDup { background: var(--signal); color: #16130f; }
 .remind { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 600 14px var(--font-sans); }
-.rbtn { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); font: 500 13px var(--font-sans); }
+.rbtn { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 6px; border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--sheet); font: 500 13px var(--font-sans); }
 .rbtn:hover { border-color: var(--ink); }
 .toast { font: 500 13px var(--font-sans); color: var(--harbour); }
 .due { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; }
@@ -81,11 +81,11 @@
 .field { display: flex; flex-direction: column; gap: 8px; border: 0; padding: 0; margin: 0; min-width: 0; }
 .field legend { font: 400 13px var(--font-sans); color: var(--graphite); padding: 0; margin-bottom: 8px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); font: 500 13px var(--font-sans); color: var(--ink); }
+.chip { min-height: 36px; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); font: 500 13px var(--font-sans); color: var(--ink); }
 .chip:hover { border-color: var(--ink); }
 .chipOn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .chipsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.chipsGrid .chip { border-radius: 10px; }
+.chipsGrid .chip { border-radius: var(--r-btn); }
 .planOut { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .head2 { font: 400 24px/1.3 var(--font-serif); }
 .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
