@@ -8,7 +8,7 @@ export default function Page() {
   return (
     <>
       <HelpHead route="/profile" />
-      <ProfileView logos={{ digilocker: <OfficialLogo id="digilocker" size={40} />, abha: <OfficialLogo id="abha" size={40} /> }} />
+      <ProfileView logos={{ digilocker: <OfficialLogo id="digilocker" size={40} />, abha: <OfficialLogo id="abha" size={40} />, abdm: <OfficialLogo id="abdm" size={40} /> }} />
     </>
   );
 }

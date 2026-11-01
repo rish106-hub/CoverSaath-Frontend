@@ -11,6 +11,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { ProfileView } from "@/components/profile/ProfileView";
+import { SettingsView } from "@/components/help/SettingsView";
+import { ThemeProvider } from "@/components/theme";
 import { SaveState } from "@/components/ui/SaveState";
 import { invalidateMe } from "@/components/shell/useMe";
 import { SHORTCUTS } from "@/lib/shortcuts";
@@ -51,7 +53,7 @@ describe("profile page", () => {
   it("renders every section", async () => {
     view();
     await ready();
-    for (const h of ["You", "Registered address (optional)", "Location", "Connected sources", "Your account"]) {
+    for (const h of ["You", "Contact", "Address", "Location", "Connected sources", "Account"]) {
       expect(screen.getByRole("heading", { name: h })).toBeInTheDocument();
     }
     expect(screen.getByRole("button", { name: "Fetch from DigiLocker" })).toBeInTheDocument();
@@ -226,13 +228,16 @@ describe("location", () => {
   it("saved places can be added and removed", async () => {
     view();
     await ready();
-    fireEvent.click(screen.getByRole("button", { name: "Add place" }));
+    expect(screen.getByTestId("place-home")).toHaveTextContent("Not set");
+    expect(screen.getByTestId("place-work")).toHaveTextContent("Not set");
+    fireEvent.click(screen.getByRole("button", { name: "Add Home" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save place" }));
     expect(await screen.findByText(/Enter the address, city, state/)).toBeInTheDocument();
-    type("Address", "7, Green Lane");
+    type("Place address", "7, Green Lane");
     type("Place city", "Pune");
     fireEvent.change(screen.getByLabelText("Place state"), { target: { value: "Maharashtra" } });
     type("Place pincode", "411001");
-    fireEvent.click(screen.getByRole("button", { name: "Add place" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save place" }));
     expect(await screen.findByText("7, Green Lane, Pune, 411001")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Remove Home" }));
     await waitFor(() => expect(screen.queryByText(/7, Green Lane/)).not.toBeInTheDocument());
@@ -259,5 +264,101 @@ describe("profile shortcut", () => {
     expect(hit?.href).toBe("/profile");
     const seq = SHORTCUTS.filter((s) => s.keys.length === 2).map((s) => s.keys.join(""));
     expect(new Set(seq).size).toBe(seq.length);
+  });
+});
+
+describe("profile layout", () => {
+  it("sections and nav anchors follow one order", async () => {
+    view();
+    await ready();
+    const order = ["You", "Contact", "Address", "Location", "Connected sources", "Account"];
+    const heads = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(heads).toEqual(order);
+    const links = within(screen.getByRole("navigation", { name: "Profile sections" })).getAllByRole("link");
+    expect(links.map((l) => l.textContent)).toEqual(order);
+    for (const l of links) {
+      const id = l.getAttribute("href")!.slice(1);
+      expect(document.getElementById(id)).toBeInTheDocument();
+    }
+    expect(links[0]).toHaveAttribute("aria-current", "location");
+  });
+
+  it("works without IntersectionObserver: clicking a link marks it current", async () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+    view();
+    await ready();
+    const nav = screen.getByRole("navigation", { name: "Profile sections" });
+    fireEvent.click(within(nav).getByRole("link", { name: "Location" }));
+    expect(within(nav).getByRole("link", { name: "Location" })).toHaveAttribute("aria-current", "location");
+    expect(within(nav).getByRole("link", { name: "You" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("scroll-spy follows the section in view", async () => {
+    let cb: IntersectionObserverCallback = () => undefined;
+    class IO {
+      constructor(c: IntersectionObserverCallback) { cb = c; }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    }
+    vi.stubGlobal("IntersectionObserver", IO);
+    view();
+    await ready();
+    act(() => cb([{ target: document.getElementById("profile-address")!, isIntersecting: true } as unknown as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(screen.getByRole("link", { name: "Address" })).toHaveAttribute("aria-current", "location");
+  });
+
+  it("shows name and email with an avatar, and long values wrap", async () => {
+    view();
+    await ready();
+    expect(await screen.findByTestId("you-name")).toHaveClass(/wrap/);
+    expect(screen.getByTestId("you-email")).toHaveClass(/wrap/);
+  });
+
+  it("long address values sit in wrapping text", async () => {
+    view();
+    await ready();
+    fireEvent.click(screen.getByRole("button", { name: "Fetch from DigiLocker" }));
+    expect((await screen.findByText(/Lakeview Residency/)).className).toMatch(/wrap/);
+  });
+});
+
+describe("connected sources", () => {
+  it("shows six uniform cards", async () => {
+    view();
+    await ready();
+    for (const id of ["gmail", "digilocker", "abha", "whatsapp", "calendar", "wallets"]) expect(screen.getByTestId(`source-${id}`)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manage Wallets" })).toHaveAttribute("href", "/cards");
+  });
+
+  it("connect and disconnect write the preferences Settings reads", async () => {
+    const save = vi.spyOn(adapters.preferences, "save");
+    view();
+    await ready();
+    const connect = screen.getByRole("button", { name: "Connect ABDM" });
+    await waitFor(() => expect(connect).not.toBeDisabled());
+    fireEvent.click(connect);
+    await screen.findByText("Saved");
+    expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ sources: expect.objectContaining({ abha: true }) }));
+    expect(await screen.findByRole("button", { name: "Disconnect ABDM" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Gmail" }));
+    await waitFor(() => expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ sources: expect.objectContaining({ gmail: false, abha: true }) })));
+    cleanup();
+    render(<ThemeProvider><SettingsView logos={{ digilocker: null, abha: null }} /></ThemeProvider>);
+    expect(await screen.findByRole("button", { name: "Connect Gmail" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Disconnect ABHA" })).toBeInTheDocument();
+  });
+
+  it("WhatsApp uses the notification setting and records the permission", async () => {
+    const perm = vi.spyOn(adapters.profile, "setPermission");
+    const save = vi.spyOn(adapters.preferences, "save");
+    view();
+    await ready();
+    const b = screen.getByRole("button", { name: "Connect Calendar" });
+    await waitFor(() => expect(b).not.toBeDisabled());
+    fireEvent.click(b);
+    await screen.findByText("Saved");
+    expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ notify: expect.objectContaining({ calendar: true }) }));
+    expect(perm).toHaveBeenCalledWith("calendar", "granted", "settings");
   });
 });
