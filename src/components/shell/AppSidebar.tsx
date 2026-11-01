@@ -11,7 +11,7 @@ import styles from "./AppSidebar.module.css";
 const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * Left sidebar pinned on every app page. Below 960px it becomes a top bar with a menu button
+ * Left sidebar pinned on every app page. Between 960 and 1199px it is an icon rail (labels move to tooltips). Below 960px it becomes a top bar with a menu button
  * that opens the same sidebar as a drawer. The "Today" and "Reading list" blocks only show on /home.
  */
 export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
@@ -73,37 +73,37 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
         <nav className={styles.groups} aria-label="Knowvia sections">
           {GROUPS.map((g) => (
             <div key={g.id} className={styles.group}>
-              <span className={styles.gname}>
+              <span className={styles.gname} data-tip={g.label}>
                 <i style={{ background: g.color }} aria-hidden />
-                {g.label}
+                <span className={styles.label}>{g.label}</span>
               </span>
               {pagesIn(g.id)
                 .filter((p) => p.route !== "/emergency")
                 .map((p) => {
                   const on = page?.group === g.id && page.tab === p.tab;
                   return (
-                    <Link key={p.route} href={p.href} className={on ? styles.on : styles.item} aria-current={on ? "page" : undefined}>
-                      {p.tab}
+                    <Link key={p.route} href={p.href} className={on ? styles.on : styles.item} aria-current={on ? "page" : undefined} data-tip={p.tab} data-glyph={p.tab.charAt(0)}>
+                      <span className={styles.label}>{p.tab}</span>
                     </Link>
                   );
                 })}
             </div>
           ))}
         </nav>
-        <Link href="/emergency" className={styles.emergency} aria-current={page?.route === "/emergency" ? "page" : undefined}>
-          <span aria-hidden>●</span> Emergency
+        <Link href="/emergency" className={styles.emergency} aria-current={page?.route === "/emergency" ? "page" : undefined} data-tip="Emergency">
+          <span aria-hidden>●</span> <span className={styles.label}>Emergency</span>
         </Link>
         {home ? (
           <>
-            <hr className={styles.rule} />
-            <div className={styles.block}>
-              <div className={styles.label}>Today</div>
+            <hr className={`${styles.rule} ${styles.extra}`} />
+            <div className={`${styles.block} ${styles.extra}`}>
+              <div className={styles.blabel}>Today</div>
               <div className={styles.text}>Father’s senior plan renews in <b>132 days</b>.</div>
               <Link href="/compare" className={styles.link}>Review it →</Link>
             </div>
-            <hr className={styles.rule} />
-            <div className={styles.block}>
-              <div className={styles.label}>Reading list</div>
+            <hr className={`${styles.rule} ${styles.extra}`} />
+            <div className={`${styles.block} ${styles.extra}`}>
+              <div className={styles.blabel}>Reading list</div>
               {readingList.map((r) => (
                 <Link key={r.title} href="/home" className={styles.read}>
                   <span>{r.title}</span>
