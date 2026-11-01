@@ -1,7 +1,7 @@
-import { PagePlaceholder } from "@/components/shell";
+import { ReviewView } from "@/components/cover/ReviewView";
 
 export const metadata = { title: "Things to check" };
 
 export default function Page() {
-  return <PagePlaceholder route="/review" />;
+  return <ReviewView />;
 }
