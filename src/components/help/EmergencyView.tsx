@@ -72,10 +72,10 @@ export function EmergencyView() {
   usePageShortcuts(Object.fromEntries([0, 1, 2, 3, 4].map((i) => [`person-${i + 1}`, () => setWho(i)])));
 
   const steps = [
-    { t: "Show the e-card, ask for cashless", d: "Planned stay: approval before admission. Emergency: within 24 hours.", ref: `${parent ? "Senior plan" : "Group plan"} p.9 §7.2`, warn: false },
-    { t: "Ask which room is within the limit", d: parent ? "Up to Rs 3,000 a day. A bigger room cuts other charges too." : "Up to Rs 5,000 a day.", ref: parent ? "Schedule p.3 and wording p.12 disagree" : "Wording p.12 §4.1", warn: parent },
-    { t: parent ? "Expect to pay 20% of the bill" : "No co-pay on this plan", d: parent ? "Co-pay: your share of every claim." : "The insurer pays the eligible bill in full.", ref: `${parent ? "Senior plan" : "Group plan"} p.2`, warn: false },
-    { t: "Carry and keep", d: "Photo ID, the e-card, the doctor’s note. Keep every bill and report.", ref: "", warn: false },
+    { t: "Show the e-card and ask for cashless", d: "Planned stay: before admission. Emergency: within 24 hours.", ref: `${parent ? "Senior plan" : "Group plan"} p.9 §7.2`, warn: false },
+    { t: "Ask which room is within your limit", d: parent ? "Up to Rs 3,000 a day. A bigger room cuts other charges." : "Up to Rs 5,000 a day.", ref: parent ? "Schedule p.3 and wording p.12 differ" : "Wording p.12 §4.1", warn: parent },
+    { t: parent ? "Expect to pay 20% of the bill" : "No co-pay on this plan", d: parent ? "Your share of every claim." : "The insurer pays the eligible bill.", ref: `${parent ? "Senior plan" : "Group plan"} p.2`, warn: false },
+    { t: "Carry and keep", d: "Photo ID, e-card and doctor’s note. Keep every bill.", ref: "", warn: false },
   ];
   const doneCount = Object.values(done).filter(Boolean).length;
   const progress = ["Got your location", `Matched “${emergencyIssues[issue].label}” to the right department`, `Checked ${p.name}’s cashless network`, "Ranked by distance, ICU and expertise"];
@@ -92,7 +92,7 @@ export function EmergencyView() {
   return (
     <div className={ui.stack}>
       <div className={s.top}>
-        <span className={s.live}>● EMERGENCY</span>
+        <span className={s.live}>● Emergency</span>
         <div className={s.people} role="group" aria-label="Who needs care">
           {emergencyPeople.map((x, i) => (
             <button key={x.name} type="button" className={cx(ui.pill, i === who && ui.pillOn)} aria-pressed={i === who} onClick={() => setWho(i)}>
@@ -102,8 +102,8 @@ export function EmergencyView() {
         </div>
       </div>
       <div>
-        <Kicker>Stay calm. Knowvia has the papers ready.</Kicker>
-        <PageTitle>{p.name} needs care. <span style={{ fontStyle: "italic", color: "var(--graphite)" }}>Start here.</span></PageTitle>
+        <Kicker>Papers are ready</Kicker>
+        <PageTitle>{p.name} needs care. <span style={{ fontStyle: "italic", color: "var(--graphite)" }}>Start here</span></PageTitle>
       </div>
 
       <div className={s.calls}>
@@ -117,7 +117,7 @@ export function EmergencyView() {
 
       <div className={s.cols}>
         <div className={s.col}>
-          <SectionHeading title="Cashless e-card" description={`${p.name}’s card, ready to show.`}>
+          <SectionHeading title="Cashless e-card">
             <div className={s.ecard}>
               <div className={s.ecardTop}>
                 <span style={{ width: 36, height: 36, borderRadius: 8, background: "#0e4f4a", color: "#f7f5f0", display: "inline-flex", alignItems: "center", justifyContent: "center", font: "600 13px var(--font-sans)" }} aria-hidden>{parent ? "MC" : "NH"}</span>
@@ -161,7 +161,7 @@ export function EmergencyView() {
         </div>
 
         <div className={s.col}>
-          <SectionHeading title="Best hospital now" description={loc === 0 ? "Location off" : "Kothrud, Pune · ±20 m"}>
+          <SectionHeading title="Nearest hospital" description={loc === 0 ? undefined : "Kothrud, Pune"}>
             <div className={s.panel}>
               <div className={ui.row + " " + ui.wrap}>
                 {Object.entries(emergencyIssues).map(([key, v]) => (
@@ -174,10 +174,10 @@ export function EmergencyView() {
                 <div className={s.loc}>
                   <span className={s.locDot} aria-hidden />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 500 }}>Allow location to find the nearest right hospital</div>
-                    <div className={ui.small}>Used only for this search. Never stored.</div>
+                    <div style={{ fontSize: 16, fontWeight: 500 }}>Allow location to find a hospital</div>
+                    <div className={ui.small}>Used for this search only.</div>
                   </div>
-                  <button type="button" className={cx(ui.pill, ui.pillOn)} onClick={allow}>Allow location</button>
+                  <button type="button" className="k-btn k-btn--primary" onClick={allow}>Allow location</button>
                 </div>
               ) : null}
               {loc >= 1 && loc < 5 ? (
@@ -192,9 +192,8 @@ export function EmergencyView() {
               {loc >= 5 ? (
                 <>
                   <div className={ui.row + " " + ui.wrap}>
-                    <span className={ui.small}>Show</span>
-                    <button type="button" className={cx(ui.chip, mode === "cashless" && ui.chipOn)} aria-pressed={mode === "cashless"} onClick={() => setMode("cashless")}>Cashless on {p.name}’s plan</button>
-                    <button type="button" className={cx(ui.chip, mode === "best" && ui.chipOn)} aria-pressed={mode === "best"} onClick={() => setMode("best")}>Best treatment nearby</button>
+                                        <button type="button" className={cx(ui.chip, mode === "cashless" && ui.chipOn)} aria-pressed={mode === "cashless"} onClick={() => setMode("cashless")}>Cashless on {p.name}’s plan</button>
+                    <button type="button" className={cx(ui.chip, mode === "best" && ui.chipOn)} aria-pressed={mode === "best"} onClick={() => setMode("best")}>Best treatment</button>
                   </div>
                   <div className={s.map} role="img" aria-label="Map of the hospitals below, relative to you">
                     <span className={s.you} />
@@ -212,11 +211,11 @@ export function EmergencyView() {
                         <span className={s.tag}>{h.tag}</span>
                       </div>
                       <div className={ui.row + " " + ui.wrap}>
-                        <a className={cx(ui.btn, ui.btnSm, h.top && ui.btnDark)} href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.name + ", Pune")}`} target="_blank" rel="noopener noreferrer">
-                          <BrandLogo id="google-maps" size={20} />Open in Google Maps
+                        <a className={cx("k-btn k-btn--sm", h.top && "k-btn--primary")} href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.name + ", Pune")}`} target="_blank" rel="noopener noreferrer">
+                          <BrandLogo id="google-maps" size={20} />Open in Maps
                         </a>
-                        <a className={cx(ui.btn, ui.btnSm)} href="tel:+912055500101">Call ER</a>
-                        <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={() => sendRoute(h.name)} disabled={flight.busy}>Send route to Rohan</button>
+                        <a className="k-btn k-btn--sm" href="tel:+912055500101">Call ER</a>
+                        <button type="button" className="k-btn k-btn--sm" onClick={() => sendRoute(h.name)} disabled={flight.busy}>Send route to Rohan</button>
                       </div>
                     </div>
                   ))}
@@ -225,7 +224,7 @@ export function EmergencyView() {
             </div>
           </SectionHeading>
 
-          <SectionHeading title="Blood near you" description="Units in stock within 10 km · updated 12 min ago">
+          <SectionHeading title="Blood nearby" description="Within 10 km">
             <div className={s.panel}>
               <div className={s.groups} role="group" aria-label="Blood group">
                 {Object.entries(stock).map(([g, n]) => (
@@ -240,11 +239,11 @@ export function EmergencyView() {
                   <div key={b.name} className={s.bank}>
                     <span><b style={{ fontWeight: 500 }}>{b.name}</b> <span className={ui.small}>· {b.distance}</span></span>
                     <span className={s.units} style={{ color: "var(--harbour)", fontWeight: 600 }}>{b.units} units {grp}</span>
-                    <a className={cx(ui.btn, ui.btnSm)} href="tel:+912055500102">Call</a>
+                    <a className="k-btn k-btn--sm" href="tel:+912055500102">Call</a>
                   </div>
                 ))}
               </div>
-              <span className={ui.small}>Stock from e-RaktKosh</span>
+              <span className={ui.small}>Source: e-RaktKosh</span>
             </div>
           </SectionHeading>
         </div>

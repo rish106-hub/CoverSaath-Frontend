@@ -46,7 +46,7 @@ describe("help views", () => {
     act(() => pressPageShortcut("next"));
     await screen.findByText("Duplicate premium", { selector: "h3" });
     fireEvent.click(screen.getByRole("button", { name: "Sign" }));
-    expect(screen.getByText("Signed ✓")).toBeTruthy();
+    expect(screen.getByText("Signed")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(BANNED);
     cleanup();
   });

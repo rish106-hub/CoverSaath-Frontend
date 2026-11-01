@@ -85,24 +85,24 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
   const flip = (k: "sources" | "notify" | "sharing", id: string, v: boolean) => setP((x) => ({ ...x, [k]: { ...x[k], [id]: v } }));
 
   const sources: { id: string; name: string; detail: string; logo: ReactNode }[] = [
-    { id: "gmail", name: "Gmail", detail: "Finds premium receipts and insurer emails", logo: <BrandLogo id="gmail" size={40} /> },
-    { id: "digilocker", name: "DigiLocker", detail: "Pulls policy documents you already hold", logo: logos.digilocker },
-    { id: "abha", name: "ABHA", detail: "Links your health ID to the e-card", logo: logos.abha },
+    { id: "gmail", name: "Gmail", detail: "Premium receipts and insurer emails", logo: <BrandLogo id="gmail" size={40} /> },
+    { id: "digilocker", name: "DigiLocker", detail: "Your policy documents", logo: logos.digilocker },
+    { id: "abha", name: "ABHA", detail: "Health ID on your e-card", logo: logos.abha },
   ];
   const notify = [
-    { id: "whatsapp", name: "WhatsApp", detail: "Case updates and renewal reminders", logo: <BrandLogo id="whatsapp" size={40} /> },
-    { id: "email", name: "Email", detail: "A weekly note and anything that needs you", logo: <BrandLogo id="gmail" size={40} /> },
-    { id: "calendar", name: "Calendar", detail: "Renewal and tax dates on your calendar", logo: <BrandLogo id="google-calendar" size={40} /> },
+    { id: "whatsapp", name: "WhatsApp", detail: "Case updates and renewals", logo: <BrandLogo id="whatsapp" size={40} /> },
+    { id: "email", name: "Email", detail: "Weekly note and urgent items", logo: <BrandLogo id="gmail" size={40} /> },
+    { id: "calendar", name: "Calendar", detail: "Renewal and tax dates", logo: <BrandLogo id="google-calendar" size={40} /> },
   ];
   const people = [
     { id: "rohan", name: "Rohan", detail: "Policies, claims and e-cards" },
-    { id: "mother", name: "Mother", detail: "Her own policy and claims only" },
+    { id: "mother", name: "Mother", detail: "Her policy and claims only" },
     { id: "father", name: "Father", detail: "Not shared yet" },
   ];
 
   return (
     <div className={s.col}>
-      <SectionHeading title="Connected sources" description="Connect only what you want Knowvia to read. Disconnect any time.">
+      <SectionHeading title="Connected sources">
         <div className={s.rows}>
           {sources.map((x) => {
             const on = p.sources[x.id];
@@ -115,7 +115,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
                 </span>
                 <span className={ui.row}>
                   <span className={cx(s.status, on && s.statusOn)}>{on ? "Connected" : "Not connected"}</span>
-                  <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={() => flip("sources", x.id, !on)} aria-label={`${on ? "Disconnect" : "Connect"} ${x.name}`}>
+                  <button type="button" className={cx("k-btn k-btn--sm", on ? "" : "k-btn--primary")} onClick={() => flip("sources", x.id, !on)} aria-label={`${on ? "Disconnect" : "Connect"} ${x.name}`}>
                     {on ? "Disconnect" : "Connect"}
                   </button>
                 </span>
@@ -125,7 +125,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
         </div>
       </SectionHeading>
 
-      <SectionHeading title="Notifications" description="Where Knowvia tells you things.">
+      <SectionHeading title="Notifications">
         <div className={s.rows}>
           {notify.map((x) => (
             <div key={x.id} className={s.row}>
@@ -142,7 +142,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
         </div>
       </SectionHeading>
 
-      <SectionHeading title="Sharing" description="Family members who can see your policies.">
+      <SectionHeading title="Sharing">
         <div className={s.rows}>
           {people.map((x) => (
             <div key={x.id} className={cx(s.row, s.plain)}>
@@ -161,7 +161,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
       <SectionHeading title="Voice and display">
         <div className={s.rows}>
           <div className={cx(s.row, s.plain)}>
-            <span><span className={s.name}>Voice language</span><span className={ui.small}>What Ask Knowvia listens for</span></span>
+            <span><span className={s.name}>Voice language</span><span className={ui.small}>Language Ask Knowvia listens for</span></span>
             <span className={s.seg} role="group" aria-label="Voice language">
               {([["en", "English"], ["hi", "हिंदी"], ["both", "Both"]] as const).map(([id, l]) => (
                 <button key={id} type="button" aria-pressed={p.voice === id} onClick={() => set("voice", id)}>{l}</button>
@@ -169,11 +169,11 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
             </span>
           </div>
           <div className={cx(s.row, s.plain)}>
-            <span><span className={s.name}>Reduce motion</span><span className={ui.small}>Fades only, nothing slides or moves by itself</span></span>
+            <span><span className={s.name}>Reduce motion</span><span className={ui.small}>Fades only, no movement</span></span>
             <span className={s.hit}><Switch on={p.reduced} label="Reduce motion" onChange={(v) => set("reduced", v)} /></span>
           </div>
           <div className={cx(s.row, s.plain)}>
-            <span><span className={s.name}>Theme</span><span className={ui.small}>Light or dark, on every page</span></span>
+            <span><span className={s.name}>Theme</span><span className={ui.small}>Light or dark</span></span>
             <span className={s.seg} role="group" aria-label="Theme">
               {([["light", "Light"], ["dark", "Dark"]] as const).map(([id, l]) => (
                 <button key={id} type="button" aria-pressed={theme === id} onClick={() => setTheme(id)}>{l}</button>
@@ -190,7 +190,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
               <span className={s.name}>{me.status === "ready" ? me.me.owner.displayName : "Your account"}</span>
               <span className={ui.small}>{me.status === "ready" ? (me.me.owner.email ?? me.me.householdName) : "Signed in"}</span>
             </span>
-            <button type="button" className={cx(ui.btn, ui.btnSm)} onClick={signOut} disabled={out.busy}>Sign out</button>
+            <button type="button" className="k-btn k-btn--sm" onClick={signOut} disabled={out.busy}>Sign out</button>
           </div>
         </div>
       </SectionHeading>
