@@ -47,6 +47,7 @@ test("g then c goes to Compare and 3 picks a plan", async ({ page }) => {
   await page.keyboard.press("g");
   await page.keyboard.press("c");
   await expect(page).toHaveURL(/\/compare$/);
+  await expect(page.getByText(/Fit for .* family/)).toBeVisible();
   await page.keyboard.press("3");
   await expect(page.getByText(/Keep your group plan and add Meridian Care/)).toBeVisible();
 });

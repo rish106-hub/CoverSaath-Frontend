@@ -4,7 +4,7 @@ The same journey three ways: `/` (beta access) to `/signin` to `/welcome` to `/h
 
 ## Keyboard only
 
-1. On `/`, `Tab` to the name field, type a name, `Tab` to email, type it, `Tab` to "Get access", `Enter`. Success reads "You're in, {name}" with a Continue link; `Enter` follows it to `/welcome`. (Continue with Google is the first `Tab` stop.)
+1. On `/`, `Tab` to the name field, type a name, `Tab` to email, type it, `Tab` to "Get access", `Enter`. Success reads "You're in, {name}" with an "Open Knowvia" link; `Enter` follows it to `/welcome`. (Continue with Google is the first `Tab` stop.)
 2. `/signin` is reachable by its link on the landing page; its 6 code boxes accept a pasted code, `Tab` moves between sign-in methods.
 3. On `/welcome`, `Tab` to the start link, `Enter`. Step pages `/welcome/add`, `/reading`, `/people`, `/ready` have a Back and a Continue button in tab order; "Skip to home" is the first stop.
 4. On `/home` (no field focused): `G` then `H` stays on Home, `V` held opens Ask Knowvia, `Esc` closes it, `T` flips light and dark, `?` lists every shortcut.
