@@ -55,12 +55,12 @@ export const PAGES: Record<string, DocPage> = {
 };
 
 export const TOPICS: Topic[] = [
-  { id: "sum", label: "Cover amount", value: "Rs 5,00,000 a year", plain: "The most the policy may pay in a year, shared by everyone on it.", ref: "Sched. p.1", at: "schedule:1", state: "Read, not checked" },
-  { id: "room", label: "Room rent", value: "Up to 1% of cover per day", plain: "A limit on the daily room charge. A costlier room can reduce what is paid on the whole bill.", ref: "p.4 §3.2", at: "policy:4", state: "Read, not checked" },
-  { id: "icu", label: "ICU", value: "Your documents disagree", plain: "The policy says 2% of cover per day; the schedule says no limit. Ask the insurer which applies.", ref: "p.4 · Sched. p.2", at: "policy:4", state: "Two documents, two answers", disagrees: true },
-  { id: "copay", label: "Co-payment", value: "Not in the pages read so far", plain: "A share of each claim you pay yourself. Not found in these documents yet.", ref: "—", at: null, state: "Not found yet" },
-  { id: "wait", label: "Waiting period", value: "30 days for illness", plain: "Time after the start date when only accidents are covered.", ref: "p.5 §4.1", at: "policy:5", state: "Read, not checked" },
-  { id: "auth", label: "Cashless approval", value: "Before a planned stay", plain: "For emergencies, within 24 hours of admission. The hospital desk raises it with the TPA.", ref: "p.9 §7.2", at: "policy:9", state: "Read, not checked" },
+  { id: "sum", label: "Cover amount", value: "Rs 5,00,000 a year", plain: "The most the policy pays in a year, shared by everyone on it.", ref: "Sched. p.1", at: "schedule:1", state: "Read from the policy" },
+  { id: "room", label: "Room rent", value: "Up to 1% of cover per day", plain: "A limit on the daily room charge. A costlier room can reduce the whole bill payout.", ref: "p.4 §3.2", at: "policy:4", state: "Read from the policy" },
+  { id: "icu", label: "ICU", value: "Details differ between documents", plain: "The policy says 2% of cover a day. The schedule says no limit. Ask the insurer which applies.", ref: "p.4 · Sched. p.2", at: "policy:4", state: "Needs review", disagrees: true },
+  { id: "copay", label: "Co-payment", value: "Not found in these pages", plain: "The share of each claim you pay yourself. Not found in these documents.", ref: "—", at: null, state: "Not found yet" },
+  { id: "wait", label: "Waiting period", value: "30 days for illness", plain: "Time after the start date when only accidents are covered.", ref: "p.5 §4.1", at: "policy:5", state: "Read from the policy" },
+  { id: "auth", label: "Cashless approval", value: "Before a planned admission", plain: "For emergencies, within 24 hours of admission. The hospital desk raises it.", ref: "p.9 §7.2", at: "policy:9", state: "Read from the policy" },
 ];
 
 export type GuideCard = { icon: string; kind: string; title: string; tone: "sand" | "mist" | "coral" | "lilac" };
@@ -70,7 +70,7 @@ const GUIDES: Partial<Record<TopicId, GuideCard[]>> = {
     { icon: "▶", kind: "Video · 6:12", title: "Picking a room at the hospital desk", tone: "mist" },
   ],
   icu: [
-    { icon: "◐", kind: "Guide · 3 min", title: "When two documents disagree", tone: "coral" },
+    { icon: "◐", kind: "Guide · 3 min", title: "When two documents differ", tone: "coral" },
     { icon: "?", kind: "Guide · 2 min", title: "How to ask your insurer which applies", tone: "lilac" },
   ],
 };
