@@ -10,6 +10,7 @@ import { useTheme } from "@/components/theme";
 
 export type Anchor = "dock" | "strip";
 export type Mode = "voice" | "text";
+export type ChatMessage = { id: number; role: "user" | "assistant"; text: string; route?: string; goLabel?: string };
 
 type Ctx = {
   hold: Hold;
@@ -22,6 +23,12 @@ type Ctx = {
   note: string;
   paletteOpen: boolean;
   helpOpen: boolean;
+  /** Text chat thread (Ask Knowvia without voice). Kept while the panel is closed. */
+  chatOpen: boolean;
+  thread: ChatMessage[];
+  thinking: boolean;
+  closeChat: () => void;
+  dictate: () => void;
   open: (trigger: HTMLElement | null, opts?: { mode?: Mode; anchor?: Anchor }) => void;
   close: () => void;
   submit: (text: string) => void;
@@ -52,6 +59,13 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   const [note, setNote] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [thread, setThread] = useState<ChatMessage[]>([]);
+  const [thinking, setThinking] = useState(false);
+  const chatRef = useRef(false);
+  const msgId = useRef(0);
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   const holdRef = useRef(hold);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -63,9 +77,23 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   const clearTimer = () => { if (timer.current) { clearInterval(timer.current); timer.current = null; } };
   useEffect(() => () => { run.current += 1; clearTimer(); }, []);
 
+  const sendChat = useCallback((said: string) => {
+    const mine: ChatMessage = { id: ++msgId.current, role: "user", text: said };
+    setThread((t) => [...t, mine]);
+    setThinking(true);
+    adapters.assistant.ask(said, pathRef.current).then((r) => {
+      if (!alive.current) return;
+      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: r.reply, route: r.route, goLabel: r.goLabel }]);
+    }).catch(() => {
+      if (!alive.current) return;
+      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: "That did not work. Try again." }]);
+    }).finally(() => { if (alive.current) setThinking(false); });
+  }, []);
+
   const submit = useCallback((text: string) => {
     const said = text.trim();
     if (!said) return;
+    if (chatRef.current) { sendChat(said); return; }
     const id = ++run.current;
     clearTimer();
     setTranscript(said);
@@ -88,7 +116,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       setNote("That did not work. Try again.");
       dispatch({ type: "open" });
     });
-  }, []);
+  }, [sendChat]);
 
   const listen = useCallback(() => {
     if (!adapters.voice.supported()) { setMode("text"); return; }
@@ -103,10 +131,24 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     triggerRef.current = trigger;
     setAnchor(opts.anchor ?? "dock");
     setAnchorRect(trigger?.getBoundingClientRect() ?? null);
+    if (opts.mode === "text") { chatRef.current = true; setChatOpen(true); return; }
     setTranscript(""); setReply(null); setDone(0); setNote("");
     dispatch({ type: "open" });
-    if (opts.mode === "text") setMode("text"); else listen();
+    listen();
   }, [listen]);
+
+  const closeChat = useCallback(() => {
+    chatRef.current = false;
+    setChatOpen(false);
+    const t = triggerRef.current;
+    if (t && t.isConnected) t.focus();
+  }, []);
+
+  // Voice into the chat thread: the spoken words are sent like typed ones.
+  const dictate = useCallback(() => {
+    if (!adapters.voice.supported()) return;
+    adapters.voice.listen().then((heard) => { if (heard && alive.current) sendChat(heard); }).catch(() => {});
+  }, [sendChat]);
 
   const close = useCallback(() => {
     run.current += 1;
@@ -137,6 +179,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       if (e.key.toLowerCase() !== "v" || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.repeat || isEditable(e.target)) return;
       if (holdRef.current.held) return;
+      if (chatRef.current) return; // the chat has its own mic button
       const trigger = (document.activeElement as HTMLElement | null) ?? null;
       triggerRef.current = trigger && trigger !== document.body ? trigger : document.querySelector<HTMLElement>("[data-ask-trigger]");
       setAnchor("dock"); setAnchorRect(null);
@@ -163,11 +206,12 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       if (e.key !== "Escape") return;
       if (helpOpen) setHelpOpen(false);
       else if (paletteOpen) setPaletteOpen(false);
+      else if (chatRef.current) closeChat();
       else if (holdRef.current.open) close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [close, helpOpen, paletteOpen]);
+  }, [close, closeChat, helpOpen, paletteOpen]);
 
   // Command palette: Cmd K / Ctrl K, from anywhere.
   useEffect(() => {
@@ -191,8 +235,8 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   });
 
   const value = useMemo<Ctx>(
-    () => ({ hold, mode, anchor, anchorRect, transcript, reply, done, note, paletteOpen, helpOpen, open, close, submit, setPaletteOpen, setHelpOpen }),
-    [hold, mode, anchor, anchorRect, transcript, reply, done, note, paletteOpen, helpOpen, open, close, submit],
+    () => ({ hold, mode, anchor, anchorRect, transcript, reply, done, note, paletteOpen, helpOpen, chatOpen, thread, thinking, closeChat, dictate, open, close, submit, setPaletteOpen, setHelpOpen }),
+    [hold, mode, anchor, anchorRect, transcript, reply, done, note, paletteOpen, helpOpen, chatOpen, thread, thinking, closeChat, dictate, open, close, submit],
   );
   return <AgentContext.Provider value={value}>{children}</AgentContext.Provider>;
 }

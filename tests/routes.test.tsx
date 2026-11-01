@@ -57,6 +57,9 @@ async function element(t: Target): Promise<ReactElement> {
 const BANNED = /\b(sample|demo|preview|draft|placeholder|lorem|not advice|not an insurer|CoverSaath|Saath)\b/i;
 const WALLET_JARGON = /\.pkpass|generic (pass|card)/i;
 const MINE = /^\/(family|money|tools|desk|emergency|assistant|settings|profile|shortcuts|cards|signin|welcome)?(\/|$)/;
+const COVER_ROUTES = new Set(["/home", "/review", "/policies", "/stress-test", "/compare"]);
+/** Casual or jargon wording that must not appear on the cover pages. */
+const COVER_JARGON = /\b(disagree\w*|annex|pkpass|gonna|wanna|stuff|tick(ed)?)\b/i;
 const INTENTS = /\b(explain_term|ask_policy|claim_help|add_document)\b/;
 
 beforeEach(() => {
@@ -86,6 +89,7 @@ describe("every route renders", () => {
         expect(t0 === "" || /^(iPhone|iPad)/.test(t0) || !/^\p{Ll}/u.test(t0), `lowercase start "${t0}" on ${t.href}`).toBe(true);
       }
     }
+    if (COVER_ROUTES.has(t.route)) expect(text, `casual wording on ${t.href}`).not.toMatch(COVER_JARGON);
     expect(text, `raw intent name on ${t.href}`).not.toMatch(INTENTS);
     expect(container.innerHTML, `banned word in markup on ${t.href}`).not.toMatch(/CoverSaath|lorem|placeholder="[^"]*(sample|demo)/i);
   });

@@ -6,6 +6,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { SectionHeading, SubHeading } from "@/components/type";
 import * as d from "@/data/mock/home";
 import { CountUp } from "./CountUp";
+import { PeopleChips } from "./PeopleChips";
 import { AskKnowviaStripSlot, RemindRowSlot } from "./slots";
 import s from "./HomeView.module.css";
 
@@ -20,7 +21,7 @@ function Glance() {
           </div>
         </div>
         <div className={s.healthText}>
-          <b>Insurance health: good</b>
+          <b>Cover health: good</b>
           <span>Fix 3 gaps to reach 90</span>
         </div>
         <div className={s.gaps}>
@@ -45,7 +46,7 @@ function Glance() {
 
 function Attention() {
   return (
-    <SectionHeading title="Needs your attention" description="Three things, most urgent first" actions={<span className={s.count}>3</span>}>
+    <SectionHeading title="Needs your attention" actions={<span className={s.count}>3</span>}>
       <div className={s.list}>
         {d.alerts.map((a) => (
           <div key={a.t} className={s.alert}>
@@ -53,7 +54,7 @@ function Attention() {
             <div className={s.alertBody}>
               <b>{a.t}</b>
               <span>{a.d}</span>
-              <Link href={a.href} className={s.link}>{a.cta} →</Link>
+              <Link href={a.href} className={`k-btn k-btn--secondary k-btn--sm ${s.alertBtn}`}>{a.cta}</Link>
             </div>
           </div>
         ))}
@@ -78,7 +79,7 @@ function Year() {
     else if (e.key === "Enter") { e.preventDefault(); router.push(d.yearTiles[i].href); }
   };
   return (
-    <SectionHeading title="Your year" description="What’s coming, and what to do">
+    <SectionHeading title="Your year">
       <RemindRowSlot count={d.yearTiles.length} />
       <div className={s.months} aria-hidden>
         {d.monthStrip.map((m, k) => (
@@ -107,7 +108,7 @@ function Year() {
             </span>
             <b className={s.dateTitle}>{t.t}</b>
             <span className={s.muted}>{t.s}</span>
-            {sel === i ? <span className={s.open}>{t.cta} →</span> : null}
+            {sel === i ? <span className={`k-btn k-btn--primary k-btn--sm ${s.open}`}>{t.cta}</span> : null}
           </button>
         ))}
       </div>
@@ -117,7 +118,7 @@ function Year() {
 
 function Policies() {
   return (
-    <SectionHeading title="Your policies by type" actions={<Link href="/policies" className={s.link}>Open all policies →</Link>}>
+    <SectionHeading title="Your policies" actions={<Link href="/policies" className="k-btn k-btn--secondary k-btn--sm">All policies</Link>}>
       <div className={s.grid3}>
         {d.policyCards.map((q) => (
           <Link key={q.type} href="/policies" className={s.card} style={{ borderTop: `4px solid ${q.c}` }}>
@@ -130,13 +131,13 @@ function Policies() {
             </span>
             <span className={s.two}>
               <span><span className={s.muted}>Cover</span><span className={s.serif}>{q.cover}</span></span>
-              <span><span className={s.muted}>Premium a month</span><span className={s.serif}>{q.pm}</span></span>
+              <span><span className={s.muted}>Monthly premium</span><span className={s.serif}>{q.pm}</span></span>
             </span>
             <span className={s.used}>
               <span className={s.rowBetween}><span>Used this year</span><span>{q.used}</span></span>
               <span className={s.meter}><span style={{ width: `${q.up}%`, background: q.c }} /></span>
             </span>
-            <span className={`${s.rowBetween} ${s.foot}`}><span>{q.who}</span><b>Renews {q.ren}</b></span>
+            <span className={`${s.rowBetween} ${s.foot}`}><PeopleChips people={q.who.map((name) => ({ name }))} /><b>Renews {q.ren}</b></span>
           </Link>
         ))}
       </div>
@@ -150,7 +151,6 @@ function PerPerson() {
   return (
     <SectionHeading
       title="Cover per person"
-      description="Who has how much"
       actions={
         <div className={s.toggle} role="group" aria-label="Show cover as">
           {(["amt", "pct"] as const).map((v) => (
@@ -174,9 +174,9 @@ function PerPerson() {
           </div>
         ))}
         <div className={s.legend}>
-          <span><i style={{ background: "var(--harbour)" }} /> Group · Northstar</span>
-          <span><i style={{ background: "var(--sea-glass)" }} /> Top-up · Kaveri, after Rs 5L</span>
-          <span><i style={{ background: "var(--ochre)" }} /> Senior plan · Meridian</span>
+          <span><i style={{ background: "var(--harbour)" }} />Group, Northstar</span>
+          <span><i style={{ background: "var(--sea-glass)" }} />Top-up, Kaveri</span>
+          <span><i style={{ background: "var(--ochre)" }} />Senior plan, Meridian</span>
         </div>
       </div>
     </SectionHeading>
@@ -185,7 +185,7 @@ function PerPerson() {
 
 function Claims() {
   return (
-    <SectionHeading title="Claims" description="This year, and what’s still left" actions={<Link href="/desk" className={s.link}>Desk →</Link>}>
+    <SectionHeading title="Claims" actions={<Link href="/desk" className="k-btn k-btn--secondary k-btn--sm">Open claims</Link>}>
       <div className={s.list}>
         {d.claims.map((c) => (
           <div key={c.t} className={s.claim}>
@@ -214,7 +214,7 @@ function MoneyAndHandling() {
           <span className={s.stats}><span>{d.moneyDesk.matched} matched</span><span>{d.moneyDesk.missing} missing</span><span>{d.moneyDesk.duplicate} duplicate</span></span>
         </Link>
       </SectionHeading>
-      <SectionHeading title="We’re handling" actions={<span className={s.muted}>2 open</span>}>
+      <SectionHeading title="In progress" actions={<span className={s.muted}>2 open</span>}>
         <Link href="/desk" className={s.card}>
           <span className={s.big}>{d.handling.headline}</span>
           <span className={s.steps}>{[0, 1, 2, 3].map((k) => <i key={k} style={{ background: k < d.handling.done ? "var(--harbour)" : "var(--line)" }} />)}</span>
@@ -232,14 +232,14 @@ function StressAndAdvisor() {
         <div className={`${s.card} ${s.dark}`}>
           <span className={s.big}>{d.stressTeaser.headline}</span>
           <span className={s.onDarkSub}>{d.stressTeaser.note}</span>
-          <Link href="/stress-test" className={s.lightBtn}>See the breakdown</Link>
+          <Link href="/stress-test" className={`k-btn ${s.lightBtn}`}>See the breakdown</Link>
         </div>
       </SectionHeading>
-      <SectionHeading title="Advisor partner">
+      <SectionHeading title="Talk to an advisor">
         <div className={`${s.card} ${s.advisor}`}>
           <span className={s.mark} aria-hidden>{d.advisor.mark}</span>
           <b className={s.advLine}>{d.advisor.line}</b>
-          <Link href="/tools" className={s.btn}>Book</Link>
+          <Link href="/tools" className="k-btn k-btn--primary">Book a call</Link>
         </div>
       </SectionHeading>
     </div>
@@ -248,7 +248,7 @@ function StressAndAdvisor() {
 
 function Tools() {
   return (
-    <SectionHeading title="Tools" description="When you have a minute">
+    <SectionHeading title="Tools">
       <div className={s.grid4}>
         {d.calcs.map((c) => (
           <Link key={c.t} href="/tools" className={s.card}>
@@ -267,8 +267,7 @@ function Learn() {
   const items = tab === "all" ? d.feed : d.feed.filter((x) => x.tag === tab);
   return (
     <SectionHeading
-      title="Picked for your policies"
-      description="Learn"
+      title="Learn"
       actions={
         <div className={s.toggle} role="group" aria-label="Filter">
           {d.feedTabs.map(([k, label]) => (
@@ -294,7 +293,7 @@ export function HomeView() {
   return (
     <div className={s.page}>
       <AskKnowviaStripSlot />
-      <SectionHeading title="Your cover at a glance" actions={<span className={s.muted}>updated 2 hours ago</span>}>
+      <SectionHeading title="Your cover at a glance" actions={<span className={s.muted}>Updated 2 hours ago</span>}>
         <Glance />
       </SectionHeading>
       <Attention />

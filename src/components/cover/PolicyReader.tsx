@@ -10,7 +10,7 @@ import styles from "./PolicyReader.module.css";
 const WHO = [{ id: "self", label: "You" }, { id: "spouse", label: "Spouse" }, { id: "child", label: "Child" }];
 
 function findingsToTopics(fs: Finding[]): Topic[] {
-  return fs.map((f, i) => ({ id: `f${i}` as Topic["id"], label: f.label, value: f.answer, plain: f.disagrees ? "Your documents disagree on this. Ask the insurer which applies." : "Read from your policy.", ref: f.pageRef, at: null, state: f.disagrees ? "Two documents, two answers" : "Read, not checked", disagrees: f.disagrees }));
+  return fs.map((f, i) => ({ id: `f${i}` as Topic["id"], label: f.label, value: f.answer, plain: f.disagrees ? "Details differ between documents. Ask the insurer which applies." : "Read from your policy.", ref: f.pageRef, at: null, state: f.disagrees ? "Needs review" : "Read from the policy", disagrees: f.disagrees }));
 }
 
 export function PolicyReader({ id }: { id: string }) {
@@ -32,11 +32,11 @@ export function PolicyReader({ id }: { id: string }) {
     };
   }, [id]);
 
-  if (policy === undefined) return <p className={styles.quiet} role="status">Opening your policy…</p>;
+  if (policy === undefined) return <p className={styles.quiet} role="status">Opening your policy...</p>;
   if (policy === null) {
     return (
       <>
-        <PageTitle>We could not find that policy</PageTitle>
+        <PageTitle>Policy not found</PageTitle>
         <p className={styles.quiet}><Link href="/policies">Back to My policies</Link></p>
       </>
     );
@@ -67,7 +67,7 @@ export function PolicyReader({ id }: { id: string }) {
           {full && page ? (
             <SectionHeading
               title="Answers from your policy"
-              description={cur?.at ? `Showing the line for: ${cur.label}` : "Not found on any page read so far"}
+              description={cur?.at ? `Showing: ${cur.label}` : "Not found on the pages read"}
               actions={
                 <div className={styles.tabs} role="group" aria-label="Document">
                   {DOCS.map((d) => <button key={d.id} type="button" aria-pressed={activeDoc === d.id} onClick={() => { setDoc(d.id); setTopicId(d.id === "schedule" ? "sum" : "room"); }}>{d.name}</button>)}
@@ -91,15 +91,15 @@ export function PolicyReader({ id }: { id: string }) {
               </article>
             </SectionHeading>
           ) : (
-            <SectionHeading title="Answers from your policy" description="The page view opens once every page of this policy has been read." />
+            <SectionHeading title="Answers from your policy" description="Page view is not ready for this policy yet." />
           )}
 
           <div className={styles.extras}>
             <div className={styles.explain}>
               <span className={styles.orb} aria-hidden />
-              <span className={styles.grow}>Too long to read? Knowvia can say this clause in two lines, or out loud.</span>
-              <Link href="/assistant">Explain it →</Link>
-              <Link href="/assistant" className={styles.light}>🔊 Listen</Link>
+              <span className={styles.grow}>Hear this clause in plain words</span>
+              <Link href="/assistant" className="k-btn k-btn--primary k-btn--sm">Explain it</Link>
+              <Link href="/assistant" className="k-btn k-btn--secondary k-btn--sm">Listen</Link>
             </div>
             {cur ? guidesFor(cur.id).map((g) => (
               <Link key={g.title} href="/home" className={styles.guide}>
@@ -107,7 +107,7 @@ export function PolicyReader({ id }: { id: string }) {
                 <span>
                   <span className={styles.gkind}>{g.kind}</span>
                   <span className={styles.gtitle}>{g.title}</span>
-                  <span className={styles.glink}>Read on the blog →</span>
+                  <span className={`k-btn k-btn--secondary k-btn--sm ${styles.glink}`}>Read guide</span>
                 </span>
               </Link>
             )) : null}
@@ -131,7 +131,7 @@ export function PolicyReader({ id }: { id: string }) {
       </div>
 
       {disagreeing.length ? (
-        <SectionHeading title="Where the documents disagree">
+        <SectionHeading title="Needs review">
           <ul className={styles.dis}>
             {disagreeing.map((t) => (
               <li key={t.id}><b>{t.label}</b> <span>{t.plain}</span> <span className={styles.aref}>{t.ref}</span></li>
