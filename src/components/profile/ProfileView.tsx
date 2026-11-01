@@ -49,7 +49,7 @@ function YouSection({ profile }: { profile: Profile }) {
   };
   const ready = me.status === "ready";
   return (
-    <SectionHeading title="You" description="How Knowvia knows and reaches you.">
+    <SectionHeading title="You">
       <form className={s.stack} onSubmit={submit} noValidate>
         <div className={s.row}>
           <div className={s.field}>
@@ -65,7 +65,7 @@ function YouSection({ profile }: { profile: Profile }) {
           <input id="pf-mobile" className={s.input} inputMode="tel" autoComplete="tel" value={mobile} onChange={(e) => { setMobile(e.target.value); sv.reset(); }} aria-invalid={error ? true : undefined} aria-describedby={error ? "pf-mobile-err" : undefined} />
         </Field>
         <div className={s.row}>
-          <button type="submit" className={cx(s.btn, s.btnPrimary)} disabled={sv.busy}>Save mobile number</button>
+          <button type="submit" className="k-btn k-btn--primary" disabled={sv.busy}>Save mobile number</button>
           <SaveState status={sv.status} onRetry={() => void submit({ preventDefault() {} } as FormEvent)} />
         </div>
       </form>
@@ -143,28 +143,28 @@ function AddressSection({ profile }: { profile: Profile }) {
 
   const showForm = editing;
   return (
-    <SectionHeading title="Registered address (optional)" description="Helps Knowvia find the right hospital and insurer office near you.">
+    <SectionHeading title="Registered address (optional)">
       <div className={s.stack}>
         {address && !showForm ? (
           <>
             <AddressCard a={address} source={source} />
             <div className={s.row}>
-              <button type="button" className={s.btn} onClick={() => { setForm(fromAddress(address)); setEditing(true); sv.reset(); }}>Edit</button>
-              <button type="button" className={s.btn} onClick={remove} disabled={remover.busy}>Remove</button>
+              <button type="button" className="k-btn" onClick={() => { setForm(fromAddress(address)); setEditing(true); sv.reset(); }}>Edit</button>
+              <button type="button" className="k-btn" onClick={remove} disabled={remover.busy}>Remove</button>
               <SaveState status={remover.status} onRetry={remove} />
             </div>
           </>
         ) : null}
         {!address && !showForm ? (
           <div className={s.row}>
-            <button type="button" className={cx(s.btn, s.btnPrimary)} onClick={fetchIt} disabled={fetcher.busy || sv.busy}>
+            <button type="button" className="k-btn k-btn--primary" onClick={fetchIt} disabled={fetcher.busy || sv.busy}>
               {fetcher.busy ? "Fetching from DigiLocker" : "Fetch from DigiLocker"}
             </button>
-            <button type="button" className={s.btn} onClick={() => setEditing(true)}>Add it yourself</button>
+            <button type="button" className="k-btn" onClick={() => setEditing(true)}>Add it yourself</button>
             <SaveState status={sv.status} />
           </div>
         ) : null}
-        {fetchFailed ? <p className={s.notice} role="status">We could not reach DigiLocker just now. You can add the address yourself below.</p> : null}
+        {fetchFailed ? <p className={s.notice} role="status">Could not reach DigiLocker. Add the address yourself.</p> : null}
         {showForm ? (
           <form className={s.stack} onSubmit={submit} noValidate aria-label="Registered address">
             <div className={s.grid}>
@@ -197,8 +197,8 @@ function AddressSection({ profile }: { profile: Profile }) {
               </Field>
             </div>
             <div className={s.row}>
-              <button type="submit" className={cx(s.btn, s.btnPrimary)} disabled={sv.busy}>Save address</button>
-              <button type="button" className={s.btn} onClick={() => { setEditing(false); setErrors({}); setFetchFailed(false); }}>Cancel</button>
+              <button type="submit" className="k-btn k-btn--primary" disabled={sv.busy}>Save address</button>
+              <button type="button" className="k-btn" onClick={() => { setEditing(false); setErrors({}); setFetchFailed(false); }}>Cancel</button>
               <SaveState status={sv.status} onRetry={() => submit()} />
             </div>
           </form>
@@ -298,22 +298,22 @@ function LocationSection({ profile }: { profile: Profile }) {
     });
 
   return (
-    <SectionHeading title="Location" description="Used to find hospitals and blood banks near you. Exact position is only used in an emergency.">
+    <SectionHeading title="Location">
       <div className={s.stack}>
         <div className={s.row}>
           <span className={s.strong}>Location access</span>
           <span className={s.status} data-testid="location-state">{PERMISSION_LABEL(permission)}</span>
         </div>
         <div className={s.row}>
-          <button type="button" className={cx(s.btn, s.btnPrimary)} onClick={ask} disabled={allow.busy}>Allow location</button>
-          {permission === "granted" ? <button type="button" className={s.btn} onClick={turnOff} disabled={allow.busy}>Turn off</button> : null}
+          <button type="button" className="k-btn k-btn--primary" onClick={ask} disabled={allow.busy}>Allow location</button>
+          {permission === "granted" ? <button type="button" className="k-btn" onClick={turnOff} disabled={allow.busy}>Turn off</button> : null}
           <SaveState status={allow.status} onRetry={ask} />
         </div>
         {message ? <p className={s.notice} role="status">{message}</p> : null}
         {current ? (
           <div className={s.row}>
             <span className={s.cardText}>Current place: about 1 km (kept for 24 hours)</span>
-            <button type="button" className={s.btn} onClick={clearIt} disabled={clear.busy}>Clear</button>
+            <button type="button" className="k-btn" onClick={clearIt} disabled={clear.busy}>Clear</button>
             <SaveState status={clear.status} onRetry={clearIt} />
           </div>
         ) : null}
@@ -327,7 +327,7 @@ function LocationSection({ profile }: { profile: Profile }) {
                   <span className={s.strong}>{p.label}</span>
                   <span className={s.cardText} style={{ display: "block" }}>{p.address.line1}</span>
                 </span>
-                <button type="button" className={s.btn} onClick={() => removePlace(p.id)} disabled={drop.busy} aria-label={`Remove ${p.label}`}>Remove</button>
+                <button type="button" className="k-btn" onClick={() => removePlace(p.id)} disabled={drop.busy} aria-label={`Remove ${p.label}`}>Remove</button>
               </div>
             ))}
           </div>
@@ -347,7 +347,7 @@ function LocationSection({ profile }: { profile: Profile }) {
             </Field>
           </div>
           <div className={s.row}>
-            <button type="submit" className={s.btn} disabled={add.busy}>Add place</button>
+            <button type="submit" className="k-btn" disabled={add.busy}>Add place</button>
             <SaveState status={add.status} />
           </div>
         </form>
@@ -375,7 +375,7 @@ function SourcesSection({ logos }: { logos: { digilocker: ReactNode; abha: React
     { id: "abha", name: "ABHA", detail: "Links your health ID to the e-card", logo: logos.abha },
   ];
   return (
-    <SectionHeading title="Connected sources" description="What Knowvia can read for you. Change these in Settings.">
+    <SectionHeading title="Connected sources">
       <div className={s.list}>
         {rows.map((x) => (
           <div key={x.id} className={s.source}>
@@ -408,7 +408,7 @@ function AccountSection() {
   return (
     <SectionHeading title="Your account">
       <div className={s.row}>
-        <button type="button" className={s.btn} onClick={signOut} disabled={out.busy}>Sign out</button>
+        <button type="button" className="k-btn" onClick={signOut} disabled={out.busy}>Sign out</button>
       </div>
     </SectionHeading>
   );
@@ -433,7 +433,7 @@ export function ProfileView({ logos }: { logos: { digilocker: ReactNode; abha: R
           <LocationSection profile={profile} />
         </>
       ) : failed ? (
-        <p className={s.notice} role="alert">We could not load your details. Refresh to try again.</p>
+        <p className={s.notice} role="alert">Could not load your details. Refresh to try again.</p>
       ) : (
         <p className={s.small} role="status">Loading your details</p>
       )}

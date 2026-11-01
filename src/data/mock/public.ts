@@ -28,9 +28,9 @@ export const FAMILY_STATS = [
 export const FAMILY_ALL_YEAR = { accent: "var(--harbour)", story: "All year · One home for 3 policies and 5 people, with the next renewal already on the calendar." };
 
 export const LANDING_POINTS = [
-  { i: "◐", t: "Reads your policy in a minute", d: "Every clause in plain words, with the page it came from." },
-  { i: "₹", t: "Shows what you would pay", d: "Before the hospital asks, for every person in the family." },
-  { i: "✓", t: "Handles the follow-up", d: "Claims, renewals, refunds and emergencies, with you in charge." },
+  { i: "◐", t: "Reads your policy in a minute", d: "Plain words, with page references." },
+  { i: "₹", t: "Shows what you would pay", d: "For every person, before the bill." },
+  { i: "✓", t: "Handles the follow-up", d: "Claims, renewals and refunds." },
 ] as const;
 
 export const AUTH_HEADS: [string, string][] = [
