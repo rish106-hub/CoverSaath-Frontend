@@ -65,7 +65,7 @@ export function Landing() {
           <section className={styles.stats} aria-label="What Knowvia did for Meera’s family">
             <div className={styles.statsHead}>
               <h2 className={styles.statsT}>Meera’s family this year</h2>
-              
+
             </div>
             <div className={styles.statGrid}>
               {FAMILY_STATS.map((x) => {
