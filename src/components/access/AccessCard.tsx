@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adapters, AdapterError } from "@/adapters";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { validateAccess, type AccessErrors } from "@/components/public/validate";
 import styles from "./AccessCard.module.css";
 

@@ -89,11 +89,24 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("Switch to dark mode", ["Theme", "Dark selected", "Press T to switch back"]),
     ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
   ] },
+  // Public screens.
+  "/": { route: "/", page: "Beta access", reads: "the Knowvia beta page", examples: [
+    ex("What does Knowvia do?", ["Question · Knowvia", "Reads your policy, shows what you would pay", "Then handles the follow-up"]),
+    ex("Is it free?", ["Question · price", "Free while in beta", "No card needed"]),
+    ex("How do I get access?", ["Access", "Use Google, or your name and email", "Takes under a minute"]),
+  ] },
+  "/signin": { route: "/signin", page: "Sign in", reads: "the sign-in page", examples: [
+    ex("I didn’t get the code", ["Sign in · code", "Codes can take a minute", "You can resend or use email instead"]),
+    ex("Sign in with email instead", ["Sign in · email", "Sends a link to your inbox", "Open it on this device"]),
+    ex("Is my data safe?", ["Question · privacy", "Only what you share is read", "You can revoke any source"]),
+  ] },
 };
 
 /** Resolve a pathname to its context (dynamic routes and /welcome/* included). */
 export function contextFor(pathname: string): PageContext {
-  const clean = pathname.replace(/\/+$/, "") || "/home";
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  if (clean === "/") return PAGE_CONTEXT["/"];
+  if (clean === "/signin") return PAGE_CONTEXT["/signin"];
   if (clean.startsWith("/welcome")) return PAGE_CONTEXT["/welcome"];
   const def = pageFor(clean);
   return PAGE_CONTEXT[def?.route ?? clean] ?? PAGE_CONTEXT["/assistant"];

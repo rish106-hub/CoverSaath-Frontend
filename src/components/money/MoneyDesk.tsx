@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { adapters } from "@/adapters";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { SectionHeading } from "@/components/type";
 import { reconcileReceipts } from "@/lib/reconcile";
 import { formatRs } from "@/lib/inflation";

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { adapters } from "@/adapters";
 import type { WalletPlatform } from "@/adapters";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { Kicker, PageTitle } from "@/components/type";
 import { SHARE_APPLE, SHARE_OTHER, WALLET_PASSES, WALLET_PEOPLE } from "@/data/mock";
 import { PASS_STYLES, PassCard, useQrClock } from "./PassCard";

@@ -1,6 +1,6 @@
 import { HelpHead } from "@/components/help/HelpHead";
 import { SettingsView } from "@/components/help/SettingsView";
-import { OfficialLogo } from "@/components/logos";
+import { OfficialLogo } from "@/components/logos/server";
 
 export const metadata = { title: "Settings" };
 

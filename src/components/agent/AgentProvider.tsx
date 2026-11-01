@@ -116,6 +116,19 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     if (t && t.isConnected) t.focus();
   }, []);
 
+  // Pages ask the card to open with a phrase (e.g. the /assistant try-saying chips): window event "knowvia:ask".
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const text = (e as CustomEvent<{ text?: string }>).detail?.text;
+      if (!text) return;
+      const active = document.activeElement as HTMLElement | null;
+      open(active && active !== document.body ? active : document.querySelector<HTMLElement>("[data-ask-trigger]"), { mode: "text" });
+      submit(text);
+    };
+    window.addEventListener("knowvia:ask", onAsk);
+    return () => window.removeEventListener("knowvia:ask", onAsk);
+  }, [open, submit]);
+
   // Hold V: keydown opens and listens, keyup submits. Ignored while an input is focused.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {

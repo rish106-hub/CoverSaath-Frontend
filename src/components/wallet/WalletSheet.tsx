@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adapters } from "@/adapters";
 import type { WalletPlatform } from "@/adapters";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { WALLET_PASSES, WALLET_PEOPLE, SHARE_CHANNELS } from "@/data/mock";
 import { orderWallets } from "@/lib/wallet-detect";
 import { PASS_STYLES, PassCard, useQrClock } from "./PassCard";

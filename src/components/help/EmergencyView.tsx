@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { adapters, type RankedHospital } from "@/adapters";
 import { SectionHeading, Kicker, PageTitle } from "@/components/type";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { emergencyPeople, emergencyIssues } from "@/data/mock/help-pages";
 import ui from "./ui.module.css";
 import s from "./Emergency.module.css";

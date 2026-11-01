@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { adapters } from "@/adapters";
 import { SectionHeading } from "@/components/type";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { useTheme } from "@/components/theme";
 import { useMe } from "@/components/shell";
 import ui from "./ui.module.css";

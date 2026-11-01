@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } 
 import Link from "next/link";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters } from "@/adapters";
-import { BrandLogo } from "@/components/logos/BrandLogo";
+import { BrandLogo } from "@/components/logos";
 import { ThemeToggle } from "@/components/theme";
 import { AUTH_CARDS, AUTH_FILTERS, AUTH_HEADS, AUTH_WHYS, type AuthCard } from "@/data/mock";
 import { OTP_LENGTH, applyOtpInput, digitsOnly, otpComplete } from "./otp";
