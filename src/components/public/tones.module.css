@@ -1,0 +1,11 @@
+/* Surface tones shared by the public screens. Fixed light fills carry fixed dark text so they read in both themes. */
+.ink { background: var(--harbour); color: var(--on-harbour); }
+.plain { background: var(--sheet); color: var(--ink); }
+.paper { background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
+.mist { background: var(--mist); color: var(--ink); }
+.marker { background: #f4dc8a; color: #16130f; }
+.signal { background: var(--signal); color: #16130f; }
+.ochre { background: #f1e3b8; color: #16130f; }
+.violet { background: #e4dff0; color: #16130f; }
+.coral { background: #f2b9a8; color: #16130f; }
+.dark { background: #16130f; color: #f7f5f0; }

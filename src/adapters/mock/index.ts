@@ -1,4 +1,6 @@
 import type { Adapters } from "../types";
+import { AdapterError } from "../types";
+import { detectWalletPlatform } from "@/lib/wallet-detect";
 import { delay } from "./delay";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
@@ -70,7 +72,7 @@ export const mockAdapters: Adapters = {
   learn: { posts: () => delay(learnPosts) }, // backend gap
   invite: { invite: () => delay({ ok: true, state: "sent" as const }) }, // backend gap
   wallet: {
-    detect: () => "google" as const,
+    detect: () => detectWalletPlatform(typeof navigator === "undefined" ? "" : navigator.userAgent),
     pass: (platform) => delay({ platform, label: "Meera Rao e-card", url: `/cards?pass=${platform}` }),
   },
   notify: {
