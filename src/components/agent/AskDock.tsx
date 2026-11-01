@@ -1,17 +1,17 @@
 "use client";
 
-import { usePageContext } from "@/agent/page-context";
 import { useAgent } from "./AgentProvider";
+import { MicGlyph } from "./VoiceIcons";
 import styles from "./agent.module.css";
 
-/** Bottom-centre pill on every app page. */
+/** Bottom-centre voice control on every app page: a labelled button with a breathing mic and a quiet sound wave. */
 export function AskDock() {
   const { open, close, view } = useAgent();
-  const ctx = usePageContext();
   return (
-    <button type="button" data-ask-trigger className={styles.dock} aria-label="Ask Knowvia" aria-expanded={view !== "closed"} onClick={(e) => (view === "closed" ? open(e.currentTarget, { anchor: "dock" }) : close())}>
-      <span className={styles.orb} aria-hidden />
-      <span className={styles.dockText}><b>Ask Knowvia</b><span>Reads this page · {ctx.page}</span></span>
+    <button type="button" data-ask-trigger className={`k-btn k-btn--primary ${styles.dock}`} aria-expanded={view !== "closed"} onClick={(e) => (view === "closed" ? open(e.currentTarget, { anchor: "dock" }) : close())}>
+      <span className={styles.dockMic} aria-hidden><MicGlyph size={20} /></span>
+      <span className={styles.dockLabel}>Talk to Knowvia</span>
+      <span className={styles.wave} aria-hidden><i /><i /><i /><i /><i /></span>
     </button>
   );
 }

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import styles from "./agent.module.css";
 import { AskDock } from "./AskDock";
 import { ShortcutsOverlay } from "./ShortcutsOverlay";
+import { VoiceCoach } from "./VoiceCoach";
 import { useAgent } from "./AgentProvider";
 
 // The panel renders nothing until opened; the palette is fetched on first use. loading: null keeps layout untouched.
@@ -15,7 +16,7 @@ export function AgentLayer() {
   const { view, paletteOpen } = useAgent();
   return (
     <>
-      <div className={styles.dockWrap}><AskDock /></div>
+      <div className={styles.dockWrap}><VoiceCoach /><AskDock /></div>
       {view !== "closed" ? <AskPanel /> : null}
       {paletteOpen ? <CommandPalette /> : null}
       <ShortcutsOverlay />

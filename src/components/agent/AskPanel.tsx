@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePageContext } from "@/agent/page-context";
+import { commandsFor } from "@/agent/voice-commands";
+import { usePathname } from "next/navigation";
 import { useAgent } from "./AgentProvider";
 import styles from "./AskPanel.module.css";
 
@@ -22,6 +24,7 @@ function MicIcon() {
 export function AskPanel() {
   const { view, hold, speaking, transcript, reply, done, note, thinking, close, setChat, toggleMic, submit } = useAgent();
   const ctx = usePageContext();
+  const commands = commandsFor(usePathname() ?? "/home");
   const mic = useRef<HTMLButtonElement>(null);
   const arrow = useRef<HTMLButtonElement>(null);
   const prev = useRef(view);
@@ -106,7 +109,17 @@ export function AskPanel() {
           </button>
         </div>
 
-        {!chat ? (
+        {!chat && !transcript && !thinking ? (
+          <div className={styles.examples}>
+            <span className={styles.tryLabel}>You can say</span>
+            {commands.map((c) => (
+              <button key={c} type="button" className={styles.ex} onClick={() => submit(c)}>
+                “{c}”
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {!chat && transcript ? (
           <div className={styles.examples}>
             <span className={styles.tryLabel}>Try saying</span>
             {ctx.examples.map((e) => (

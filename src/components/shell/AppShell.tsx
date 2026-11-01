@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeButton } from "@/components/theme";
-import { AgentProvider, AgentLayer } from "@/components/agent";
+import { AgentProvider, AgentLayer, HeaderMic } from "@/components/agent";
 import { groupOf, pageFor } from "@/lib/ia";
 import { PageHeader } from "./PageHeader";
 import { AppSidebar } from "./AppSidebar";
@@ -24,7 +24,7 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
       <a href="#main-content" className={styles.skip}>Skip to content</a>
       <AppSidebar pathname={pathname} />
       <div className={styles.main}>
-        <div className={styles.bar}><ThemeButton /></div>
+        <div className={styles.bar}><HeaderMic /><ThemeButton /></div>
         {home ? null : <PageHeader pathname={pathname} />}
         <main key={pathname} id="main-content" tabIndex={-1} className={`${styles.content} k-stagger`}>{children}</main>
       </div>

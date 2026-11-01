@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "analyze:size": "node scripts/analyze-size.mjs",
-    "dry-run": "tsx --conditions=react-server scripts/dry-run.ts"
+    "dry-run": "tsx --conditions=react-server scripts/dry-run.ts",
+    "verify:persistence": "tsx --conditions=react-server scripts/verify-persistence.ts"
   },
   "dependencies": {
     "cmdk": "^1.1.1",

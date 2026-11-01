@@ -7,7 +7,7 @@ export type TourScene = {
   say: string; reply: string; nav: number;
 };
 
-export const TOUR_NAV = ["Home", "Stress test", "Compare", "Money", "Family", "Emergency"];
+export const TOUR_NAV = ["Home", "Stress test", "Compare", "Money", "Family", "Emergency", "Talk"];
 
 export const TOUR_SCENES: TourScene[] = [
   { t: "Home", path: "home", title: "Good evening, Meera.", tag: "Health 72 / 100", tiles: [["Total cover", "Rs 23L", "ink"], ["Premium a month", "Rs 5,308", "plain"], ["Next renewal", "13 Mar", "marker"]], bars: [["Meera", 100, "ink", "Rs 15L"], ["Rohan", 33, "ink", "Rs 5L"], ["Mother", 20, "ochre", "Rs 3L"], ["Father", 20, "ochre", "Rs 3L"]], say: "What needs my attention?", reply: "Three things. Father’s room rent pages disagree; that one first.", nav: 0 },
@@ -15,6 +15,7 @@ export const TOUR_SCENES: TourScene[] = [
   { t: "Compare", path: "compare", title: "Which plan fits your family?", tag: "Best fit 94%", tiles: [["Today", "67%", "plain"], ["Kaveri top-up", "94%", "marker"], ["You’d pay on a bypass", "Rs 13k", "ink"]], bars: [["Today", 67, "soft", "67%"], ["Kaveri", 94, "ink", "94%"], ["Meridian", 67, "soft", "67%"], ["Indus", 100, "ink", "100%"]], say: "Parents first. I hate surprise bills.", reply: "Then Indus Shield fits best: no co-pay, any room.", nav: 2 },
   { t: "Money", path: "money", title: "Every premium and bill, matched.", tag: "1 paid twice", tiles: [["Receipts found", "6", "plain"], ["80D you can claim", "Rs 75k", "ink"], ["On its way back", "Rs 60,890", "marker"]], bars: [["Mar", 100, "ink", "31,700"], ["Apr", 76, "soft", "24,100"], ["Jun", 25, "soft", "7,900"], ["Aug", 10, "soft", "3,240"]], say: "Find my premium receipts for tax.", reply: "Found 4 in Gmail. Your 80D pack is ready for HR.", nav: 3 },
   { t: "Emergency", path: "emergency", title: "Father needs care. Start here.", tag: "Cashless nearby", tiles: [["Nearest cashless", "7 min", "signal"], ["Heart unit", "Yes", "plain"], ["E-card", "Ready", "ink"]], bars: [["Kothrud", 92, "ink", "7 min"], ["Paud Road", 78, "ink", "11 min"], ["Deccan", 60, "soft", "16 min"], ["Wanowrie", 40, "soft", "24 min"]], say: "Papa ko chest pain ho raha hai.", reply: "Call 112. Kothrud Care is cashless on his plan. Route sent to Rohan.", nav: 5 },
+  { t: "Talk", path: "talk", title: "Say it, it opens.", tag: "Talk to Knowvia", tiles: [["Opens pages", "Any", "ink"], ["Answers", "From your policy", "plain"], ["Where", "Bottom of every page", "marker"]], bars: [["Open my family", 100, "ink", "Opens"], ["Is cataract covered?", 80, "soft", "Answers"], ["Open money desk", 60, "ink", "Opens"], ["Nearest cashless hospital", 40, "soft", "Answers"]], say: "Open my family.", reply: "Opening My family. Tap Talk to Knowvia at the bottom of any page.", nav: 6 },
 ];
 
 /** The four clickable stats: value, label, month, tour scene index, accent token, story. */
