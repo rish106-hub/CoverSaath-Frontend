@@ -24,12 +24,15 @@ export function AskStrip() {
 
   return (
     <div className={styles.strip}>
-      <button ref={ref} type="button" className={styles.stripMain} aria-label="Ask Knowvia, hold V" onClick={() => open(ref.current, { anchor: "strip", mode: "text" })}>
+      <button ref={ref} type="button" className={styles.stripMain} aria-label="Ask Knowvia" onClick={() => open(ref.current, { anchor: "strip", mode: "text" })}>
         <span className={styles.orb} aria-hidden />
         <span className={styles.stripText}>
           <b>Ask Knowvia anything</b>
-          <span>It reads your policies and whatever page you are on. Hold <kbd className={styles.kbd}>V</kbd> and talk.</span>
+          <span>It reads your policies and whatever page you are on.</span>
         </span>
+      </button>
+      <button type="button" className={styles.stripMic} aria-label="Talk to Knowvia" onClick={() => open(ref.current, { anchor: "strip" })}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" /></svg>
       </button>
       <div className={styles.chips}>
         {ctx.examples.map((e) => (
