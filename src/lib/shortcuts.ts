@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-/** Keyboard map (BUILD-SPEC 5.2). Never shown as hint text on pages; only on /shortcuts and the ? overlay. */
+/** Keyboard map (BUILD-SPEC 5.2). Key hints are shown on /shortcuts and the ? overlay; the V hold-to-talk hint is also on the voice dock, coach and panel (owner request: voice must be discoverable). */
 export type ShortcutSection = "Go to" | "Act" | "Move" | "On a page";
 export type Shortcut = {
   id: string;

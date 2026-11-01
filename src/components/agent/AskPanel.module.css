@@ -67,3 +67,6 @@
 }
 html[data-motion="reduced"] .sheet, html[data-motion="reduced"] .micRing, html[data-motion="reduced"] .chev { animation: none !important; }
 html[data-motion="reduced"] .chatWrap, html[data-motion="reduced"] .chev, html[data-motion="reduced"] .mic { transition: none !important; }
+
+.holdHint { display: none; font-size: 13px; color: var(--graphite); }
+@media (hover: hover) and (pointer: fine) { .holdHint { display: block; } }

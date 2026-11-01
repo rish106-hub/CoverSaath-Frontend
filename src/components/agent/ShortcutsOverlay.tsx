@@ -8,7 +8,7 @@ import styles from "./agent.module.css";
 const SECTIONS: ShortcutSection[] = ["Go to", "Act", "Move", "On a page"];
 const pretty = (k: string) => (k === "escape" ? "Esc" : k === "enter" ? "Enter" : k.toUpperCase());
 
-/** `?` overlay. The only place besides /shortcuts where key hints are shown. */
+/** `?` overlay. Lists every key. The V hold-to-talk hint also appears on the voice dock. */
 export function ShortcutsOverlay() {
   const { helpOpen, setHelpOpen } = useAgent();
   const ref = useRef<HTMLDivElement>(null);

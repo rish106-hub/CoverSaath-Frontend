@@ -8,7 +8,7 @@ import styles from "./agent.module.css";
 export function HeaderMic() {
   const { open, close, view } = useAgent();
   return (
-    <button type="button" className={styles.headMic} aria-label="Talk to Knowvia" title="Talk to Knowvia" aria-expanded={view !== "closed"} onClick={(e) => (view === "closed" ? open(e.currentTarget, { anchor: "dock" }) : close())}>
+    <button type="button" className={styles.headMic} aria-label="Talk to Knowvia" title="Talk to Knowvia. Or hold V and speak." aria-keyshortcuts="V" aria-expanded={view !== "closed"} onClick={(e) => (view === "closed" ? open(e.currentTarget, { anchor: "dock" }) : close())}>
       <MicGlyph size={18} />
     </button>
   );

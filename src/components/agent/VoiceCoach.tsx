@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAgent } from "./AgentProvider";
+import { KeyHint } from "./KeyHint";
 import styles from "./agent.module.css";
 
 const KEY = "knowvia.voiceCoach";
@@ -46,7 +47,7 @@ export function VoiceCoach() {
   if (!shown) return null;
   return (
     <div role="dialog" aria-modal="false" aria-labelledby="voice-coach-title" className={styles.coach}>
-      <p id="voice-coach-title" className={styles.coachText}><b>Talk to Knowvia.</b> Say what you need, it can open pages and answer questions.</p>
+      <p id="voice-coach-title" className={styles.coachText}><b>Talk to Knowvia.</b> Say what you need, it can open pages and answer questions.<span className={styles.coachKey}> On a keyboard, hold <KeyHint /> and speak.</span></p>
       <div className={styles.coachActions}>
         <button ref={tryBtn} type="button" className="k-btn k-btn--primary k-btn--sm" onClick={() => { dismiss(true); open(document.querySelector<HTMLElement>("[data-ask-trigger]"), { anchor: "dock" }); }}>Try it</button>
         <button type="button" className="k-btn k-btn--sm" onClick={() => dismiss(true)}>Not now</button>

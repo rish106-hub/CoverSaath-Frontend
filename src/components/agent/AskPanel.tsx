@@ -6,7 +6,9 @@ import Link from "next/link";
 import { usePageContext } from "@/agent/page-context";
 import { commandsFor } from "@/agent/voice-commands";
 import { usePathname } from "next/navigation";
+import { adapters } from "@/adapters";
 import { useAgent } from "./AgentProvider";
+import { KeyHint } from "./KeyHint";
 import styles from "./AskPanel.module.css";
 
 // The thread and input load the first time chat is opened; voice never waits for them.
@@ -67,6 +69,7 @@ export function AskPanel() {
       <div className={styles.voice}>
         <div className={styles.status} role="status" aria-live="polite">
           <span className={styles.label}>{label}</span>
+          {state === "idle" && !chat && adapters.voice.supported() ? <span className={styles.holdHint}>Or hold <KeyHint /> and speak</span> : null}
           {transcript && !chat ? <div className={styles.say}>{transcript}</div> : null}
           {reply && done >= 3 && !chat ? <div className={styles.reply}>{reply.reply}</div> : null}
           {note ? <div className={styles.note}>{note}</div> : null}
