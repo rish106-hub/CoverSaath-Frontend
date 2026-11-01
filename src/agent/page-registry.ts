@@ -98,4 +98,3 @@ export function contextFor(pathname: string): PageContext {
   const def = pageFor(clean);
   return PAGE_CONTEXT[def?.route ?? clean] ?? PAGE_CONTEXT["/assistant"];
 }
-
