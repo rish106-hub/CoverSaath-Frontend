@@ -9,6 +9,7 @@ import {
   prefsOut, prefsPut, type PermissionPut, type PlaceDelete, type PlacePut,
 } from "@/adapters/user-data-contract";
 import type { FetchLike } from "./client";
+import { guardedFetch } from "./resilience";
 
 // BFF for the backend user-data store (ADR 0015). The backend token stays in the sealed cookie; bodies are allow-listed by zod
 // before they leave; backend errors become coded, client-safe errors; values never appear in errors or logs.
@@ -47,7 +48,7 @@ export function mapFailure(status: number, body: unknown): AppError {
 
 export function createUserDataClient(opts: UserDataClientOptions) {
   const base = opts.baseUrl.replace(/\/+$/, "");
-  const doFetch: FetchLike = opts.fetch ?? ((u, i) => globalThis.fetch(u, i));
+  const doFetch: FetchLike = opts.fetch ?? guardedFetch;
   const timeoutMs = opts.timeoutMs ?? 5000;
 
   async function send(method: "GET" | "PUT" | "DELETE", path: string, token: string, o: { json?: unknown; revision?: number } = {}): Promise<unknown> {

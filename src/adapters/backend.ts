@@ -2,12 +2,13 @@ import type { AccessAdapter, HouseholdAdapter } from "./types";
 import { AdapterError } from "./types";
 import { accessResultSchema, householdSchema, meSchema } from "./schemas";
 import { mockAdapters } from "./mock";
+import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser-side clients for the same-origin BFF (/api/app/*). They never see the backend token.
 
 async function call(path: string, init?: RequestInit): Promise<Response> {
   try {
-    return await fetch(path, { ...init, cache: "no-store", headers: { "content-type": "application/json", "x-knowvia-app": "1", ...init?.headers } });
+    return await fetchWithRetry(path, { ...init, cache: "no-store", headers: { "content-type": "application/json", "x-knowvia-app": "1", ...init?.headers } });
   } catch {
     throw new AdapterError("BACKEND_UNREACHABLE", true);
   }

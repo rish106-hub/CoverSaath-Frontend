@@ -69,8 +69,8 @@ Screens import from `src/adapters` only (never `src/adapters/mock/*`). `types.ts
 | `tests` | Vitest, grouped like `src`: `app`, `components`, `agent`, `adapters`, `server`, `lib`, `styles` |
 | `e2e`, `scripts` | Playwright walk; dry run, persistence check, bundle size |
 | `design` | Design boards the UI is built from |
-| `docs` | [build-spec](docs/build-spec.md), [decisions](docs/decisions.md), [persistence-matrix](docs/persistence-matrix.md), [keyboard-walkthrough](docs/keyboard-walkthrough.md) |
+| `docs` | [build-spec](docs/build-spec.md), [decisions](docs/decisions.md), [persistence-matrix](docs/persistence-matrix.md), [keyboard-walkthrough](docs/keyboard-walkthrough.md), [deploy](docs/deploy.md) |
 
 ## Checks
 
-Banned-words and route smoke tests render every route (`tests/app/routes.test.tsx`); contrast tests cover both themes plus the Emergency fixed colours (`tests/styles/tokens.test.ts`); the shortcut map has a collision test (`tests/agent/agent.test.ts`). CI runs typecheck, lint, test and build on every push.
+Banned-words and route smoke tests render every route (`tests/app/routes.test.tsx`); contrast tests cover both themes plus the Emergency fixed colours (`tests/styles/tokens.test.ts`); the shortcut map has a collision test (`tests/agent/agent.test.ts`). CI runs typecheck, lint, test, build, dependency audit, secret scan and the Playwright walk on every push; CodeQL runs weekly. Deploy, env vars, post-deploy smoke and scale limits: [docs/deploy.md](docs/deploy.md).
