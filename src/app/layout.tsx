@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Newsreader, Geist, Geist_Mono } from "next/font/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider, themeInitScript, CapabilityInit } from "@/components/theme";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/styles/globals.css";
