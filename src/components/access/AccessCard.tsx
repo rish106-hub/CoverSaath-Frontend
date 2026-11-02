@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { adapters, AdapterError } from "@/adapters";
+import { adapters, AdapterError, usingBackend } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
 import { invalidateMe } from "@/components/shell/useMe";
 import { validateAccess, type AccessErrors } from "@/components/public/validate";
@@ -98,10 +98,14 @@ export function AccessCard() {
   return (
     <form className={styles.card} onSubmit={onSubmit} noValidate aria-label="Get access">
       <div className={styles.title}>Get access in 10 seconds</div>
+      {usingBackend ? null : (
+        <>
       <button type="button" className={styles.ghost} onClick={withGoogle} disabled={busy}>
         <BrandLogo id="google" size={24} />Continue with Google
       </button>
       <div className={styles.or} aria-hidden><span />or<span /></div>
+        </>
+      )}
       <label className={styles.field}>
         <span>Your name</span>
         <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? "acc-name-err" : undefined} />
