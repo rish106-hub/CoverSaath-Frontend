@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AdapterError } from "./types";
+import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser clients for saved calculator inputs and household members. Same-origin BFF only (/api/app/*); they never see the
 // backend token. Failures are AdapterError with a code and a retry hint; no values are put into errors.
@@ -33,7 +34,7 @@ async function call(path: string, init?: RequestInit & { json?: unknown }): Prom
   const { json, ...rest } = init ?? {};
   let res: Response;
   try {
-    res = await fetch(path, {
+    res = await fetchWithRetry(path, {
       ...rest,
       body: json === undefined ? undefined : JSON.stringify(json),
       cache: "no-store",

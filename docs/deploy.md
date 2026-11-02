@@ -37,3 +37,16 @@ Manual smoke after the env vars are set: beta access, `/home` shows the backend 
 - The backend is **one Fly machine** (`knowvia-api`, Sydney). Its rate limit, model budget and evidence-claim guard are in-process, so a second machine would multiply those limits instead of sharing them. No capacity number has been measured, so there is no supported claim of "millions of requests". Do not make one.
 - To measure: `node scripts/soak.mjs <baseUrl> --total 2000 --concurrency 50` against a staging deployment, then record latency percentiles and error rate here.
 - Before adding Fly machines, move the rate limit and budget to shared storage (backend ADR needed).
+
+## Overload behaviour (what happens when the backend is slow or down)
+
+The site must degrade, not crash. Every backend call from the BFF passes `src/server/backend/resilience.ts`:
+
+- **Bulkhead:** at most 32 backend calls in flight per serverless instance. Extra calls fail at once instead of queueing until the platform timeout.
+- **Circuit breaker:** 5 failures in a row (network error, timeout, 5xx) open the circuit for 10 s. Calls fail at once, then one probe call decides whether it closes.
+- **Fast failure** is `503 BACKEND_BUSY` with `Retry-After: 5` and `no-store`. The body is coded and holds no internals.
+- **Browser:** reads (GET) retry up to 2 times on a network error or 502/503/504, waiting for `Retry-After` (capped at 3 s) or a jittered backoff. Writes are never retried automatically.
+- Pages that do not need the backend (sign-in shell, static content, `/api/health`) keep serving while the backend is down.
+- Error boundaries (`error.tsx`, `global-error.tsx`, `not-found.tsx`) catch render failures.
+
+Limits: breaker and bulkhead state is **per instance**. It lowers pressure on the backend but is not a global cap, so many Vercel instances can still send more than 32 calls in total. A true global limit needs shared storage and is part of the same backend work as the shared rate limit.
