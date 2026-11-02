@@ -4,7 +4,8 @@ import { BrandMark } from "@/components/brand/BrandMark";
 import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
-import { adapters } from "@/adapters";
+import { adapters, usingBackend } from "@/adapters";
+import { AccessCard } from "@/components/access/AccessCard";
 import { useTicker } from "@/lib/use-ticker";
 import { useSingleFlight } from "@/lib/use-single-flight";
 import { invalidateMe } from "@/components/shell/useMe";
@@ -69,7 +70,18 @@ export function SignIn() {
           ))}
         </ol>
 
-        {step === "start" ? (
+        {step === "start" && usingBackend ? (
+          // The backend has no login, OTP or social routes yet; beta access is the only real way in.
+          <div className={styles.form}>
+            <div>
+              <h1 className={styles.h1}>Welcome to Knowvia</h1>
+              <p className={styles.sub}>Private beta. Get access to start.</p>
+            </div>
+            <AccessCard />
+          </div>
+        ) : null}
+
+        {step === "start" && !usingBackend ? (
           <form className={styles.form} onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
             <div>
               <h1 className={styles.h1}>Welcome to Knowvia</h1>
