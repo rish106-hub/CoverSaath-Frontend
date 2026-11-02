@@ -1,0 +1,35 @@
+name: Post-deploy smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Base URL to test
+        required: false
+        default: https://knowviafrontend.vercel.app
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.event.deployment_status.target_url || github.event.inputs.url || 'scheduled' }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Smoke test
+        env:
+          INPUT_URL: ${{ github.event.inputs.url }}
+          DEPLOY_URL: ${{ github.event.deployment_status.target_url }}
+        run: node scripts/smoke.mjs "${DEPLOY_URL:-${INPUT_URL:-https://knowviafrontend.vercel.app}}"
