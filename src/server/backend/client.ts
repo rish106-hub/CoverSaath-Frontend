@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { AppError } from "./errors";
+import { guardedFetch } from "./resilience";
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 export type ClientOptions = { baseUrl: string; bootstrapToken: string; fetch?: FetchLike; timeoutMs?: number };
@@ -24,7 +25,7 @@ export type HouseholdView = z.infer<typeof matrixSchema>;
 /** Typed backend client. 5 s timeout, coded errors, tokens never logged. */
 export function createBackendClient(opts: ClientOptions) {
   const base = opts.baseUrl.replace(/\/+$/, "");
-  const doFetch: FetchLike = opts.fetch ?? ((u, i) => globalThis.fetch(u, i));
+  const doFetch: FetchLike = opts.fetch ?? guardedFetch;
   const timeoutMs = opts.timeoutMs ?? 5000;
 
   async function send(method: "GET" | "POST", path: string, o: { token?: string; bootstrap?: boolean; json?: unknown } = {}): Promise<{ status: number; body: unknown }> {

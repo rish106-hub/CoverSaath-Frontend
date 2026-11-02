@@ -1,6 +1,7 @@
 import "server-only";
 import { AppError, errorBody } from "./errors";
 import type { FetchLike } from "./client";
+import { guardedFetch } from "./resilience";
 
 // Backend access for the person's own saved data (tool scenarios, household members). Server only: the session token never
 // reaches the browser. Errors are coded and client-safe; backend messages and values are never copied into them.
@@ -57,7 +58,7 @@ export type Send = (
 /** One typed request to the backend. 5 s timeout, no redirects, coded errors. */
 export function createSender(opts: { baseUrl: string; fetch?: FetchLike; timeoutMs?: number }): Send {
   const base = opts.baseUrl.replace(/\/+$/, "");
-  const doFetch: FetchLike = opts.fetch ?? ((u, i) => globalThis.fetch(u, i));
+  const doFetch: FetchLike = opts.fetch ?? guardedFetch;
   const timeoutMs = opts.timeoutMs ?? 5000;
   return async (method, path, o) => {
     const controller = new AbortController();
@@ -81,7 +82,7 @@ export function createSender(opts: { baseUrl: string; fetch?: FetchLike; timeout
       if (res.status >= 200 && res.status < 300) return parsed;
       throw toDataError(res.status, parsed);
     } catch (e) {
-      if (e instanceof DataError) throw e;
+      if (e instanceof DataError || e instanceof AppError) throw e;
       if (controller.signal.aborted) throw new DataError(504, "BACKEND_TIMEOUT", true);
       throw new DataError(503, "BACKEND_UNREACHABLE", true);
     } finally {
@@ -92,7 +93,9 @@ export function createSender(opts: { baseUrl: string; fetch?: FetchLike; timeout
 
 /** Response for a route handler: coded body, never a backend message. */
 export function dataFailure(e: unknown): Response {
-  const err: { status: number; code: string; retryable: boolean } =
-    e instanceof DataError ? e : e instanceof AppError ? { status: e.status, ...errorBody(e) } : new DataError(500, "BACKEND_UNREACHABLE", true);
-  return Response.json({ ok: false, code: err.code, retryable: err.retryable }, { status: err.status, headers: { "cache-control": "no-store" } });
+  const err: { status: number; code: string; retryable: boolean; retryAfter?: number } =
+    e instanceof DataError ? e : e instanceof AppError ? { status: e.status, ...errorBody(e), retryAfter: e.retryAfter } : new DataError(500, "BACKEND_UNREACHABLE", true);
+  const headers: Record<string, string> = { "cache-control": "no-store" };
+  if (err.retryAfter !== undefined) headers["retry-after"] = String(err.retryAfter);
+  return Response.json({ ok: false, code: err.code, retryable: err.retryable }, { status: err.status, headers });
 }

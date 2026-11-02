@@ -1,46 +1,52 @@
 import type { NextConfig } from "next";
 
-const isDevelopment = process.env.NODE_ENV === "development";
+const isProd = process.env.NODE_ENV === "production";
 
-// Next injects inline bootstrap scripts, so script-src needs 'unsafe-inline'
-// until a nonce-based CSP is added. Fonts are self-hosted by next/font.
-const contentSecurityPolicy = [
+/**
+ * Content-Security-Policy. The app is same-origin only: the browser never calls
+ * the backend (the BFF does, server-side), fonts are self-hosted by next/font,
+ * and Vercel Speed Insights posts to a same-origin /_vercel path.
+ * 'unsafe-inline' scripts are needed for the theme-init script and Next's inline
+ * bootstrap; a nonce-based policy would force every page to render dynamically.
+ * 'unsafe-eval' and ws: are dev only (React refresh, HMR).
+ */
+const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
-  "font-src 'self'",
+  "font-src 'self' data:",
+  `connect-src 'self'${isProd ? "" : " ws: wss:"}`,
   "media-src 'self' blob:",
-  `connect-src 'self'${isDevelopment ? " ws: wss:" : ""}`,
-  "frame-ancestors 'none'",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "object-src 'none'",
+  "frame-ancestors 'none'",
 ].join("; ");
+
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: csp },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "microphone=(self), geolocation=(self), camera=(), payment=(), usb=(), bluetooth=(), interest-cohort=()",
+  },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+];
 
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  compress: true,
   async headers() {
     return [
-      {
-        source: "/:path*",
-        headers: [
-          { key: "Content-Security-Policy", value: contentSecurityPolicy },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=()" },
-        ],
-      },
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "Cache-Control", value: "no-store" },
-          { key: "X-Robots-Tag", value: "noindex, nofollow" },
-        ],
-      },
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "no-store" }] },
     ];
   },
   /**

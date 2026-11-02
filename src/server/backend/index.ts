@@ -36,5 +36,12 @@ export function json(body: unknown, status = 200): Response {
 
 export function failure(e: unknown): Response {
   const err = e instanceof AppError ? e : new AppError(500, "BACKEND_UNREACHABLE", true);
-  return json(errorBody(err), err.status);
+  return Response.json(errorBody(err), { status: err.status, headers: retryHeaders(err) });
+}
+
+/** no-store always; Retry-After when the error carries one (overload or open circuit). */
+export function retryHeaders(err: { retryAfter?: number }): Record<string, string> {
+  const h: Record<string, string> = { "cache-control": "no-store" };
+  if (err.retryAfter !== undefined) h["retry-after"] = String(err.retryAfter);
+  return h;
 }

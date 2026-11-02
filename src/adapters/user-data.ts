@@ -6,6 +6,7 @@ import {
 } from "./user-data-contract";
 import { roundCoarse } from "@/lib/india";
 import { mockProfile } from "./mock/profile";
+import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser adapters for the same-origin BFF routes /api/app/{permissions,places,preferences,onboarding}. They hold the last revision the
 // server reported and send it back as the precondition, so a stale write is refused (REVISION_CONFLICT) instead of overwriting.
@@ -17,7 +18,7 @@ type Parser<T> = { safeParse(v: unknown): { success: true; data: T } | { success
 async function call<T>(path: string, schema: Parser<T>, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(path, { ...init, cache: "no-store", headers: { "content-type": "application/json", "x-knowvia-app": "1", ...init?.headers } });
+    res = await fetchWithRetry(path, { ...init, cache: "no-store", headers: { "content-type": "application/json", "x-knowvia-app": "1", ...init?.headers } });
   } catch {
     throw new AdapterError("BACKEND_UNREACHABLE", true);
   }
