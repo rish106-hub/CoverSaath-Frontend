@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { adapters, AdapterError, usingBackend } from "@/adapters";
+import { adapters, AdapterError, googleSignIn, usingBackend } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
 import { invalidateMe } from "@/components/shell/useMe";
 import { validateAccess, type AccessErrors } from "@/components/public/validate";
@@ -11,6 +11,12 @@ import styles from "./AccessCard.module.css";
 
 type State = { kind: "idle" } | { kind: "busy" } | { kind: "done"; name: string } | { kind: "error"; message: string };
 
+const GOOGLE_ERRORS: Record<string, string> = {
+  google_denied: "Google sign-in was cancelled.",
+  google_failed: "Google sign-in didn’t complete. Try again.",
+  google_unavailable: "Google sign-in isn’t available right now.",
+  google_busy: "Too many sign-ins right now. Try again in a minute.",
+};
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
 
 /** Beta access card on the landing page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
@@ -23,6 +29,8 @@ export function AccessCard() {
   const flying = useRef(false); // blocks re-entry within the same tick; state alone is too slow
   const alive = useRef(true);
   const nav = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const urlError = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("error"), () => null);
+  const urlMessage = urlError ? GOOGLE_ERRORS[urlError] : undefined;
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -98,6 +106,14 @@ export function AccessCard() {
   return (
     <form className={styles.card} onSubmit={onSubmit} noValidate aria-label="Get access">
       <div className={styles.title}>Get access in 10 seconds</div>
+      {usingBackend && googleSignIn ? (
+        <>
+      <a className={styles.ghost} href="/api/app/auth/google">
+        <BrandLogo id="google" size={24} />Continue with Google
+      </a>
+      <div className={styles.or} aria-hidden><span />or<span /></div>
+        </>
+      ) : null}
       {usingBackend ? null : (
         <>
       <button type="button" className={styles.ghost} onClick={withGoogle} disabled={busy}>
@@ -117,7 +133,7 @@ export function AccessCard() {
         {errors.email ? <span id="acc-mail-err" className={styles.fieldErr}>{errors.email}</span> : null}
       </label>
       <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Getting you in…" : "Get access"}</button>
-      {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : null}
+      {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : urlMessage ? <p className={styles.err} role="alert">{urlMessage}</p> : null}
       <div className={styles.note}><span>No card needed. Leave any time.</span><a href="#">Privacy</a></div>
     </form>
   );

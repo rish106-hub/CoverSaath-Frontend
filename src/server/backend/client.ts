@@ -4,7 +4,7 @@ import { AppError } from "./errors";
 import { guardedFetch } from "./resilience";
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
-export type ClientOptions = { baseUrl: string; bootstrapToken: string; fetch?: FetchLike; timeoutMs?: number };
+export type ClientOptions = { baseUrl: string; bootstrapToken: string; identityToken?: string; fetch?: FetchLike; timeoutMs?: number };
 
 const sessionSchema = z.object({ token: z.string().min(16), sessionId: z.string(), adultUserId: z.string(), expiresAt: z.string() });
 const createSchema = z.object({
@@ -19,6 +19,14 @@ const matrixSchema = z.object({
   members: z.array(z.object({ id: z.string(), displayName: z.string(), memberKind: z.string().nullish(), relationshipLabel: z.string().nullish() }).loose()),
 }).loose();
 
+const identitySchema = z.object({
+  returning: z.boolean(),
+  household: z.object({ id: z.string() }).loose(),
+  memberId: z.string(),
+  session: z.object({ token: z.string().min(16), expiresAt: z.string() }).loose(),
+}).loose();
+
+export type SignedIn = { returning: boolean; householdId: string; memberId: string; token: string; expiresAt: string };
 export type CreatedHousehold = { householdId: string; ownerMemberId: string; token: string; expiresAt: string };
 export type HouseholdView = z.infer<typeof matrixSchema>;
 
@@ -28,11 +36,12 @@ export function createBackendClient(opts: ClientOptions) {
   const doFetch: FetchLike = opts.fetch ?? guardedFetch;
   const timeoutMs = opts.timeoutMs ?? 5000;
 
-  async function send(method: "GET" | "POST", path: string, o: { token?: string; bootstrap?: boolean; json?: unknown } = {}): Promise<{ status: number; body: unknown }> {
+  async function send(method: "GET" | "POST", path: string, o: { token?: string; bootstrap?: boolean; identity?: boolean; json?: unknown } = {}): Promise<{ status: number; body: unknown }> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const headers: Record<string, string> = { accept: "application/json" };
     if (o.bootstrap) headers.authorization = `Bearer ${opts.bootstrapToken}`;
+    else if (o.identity) headers.authorization = `Bearer ${opts.identityToken ?? ""}`;
     else if (o.token) headers.authorization = `Bearer ${o.token}`;
     let body: string | undefined;
     if (o.json !== undefined) {
@@ -90,6 +99,16 @@ export function createBackendClient(opts: ClientOptions) {
       if (r.status === 401 || r.status === 403) throw new AppError(503, "CONFIG_MISSING");
       const d = parse(createSchema, ok(r, false));
       return { householdId: d.household.id, ownerMemberId: d.ownerMember.id, token: d.session.token, expiresAt: d.session.expiresAt };
+    },
+    /** Sign-in identity (ADR 0012 D3): the backend maps (issuer, subject) to one adult and starts a session. */
+    async identitySession(input: { issuer: string; subject: string; displayName: string; contactEmail: string | null }): Promise<SignedIn> {
+      if (!opts.identityToken) throw new AppError(503, "CONFIG_MISSING");
+      const r = await send("POST", "/api/v1/identity-sessions", { identity: true, json: input });
+      if (r.status === 503) throw new AppError(503, "CONFIG_MISSING");
+      if (r.status === 401 || r.status === 403) throw new AppError(401, "UNAUTHENTICATED");
+      if (r.status === 429) throw new AppError(429, "RATE_LIMITED", true);
+      const d = parse(identitySchema, ok(r, false));
+      return { returning: d.returning, householdId: d.household.id, memberId: d.memberId, token: d.session.token, expiresAt: d.session.expiresAt };
     },
     async household(token: string, id: string): Promise<HouseholdView> {
       return parse(matrixSchema, ok(await send("GET", `/api/v1/households/${encodeURIComponent(id)}`, { token }), true));
