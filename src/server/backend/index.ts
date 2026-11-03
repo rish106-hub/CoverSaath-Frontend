@@ -9,7 +9,7 @@ export { AppError, errorBody };
 
 export function runtime(): { config: ServerConfig; client: BackendClient } {
   const config = loadConfig();
-  return { config, client: createBackendClient({ baseUrl: config.apiUrl, bootstrapToken: config.bootstrapToken }) };
+  return { config, client: createBackendClient({ baseUrl: config.apiUrl, bootstrapToken: config.bootstrapToken, identityToken: process.env.KNOWVIA_IDENTITY_TOKEN }) };
 }
 
 export async function readSession(secret: string): Promise<SessionPayload | null> {
