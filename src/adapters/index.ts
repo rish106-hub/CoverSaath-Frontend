@@ -6,6 +6,8 @@ import { backendMembers, backendScenarios } from "./scenarios";
 
 // Active adapter set. Access and household talk to the real backend through the BFF unless
 // NEXT_PUBLIC_ADAPTERS=mock (or under test). Profile, preferences and onboarding use the user-data store (ADR 0015). Everything else is mock until the backend has tables.
+export const usingBackend =
+  process.env.NEXT_PUBLIC_ADAPTERS !== "mock" && process.env.NODE_ENV !== "test";
 const useBackend = process.env.NEXT_PUBLIC_ADAPTERS !== "mock" && process.env.NODE_ENV !== "test";
 
 export const adapters: Adapters = {
