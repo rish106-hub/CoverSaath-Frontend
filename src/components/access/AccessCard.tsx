@@ -32,6 +32,14 @@ export function AccessCard() {
   const urlError = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("error"), () => null);
   const urlMessage = urlError ? GOOGLE_ERRORS[urlError] : undefined;
   useEffect(() => {
+    // Waitlist visitors arrive with ?email=&name= from the Knowvia site; prefill so they only press "Get access".
+    const q = new URLSearchParams(window.location.search);
+    const pe = q.get("email")?.trim().slice(0, 320);
+    const pn = q.get("name")?.trim().slice(0, 80);
+    if (pe) setEmail((cur) => cur || pe);
+    if (pn) setName((cur) => cur || pn);
+  }, []);
+  useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
