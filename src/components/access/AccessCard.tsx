@@ -19,6 +19,14 @@ const GOOGLE_ERRORS: Record<string, string> = {
 };
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
 
+/** "rishav.dewan@x.com" -> "Rishav Dewan". Waitlist hero signups carry no name; the access schema needs one. */
+function nameFromEmail(email: string): string {
+  const local = email.split("@")[0]?.replace(/\+.*$/, "") ?? "";
+  const words = local.split(/[._-]+/).map((w) => w.replace(/\d+/g, "")).filter(Boolean).slice(0, 3);
+  const out = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+  return (out || "there").slice(0, 80);
+}
+
 /** Beta access card on the landing page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
 export function AccessCard() {
   const router = useRouter();
@@ -26,18 +34,26 @@ export function AccessCard() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<AccessErrors>({});
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [auto, setAuto] = useState(false); // true while a waitlist link is being signed in automatically
   const flying = useRef(false); // blocks re-entry within the same tick; state alone is too slow
   const alive = useRef(true);
   const nav = useRef<ReturnType<typeof setTimeout> | null>(null);
   const urlError = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("error"), () => null);
   const urlMessage = urlError ? GOOGLE_ERRORS[urlError] : undefined;
   useEffect(() => {
-    // Waitlist visitors arrive with ?email=&name= from the Knowvia site; prefill so they only press "Get access".
+    // Waitlist visitors arrive with ?email=&name= from the Knowvia site. Valid email: sign them in straight away, no form.
+    // Anything else (shared link, bad email, failure) falls back to the normal form, prefilled.
     const q = new URLSearchParams(window.location.search);
     const pe = q.get("email")?.trim().slice(0, 320);
     const pn = q.get("name")?.trim().slice(0, 80);
     if (pe) setEmail((cur) => cur || pe);
     if (pn) setName((cur) => cur || pn);
+    if (pe && !q.get("error") && validateAccess(pn || nameFromEmail(pe), pe).ok) {
+      window.history.replaceState(null, "", window.location.pathname); // keep the email out of the address bar and history
+      setAuto(true);
+      void submit(pn || nameFromEmail(pe), pe, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     alive.current = true;
@@ -47,8 +63,12 @@ export function AccessCard() {
     };
   }, []);
 
-  async function onSubmit(e: FormEvent) {
+  function onSubmit(e: FormEvent) {
     e.preventDefault();
+    void submit(name, email, false);
+  }
+
+  async function submit(name: string, email: string, viaLink: boolean) {
     if (flying.current) return;
     const check = validateAccess(name, email);
     if (!check.ok) {
@@ -63,15 +83,21 @@ export function AccessCard() {
       if (!alive.current) return;
       if (!res.ok) {
         flying.current = false;
+        setAuto(false);
         setState({ kind: "error", message: res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : DOWN });
         return;
       }
       const first = res.name ?? name.trim().split(" ")[0];
       invalidateMe();
+      if (viaLink) {
+        router.replace("/welcome");
+        return;
+      }
       setState({ kind: "done", name: first });
       nav.current = setTimeout(() => router.push("/welcome"), 700);
     } catch (err) {
       flying.current = false;
+      setAuto(false);
       if (!alive.current) return;
       setState({ kind: "error", message: err instanceof AdapterError ? DOWN : "Something went wrong. Try again." });
     }
@@ -111,6 +137,16 @@ export function AccessCard() {
     );
   }
   const busy = state.kind === "busy";
+  if (auto) {
+    return (
+      <div className={styles.card} role="status" aria-live="polite">
+        <div className={styles.done}>
+          <div className={styles.doneT}>Getting you in…</div>
+          <div className={styles.doneD}>Opening your Knowvia beta.</div>
+        </div>
+      </div>
+    );
+  }
   return (
     <form className={styles.card} onSubmit={onSubmit} noValidate aria-label="Get access">
       <div className={styles.title}>Get access in 10 seconds</div>

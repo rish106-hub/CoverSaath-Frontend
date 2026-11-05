@@ -4,8 +4,9 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { adapters } from "@/adapters";
 
 const push = vi.fn();
+const replace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn() }),
+  useRouter: () => ({ push, replace, refresh: vi.fn(), prefetch: vi.fn() }),
   usePathname: () => "/",
 }));
 
@@ -35,6 +36,7 @@ async function mash(el: HTMLElement, n = 20) {
 
 beforeEach(() => {
   push.mockClear();
+  replace.mockClear();
   invalidateMe();
   vi.spyOn(adapters.household, "me").mockResolvedValue(null);
 });
@@ -42,6 +44,28 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.useRealTimers();
+});
+
+describe("waitlist link", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+  it("AccessCard: ?email= signs in once with a derived name, goes to /welcome, scrubs the URL", async () => {
+    window.history.replaceState(null, "", "/?email=asha.rao%40example.com");
+    const spy = vi.spyOn(adapters.access, "submit").mockResolvedValue({ ok: true, name: "Asha" } as never);
+    render(<AccessCard />);
+    await act(async () => {});
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith({ name: "Asha Rao", email: "asha.rao@example.com" });
+    expect(replace).toHaveBeenCalledWith("/welcome");
+    expect(window.location.search).toBe("");
+  });
+  it("AccessCard: bad ?email= shows the normal form, no request", async () => {
+    window.history.replaceState(null, "", "/?email=nope");
+    const spy = vi.spyOn(adapters.access, "submit");
+    render(<AccessCard />);
+    await act(async () => {});
+    expect(spy).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Email")).toBeTruthy();
+  });
 });
 
 describe("click-spam safety", () => {
