@@ -41,21 +41,6 @@ export function AccessCard() {
   const urlError = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("error"), () => null);
   const urlMessage = urlError ? GOOGLE_ERRORS[urlError] : undefined;
   useEffect(() => {
-    // Waitlist visitors arrive with ?email=&name= from the Knowvia site. Valid email: sign them in straight away, no form.
-    // Anything else (shared link, bad email, failure) falls back to the normal form, prefilled.
-    const q = new URLSearchParams(window.location.search);
-    const pe = q.get("email")?.trim().slice(0, 320);
-    const pn = q.get("name")?.trim().slice(0, 80);
-    if (pe) setEmail((cur) => cur || pe);
-    if (pn) setName((cur) => cur || pn);
-    if (pe && !q.get("error") && validateAccess(pn || nameFromEmail(pe), pe).ok) {
-      window.history.replaceState(null, "", window.location.pathname); // keep the email out of the address bar and history
-      setAuto(true);
-      void submit(pn || nameFromEmail(pe), pe, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
@@ -103,6 +88,23 @@ export function AccessCard() {
     }
   }
 
+  useEffect(() => {
+    // Waitlist visitors arrive with ?email=&name= from the Knowvia site. Valid email: sign them in straight away, no form.
+    // Anything else (shared link, bad email, failure) falls back to the normal form, prefilled.
+    const q = new URLSearchParams(window.location.search);
+    const pe = q.get("email")?.trim().slice(0, 320);
+    const pn = q.get("name")?.trim().slice(0, 80);
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time read of the URL, which only exists in the browser */
+    if (pe) setEmail((cur) => cur || pe);
+    if (pn) setName((cur) => cur || pn);
+    if (pe && !q.get("error") && validateAccess(pn || nameFromEmail(pe), pe).ok) {
+      window.history.replaceState(null, "", window.location.pathname); // keep the email out of the address bar and history
+      setAuto(true);
+      void submit(pn || nameFromEmail(pe), pe, true);
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   async function withGoogle() {
     if (flying.current) return;
     flying.current = true;
