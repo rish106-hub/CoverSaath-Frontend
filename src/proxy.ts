@@ -6,6 +6,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * signed-out visitors from loading the page shell and firing requests that can only answer 401.
  */
 export function proxy(request: NextRequest) {
+  // Mock adapters (local dev and the e2e suite) never set the sealed cookie, so there is nothing to gate on.
+  if (process.env.NEXT_PUBLIC_ADAPTERS === "mock") return NextResponse.next();
   if (request.cookies.has("kv_session")) return NextResponse.next();
   return NextResponse.redirect(new URL("/signin", request.url));
 }
