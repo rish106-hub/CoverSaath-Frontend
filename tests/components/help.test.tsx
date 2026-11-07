@@ -43,8 +43,11 @@ describe("help views", () => {
   it("desk: J moves the selected case, signing clears the ask", async () => {
     render(<DeskView />);
     await screen.findByText("Short-settled claim", { selector: "h3" });
-    act(() => pressPageShortcut("next"));
-    await screen.findByText("Duplicate premium", { selector: "h3" });
+    // The shortcut listener can attach after the first paint, so keep pressing until the selection moves.
+    await waitFor(() => {
+      act(() => pressPageShortcut("next"));
+      expect(screen.getByText("Duplicate premium", { selector: "h3" })).toBeTruthy();
+    });
     fireEvent.click(screen.getByRole("button", { name: "Sign" }));
     expect(screen.getByText("Signed")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(BANNED);
