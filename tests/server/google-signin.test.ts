@@ -84,7 +84,7 @@ describe("Google sign-in callback", () => {
     const idCall = calls.find((c) => c.url.endsWith("/api/v1/identity-sessions"));
     expect(idCall?.headers.authorization).toBe(`Bearer ${IDENTITY}`);
     expect(JSON.parse(idCall?.body ?? "{}")).toEqual({ issuer: "https://accounts.google.com", subject: "1234567890", displayName: "Meera Rao", contactEmail: "meera@example.com" });
-    const token = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com"));
+    const token = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com/"));
     expect(token?.body).toContain("code_verifier=");
     expect(jar.has("__Host-kv_session")).toBe(true);
     expect(jar.has("__Secure-kv_oauth")).toBe(false);
