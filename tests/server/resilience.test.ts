@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGuard } from "@/server/backend/resilience";
+import { createBackendClient } from "@/server/backend/client";
 import { AppError } from "@/server/backend/errors";
 import { failure, retryHeaders } from "@/server/backend";
 import { fetchWithRetry, retryDelayMs } from "@/lib/retry-fetch";
@@ -41,6 +42,40 @@ describe("backend guard", () => {
     await expect(f("u")).resolves.toBeInstanceOf(Response); // probe
     expect(guard.state()).toMatchObject({ open: false, consecutiveFailures: 0 });
     await expect(f("u")).resolves.toBeInstanceOf(Response);
+  });
+
+  it("counts only network errors, timeouts and 502/503/504; a plain 500 or a 4xx never opens it", async () => {
+    let status = 500;
+    const guard = createGuard({ failureThreshold: 2 });
+    const f = guard.wrap(async () => new Response("{}", { status }));
+    for (const s of [500, 500, 500, 400, 401, 404, 429, 500, 500]) {
+      status = s;
+      await f("u");
+    }
+    expect(guard.state()).toMatchObject({ open: false, consecutiveFailures: 0 });
+    for (const s of [502, 504]) {
+      status = s;
+      await f("u");
+    }
+    expect(guard.state().open).toBe(true);
+  });
+
+  it("503 opens it, and so do thrown network errors", async () => {
+    const a = createGuard({ failureThreshold: 1 });
+    await a.wrap(async () => new Response("{}", { status: 503 }))("u");
+    expect(a.state().open).toBe(true);
+    const b = createGuard({ failureThreshold: 1 });
+    await b.wrap(async () => { throw new TypeError("fetch failed"); })("u").catch(() => undefined);
+    expect(b.state().open).toBe(true);
+  });
+
+  it("repeated 500s from the identity sign-in POST cannot open the shared breaker", async () => {
+    const guard = createGuard({ failureThreshold: 3 });
+    const client = createBackendClient({ baseUrl: "http://api.test", bootstrapToken: "b", identityToken: "i".repeat(40), fetch: guard.wrap(async () => new Response("{}", { status: 500 })) });
+    for (let i = 0; i < 10; i += 1) {
+      await expect(client.identitySession({ issuer: "https://accounts.google.com", subject: "1", displayName: "A", contactEmail: null })).rejects.toMatchObject({ code: "BACKEND_UNREACHABLE" });
+    }
+    expect(guard.state().open).toBe(false);
   });
 
   it("allows only one probe while half-open, and re-opens when the probe fails", async () => {
