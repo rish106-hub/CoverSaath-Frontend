@@ -4,7 +4,7 @@ const jar = new Map<string, string>();
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (n: string) => (jar.has(n) ? { value: jar.get(n) as string } : undefined),
-    set: (n: string, v: string) => void jar.set(n, v),
+    set: (n: string, v: string, o?: { maxAge?: number }) => void (o?.maxAge === 0 ? jar.delete(n) : jar.set(n, v)),
     delete: (a: string | { name: string }) => void jar.delete(typeof a === "string" ? a : a.name),
   }),
 }));
@@ -30,6 +30,7 @@ beforeEach(() => {
   vi.stubEnv("KNOWVIA_API_URL", "http://api.test");
   vi.stubEnv("KNOWVIA_BOOTSTRAP_TOKEN", "bootstrap-token-should-never-be-used-here");
   vi.stubEnv("SESSION_COOKIE_SECRET", "s".repeat(40));
+  vi.stubEnv("NEXT_PUBLIC_GOOGLE_SIGNIN", "1");
   vi.stubEnv("GOOGLE_CLIENT_ID", CLIENT);
   vi.stubEnv("GOOGLE_CLIENT_SECRET", "google-secret");
   vi.stubEnv("KNOWVIA_IDENTITY_TOKEN", IDENTITY);
@@ -62,7 +63,7 @@ describe("Google sign-in start", () => {
     expect(url.searchParams.get("redirect_uri")).toBe("http://app.test/api/app/auth/google/callback");
     expect(url.searchParams.get("scope")).toBe("openid email profile");
     expect(url.searchParams.get("client_id")).toBe(CLIENT);
-    expect(jar.has("kv_oauth")).toBe(true);
+    expect(jar.has("__Secure-kv_oauth")).toBe(true);
     expect(JSON.stringify([...jar.values()])).not.toContain("google-secret");
   });
 
@@ -70,7 +71,7 @@ describe("Google sign-in start", () => {
     vi.stubEnv("GOOGLE_CLIENT_SECRET", "");
     const res = await start.GET(at("/api/app/auth/google"));
     expect(res.headers.get("location")).toBe("/signin?error=google_unavailable");
-    expect(jar.has("kv_oauth")).toBe(false);
+    expect(jar.has("__Secure-kv_oauth")).toBe(false);
   });
 });
 
@@ -83,10 +84,10 @@ describe("Google sign-in callback", () => {
     const idCall = calls.find((c) => c.url.endsWith("/api/v1/identity-sessions"));
     expect(idCall?.headers.authorization).toBe(`Bearer ${IDENTITY}`);
     expect(JSON.parse(idCall?.body ?? "{}")).toEqual({ issuer: "https://accounts.google.com", subject: "1234567890", displayName: "Meera Rao", contactEmail: "meera@example.com" });
-    const token = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com"));
+    const token = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com/"));
     expect(token?.body).toContain("code_verifier=");
-    expect(jar.has("kv_session")).toBe(true);
-    expect(jar.has("kv_oauth")).toBe(false);
+    expect(jar.has("__Host-kv_session")).toBe(true);
+    expect(jar.has("__Secure-kv_oauth")).toBe(false);
   });
 
   it("sends a returning person to home", async () => {
@@ -110,18 +111,18 @@ describe("Google sign-in callback", () => {
     const res = await callback.GET(at(`/api/app/auth/google/callback?code=abc&state=${state ?? s.state}`));
     expect(res.headers.get("location")).toBe("/signin?error=google_failed");
     expect(calls.some((c) => c.url.endsWith("/api/v1/identity-sessions"))).toBe(false);
-    expect(jar.has("kv_session")).toBe(false);
+    expect(jar.has("__Host-kv_session")).toBe(false);
   });
 
   it("refuses a replay: the state cookie is single use", async () => {
     const s = await begin();
     idTokenClaims = claims(s.nonce);
-    const saved = jar.get("kv_oauth") as string;
+    const saved = jar.get("__Secure-kv_oauth") as string;
     await callback.GET(at(`/api/app/auth/google/callback?code=abc&state=${s.state}`));
-    jar.set("kv_oauth", saved);
-    jar.delete("kv_session");
+    jar.set("__Secure-kv_oauth", saved);
+    jar.delete("__Host-kv_session");
     // The cookie itself is replayable only by someone who holds it; with it removed the callback must fail.
-    jar.delete("kv_oauth");
+    jar.delete("__Secure-kv_oauth");
     const res = await callback.GET(at(`/api/app/auth/google/callback?code=abc&state=${s.state}`));
     expect(res.headers.get("location")).toBe("/signin?error=google_failed");
   });

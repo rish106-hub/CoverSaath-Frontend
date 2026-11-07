@@ -9,10 +9,31 @@ The BFF is the only caller of the backend (`https://knowvia-api.fly.dev`). The b
 | --- | --- | --- |
 | `KNOWVIA_API_URL` | `https://knowvia-api.fly.dev` | No trailing slash. |
 | `KNOWVIA_BOOTSTRAP_TOKEN` | same value as the Fly secret | Mark Sensitive. |
-| `SESSION_COOKIE_SECRET` | 32+ random characters | `openssl rand -base64 48`. Mark Sensitive. Rotating it signs everyone out. |
+| `SESSION_COOKIE_SECRET` | 32+ random characters | `openssl rand -base64 48`. Mark Sensitive. To rotate without signing anyone out, move the old value to `SESSION_COOKIE_SECRET_PREVIOUS` (optional, read-only) for 7 days. See `docs/cookie-inventory.md`. |
 
 Missing any of them makes every `/api/app/*` route answer `503 {"code":"CONFIG_MISSING"}`.
 Never set `NEXT_PUBLIC_ADAPTERS=mock` in Production.
+
+Cookie variables (see `docs/cookie-inventory.md`):
+
+| Name | Value | Notes |
+| --- | --- | --- |
+| `SESSION_COOKIE_SECRET_PREVIOUS` | optional, 32+ chars | Rotation window only. |
+| `SESSION_COOKIE_ACCEPT_LEGACY` | `0` after 7 days | Closes the old-cookie transitions (no key id, plain `kv_session` name). |
+| `COOKIE_SECURE` | `always` | Optional. Never drops the `Secure` flag, even for a loopback Host. Already implied on Vercel (`VERCEL` is set) and when `APP_ORIGIN` is https. |
+
+Session cookie is `__Host-kv_session` over https (plain `kv_session` only for local http dev).
+
+## HSTS: owner decision
+
+The app sends `Strict-Transport-Security: max-age=63072000; includeSubDomains`. `preload` is deliberately off: preload submission is
+very hard to undo and covers every subdomain of the registrable domain. `includeSubDomains` makes every subdomain https-only for two
+years; confirm no subdomain needs plain http before relying on it, or drop it. Add `preload` only after the owner decides to submit the
+domain to the preload list.
+
+## Follow-up
+
+CSP still allows `script-src 'unsafe-inline'`. Replacing it with nonces or hashes is a separate task.
 
 ## Checks
 

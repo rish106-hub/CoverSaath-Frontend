@@ -1,6 +1,7 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { AppError } from "./errors";
+import { OAUTH_COOKIE_MAX_AGE_S, OAUTH_COOKIE_NAME } from "./cookie-policy";
 
 /**
  * Google sign-in, server-side authorization-code flow with PKCE, state and nonce.
@@ -9,16 +10,17 @@ import { AppError } from "./errors";
  * The identity the backend stores is (issuer, subject) only, never the e-mail address (ADR 0012 D3).
  */
 export const GOOGLE_ISSUER = "https://accounts.google.com";
-export const OAUTH_COOKIE = "kv_oauth";
+export const OAUTH_COOKIE = OAUTH_COOKIE_NAME;
 export const CALLBACK_PATH = "/api/app/auth/google/callback";
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
-const STATE_TTL_MS = 10 * 60 * 1000;
+const STATE_TTL_MS = OAUTH_COOKIE_MAX_AGE_S * 1000;
 
 export type GoogleConfig = { clientId: string; clientSecret: string; identityToken: string };
 
 /** Null when any piece is missing: the start route then sends the visitor back to sign-in with a coded error. */
 export function googleConfig(env: NodeJS.ProcessEnv = process.env): GoogleConfig | null {
+  if (env.NEXT_PUBLIC_GOOGLE_SIGNIN !== "1") return null; // feature flag: off unless a deploy opts in (stays off in production until the owner enables it)
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
   const identityToken = env.KNOWVIA_IDENTITY_TOKEN;
@@ -70,15 +72,24 @@ export function sealOAuth(start: OAuthStart, secret: string, now = Date.now()): 
   return [iv, c.getAuthTag(), enc].map(b64).join(".");
 }
 
-export function openOAuth(sealed: string | undefined, secret: string, now = Date.now()): OAuthCookie | null {
-  if (!sealed) return null;
+export function openOAuth(sealed: string | undefined, secret: string, now = Date.now(), previous?: string | null): OAuthCookie | null {
+  if (!sealed || sealed.length > 2048) return null;
+  const secrets = previous && previous !== secret ? [secret, previous] : [secret];
+  for (const candidate of secrets) {
+    const p = tryOpenOAuth(sealed, candidate, now);
+    if (p) return p;
+  }
+  return null;
+}
+
+function tryOpenOAuth(sealed: string, secret: string, now: number): OAuthCookie | null {
   try {
     const [iv, tag, enc] = sealed.split(".").map((p) => Buffer.from(p, "base64url"));
     if (!iv || !tag || !enc) return null;
     const d = createDecipheriv("aes-256-gcm", cookieKey(secret), iv);
     d.setAuthTag(tag);
     const p = JSON.parse(Buffer.concat([d.update(enc), d.final()]).toString("utf8")) as OAuthCookie;
-    if (typeof p.s !== "string" || typeof p.n !== "string" || typeof p.v !== "string" || typeof p.exp !== "number" || p.exp < now) return null;
+    if (typeof p.s !== "string" || typeof p.n !== "string" || typeof p.v !== "string" || typeof p.exp !== "number" || p.exp < now || p.exp > now + STATE_TTL_MS + 60_000) return null;
     return p;
   } catch {
     return null;

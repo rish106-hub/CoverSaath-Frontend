@@ -26,6 +26,8 @@ test("keyboard only: / to /signin to /welcome to /home to /emergency", async ({ 
 
   await page.goto("/home");
   await expect(page.getByText("Ask Knowvia anything")).toBeVisible();
+  // The dev server compiles /home on first hit, so the shortcut listener can attach after the first key press.
+  // Retry the press until hydration lands, then assert the toggle back.
   await expect(async () => {
     await page.keyboard.press("t");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark", { timeout: 1000 });
