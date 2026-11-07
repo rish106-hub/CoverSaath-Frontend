@@ -17,6 +17,8 @@ Source of truth for the flags: `src/server/backend/cookie-policy.ts`. Tests asse
 navigation from `accounts.google.com`, which `Strict` would drop. Cross-site request forgery on state-changing routes is
 handled separately by the same-origin guard (`src/server/backend/guard.ts`).
 
+| `__Host-kv_analytics` (plain `kv_analytics` on loopback http only) | Remembers the analytics choice and holds a random anonymous id (unrelated to session, household or member), only if the person grants analytics. Set by `POST /api/app/analytics/consent`; cleared when they deny. Nothing is sent to PostHog without it. | `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, no `Domain` | 180 days | No: non-essential, set only after a choice. Wording FOR LEGAL REVIEW. |
+
 ### Name prefixes
 
 When the cookie is Secure the browser enforces the prefix: `__Host-kv_session` can only be set by a secure origin with `Path=/` and
@@ -74,9 +76,8 @@ legal to decide whether it needs mention.
 
 ## Future (not built)
 
-A non-essential consent cookie (remembering a person's analytics or marketing choice) is planned under F5. It does not exist yet.
-When added it needs its own row here (name, purpose, flags, TTL, non-essential), must be set only after a choice is made, and the
-wording shown to people needs legal review. The app currently sets no analytics, advertising or tracking cookies of its own.
+The analytics consent cookie (F5, row above) exists server side. No banner or choice screen is built yet; the wording shown to
+people needs legal review first. The app sets no advertising or tracking cookies of its own.
 
 ## Google sign-in feature flag
 
