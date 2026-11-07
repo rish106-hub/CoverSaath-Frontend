@@ -92,3 +92,10 @@
   .tiles, .split { grid-template-columns: minmax(0, 1fr); }
   .themeSlot { position: static; padding: 8px 16px 24px; display: flex; justify-content: flex-end; }
 }
+@media (max-width: 420px) {
+  .nav { gap: 8px; }
+  .brand { gap: 6px; min-width: 0; }
+  .navRight { gap: 6px; flex-shrink: 0; }
+  .navRight :global(.k-btn) { white-space: nowrap; padding-inline: 10px; }
+  .beta { padding: 2px 7px; font-size: 12px; }
+}
