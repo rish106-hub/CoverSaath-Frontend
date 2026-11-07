@@ -1,6 +1,6 @@
 // Copy and numbers for the public screens (Landing, Auth, Onboarding, Wallet). Synthetic data only.
 
-export type TourScene = {
+type TourScene = {
   t: string; path: string; title: string; tag: string;
   tiles: [string, string, "ink" | "plain" | "marker" | "signal"][];
   bars: [string, number, "ink" | "soft" | "signal" | "ochre" | "dark", string][];

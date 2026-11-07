@@ -68,6 +68,11 @@ export function FamilyView() {
     setAdding(false);
   };
 
+  const onAdded = (m: { name: string }) => {
+    setInvites((cur) => (cur.some((c) => c.name.toLowerCase() === m.name.toLowerCase()) ? cur : [...cur, { id: m.name.toLowerCase(), name: m.name, initials: m.name.slice(0, 1).toUpperCase(), mobile: "", state: "none", detail: "Added to your household" }]));
+    setAdding(false);
+  };
+
   return (
     <>
       <div className={styles.toolbar}>
@@ -208,7 +213,7 @@ export function FamilyView() {
           onSaved={(m) => { setDetails((cur) => ({ ...cur, [m.id]: m })); closeEdit(); }}
         />
       ) : null}
-      {adding ? <AddMemberSheet onClose={() => setAdding(false)} onSent={onSent} /> : null}
+      {adding ? <AddMemberSheet onClose={() => setAdding(false)} onSent={onSent} onAdded={onAdded} /> : null}
     </>
   );
 }

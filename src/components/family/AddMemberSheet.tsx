@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { adapters } from "@/adapters";
+import { adapters, features } from "@/adapters";
 import { addMemberFlow, addMemberRelations } from "@/data/mock/family";
 import { normaliseIndianMobile, validateAddMember } from "./logic";
 import styles from "./family.module.css";
 
 export type SentInvite = { name: string; mobile: string; via: "whatsapp" | "sms" };
 
-export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSent: (i: SentInvite) => void }) {
+/**
+ * With features.memberContact off (the backend has no mobile, e-mail or invite field), the sheet takes the relation and the name,
+ * stores the member and closes. It sends no invite and never says one was sent.
+ */
+export function AddMemberSheet({ onClose, onSent, onAdded }: { onClose: () => void; onSent: (i: SentInvite) => void; onAdded?: (m: { name: string }) => void }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [relation, setRelation] = useState(addMemberRelations[3]);
   const [name, setName] = useState("");
@@ -29,6 +33,27 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
 
   const next = async () => {
     if (busy || flying.current) return;
+    if (!features.memberContact) {
+      const e = validateAddMember(name, "", false);
+      setErrors(e);
+      if (e.name) return;
+      flying.current = true;
+      setBusy(true);
+      setFailed(false);
+      try {
+        if (!stored.current) {
+          await adapters.members.add({ name: name.trim(), relation });
+          stored.current = true;
+        }
+        if (alive.current) onAdded?.({ name: name.trim() });
+      } catch {
+        flying.current = false;
+        if (!alive.current) return;
+        setFailed(true);
+        setBusy(false);
+      }
+      return;
+    }
     if (step === 1) {
       const e = validateAddMember(name, mobile);
       setErrors(e);
@@ -66,7 +91,7 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
     >
       <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="Add family member">
         <div className={styles.sheetHead}>
-          <h2 className={styles.sheetTitle}>Add family member · step {step} of 2</h2>
+          <h2 className={styles.sheetTitle}>{features.memberContact ? `Add family member · step ${step} of 2` : "Add family member"}</h2>
           <button type="button" className={styles.btn} onClick={onClose}>Close</button>
         </div>
         {step === 1 ? (
@@ -83,6 +108,7 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
                 <input ref={nameRef} className={styles.input} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" aria-invalid={!!errors.name} aria-describedby={errors.name ? "am-name-err" : undefined} />
                 {errors.name ? <span id="am-name-err" className={styles.err} role="alert">{errors.name}</span> : null}
               </label>
+              {features.memberContact ? (
               <label className={styles.field}>
                 Mobile number
                 <span className={styles.phone}>
@@ -91,6 +117,7 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
                 </span>
                 {errors.mobile ? <span id="am-mob-err" className={styles.err} role="alert">{errors.mobile}</span> : null}
               </label>
+              ) : null}
             </div>
           </div>
         ) : (
@@ -112,8 +139,11 @@ export function AddMemberSheet({ onClose, onSent }: { onClose: () => void; onSen
             {failed ? <span className={styles.err} role="alert">Could not add them. Try again.</span> : null}
           </div>
         )}
+        {!features.memberContact && failed ? <span className={styles.err} role="alert">Could not add them. Try again.</span> : null}
         <div>
-          <button type="button" className={styles.cta} onClick={() => void next()} disabled={busy}>{step === 1 ? "Continue" : busy ? "Sending…" : "Send invite"}</button>
+          <button type="button" className={styles.cta} onClick={() => void next()} disabled={busy}>
+            {!features.memberContact ? (busy ? "Adding…" : "Add to household") : step === 1 ? "Continue" : busy ? "Sending…" : "Send invite"}
+          </button>
         </div>
       </div>
     </div>

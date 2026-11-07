@@ -9,7 +9,7 @@ export const healthGaps = [
   { t: "Room rent needs review", p: 4, href: "/policies" },
 ];
 
-export type GlanceTile = {
+type GlanceTile = {
   icon: string; label: string; stat?: Stat; text?: string; detail: string; progress: number; href: string; tone: "plain" | "light" | "marker";
 };
 export const glanceTiles: GlanceTile[] = [
@@ -41,7 +41,7 @@ export const policyCards = [
   { icon: "♥", type: "Parents’ plan", ins: "Meridian Care, senior plan", mark: "MC", cover: "Rs 3L each", pm: "Rs 4,650", used: "Rs 1.48L", up: 49, who: ["Mother", "Father"], ren: "13 Mar", c: "var(--ochre)", ink: "#16130f" },
 ];
 
-export type PersonBar = { name: string; rel: string; group: number; topup: number; senior: number; amount: string; share: string; groupPct: number; topupPct: number; seniorPct: number };
+type PersonBar = { name: string; rel: string; group: number; topup: number; senior: number; amount: string; share: string; groupPct: number; topupPct: number; seniorPct: number };
 export const personBars: PersonBar[] = [
   { name: "Meera", rel: "You", group: 33, topup: 67, senior: 0, amount: "Rs 15L", share: "100%", groupPct: 50, topupPct: 50, seniorPct: 0 },
   { name: "Rohan", rel: "Spouse", group: 33, topup: 0, senior: 0, amount: "Rs 5L", share: "50%", groupPct: 50, topupPct: 0, seniorPct: 0 },

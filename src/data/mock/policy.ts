@@ -1,9 +1,9 @@
 // Reading-room data for the Northstar group policy, from design/Reading.dc.html. All text is invented.
 
 export type DocId = "policy" | "schedule";
-export type Para = { before: string; mark: string; after: string; topic?: TopicId };
-export type DocPage = { head: string; no: string; title: string; paras: Para[] };
-export type TopicId = "sum" | "room" | "icu" | "copay" | "wait" | "auth";
+type Para = { before: string; mark: string; after: string; topic?: TopicId };
+type DocPage = { head: string; no: string; title: string; paras: Para[] };
+type TopicId = "sum" | "room" | "icu" | "copay" | "wait" | "auth";
 export type Topic = {
   id: TopicId;
   label: string;
@@ -63,7 +63,7 @@ export const TOPICS: Topic[] = [
   { id: "auth", label: "Cashless approval", value: "Before a planned admission", plain: "For emergencies, within 24 hours of admission. The hospital desk raises it.", ref: "p.9 §7.2", at: "policy:9", state: "Read from the policy" },
 ];
 
-export type GuideCard = { icon: string; kind: string; title: string; tone: "sand" | "mist" | "coral" | "lilac" };
+type GuideCard = { icon: string; kind: string; title: string; tone: "sand" | "mist" | "coral" | "lilac" };
 const GUIDES: Partial<Record<TopicId, GuideCard[]>> = {
   room: [
     { icon: "▣", kind: "Guide · 4 min", title: "Room rent, explained with one bill", tone: "sand" },
@@ -80,11 +80,6 @@ const DEFAULT_GUIDES: GuideCard[] = [
 ];
 export function guidesFor(topic: TopicId): GuideCard[] {
   return GUIDES[topic] ?? DEFAULT_GUIDES;
-}
-
-/** Page key shown for a topic, given which document tab is open. */
-export function pageKeyFor(topic: Topic | undefined, doc: DocId): string {
-  return topic?.at ?? (doc === "schedule" ? "schedule:1" : "policy:4");
 }
 
 /** The ICU topic shows the schedule page when the schedule tab is open. */

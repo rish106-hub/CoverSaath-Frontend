@@ -16,14 +16,28 @@ BFF routes: `/api/app/permissions`, `/api/app/places`, `/api/app/preferences`, `
 | Connected sources, notification channels, family sharing, voice language, reduce motion, theme | Settings (theme also from the header toggle) | `GET/PUT /api/app/preferences` | `adult_preferences` | wired, with the enum limits below |
 | Onboarding step, way, people toggles, completed | Welcome flow | `GET/PUT /api/app/onboarding` | `onboarding_progress` | wired, with the enum limits below |
 | Wallet choice | Save card to wallet | `PUT /api/app/onboarding` (`wallet`) | `onboarding_progress` | wired (Samsung is stored as `google`) |
-| Mobile number | Profile, You | none | none | not wired: no backend route stores a mobile number for a signed-in person (only on sign-up); kept for the visit |
-| DigiLocker fetch | Profile | none | none | not wired: mock fetch; the result is saved as the registered address |
+| Mobile number | Profile, Contact | none | none | flagged off (`features.profileMobile`): no backend route stores a mobile number for a signed-in person; the section is hidden and the adapter refuses with `NOT_SUPPORTED` |
+| DigiLocker fetch | Profile, Address | none | none | flagged off (`features.digilockerFetch`): no integration; the button is hidden, the person types the address, a mock address is never saved as theirs |
 
-Enum limits (the backend lists are closed; a backend change is needed to avoid these):
+## Flags (F2)
+
+`src/adapters/features.ts` lists controls the backend cannot store. With the backend as data source they are off; with the mock adapters (dev, tests) they stay on. `npm run verify:persistence` prints each as FLAGGED with its reason and fails if one is still on. Turn a flag on again when the backend gains the field.
+
+| Flag | Off means | Reason |
+|---|---|---|
+| `profileMobile` | Profile has no Contact section | no backend route for a signed-in person's mobile |
+| `digilockerFetch` | Profile, Address shows "Add your address" only | no DigiLocker integration |
+| `memberContact` | Family Add is name and relation, one step, no invite; Edit has no mobile, e-mail or channel | no backend field, no invite service |
+| `advisorBooking` | Tools has no Advisors section | a booking is not a scenario kind |
+| `perPersonSharing` | Settings, Sharing is one Family view switch | backend holds one family-view switch |
+
+Session-only by design, no "saved" claim on screen: Compare cover band, Top-up finder. Backend-owned: `household_members.relationship_label` is stored unsealed (only `display_name` is in the backend sealed-column list); the script flags it.
+
+Enum limits (the backend lists are closed; each value the screens offer round-trips, see `tests/adapters/enum-roundtrip.test.ts` and the script rows):
 
 - Sources: Gmail is `email`, DigiLocker is `digilocker`, ABHA is stored as `documents`.
 - Notification channels: Calendar is stored as `push`.
-- Sharing: the contract holds one family-view switch, not one per person. On means the default people (Rohan, Mother), off means nobody.
+- Sharing: the contract holds one family-view switch, so Settings shows one switch (per-person switches are flagged off). On means the default people (Rohan, Mother), off means nobody.
 - Voice: "Both" is stored as no voice language; English is `en-IN`, Hindi `hi-IN`.
 - Onboarding way: DigiLocker is `connect`, Upload `upload`, Forward the HR mail `talk`, Policy number `skip`.
 
@@ -49,14 +63,14 @@ Browser adapter `scenarios` and `members` (`src/adapters/scenarios.ts`) call the
 | Room rent: cover, limit %, room per day, other charges (Tools, Room rent) | `PUT /api/app/scenarios?tool=hospital_bill` | `tool_scenarios` (`hospital_bill`: sumInsured, roomRentCap, roomRentActual, billAmount) | wired |
 | Inflation planner: whose cover, treatment, rate, years (Money) | `PUT /api/app/scenarios?tool=inflation` | `tool_scenarios` (`inflation`: who, caseKind, medicalInflationPct, years) | wired |
 | Compare: kind, scenario, six priority weights (Compare) | `PUT /api/app/scenarios?tool=compare_weights` | `tool_scenarios` (`compare_weights`: kind, scenario, weights) | wired |
-| Compare: cover band (Rs 5L, 10L, 25L) | none | none | gap: the contract has no cover-band field (`ageBand` is a different thing) |
+| Compare: cover band (Rs 5L, 10L, 25L) | none | none | session-only: the contract has no cover-band field (`ageBand` is a different thing) |
 | Stress test: who, treatment, three levers (Stress test) | `PUT /api/app/scenarios?tool=stress_levers` | `tool_scenarios` (`stress_levers`: who, scenario, levers) | wired with two limits below |
 | Review: accepted or changed decisions, checked or flagged items (Review) | `PUT /api/app/scenarios?tool=review_state` | `tool_scenarios` (`review_state`: items keyed `dec-n`, `look-n`) | wired |
 | Family: add member name and relation (Add sheet) | `POST /api/app/members` | `household_members` | wired |
 | Family: edit member name and relation (Edit sheet) | `PATCH /api/app/members?id=` (first save of a person with no stored member uses `POST`) | `household_members` | wired |
-| Family: mobile, e-mail, invite channel (Add and Edit sheets) | none | none | gap: no backend field; stays on the mock adapter and is lost on refresh |
-| Tools: top-up finder (who, cover, treatment, pick) | none | none | not wired: no scenario kind for it |
-| Tools: advisor filter, slot, mode, shared items | none | none | not wired: booking is not a scenario |
+| Family: mobile, e-mail, invite channel (Add and Edit sheets) | none | none | flagged off (`features.memberContact`): the fields and the invite step are hidden |
+| Tools: top-up finder (who, cover, treatment, pick) | none | none | session-only calculator: no scenario kind for it |
+| Tools: advisor filter, slot, mode, shared items | none | none | flagged off (`features.advisorBooking`): section hidden |
 | Premium rise (`premium_rise`) | `PUT /api/app/scenarios?tool=premium_rise` allowed by the BFF | `tool_scenarios` | route ready, no screen control uses it yet |
 
 Limits of the stress encoding (no dedicated fields in `stress_levers`): add-a-top-up is stored as `sumInsuredPct` 100 or 200, cashless as `claimDelayDays` 0 or 14, room within the limit as `roomUpgrade` false or true. The "Dengue" treatment has no value in the `scenario` enum, so it is not stored and a reload shows the default treatment. `who` is the person's name because the screen has no member ids yet.

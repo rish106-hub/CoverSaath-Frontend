@@ -5,7 +5,6 @@ import {
   type PlaceRow, type WireOnboarding, type WirePrefs,
 } from "./user-data-contract";
 import { roundCoarse } from "@/lib/india";
-import { mockProfile } from "./mock/profile";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser adapters for the same-origin BFF routes /api/app/{permissions,places,preferences,onboarding}. They hold the last revision the
@@ -60,7 +59,6 @@ function queue() {
 const rev = new Map<string, number>();
 const placeKey = (kind: string, slot?: string | null) => `place:${kind}${slot ? `:${slot}` : ""}`;
 const withRev = (key: string) => (rev.has(key) ? { revision: rev.get(key) } : {});
-let mobileMemo: string | null = null; // backend gap: the backend has no route to store a mobile number yet; kept for this visit only.
 
 const toAddress = (a: NonNullable<PlaceRow["address"]>): Address => addressSchema.parse({ ...a, line2: a.line2 ?? "", landmark: a.landmark ?? "" });
 const toPlace = (r: PlaceRow): SavedPlace | null => {
@@ -98,7 +96,7 @@ async function loadProfile(): Promise<Profile> {
       if (p) saved.push(p);
     }
   }
-  return { mobile: mobileMemo, address, addressSource, permissions, currentLocation, places: saved };
+  return { mobile: null, address, addressSource, permissions, currentLocation, places: saved };
 }
 
 const putPlace = (body: object, key: string) =>
@@ -123,12 +121,11 @@ const deletePlace = async (kind: string, slot?: string) => {
 
 export const backendProfile: ProfileAdapter = {
   get: loadProfile,
+  // backend gap: no route stores a mobile number for a signed-in person (it exists only on sign-up). The Contact section is hidden
+  // (features.profileMobile), and a call that still arrives fails loudly instead of keeping the number for the visit only.
   saveContact: async ({ mobile }) => {
-    // backend gap: no route stores a mobile number for a signed-in person yet (it exists only on sign-up).
-    const parsed = mobileSchema.safeParse(mobile);
-    if (!parsed.success) throw new AdapterError("INVALID_MOBILE");
-    mobileMemo = parsed.data;
-    return { mobile: parsed.data };
+    if (!mobileSchema.safeParse(mobile).success) throw new AdapterError("INVALID_MOBILE");
+    throw new AdapterError("NOT_SUPPORTED");
   },
   saveAddress: async (address, source = "user_typed") => {
     const parsed = addressSchema.safeParse(address);
@@ -138,8 +135,10 @@ export const backendProfile: ProfileAdapter = {
     return row.address ? toAddress(row.address) : parsed.data;
   },
   deleteAddress: () => deletePlace("registered_address"),
-  // backend gap: no DigiLocker integration in the backend yet; the fetch stays a mock and its result is saved through saveAddress.
-  fetchAddressFromDigiLocker: () => mockProfile.fetchAddressFromDigiLocker(),
+  // backend gap: no DigiLocker integration in the backend. The button is hidden (features.digilockerFetch); a mock address is never saved as the person's.
+  fetchAddressFromDigiLocker: async () => {
+    throw new AdapterError("NOT_SUPPORTED");
+  },
   setPermission: async (permission, state, surface) => {
     const key = `perm:${permission}`;
     await retryOnConflict(loadProfile, async () => {
@@ -289,7 +288,6 @@ export const backendOnboarding: OnboardingAdapter = {
 /** Test helper: forget cached revisions. */
 export function resetUserDataCache() {
   rev.clear();
-  mobileMemo = null;
   prefsRevision = undefined;
   prefsCache = undefined;
   onboardingRevision = undefined;
