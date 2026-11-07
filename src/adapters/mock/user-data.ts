@@ -32,9 +32,3 @@ export const mockOnboarding: OnboardingAdapter = {
     return delay(structuredClone(next));
   },
 };
-
-/** Test helper. */
-export function resetMockUserData() {
-  prefs = null;
-  onboarding = null;
-}

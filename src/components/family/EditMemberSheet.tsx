@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { adapters } from "@/adapters";
+import { adapters, features } from "@/adapters";
 import { SaveState, useSave } from "@/components/ui/SaveState";
 import { memberRelations, type MemberChannel } from "@/data/mock/family";
 import { normaliseIndianMobile, validateEditMember, type EditErrors } from "./logic";
@@ -29,7 +29,7 @@ export function EditMemberSheet({ member, onClose, onSaved }: { member: MemberDe
 
   const submit = async () => {
     if (busy) return;
-    const e = validateEditMember(name, mobile, email);
+    const e = validateEditMember(name, features.memberContact ? mobile : "", features.memberContact ? email : "");
     setErrors(e);
     if (e.name || e.mobile || e.email) return;
     const next: MemberDetails = {
@@ -42,7 +42,7 @@ export function EditMemberSheet({ member, onClose, onSaved }: { member: MemberDe
         ? await adapters.members.update(next.backendId, { name: next.name, relation: next.relation })
         : await adapters.members.add({ name: next.name, relation: next.relation });
       next.backendId = stored.id;
-      await adapters.invite.updateMember(next);
+      if (features.memberContact) await adapters.invite.updateMember(next);
     });
     if (ok) onSaved(next);
   };
@@ -66,12 +66,13 @@ export function EditMemberSheet({ member, onClose, onSaved }: { member: MemberDe
               <button key={r} type="button" className={styles.chip} data-on={r === relation} aria-pressed={r === relation} onClick={() => setRelation(r)}>{r}</button>
             ))}
           </div>
-          <div className={styles.twoCol}>
+          <div className={features.memberContact ? styles.twoCol : undefined}>
             <label className={styles.field}>
               Name
               <input ref={nameRef} className={styles.input} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" aria-invalid={!!errors.name} />
               {errors.name ? <span className={styles.err} role="alert">{errors.name}</span> : null}
             </label>
+            {features.memberContact ? (
             <label className={styles.field}>
               Mobile number
               <span className={styles.phone}>
@@ -80,18 +81,23 @@ export function EditMemberSheet({ member, onClose, onSaved }: { member: MemberDe
               </span>
               {errors.mobile ? <span className={styles.err} role="alert">{errors.mobile}</span> : null}
             </label>
+            ) : null}
           </div>
-          <label className={styles.field}>
-            Email
-            <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" aria-invalid={!!errors.email} />
-            {errors.email ? <span className={styles.err} role="alert">{errors.email}</span> : null}
-          </label>
-          <div className={styles.via}>
-            <span>Send invites on</span>
-            {CHANNELS.map((c) => (
-              <button key={c.id} type="button" className={styles.chip} data-on={channel === c.id} aria-pressed={channel === c.id} onClick={() => setChannel(c.id)}>{c.label}</button>
-            ))}
-          </div>
+          {features.memberContact ? (
+            <>
+              <label className={styles.field}>
+                Email
+                <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" aria-invalid={!!errors.email} />
+                {errors.email ? <span className={styles.err} role="alert">{errors.email}</span> : null}
+              </label>
+              <div className={styles.via}>
+                <span>Send invites on</span>
+                {CHANNELS.map((c) => (
+                  <button key={c.id} type="button" className={styles.chip} data-on={channel === c.id} aria-pressed={channel === c.id} onClick={() => setChannel(c.id)}>{c.label}</button>
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
         <div className={styles.sheetFoot}>
           <button type="button" className="k-btn k-btn--primary" onClick={() => void submit()} disabled={busy}>Save</button>

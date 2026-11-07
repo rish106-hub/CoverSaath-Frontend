@@ -1,6 +1,6 @@
 // Mock data for /family (Meera Rao household, all invented). backend gap: members beyond the owner, policies, dates, sharing.
 
-export type FamilyPerson = {
+type FamilyPerson = {
   id: string; name: string; initials: string; relation: string; age: number; cover: string;
   segments: { group: number; topUp: number; senior: number };
   status: string; tone: "ok" | "warn" | "bad"; note: string;
@@ -65,7 +65,7 @@ export const addMemberFlow = [
 ];
 
 export type MemberChannel = "whatsapp" | "sms" | "email";
-export type MemberContact = { mobile: string; email: string; channel: MemberChannel };
+type MemberContact = { mobile: string; email: string; channel: MemberChannel };
 /** Contact details per person id. backend gap. */
 export const familyContacts: Record<string, MemberContact> = {
   meera: { mobile: "+91 98220 10001", email: "meera@example.com", channel: "whatsapp" },

@@ -15,10 +15,3 @@ export const deskCases: DeskCase[] = [
   { id: "c4", title: "Compare parents’ renewal", detail: "Starts 13 Feb", status: "Scheduled", progress: 0, eta: "104 days" },
   { id: "c5", title: "Mother’s cataract pre-approval", detail: "Approved by Meridian Care", status: "Done", progress: 100, eta: "done" },
 ];
-
-export const yearDates = [
-  { month: "JAN", day: "15", title: "Tax proofs to HR", detail: "Rs 75,000 under 80D, pack ready" },
-  { month: "MAR", day: "13", title: "Parents’ plan renews", detail: "Meridian Care · compare first" },
-  { month: "MAR", day: "31", title: "Group cover year ends", detail: "Northstar · employer renews" },
-  { month: "JUN", day: "14", title: "Top-up renews", detail: "Kaveri · auto-debit on" },
-];

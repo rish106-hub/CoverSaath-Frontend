@@ -90,7 +90,7 @@ export const deskScore = [
 ] as const;
 
 // ---- Emergency ----
-export type EmergencyPerson = { name: string; full: string; plan: "group" | "senior"; policyNo: string; valid: string; left: string; abha: string; tpa: string };
+type EmergencyPerson = { name: string; full: string; plan: "group" | "senior"; policyNo: string; valid: string; left: string; abha: string; tpa: string };
 export const emergencyPeople: EmergencyPerson[] = [
   { name: "Meera", full: "Meera Rao", plan: "group", policyNo: "NHG/2026/771204-01", valid: "31 Mar 2027", left: "Rs 5,00,000", abha: "91-4471-•••• -2210", tpa: "Northstar TPA, 24×7" },
   { name: "Rohan", full: "Rohan Rao", plan: "group", policyNo: "NHG/2026/771204-02", valid: "31 Mar 2027", left: "Rs 5,00,000", abha: "Not linked", tpa: "Northstar TPA, 24×7" },
@@ -138,7 +138,7 @@ export function bloodBanks(group: string): BloodBank[] {
 }
 
 // ---- Assistant ----
-export type Utterance = {
+type Utterance = {
   say: string; label: string; person: string; conf: string; route: string; tone: "urgent" | "cover" | "number" | "word";
   kicker: string; answer: string; ref?: string; acts: { text: string; href: string; primary?: boolean }[];
 };
