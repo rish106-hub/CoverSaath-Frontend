@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { adapters, type UiPrefs } from "@/adapters";
+import { adapters, features, type UiPrefs } from "@/adapters";
 import { SaveState } from "@/components/ui/SaveState";
 import { useAutosave } from "@/lib/use-autosave";
 import { SectionHeading } from "@/components/type";
@@ -97,6 +97,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) => change({ ...cur, [k]: v });
   const flip = (k: "sources" | "notify" | "sharing", id: string, v: boolean) => change({ ...cur, [k]: { ...cur[k], [id]: v } });
   const locked = load !== "ready";
+  const familyOn = Object.values(p.sharing).some(Boolean);
 
   const sources: { id: string; name: string; detail: string; logo: ReactNode }[] = [
     { id: "gmail", name: "Gmail", detail: "Premium receipts and insurer emails", logo: <BrandLogo id="gmail" size={40} /> },
@@ -167,7 +168,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
 
       <SectionHeading title="Sharing">
         <div className={s.rows}>
-          {people.map((x) => (
+          {features.perPersonSharing ? people.map((x) => (
             <div key={x.id} className={cx(s.row, s.plain)}>
               <span>
                 <span className={s.name}>{x.name}</span>
@@ -177,7 +178,17 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
                 <Switch on={!!p.sharing[x.id]} label={`Share with ${x.name}`} disabled={locked} onChange={(v) => flip("sharing", x.id, v)} />
               </span>
             </div>
-          ))}
+          )) : (
+            <div className={cx(s.row, s.plain)}>
+              <span>
+                <span className={s.name}>Family view</span>
+                <span className={ui.small}>Rohan and Mother see your policies, claims and e-cards</span>
+              </span>
+              <span className={s.hit}>
+                <Switch on={familyOn} label="Family view" disabled={locked} onChange={(v) => change({ ...cur, sharing: Object.fromEntries(Object.keys(cur.sharing).map((k) => [k, v ? (DEFAULTS.sharing[k] ?? true) : false])) })} />
+              </span>
+            </div>
+          )}
         </div>
       </SectionHeading>
 

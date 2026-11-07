@@ -21,7 +21,7 @@ export interface AccessAdapter {
 export interface HouseholdAdapter {
   /** The signed-in person and household, or null when nobody is signed in. Throws AdapterError when the backend is unreachable. */
   me(): Promise<S.Me | null>;
-  /** Household with all members (members beyond the owner are mock: backend gap). */
+  /** Household with its members. With the backend: the owner plus the stored members only. With the mock adapters: the invented Rao family. */
   household(): Promise<S.Household>;
 }
 export interface DocumentAdapter {

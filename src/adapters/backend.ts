@@ -1,8 +1,11 @@
 import type { AccessAdapter, HouseholdAdapter } from "./types";
 import { AdapterError } from "./types";
 import { accessResultSchema, householdSchema, meSchema } from "./schemas";
-import { mockAdapters } from "./mock";
 import { fetchWithRetry } from "@/lib/retry-fetch";
+import { backendMembers, type MemberRecord } from "./scenarios";
+
+const RELATIONS = { spouse: "spouse", wife: "spouse", husband: "spouse", partner: "spouse", son: "child", daughter: "child", child: "child", mother: "mother", father: "father" } as const;
+const relationOf = (label: string | null) => RELATIONS[(label ?? "").trim().toLowerCase() as keyof typeof RELATIONS] ?? ("other" as const);
 
 // Browser-side clients for the same-origin BFF (/api/app/*). They never see the backend token.
 
@@ -35,10 +38,13 @@ export const backendHousehold: HouseholdAdapter = {
     return meSchema.parse(await res.json());
   },
   async household() {
-    // backend gap: only the owner is stored today; the rest of the household is mock.
-    const [me, base] = await Promise.all([this.me(), mockAdapters.household.household()]);
-    if (!me) return base;
-    const members = base.members.map((m) => (m.relation === "self" ? { ...m, id: me.owner.id, name: me.owner.displayName } : m));
-    return householdSchema.parse({ ...base, id: me.householdId, displayName: me.householdName, members });
+    // Real mode: only what the backend returns. The owner comes from /me, the rest from the stored members; nothing is borrowed from the mock family.
+    const [me, stored] = await Promise.all([this.me(), backendMembers.list().catch(() => [] as MemberRecord[])]);
+    if (!me) return householdSchema.parse({ id: "", displayName: "Your household", members: [] });
+    const owner = { id: me.owner.id, name: me.owner.displayName, relation: "self" as const, age: 0, invite: "joined" as const };
+    const others = stored
+      .filter((m) => !m.isOwner && !m.isYou && m.id !== owner.id)
+      .map((m) => ({ id: m.id, name: m.name, relation: relationOf(m.relation), age: m.ageYears ?? 0, invite: "none" as const }));
+    return householdSchema.parse({ id: me.householdId, displayName: me.householdName, members: [owner, ...others] });
   },
 };
