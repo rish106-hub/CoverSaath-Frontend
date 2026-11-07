@@ -1,6 +1,6 @@
 // Money desk board data (design/Money.dc.html). All people, insurers and amounts are invented.
 
-export type InboxReceipt = { id: string; logo: string; title: string; date: string; from: string; amountRs: number; isoDate: string; policyNumber?: string };
+type InboxReceipt = { id: string; logo: string; title: string; date: string; from: string; amountRs: number; isoDate: string; policyNumber?: string };
 
 export const inbox: InboxReceipt[] = [
   { id: "m1", logo: "MC", title: "Meridian Care · Senior plan", date: "9 Mar", from: "renewals@", amountRs: 15850, isoDate: "2026-03-09", policyNumber: "MC-SR-001" },
@@ -11,7 +11,7 @@ export const inbox: InboxReceipt[] = [
   { id: "m6", logo: "NH", title: "Northstar · Payslip deduction", date: "30 Apr", from: "payroll@", amountRs: 15900, isoDate: "2026-04-30", policyNumber: "NH-GR-077" },
 ];
 
-export type ExpectedRow = { id: string; title: string; amountRs: number; due: string; dueIso: string; policyNumber?: string; /** index into inbox that the board matches by hand */ manualMatch?: boolean };
+type ExpectedRow = { id: string; title: string; amountRs: number; due: string; dueIso: string; policyNumber?: string; /** index into inbox that the board matches by hand */ manualMatch?: boolean };
 
 export const expectedRows: ExpectedRow[] = [
   { id: "x1", title: "Parents’ senior plan", amountRs: 15850, due: "Due 13 Mar", dueIso: "2026-03-13", policyNumber: "MC-SR-001" },

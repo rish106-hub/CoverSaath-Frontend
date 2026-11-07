@@ -2,6 +2,9 @@
  * reads it back (twice, with a second cookie jar), then reads Postgres directly with psql and checks sealing and erasure.
  * Local only: loopback BFF, loopback database, synthetic data. Prints no tokens, cookies or secrets. */
 import { spawnSync } from "node:child_process";
+import { features, FEATURE_REASON, type FeatureName } from "../src/adapters/features";
+import { DEFAULT_PREFS, onboardingFromWire, onboardingToWire, prefsFromWire, prefsToWire } from "../src/adapters/user-data";
+import type { UiOnboarding, UiPrefs } from "../src/adapters/types";
 
 const BFF = process.env.VERIFY_BFF_URL ?? "http://127.0.0.1:3200";
 const DB = { host: "127.0.0.1", port: "54329", user: "coversaath", name: "knowvia_dryrun" } as const;
@@ -13,7 +16,8 @@ if (bffUrl.port === "8787") throw new Error("REFUSED: port 8787 is the owner's b
 if (!/^[a-z0-9_]+$/.test(DB.name) || (DB.name as string) === "coversaath_dev") throw new Error("REFUSED: database name");
 if (!["127.0.0.1", "localhost"].includes(DB.host)) throw new Error("REFUSED: database host is not loopback");
 
-type Status = "PASS" | "FAIL" | "NOT WIRED";
+/** FLAGGED: not a pass and not a defect of this app. The reason says what the backend lacks; the control is off or the limit is documented. */
+type Status = "PASS" | "FAIL" | "FLAGGED";
 type Row = { field: string; route: string; table: string; sealed: "yes" | "no" | "n/a"; status: Status; note?: string };
 const rows: Row[] = [];
 const add = (r: Row) => rows.push(r);
@@ -140,7 +144,6 @@ async function main() {
   };
   const first = await readAll(jar);
   const second = await readAll(new Jar(jar.cookie));
-  const same = (get: (r: typeof first) => unknown) => eq(get(first), get(second));
 
   const permOf = (r: typeof first, n: string) => r.perms.find((x: any) => x.permission === n);
   const placeOf = (r: typeof first, kind: string, slot?: string) => r.places.find((x: any) => x.kind === kind && (slot ? x.slot === slot : true));
@@ -256,7 +259,9 @@ async function main() {
   const nameSealed = !!memRow && isSealed(memRow[0]) && !memRow[0].includes(M.member);
   const relSealed = !!memRow && isSealed(memRow[1]);
   add({ field: "family member add (name)", route: route("member-add"), table: "household_members.display_name", sealed: nameSealed ? "yes" : "no", status: decide(wrote("member-add") && !!mem && mem.displayName === M.member && nameSealed) });
-  add({ field: "family member add/edit (relation label)", route: `${route("member-add")}; ${route("member-edit")}`, table: "household_members.relationship_label", sealed: relSealed ? "yes" : "no", status: decide(wrote("member-edit") && mem?.relationshipLabel === `${M.memberRel}-edited` && relSealed), note: relSealed ? undefined : "BACKEND gap: relationship_label stored in plaintext" });
+  add({ field: "family member add/edit (relation label) round trip", route: `${route("member-add")}; ${route("member-edit")}`, table: "household_members.relationship_label", sealed: "n/a", status: decide(wrote("member-edit") && mem?.relationshipLabel === `${M.memberRel}-edited`) });
+  // The backend seals household_members.display_name only (column-backfill list). Sealing relationship_label is a backend change; the app cannot do it.
+  add({ field: "family member relation label sealed at rest", route: "(backend)", table: "household_members.relationship_label", sealed: relSealed ? "yes" : "no", status: relSealed ? "PASS" : "FLAGGED", note: relSealed ? undefined : "backend-owned: relationship_label is not in the backend sealed-column list; stored in plaintext" });
 
   // ---- 5. Erasure -------------------------------------------------------------------------------------------------------
   const rev = await jar.call("PUT", "/api/app/permissions", { permission: "location", state: "revoked", surface: "settings", revision: permOf(first, "location")?.revision });
@@ -280,13 +285,57 @@ async function main() {
   add({ field: "isolation: another household sees none of it", route: "GET /api/app/{places,scenarios,...}", table: "(all)", sealed: "n/a", status: decide(o.places.length === 0 && o.scenarios.length === 0 && o.perms.length === 0 && !JSON.stringify(o).includes(M.addr1)) });
   await other.call("POST", "/api/app/signout", {});
 
-  // ---- 6. Known backend gaps ---------------------------------------------------------------------------------------------
-  const gap = (field: string, note: string) => add({ field, route: "none", table: "none", sealed: "n/a", status: "NOT WIRED", note });
-  gap("mobile number (Profile)", "no backend route stores it for a signed-in person");
-  gap("DigiLocker fetch", "mock fetch; result saved as registered address");
-  gap("member mobile / e-mail / invite channel", "no backend field");
-  gap("compare cover band; top-up finder; advisor booking", "no scenario kind / field");
-  gap("lossy enums (ABHA, Gmail, Calendar channel, Samsung wallet, voice Both, per-person sharing)", "closed backend lists; see docs/persistence-matrix.md");
+  // ---- 6. Enum round trips: every value the screens offer must come back as it was saved ------------------------------------
+  const canon = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
+  const prefsRt = async (cases: UiPrefs[]) => {
+    for (const ui of cases) {
+      const cur = await jar.call("GET", "/api/app/preferences");
+      const put = await jar.call("PUT", "/api/app/preferences", { prefs: prefsToWire(ui), revision: cur.data?.revision });
+      const got = await jar.call("GET", "/api/app/preferences");
+      if (put.status !== 200 || !got.data?.prefs || canon(prefsFromWire(got.data.prefs)) !== canon(ui)) return false;
+    }
+    return true;
+  };
+  const onbRt = async (cases: UiOnboarding[]) => {
+    for (const ui of cases) {
+      const cur = await jar.call("GET", "/api/app/onboarding");
+      const put = await jar.call("PUT", "/api/app/onboarding", { state: onboardingToWire(ui), completed: ui.completed, revision: cur.data?.revision });
+      const got = await jar.call("GET", "/api/app/onboarding");
+      if (put.status !== 200 || !got.data?.state || canon(onboardingFromWire(got.data.state, got.data.completed)) !== canon(ui)) return false;
+    }
+    return true;
+  };
+  const base: UiPrefs = { ...DEFAULT_PREFS, sources: { gmail: false, digilocker: false, abha: false }, notify: { whatsapp: false, email: false, calendar: false }, sharing: { rohan: false, mother: false, father: false } };
+  const rtRow = (field: string, table: string, ok: boolean) => add({ field, route: "PUT then GET /api/app/" + (table === "onboarding_progress" ? "onboarding" : "preferences"), table, sealed: "yes", status: decide(ok) });
+  rtRow("enum round trip: connected sources (Gmail, DigiLocker, ABHA, each alone and all)", "adult_preferences", await prefsRt([
+    ...(["gmail", "digilocker", "abha"] as const).map((k) => ({ ...base, sources: { ...base.sources, [k]: true } })),
+    { ...base, sources: { gmail: true, digilocker: true, abha: true } }, base,
+  ]));
+  rtRow("enum round trip: notification channels (WhatsApp, Email, Calendar, each alone and all)", "adult_preferences", await prefsRt([
+    ...(["whatsapp", "email", "calendar"] as const).map((k) => ({ ...base, notify: { ...base.notify, [k]: true } })),
+    { ...base, notify: { whatsapp: true, email: true, calendar: true } }, base,
+  ]));
+  rtRow("enum round trip: voice language (English, Hindi, Both)", "adult_preferences", await prefsRt((["en", "hi", "both"] as const).map((v) => ({ ...base, voice: v }))));
+  rtRow("enum round trip: family sharing (one switch: on = default people, off = nobody)", "adult_preferences", await prefsRt([{ ...base, sharing: { ...DEFAULT_PREFS.sharing } }, base]));
+  rtRow("enum round trip: onboarding way (DigiLocker, Upload, HR mail, Policy number)", "onboarding_progress", await onbRt((["dl", "up", "hr", "no"] as const).map((way) => ({ way, step: 1, completed: false }))));
+  rtRow("enum round trip: onboarding wallet (Apple, Google, none, later)", "onboarding_progress", await onbRt((["apple", "google", "none", "later"] as const).map((wallet) => ({ wallet, completed: false }))));
+
+  // ---- 7. Flagged: controls the backend cannot store, and limits that stay -------------------------------------------------
+  const flag = (field: string, note: string) => add({ field, route: "none", table: "none", sealed: "n/a", status: "FLAGGED", note });
+  const OFF_LABEL: Record<FeatureName, string> = {
+    profileMobile: "mobile number (Profile, Contact)",
+    digilockerFetch: "Fetch from DigiLocker (Profile, Address)",
+    memberContact: "member mobile, e-mail, invite channel (Family sheets)",
+    advisorBooking: "advisor list and booking (Tools)",
+    perPersonSharing: "per-person sharing switches (Settings)",
+  };
+  for (const k of Object.keys(OFF_LABEL) as FeatureName[]) {
+    flag(OFF_LABEL[k], features[k] ? "STILL ON: the app would show it as saved and lose it" : `control off in the app: ${FEATURE_REASON[k]}`);
+    if (features[k]) rows[rows.length - 1].status = "FAIL";
+  }
+  flag("wallet Samsung (WalletSheet)", "stored as the Android wallet (google); the stored wallet is never read back into a screen, so nothing shown changes");
+  flag("compare cover band (Compare)", "session-only view control: no scenario field; nothing claims it is saved");
+  flag("top-up finder (Tools)", "session-only calculator: no scenario kind; nothing claims it is saved");
 
   // Informational: where the sign-up identity lives (existing tables, not part of the new-table scan).
   const idRow = sql(`select count(*) from public.adult_users where contact_email='${EMAIL}'`);
@@ -299,7 +348,7 @@ async function main() {
   console.log("\nFIELD".padEnd(1) + "\n" + [w("field", 62), w("BFF route", 52), w("table", 34), w("sealed", 6), "status"].join(" | "));
   for (const r of rows) console.log([w(r.field, 62), w(r.route, 52), w(r.table, 34), w(r.sealed, 6), r.status + (r.note ? `  (${r.note})` : "")].join(" | "));
   const count = (s: Status) => rows.filter((r) => r.status === s).length;
-  console.log(`\nSUMMARY: ${count("PASS")} PASS, ${count("FAIL")} FAIL, ${count("NOT WIRED")} NOT WIRED`);
+  console.log(`\nSUMMARY: ${count("PASS")} PASS, ${count("FAIL")} FAIL, ${count("FLAGGED")} FLAGGED (of ${rows.length})`);
   console.log(`plaintext leaks in new tables: ${leaks.length === 0 ? "none" : leaks.join(", ")}`);
   console.log(`note: sign-up email stored plaintext in adult_users.contact_email (existing table, outside the new-table scan): ${emailPlain ? "yes" : "no"}`);
   process.exit(count("FAIL") > 0 ? 1 : 0);

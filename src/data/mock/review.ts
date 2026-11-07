@@ -12,7 +12,7 @@ export const decisions: Decision[] = [
   { q: "Advisor calls", options: ["First call free, then a flat fee", "Insurers pay the advisors"] },
 ];
 
-export type LookItem = { t: string; where: string; href: string };
+type LookItem = { t: string; where: string; href: string };
 export const lookItems: LookItem[] = [
   { t: "Beta page", where: "Landing page", href: "/" },
   { t: "Speak to Knowvia", where: "Overview, dark panel", href: "/home" },

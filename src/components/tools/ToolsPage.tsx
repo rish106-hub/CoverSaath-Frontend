@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { features } from "@/adapters";
 import { SectionHeading } from "@/components/type";
 import { SaveState } from "@/components/ui/SaveState";
 import { useScenario } from "@/lib/use-scenario";
@@ -307,7 +308,7 @@ export function ToolsPage() {
         {tab === "tax" ? <Tax /> : tab === "room" ? <Room /> : <Exit />}
       </SectionHeading>
       <SectionHeading title="Top-up finder"><TopUp /></SectionHeading>
-      <SectionHeading title="Advisors"><Advisors /></SectionHeading>
+      {features.advisorBooking ? <SectionHeading title="Advisors"><Advisors /></SectionHeading> : null}
       <SectionHeading title="What these tools save"><Wins /></SectionHeading>
       <SectionHeading title="Read next">
         <div className={styles.reads}>

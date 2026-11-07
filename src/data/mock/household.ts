@@ -13,8 +13,6 @@ export const household: Household = {
   ],
 };
 
-export const notOnKnowvia = { id: "priya", name: "Priya", relation: "other" as const, age: 36, invite: "none" as const };
-
 export const policies: Policy[] = [
   { id: "northstar-floater", name: "Group floater Rs 5L", insurer: "Northstar Health", kind: "group", sumInsuredRs: 500000, premiumRs: 0, coPayPct: 0, renewsOn: "2027-03-31", memberIds: ["meera", "rohan", "kabir"] },
   { id: "kaveri-topup", name: "Super top-up Rs 10L after Rs 5L", insurer: "Kaveri Insurance", kind: "top-up", sumInsuredRs: 1000000, premiumRs: 8400, coPayPct: 0, renewsOn: "2027-06-14", memberIds: ["meera", "kabir"] },

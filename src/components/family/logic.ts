@@ -5,10 +5,10 @@ export function normaliseIndianMobile(input: string): string | null {
   return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
 }
 
-export function validateAddMember(name: string, mobile: string): { name?: string; mobile?: string } {
+export function validateAddMember(name: string, mobile: string, requireMobile = true): { name?: string; mobile?: string } {
   const errors: { name?: string; mobile?: string } = {};
   if (name.trim().length < 2) errors.name = "Enter a name.";
-  if (!normaliseIndianMobile(mobile)) errors.mobile = "Enter a 10-digit mobile number.";
+  if (requireMobile && !normaliseIndianMobile(mobile)) errors.mobile = "Enter a 10-digit mobile number.";
   return errors;
 }
 
