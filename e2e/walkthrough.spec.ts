@@ -48,9 +48,13 @@ test("keyboard only: / to /signin to /welcome to /home to /emergency", async ({ 
 
 test("g then c goes to Compare and 3 picks a plan", async ({ page }) => {
   await page.goto("/home");
-  await page.keyboard.press("g");
-  await page.keyboard.press("c");
-  await expect(page).toHaveURL(/\/compare$/);
+  await expect(page.getByText("Ask Knowvia anything")).toBeVisible();
+  // Dev server compiles on first hit; retry the chord until the shortcut listener has hydrated.
+  await expect(async () => {
+    await page.keyboard.press("g");
+    await page.keyboard.press("c");
+    await expect(page).toHaveURL(/\/compare$/, { timeout: 1500 });
+  }).toPass({ timeout: 15_000 });
   await expect(page.getByText(/Fit for .* family/)).toBeVisible();
   await page.keyboard.press("3");
   await expect(page.getByText(/Keep your group plan and add Meridian Care/)).toBeVisible();
