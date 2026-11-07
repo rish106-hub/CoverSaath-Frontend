@@ -144,7 +144,6 @@ async function main() {
   };
   const first = await readAll(jar);
   const second = await readAll(new Jar(jar.cookie));
-  const same = (get: (r: typeof first) => unknown) => eq(get(first), get(second));
 
   const permOf = (r: typeof first, n: string) => r.perms.find((x: any) => x.permission === n);
   const placeOf = (r: typeof first, kind: string, slot?: string) => r.places.find((x: any) => x.kind === kind && (slot ? x.slot === slot : true));
