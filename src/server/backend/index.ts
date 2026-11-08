@@ -5,6 +5,7 @@ import { acceptLegacyCookies, loadConfig, previousCookieSecret, type ServerConfi
 import { seal, unseal, type SessionPayload } from "./session";
 import { DEMO_COOKIE, MAX_SESSION_MS, SESSION_COOKIE, expiring, isSecureRequest, sessionCookieName, sessionFlags, sessionMaxAgeSeconds } from "./cookie-policy";
 import { AppError, errorBody } from "./errors";
+import { demoEnabled } from "./demo";
 
 export { AppError, errorBody };
 
@@ -41,6 +42,15 @@ export async function readAnySession(secret: string): Promise<SessionPayload | n
     fromPlain = opened !== null;
   }
   if (!opened) return null;
+  if (opened.payload.demo && !demoEnabled()) {
+    // Kill switch: DEMO_LOGIN_ENABLED off ends existing demo sessions.
+    try {
+      setDemoMarker(jar, false, secure);
+    } catch {
+      // Server Components cannot set cookies; the session is still refused.
+    }
+    return null;
+  }
   if (opened.reseal || fromPlain) {
     try {
       jar.set(name, seal(opened.payload, secret), sessionFlags(secure, sessionMaxAgeSeconds(opened.payload.exp)));

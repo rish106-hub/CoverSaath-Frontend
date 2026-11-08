@@ -17,13 +17,13 @@ import { GET as me } from "@/app/api/app/me/route";
 import { GET as placesGet } from "@/app/api/app/places/route";
 import { readSession, readAnySession } from "@/server/backend";
 import { seal } from "@/server/backend/session";
-import { demoResetLimits } from "@/server/backend/demo";
+import { MAX_TRACKED, demoCredentialsMatch, clientIp, demoNoteFailure, demoRateLimited, demoResetLimits, demoTracked } from "@/server/backend/demo";
 
 const SECRET = "s".repeat(40);
 const req = (body: unknown) =>
   new Request("http://localhost:3200/api/app/demo", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-knowvia-app": "1", host: "localhost:3200", origin: "http://localhost:3200" },
+    headers: { "content-type": "application/json", "x-knowvia-app": "1", host: "localhost:3200", origin: "http://localhost:3200", "x-real-ip": "7.7.7.7" },
     body: JSON.stringify(body),
   });
 const GOOD = { email: "demo@demo.com", password: "demo123" };
@@ -59,6 +59,15 @@ describe("demo login", () => {
     expect((await demoLogin(req(null))).status).toBe(401);
     expect(setCookie("kv_session")).toHaveLength(0);
     expect(setCookie("kv_demo").filter((c) => c.includes("kv_demo=1"))).toHaveLength(0);
+  });
+
+  it("rejects over-long and non-string input", async () => {
+    expect((await demoLogin(req({ email: "demo@demo.com", password: "demo123" + "x".repeat(5000) }))).status).toBe(401);
+    expect((await demoLogin(req({ email: "demo@demo.com".padEnd(300, "x"), password: "demo123" }))).status).toBe(401);
+    expect((await demoLogin(req({ email: 1, password: ["demo123"] }))).status).toBe(401);
+    expect(demoCredentialsMatch("demo@demo.com", "demo123")).toBe(true);
+    expect(demoCredentialsMatch(" Demo@Demo.com ", "demo123")).toBe(true);
+    expect(demoCredentialsMatch("demo@demo.com", "demo1234")).toBe(false);
   });
 
   it("rate limits repeated failures", async () => {
@@ -119,5 +128,45 @@ describe("demo login", () => {
     const { writeSession } = await import("@/server/backend");
     await writeSession({ t: "tok", h: "h1", m: "m1", exp: Date.now() + 3_600_000 }, SECRET);
     expect(setCookie("kv_demo").every((c) => !c.includes("kv_demo=1"))).toBe(true);
+  });
+
+  it("kill switch: existing demo sessions end when the flag is turned off, and the marker is cleared", async () => {
+    inbound.set("kv_session", seal({ t: "", h: "demo", m: "demo", exp: Date.now() + 3_600_000, demo: true }, SECRET));
+    expect((await readAnySession(SECRET))?.demo).toBe(true);
+    vi.stubEnv("DEMO_LOGIN_ENABLED", "");
+    expect(await readAnySession(SECRET)).toBeNull();
+    expect(await readSession(SECRET)).toBeNull();
+    expect(setCookie("kv_demo")[0]).toMatch(/Max-Age=0|Expires=Thu, 01 Jan 1970/i);
+    expect((await me()).status).toBe(401);
+  });
+
+  it("client IP: x-real-ip wins, else rightmost XFF hop, never the spoofable leftmost; none gives null", () => {
+    const h = (o: Record<string, string>) => new Headers(o);
+    expect(clientIp(h({ "x-real-ip": "1.1.1.1", "x-forwarded-for": "9.9.9.9, 2.2.2.2" }))).toBe("1.1.1.1");
+    expect(clientIp(h({ "x-forwarded-for": "9.9.9.9, 2.2.2.2" }))).toBe("2.2.2.2");
+    expect(clientIp(h({}))).toBeNull();
+  });
+
+  it("no IP: no shared bucket, no lockout, credentials still required", async () => {
+    const noIp = (body: unknown) => new Request("http://localhost:3200/api/app/demo", { method: "POST", headers: { "content-type": "application/json", "x-knowvia-app": "1", host: "localhost:3200" }, body: JSON.stringify(body) });
+    for (let i = 0; i < 20; i++) expect((await demoLogin(noIp({ email: "a", password: "b" }))).status).toBe(401);
+    expect(demoRateLimited(null)).toBe(false);
+    expect(demoTracked()).toBe(0);
+    expect((await demoLogin(noIp(GOOD))).status).toBe(200);
+  });
+
+  it("spoofed leftmost XFF cannot dodge the lockout", async () => {
+    const r = (xff: string, body: unknown) =>
+      new Request("http://localhost:3200/api/app/demo", { method: "POST", headers: { "content-type": "application/json", "x-knowvia-app": "1", host: "localhost:3200", "x-forwarded-for": xff }, body: JSON.stringify(body) });
+    for (let i = 0; i < 8; i++) await demoLogin(r(`10.0.0.${i}, 5.5.5.5`, { email: "a", password: "b" }));
+    expect((await demoLogin(r("10.9.9.9, 5.5.5.5", GOOD))).status).toBe(429);
+  });
+
+  it("failure map is hard-capped and evicts oldest", () => {
+    for (let i = 0; i < MAX_TRACKED + 50; i++) demoNoteFailure(`ip${i}`);
+    expect(demoTracked()).toBe(MAX_TRACKED);
+    for (let i = 0; i < 8; i++) demoNoteFailure("ip2000");
+    expect(demoRateLimited("ip2000")).toBe(true);
+    expect(demoRateLimited("ip0")).toBe(false); // evicted
   });
 });

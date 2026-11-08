@@ -1,6 +1,6 @@
 import { runtime, writeSession, json, failure, AppError } from "@/server/backend";
 import { assertSameOrigin } from "@/server/backend/guard";
-import { DEMO_SESSION_MS, demoCredentialsMatch, demoEnabled, demoNoteFailure, demoRateLimited } from "@/server/backend/demo";
+import { DEMO_SESSION_MS, clientIp, demoCredentialsMatch, demoEnabled, demoNoteFailure, demoRateLimited } from "@/server/backend/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     if (!demoEnabled()) throw new AppError(404, "NOT_FOUND");
     assertSameOrigin(req);
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const ip = clientIp(req.headers);
     if (demoRateLimited(ip)) throw new AppError(429, "RATE_LIMITED", true, 600);
     const body = (await req.json().catch(() => null)) as { email?: unknown; password?: unknown } | null;
     if (!demoCredentialsMatch(body?.email, body?.password)) {
