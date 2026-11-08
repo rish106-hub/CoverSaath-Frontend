@@ -3,7 +3,6 @@
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters, usingBackend } from "@/adapters";
 import { AccessCard } from "@/components/access/AccessCard";
@@ -156,7 +155,6 @@ export function SignIn() {
 
 /** Public synthetic demo. Shown only for /signin?demo=1. The server enables it with DEMO_LOGIN_ENABLED=true. */
 function DemoCard() {
-  const router = useRouter();
   const { run: once, busy, alive } = useSingleFlight();
   const [error, setError] = useState("");
   const enter = () =>
@@ -172,7 +170,8 @@ function DemoCard() {
         if (!alive()) return;
         if (!res.ok) return setError(res.status === 404 ? "The demo isn’t available right now." : DOWN);
         invalidateMe();
-        router.push("/home");
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load on purpose
+        window.location.href = "/home"; // full load: no mock state carried over
       } catch {
         if (alive()) setError(DOWN);
       }

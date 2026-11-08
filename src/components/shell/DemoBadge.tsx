@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
 import { adapters } from "@/adapters";
 import { isDemoSession } from "@/adapters/demo";
 import { invalidateMe } from "./useMe";
@@ -9,7 +8,6 @@ import styles from "./DemoBadge.module.css";
 
 /** Shown only in a demo session: a small label and the way out. */
 export function DemoBadge() {
-  const router = useRouter();
   const demo = useSyncExternalStore(() => () => {}, isDemoSession, () => false);
   const [busy, setBusy] = useState(false);
   if (!demo) return null;
@@ -22,7 +20,8 @@ export function DemoBadge() {
       return;
     }
     invalidateMe();
-    router.push("/");
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full reload on purpose
+    window.location.href = "/"; // full reload: drops the in-memory mock state
   };
   return (
     <div className={styles.badge}>
