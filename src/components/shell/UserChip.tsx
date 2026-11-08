@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adapters } from "@/adapters";
+import { DemoBadge } from "./DemoBadge";
 import styles from "./UserChip.module.css";
 
 /** Avatar and name, read back from the household adapter (backend when configured). */
@@ -17,9 +18,12 @@ export function UserChip() {
   }, []);
   const initial = name ? name.charAt(0).toUpperCase() : "·";
   return (
-    <Link href="/profile" className={styles.chip} aria-label={`Your profile${name ? `, ${name}` : ""}`}>
-      <span className={styles.avatar} aria-hidden>{initial}</span>
-      <span className={styles.name}>{name ?? "Your account"}</span>
-    </Link>
+    <>
+      <Link href="/profile" className={styles.chip} aria-label={`Your profile${name ? `, ${name}` : ""}`}>
+        <span className={styles.avatar} aria-hidden>{initial}</span>
+        <span className={styles.name}>{name ?? "Your account"}</span>
+      </Link>
+      <DemoBadge />
+    </>
   );
 }

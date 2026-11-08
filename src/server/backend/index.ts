@@ -3,7 +3,7 @@ import { cookies, headers } from "next/headers";
 import { createBackendClient, type BackendClient } from "./client";
 import { acceptLegacyCookies, loadConfig, previousCookieSecret, type ServerConfig } from "./env";
 import { seal, unseal, type SessionPayload } from "./session";
-import { MAX_SESSION_MS, SESSION_COOKIE, expiring, isSecureRequest, sessionCookieName, sessionFlags, sessionMaxAgeSeconds } from "./cookie-policy";
+import { DEMO_COOKIE, MAX_SESSION_MS, SESSION_COOKIE, expiring, isSecureRequest, sessionCookieName, sessionFlags, sessionMaxAgeSeconds } from "./cookie-policy";
 import { AppError, errorBody } from "./errors";
 
 export { AppError, errorBody };
@@ -28,7 +28,7 @@ async function requestSecure(): Promise<boolean> {
  * (same expiry) where cookies are writable. Over https the cookie is __Host-kv_session; while the legacy transition is open
  * an old plain kv_session is read once, re-sealed under the new name and the old one is cleared.
  */
-export async function readSession(secret: string): Promise<SessionPayload | null> {
+export async function readAnySession(secret: string): Promise<SessionPayload | null> {
   const jar = await cookies();
   const secure = await requestSecure();
   const name = sessionCookieName(secure);
@@ -52,12 +52,29 @@ export async function readSession(secret: string): Promise<SessionPayload | null
   return opened.payload;
 }
 
+/**
+ * The session for any route that talks to the backend. A demo session is refused here with a coded 403, so no backend
+ * client call can be made with it. Only /me and /signout use readAnySession.
+ */
+export async function readSession(secret: string): Promise<SessionPayload | null> {
+  const s = await readAnySession(secret);
+  if (s?.demo) throw new AppError(403, "DEMO_READ_ONLY");
+  return s;
+}
+
 export async function writeSession(payload: SessionPayload, secret: string, secure?: boolean): Promise<void> {
   const exp = Math.min(payload.exp, Date.now() + MAX_SESSION_MS);
   const isSecure = secure ?? (await requestSecure());
   const jar = await cookies();
   jar.set(sessionCookieName(isSecure), seal({ ...payload, exp }, secret), sessionFlags(isSecure, sessionMaxAgeSeconds(exp)));
   if (isSecure) jar.set(SESSION_COOKIE, "", expiring(sessionFlags(true, 0))); // drop any pre-prefix cookie
+  setDemoMarker(jar, payload.demo === true, isSecure, exp);
+}
+
+/** Readable, non-sensitive marker so the browser picks mock adapters. The server never trusts it; the sealed session decides. */
+function setDemoMarker(jar: Awaited<ReturnType<typeof cookies>>, on: boolean, secure: boolean, exp = 0): void {
+  if (on) jar.set(DEMO_COOKIE, "1", { httpOnly: false, sameSite: "lax", secure, path: "/", maxAge: sessionMaxAgeSeconds(exp) });
+  else jar.set(DEMO_COOKIE, "", { httpOnly: false, sameSite: "lax", secure, path: "/", maxAge: 0, expires: new Date(0) });
 }
 
 export async function clearSession(secure?: boolean): Promise<void> {
@@ -65,6 +82,7 @@ export async function clearSession(secure?: boolean): Promise<void> {
   const jar = await cookies();
   jar.set(sessionCookieName(isSecure), "", expiring(sessionFlags(isSecure, 0)));
   if (isSecure) jar.set(SESSION_COOKIE, "", expiring(sessionFlags(true, 0)));
+  setDemoMarker(jar, false, isSecure);
 }
 
 export function json(body: unknown, status = 200): Response {

@@ -1,8 +1,9 @@
 "use client";
 
 import { BrandMark } from "@/components/brand/BrandMark";
-import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters, usingBackend } from "@/adapters";
 import { AccessCard } from "@/components/access/AccessCard";
@@ -27,6 +28,7 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const { run: once, busy, alive } = useSingleFlight();
+  const demoRequested = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("demo") === "1", () => false);
 
   function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
     return once(async () => {
@@ -78,6 +80,7 @@ export function SignIn() {
               <p className={styles.sub}>Private beta. Get access to start.</p>
             </div>
             <AccessCard />
+            {demoRequested ? <DemoCard /> : null}
           </div>
         ) : null}
 
@@ -148,6 +151,43 @@ export function SignIn() {
       <ShowcasePanel />
       <div className={styles.themeSlot}><ThemeToggle /></div>
     </div>
+  );
+}
+
+/** Public synthetic demo. Shown only for /signin?demo=1. The server enables it with DEMO_LOGIN_ENABLED=true. */
+function DemoCard() {
+  const router = useRouter();
+  const { run: once, busy, alive } = useSingleFlight();
+  const [error, setError] = useState("");
+  const enter = () =>
+    once(async () => {
+      setError("");
+      try {
+        const res = await fetch("/api/app/demo", {
+          method: "POST",
+          cache: "no-store",
+          headers: { "content-type": "application/json", "x-knowvia-app": "1" },
+          body: JSON.stringify({ email: "demo@demo.com", password: "demo123" }),
+        });
+        if (!alive()) return;
+        if (!res.ok) return setError(res.status === 404 ? "The demo isn’t available right now." : DOWN);
+        invalidateMe();
+        router.push("/home");
+      } catch {
+        if (alive()) setError(DOWN);
+      }
+    });
+  return (
+    <form className={styles.form} style={{ marginTop: 8 }} onSubmit={(e) => { e.preventDefault(); void enter(); }} aria-label="Demo">
+      <div>
+        <h2 className={styles.sub} style={{ margin: 0, color: "var(--ink)", fontWeight: 600 }}>Demo</h2>
+        <p className={styles.small} style={{ margin: "4px 0 0" }}>Look around with sample data.</p>
+      </div>
+      <label className={styles.field}><input type="email" aria-label="Demo email" readOnly value="demo@demo.com" /></label>
+      <label className={styles.field}><input type="text" aria-label="Demo password" readOnly value="demo123" /></label>
+      {error ? <p className={styles.err} role="alert">{error}</p> : null}
+      <button type="submit" className={styles.cta} disabled={busy}>Enter demo</button>
+    </form>
   );
 }
 
