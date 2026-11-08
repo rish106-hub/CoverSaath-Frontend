@@ -2,7 +2,8 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { MAX_SESSION_MS, SESSION_COOKIE } from "./cookie-policy";
 
-export type SessionPayload = { t: string; h: string; m: string; exp: number };
+/** `demo: true` marks the public synthetic demo session: it carries no backend token and is refused by every backend route. */
+export type SessionPayload = { t: string; h: string; m: string; exp: number; demo?: true };
 export const COOKIE_NAME = SESSION_COOKIE;
 
 const key = (secret: string) => createHash("sha256").update(secret).digest();

@@ -6,6 +6,8 @@
  */
 /** Plain names: loopback http development, and the pre-prefix cookies still read during the legacy transition. */
 export const SESSION_COOKIE = "kv_session";
+/** Readable (not HttpOnly) marker for a demo session. Not a credential: the sealed session is the authority. */
+export const DEMO_COOKIE = "kv_demo";
 export const OAUTH_COOKIE_NAME = "kv_oauth";
 /** Prefixed names, used whenever the cookie is Secure. __Host- needs Secure, Path=/ and no Domain (the session cookie). __Secure- needs Secure only (the oauth cookie is path-scoped, so it cannot be __Host-). */
 export const SESSION_COOKIE_SECURE = "__Host-kv_session";

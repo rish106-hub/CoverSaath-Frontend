@@ -20,7 +20,7 @@ export default async function Status() {
     const s = await readStatus(createBackendClient({ baseUrl: config.apiUrl, bootstrapToken: config.bootstrapToken }));
     health = s.health;
     ready = s.ready;
-    householdId = (await readSession(config.cookieSecret))?.h;
+    householdId = (await readSession(config.cookieSecret).catch(() => null))?.h;
   }
   const row = (label: string, v: boolean | null) => (
     <li>{label}: <b>{v === null ? "not checked" : v ? "ok" : "unreachable"}</b></li>
