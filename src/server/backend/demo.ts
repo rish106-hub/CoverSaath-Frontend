@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 
 // Public synthetic demo login. The credentials are deliberately public. The session it opens carries no backend token and every
 // backend route refuses it (readSession), so it can only ever be served synthetic data from the browser mock adapters.
@@ -9,12 +9,30 @@ export const DEMO_SESSION_MS = 12 * 60 * 60 * 1000;
 
 export const demoEnabled = (env: NodeJS.ProcessEnv = process.env): boolean => env.DEMO_LOGIN_ENABLED === "true";
 
-const digest = (s: string) => createHash("sha256").update(s).digest();
+const CAP = 256;
 
-/** Constant-time on both fields (compares fixed-length digests, no short-circuit). */
+/** Fixed-size zero-padded copy so the compare never depends on input length. Null when the input is not a string or is over the cap. */
+function padded(v: unknown): Buffer | null {
+  if (typeof v !== "string") return null;
+  const raw = Buffer.from(v, "utf8");
+  if (raw.length > CAP) return null;
+  const out = Buffer.alloc(CAP);
+  raw.copy(out);
+  return out;
+}
+
+function same(input: unknown, expected: string, lower: boolean): boolean {
+  const given = padded(typeof input === "string" && lower ? input.trim().toLowerCase() : input);
+  const want = padded(expected) as Buffer;
+  const lenOk = typeof input === "string" && (lower ? input.trim().toLowerCase() : input).length === expected.length;
+  const eq = timingSafeEqual(given ?? Buffer.alloc(CAP, 1), want); // over-cap or non-string compares against a filler that never matches
+  return eq && lenOk && given !== null;
+}
+
+/** Constant-time on fixed-size buffers; no hashing, no early return, both fields always compared. */
 export function demoCredentialsMatch(email: unknown, password: unknown): boolean {
-  const e = timingSafeEqual(digest(typeof email === "string" ? email.trim().toLowerCase() : ""), digest(DEMO_EMAIL));
-  const p = timingSafeEqual(digest(typeof password === "string" ? password : ""), digest(DEMO_PASSWORD));
+  const e = same(email, DEMO_EMAIL, true);
+  const p = same(password, DEMO_PASSWORD, false);
   return e && p;
 }
 

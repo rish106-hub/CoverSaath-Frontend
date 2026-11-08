@@ -17,7 +17,7 @@ import { GET as me } from "@/app/api/app/me/route";
 import { GET as placesGet } from "@/app/api/app/places/route";
 import { readSession, readAnySession } from "@/server/backend";
 import { seal } from "@/server/backend/session";
-import { MAX_TRACKED, clientIp, demoNoteFailure, demoRateLimited, demoResetLimits, demoTracked } from "@/server/backend/demo";
+import { MAX_TRACKED, demoCredentialsMatch, clientIp, demoNoteFailure, demoRateLimited, demoResetLimits, demoTracked } from "@/server/backend/demo";
 
 const SECRET = "s".repeat(40);
 const req = (body: unknown) =>
@@ -59,6 +59,15 @@ describe("demo login", () => {
     expect((await demoLogin(req(null))).status).toBe(401);
     expect(setCookie("kv_session")).toHaveLength(0);
     expect(setCookie("kv_demo").filter((c) => c.includes("kv_demo=1"))).toHaveLength(0);
+  });
+
+  it("rejects over-long and non-string input", async () => {
+    expect((await demoLogin(req({ email: "demo@demo.com", password: "demo123" + "x".repeat(5000) }))).status).toBe(401);
+    expect((await demoLogin(req({ email: "demo@demo.com".padEnd(300, "x"), password: "demo123" }))).status).toBe(401);
+    expect((await demoLogin(req({ email: 1, password: ["demo123"] }))).status).toBe(401);
+    expect(demoCredentialsMatch("demo@demo.com", "demo123")).toBe(true);
+    expect(demoCredentialsMatch(" Demo@Demo.com ", "demo123")).toBe(true);
+    expect(demoCredentialsMatch("demo@demo.com", "demo1234")).toBe(false);
   });
 
   it("rate limits repeated failures", async () => {
