@@ -8,6 +8,7 @@ import { resolveNavigation } from "@/agent/navigate";
 import { holdReducer, initialHold, type Hold } from "@/agent/hold";
 import { isEditable, PAGE_SHORTCUT_EVENT, SHORTCUTS, useShortcuts } from "@/lib/shortcuts";
 import { useTheme } from "@/components/theme";
+import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
 
 export type Anchor = "dock" | "strip";
 export type Mode = "voice" | "text";
@@ -93,7 +94,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") window.speechSynthesis?.cancel?.();
     setSpeaking(false);
   };
-  useEffect(() => () => { run.current += 1; clearTimer(); }, []);
+  useEffect(() => () => { run.current += 1; clearTimer(); adapters.voice.stop?.(); }, []); // unmount: release the microphone and any pending capture
 
   const speak = useCallback((text: string) => {
     const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
@@ -177,7 +178,13 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     }).catch((e: unknown) => {
       if (!alive.current) return;
       const code = e instanceof AdapterError ? e.code : "";
-      setNote(code === "VOICE_MIC_DENIED" ? "The microphone is blocked. Type your question, or allow it in your browser." : code === "VOICE_BUSY" ? "Voice is busy. Try again in a moment." : "Voice is not available here. Type your question.");
+      // FOR LEGAL REVIEW: the fallback notice names where the audio goes. The person starts again on purpose; the panel stays on voice.
+      if (code === "VOICE_FALLBACK_NOTICE") { setNote(`${FALLBACK_NOTICE} Tap the mic to continue.`); dispatch({ type: "rest" }); return; }
+      if (code === "VOICE_BAD_AUDIO") { setNote("I could not read that audio. Tap the mic and try again."); dispatch({ type: "rest" }); return; }
+      setNote(code === "VOICE_MIC_DENIED" ? "The microphone is blocked. Type your question, or allow it in your browser."
+        : code === "VOICE_BUSY" ? "Voice is busy. Try again in a moment."
+        : code === "VOICE_RATE_LIMITED" ? "Voice has reached its limit for now. Type your question."
+        : "Voice is not available here. Type your question.");
       setView("chat");
       dispatch({ type: "rest" });
     });

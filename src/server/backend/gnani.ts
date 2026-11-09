@@ -19,11 +19,21 @@ export const LANGUAGES = ["en-IN", "hi-IN", "hi-IN,en-IN"] as const;
 export type Language = (typeof LANGUAGES)[number];
 export const isLanguage = (v: string | null): v is Language => !!v && (LANGUAGES as readonly string[]).includes(v);
 
-const out = z.object({ transcript: z.string().max(5000), language: z.string().max(40).optional(), language_code: z.string().max(40).optional() }).loose();
-export type Transcript = { transcript: string; language?: string };
+const out = z.object({
+  transcript: z.string().max(5000),
+  detected_language_code: z.string().max(40).optional(),
+  language_code: z.string().max(40).optional(),
+  language: z.string().max(40).optional(),
+  truncated: z.boolean().optional(),
+}).loose();
+export type Transcript = { transcript: string; language?: string; truncated?: boolean };
 
-/** Key from the server env, read at call time. Missing: coded 503, nothing else is revealed. */
+/**
+ * Spend gate, read at call time. Gnani STT runs only when GNANI_STT_ENABLED is exactly "true" AND GNANI_API_KEY is present. Otherwise a
+ * coded 503 VOICE_NOT_CONFIGURED (the app then falls back to browser speech) and nothing else is revealed.
+ */
 export function gnaniKey(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.GNANI_STT_ENABLED !== "true") throw new AppError(503, "VOICE_NOT_CONFIGURED");
   const k = env.GNANI_API_KEY;
   if (!k || !k.trim()) throw new AppError(503, "VOICE_NOT_CONFIGURED");
   return k.trim();
@@ -59,6 +69,27 @@ export function checkWav(buf: Uint8Array): number {
   return seconds;
 }
 
+/**
+ * Best-effort per-household limiter: GNANI_STT_PER_HOUR (default 20) and GNANI_STT_PER_DAY (default 100) clips. In memory, per serverless
+ * instance: instances do not share memory, so the real ceiling is limit x instances. A shared store (for example Redis or the database)
+ * is an OWNER DECISION and is deliberately not added here. 429 VOICE_RATE_LIMITED.
+ */
+const HOUR = 3_600_000, DAY = 86_400_000;
+const hits = new Map<string, number[]>();
+const intEnv = (v: string | undefined, d: number) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : d; };
+export function checkVoiceQuota(householdId: string, env: NodeJS.ProcessEnv = process.env, now: number = Date.now()): void {
+  const perHour = intEnv(env.GNANI_STT_PER_HOUR, 20), perDay = intEnv(env.GNANI_STT_PER_DAY, 100);
+  const list = (hits.get(householdId) ?? []).filter((t) => now - t < DAY);
+  if (list.length >= perDay || list.filter((t) => now - t < HOUR).length >= perHour) {
+    hits.set(householdId, list);
+    throw new AppError(429, "VOICE_RATE_LIMITED", false, 60);
+  }
+  list.push(now);
+  hits.set(householdId, list);
+  if (hits.size > 5000) for (const [k, v] of hits) if (v.every((t) => now - t >= DAY)) hits.delete(k); // bound memory
+}
+export const _resetVoiceQuota = () => hits.clear();
+
 /** Per-session single flight. Gnani allows one active request per account, so a second one while busy is a coded 429. */
 const busy = new Set<string>();
 export async function withSessionLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
@@ -85,11 +116,17 @@ export async function transcribe(audio: Uint8Array, language: Language, opts: { 
   try {
     const res = await doFetch(GNANI_URL, { method: "POST", headers: { "X-API-Key-ID": key }, body: form, signal: controller.signal, cache: "no-store", redirect: "error" });
     if (res.status === 429) throw new AppError(429, "VOICE_BUSY", true, 3);
-    if (!res.ok) throw new AppError(502, "VOICE_UPSTREAM_FAILED", res.status >= 500); // 401, 402, 403, 422, 504 and the rest: no upstream body is read or forwarded
+    if (!res.ok) {
+      // Status code only: no body, audio, transcript or key. 401/402/403 mean a bad key, no credit or no access: the owner needs to see them.
+      console.warn(JSON.stringify({ event: "VOICE_UPSTREAM_STATUS", status: res.status }));
+      if (res.status === 422) throw new AppError(400, "VOICE_BAD_AUDIO"); // Gnani could not read the clip
+      throw new AppError(502, "VOICE_UPSTREAM_FAILED", res.status >= 500); // 401, 402, 403, 504 and the rest: no upstream body is read or forwarded
+    }
     const parsed = out.safeParse(await res.json().catch(() => null));
     if (!parsed.success) throw new AppError(502, "VOICE_UPSTREAM_FAILED");
-    const language_ = parsed.data.language ?? parsed.data.language_code;
-    return { transcript: parsed.data.transcript.trim(), ...(language_ ? { language: language_ } : {}) };
+    const d = parsed.data;
+    const lang = d.detected_language_code ?? d.language_code ?? d.language;
+    return { transcript: d.transcript.trim(), ...(lang ? { language: lang } : {}), ...(d.truncated ? { truncated: true } : {}) };
   } catch (e) {
     if (e instanceof AppError) throw e;
     throw new AppError(502, "VOICE_UPSTREAM_FAILED", true); // timeout or network: the error text could carry the URL, so it is dropped
