@@ -4,28 +4,32 @@ import { webVoice } from "./voice";
 
 // Speech to text through the same-origin BFF (/api/app/voice/transcribe), which calls Gnani Vachana server-side. The browser never talks
 // to Gnani and never holds a key. Gnani does not accept webm, so audio is captured, downsampled to 16 kHz mono 16-bit PCM and
-// encoded as WAV here. Hard cap 30 s. Tracks are always released. Audio is not stored or logged.
+// encoded as WAV here. Hard cap 30 s. Tracks are always released. Audio is not stored or logged by this app.
 //
-// FOR LEGAL REVIEW (not final wording): VOICE_NOTICE is shown next to the microphone. Gnani retention terms are not in its docs.
-export const VOICE_NOTICE = "Audio is sent to a speech service to turn it into text. It is not stored.";
+// FOR LEGAL REVIEW (not final wording, both strings below): Gnani retention terms are not in its docs, so no promise about storage is made.
+// VOICE_NOTICE is shown next to the microphone while Gnani is the recipient.
+export const VOICE_NOTICE = "Audio is sent to a speech service to turn it into text.";
+// FOR LEGAL REVIEW: shown BEFORE the browser's own speech recognition starts. In Chrome the audio then goes to Google; other browsers
+// differ. The person must start again explicitly after seeing it.
+export const FALLBACK_NOTICE = "Your browser's speech service will be used instead.";
 
 export const TARGET_RATE = 16_000;
 export const MAX_SECONDS = 30;
 export type VoicePref = "en" | "hi" | "both";
 export const languageFor = (p: VoicePref | null | undefined): string => (p === "hi" ? "hi-IN" : p === "en" ? "en-IN" : "hi-IN,en-IN");
 
-/** Linear-interpolation downsample of mono float samples. Same rate returns the input. */
+/** Downsample of mono float samples with a box (moving-average) low-pass over each output span, so frequencies above the new Nyquist are attenuated before decimation. Same or lower rate returns the input. */
 export function downsample(input: Float32Array, from: number, to: number = TARGET_RATE): Float32Array {
   if (to >= from) return input;
   const ratio = from / to;
   const n = Math.floor(input.length / ratio);
   const out = new Float32Array(n);
   for (let i = 0; i < n; i++) {
-    const pos = i * ratio;
-    const i0 = Math.floor(pos);
-    const i1 = Math.min(i0 + 1, input.length - 1);
-    const f = pos - i0;
-    out[i] = input[i0]! * (1 - f) + input[i1]! * f;
+    const start = Math.floor(i * ratio);
+    const end = Math.min(input.length, Math.max(start + 1, Math.floor((i + 1) * ratio)));
+    let sum = 0;
+    for (let j = start; j < end; j++) sum += input[j]!;
+    out[i] = sum / (end - start);
   }
   return out;
 }
@@ -55,9 +59,10 @@ type Deps = {
 };
 
 type Ac = AudioContext;
-const acCtor = (): (new () => Ac) | undefined => {
+type AcCtor = new (opts?: AudioContextOptions) => Ac;
+const acCtor = (): AcCtor | undefined => {
   if (typeof window === "undefined") return undefined;
-  const w = window as unknown as { AudioContext?: new () => Ac; webkitAudioContext?: new () => Ac };
+  const w = window as unknown as { AudioContext?: AcCtor; webkitAudioContext?: AcCtor };
   return w.AudioContext ?? w.webkitAudioContext;
 };
 const canCapture = () => typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getUserMedia === "function" && !!acCtor();
@@ -67,7 +72,17 @@ export function createGnaniVoice(deps: Deps = {}): VoiceAdapter & { notice: stri
   const doFetch = deps.fetchImpl ?? ((u: string, i?: RequestInit) => fetch(u, i));
   const maxSeconds = deps.maxSeconds ?? MAX_SECONDS;
   let stopNow: (() => void) | null = null;
-  let useFallback = false; // sticky once the BFF says speech is not configured here
+  let useFallback = false; // sticky only once the BFF says speech is not configured here (VOICE_NOT_CONFIGURED)
+  let usingBrowser = false; // the browser's own speech service is (or is about to be) the recipient of the audio
+  let fallbackSeen = false; // the person has seen FALLBACK_NOTICE and started again
+
+  /** Browser speech, but only after FALLBACK_NOTICE was shown once: the first attempt throws a coded error, the next explicit start goes ahead. */
+  async function viaFallback(): Promise<string> {
+    if (!fallback.supported()) throw new AdapterError("VOICE_UNSUPPORTED");
+    usingBrowser = true;
+    if (!fallbackSeen) { fallbackSeen = true; throw new AdapterError("VOICE_FALLBACK_NOTICE"); }
+    return fallback.listen();
+  }
 
   async function upload(wav: Uint8Array): Promise<string> {
     const lang = languageFor(await deps.getLanguage?.().catch(() => null));
@@ -83,20 +98,33 @@ export function createGnaniVoice(deps: Deps = {}): VoiceAdapter & { notice: stri
   }
 
   return {
-    notice: VOICE_NOTICE,
+    get notice() { return usingBrowser || useFallback || !canCapture() ? FALLBACK_NOTICE : VOICE_NOTICE; },
     supported: () => canCapture() || fallback.supported(),
     async listen() {
-      if (useFallback || !canCapture()) return fallback.listen();
+      if (useFallback || !canCapture()) return viaFallback();
+      // Created synchronously, still inside the click or key handler, so Safari treats it as a user gesture. Resumed before capture starts.
+      const Ctx = acCtor() as AcCtor;
+      let ctx: Ac;
+      try { ctx = new Ctx({ sampleRate: TARGET_RATE }); } catch { ctx = new Ctx(); }
+      const resumed = ctx.state === "suspended" ? Promise.resolve(ctx.resume?.()).catch(() => undefined) : Promise.resolve();
+      let aborted = false; // stop() arrived while getUserMedia was still pending
+      stopNow = () => { aborted = true; };
+      const closeCtx = () => { void Promise.resolve(ctx.close?.()).catch(() => undefined); };
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (e) {
+        stopNow = null;
+        closeCtx();
         const name = (e as { name?: string } | null)?.name;
         if (name === "NotAllowedError" || name === "SecurityError") throw new AdapterError("VOICE_MIC_DENIED"); // no fallback: the person said no
         throw new AdapterError("VOICE_UNSUPPORTED");
       }
-      const Ctx = acCtor() as new () => Ac;
-      const ctx = new Ctx();
+      const stopTracks = () => stream.getTracks().forEach((t) => t.stop());
+      await resumed;
+      if (aborted) { stopNow = null; stopTracks(); closeCtx(); return ""; }
+      // A context below 16 kHz cannot make a correct 16 kHz clip, and a wrong header would change the pitch. Refuse with a coded error.
+      if (!(ctx.sampleRate >= TARGET_RATE)) { stopNow = null; stopTracks(); closeCtx(); throw new AdapterError("VOICE_RATE_UNSUPPORTED"); }
       const chunks: Float32Array[] = [];
       let total = 0;
       let proc: ScriptProcessorNode | null = null;
@@ -107,8 +135,8 @@ export function createGnaniVoice(deps: Deps = {}): VoiceAdapter & { notice: stri
         timer = null;
         try { proc?.disconnect(); src?.disconnect(); } catch { /* already disconnected */ }
         if (proc) proc.onaudioprocess = null;
-        stream.getTracks().forEach((t) => t.stop());
-        void ctx.close?.().catch(() => undefined);
+        stopTracks();
+        closeCtx();
         stopNow = null;
       };
       const captured = new Promise<void>((done) => {
@@ -132,6 +160,7 @@ export function createGnaniVoice(deps: Deps = {}): VoiceAdapter & { notice: stri
           done();
         }
       });
+      if (aborted) stopNow?.(); // stop() landed between the check above and here
       await captured;
       const rate = ctx.sampleRate;
       release();
@@ -141,15 +170,15 @@ export function createGnaniVoice(deps: Deps = {}): VoiceAdapter & { notice: stri
       for (const c of chunks) { all.set(c, o); o += c.length; }
       const wav = encodeWav(downsample(all, rate));
       try {
-        return await upload(wav);
+        const text = await upload(wav);
+        usingBrowser = false; fallbackSeen = false;
+        return text;
       } catch (e) {
         const code = e instanceof AdapterError ? e.code : "";
-        // Speech service not set up, call refused as unsupported, or the network is down: browser speech instead. Everything else surfaces.
-        if (code === "VOICE_NOT_CONFIGURED" || code === "DEMO_READ_ONLY" || code === "BACKEND_UNREACHABLE" || code === "VOICE_BAD_AUDIO") {
-          if (code !== "BACKEND_UNREACHABLE") useFallback = true;
-          if (fallback.supported()) return fallback.listen();
-          throw new AdapterError("VOICE_UNSUPPORTED");
-        }
+        // Speech service not set up here (sticky), the call was refused for a demo session, or the network is down: the browser's own speech
+        // service is the next option, but only after its notice. Bad audio, busy, rate-limited and upstream failures surface as they are.
+        if (code === "VOICE_NOT_CONFIGURED") { useFallback = true; return viaFallback(); }
+        if (code === "DEMO_READ_ONLY" || code === "BACKEND_UNREACHABLE") return viaFallback();
         throw e;
       }
     },

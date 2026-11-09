@@ -62,7 +62,8 @@ export function AskChatPane() {
         ) : null}
         <button type="submit" className="k-btn k-btn--primary" disabled={!text.trim()}>Send</button>
       </form>
-      {canSpeak && adapters.voice.notice ? <p className={styles.source}>{adapters.voice.notice}</p> : null}
+      {/* FOR LEGAL REVIEW: names where the audio goes. The region stays mounted so a change of recipient is announced. */}
+      <p className={styles.source} role="status" aria-live="polite">{canSpeak ? adapters.voice.notice ?? "" : ""}</p>
     </>
   );
 }

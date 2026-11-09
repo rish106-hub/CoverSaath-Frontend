@@ -28,7 +28,7 @@ export function normaliseSteps(steps: readonly string[] | undefined): [string, s
 
 /** A route is kept only if it is a known in-app page. Anything else (external, unknown, protocol-relative) is dropped. */
 export function knownRoute(route: string | undefined): string | undefined {
-  if (!route || !route.startsWith("/") || route.startsWith("//") || route.includes("\\")) return undefined;
+  if (!route || !route.startsWith("/") || route.startsWith("//") || route.includes("\\") || /[\u0000-\u001f\u007f:]/.test(route)) return undefined;
   const path = route.split(/[?#]/)[0] ?? "";
   return pageFor(path) ? route : undefined;
 }
