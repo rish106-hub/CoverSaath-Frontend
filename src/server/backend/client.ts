@@ -19,7 +19,7 @@ const matrixSchema = z.object({
   members: z.array(z.object({ id: z.string(), displayName: z.string(), memberKind: z.string().nullish(), relationshipLabel: z.string().nullish() }).loose()),
 }).loose();
 
-export type CreatedHousehold = { householdId: string; ownerMemberId: string; token: string; expiresAt: string };
+export type CreatedHousehold = { householdId: string; ownerMemberId: string; adultUserId: string; token: string; expiresAt: string };
 export type HouseholdView = z.infer<typeof matrixSchema>;
 
 /** Typed backend client. 5 s timeout, coded errors, tokens never logged. */
@@ -89,7 +89,7 @@ export function createBackendClient(opts: ClientOptions) {
       });
       if (r.status === 401 || r.status === 403) throw new AppError(503, "CONFIG_MISSING");
       const d = parse(createSchema, ok(r, false));
-      return { householdId: d.household.id, ownerMemberId: d.ownerMember.id, token: d.session.token, expiresAt: d.session.expiresAt };
+      return { householdId: d.household.id, ownerMemberId: d.ownerMember.id, adultUserId: d.session.adultUserId, token: d.session.token, expiresAt: d.session.expiresAt };
     },
     async household(token: string, id: string): Promise<HouseholdView> {
       return parse(matrixSchema, ok(await send("GET", `/api/v1/households/${encodeURIComponent(id)}`, { token }), true));

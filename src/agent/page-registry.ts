@@ -94,6 +94,11 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("Why do you need my location?", ["Question · location", "Finds hospitals near you", "Kept 24 hours at about 1 km"]),
     ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
   ] },
+  "/upload": { route: "/upload", page: "Add a policy", reads: "the policy PDFs you add and how far each one has got", examples: [
+    ex("Add my health policy", ["Add a policy", "Pick a PDF up to 4 MB", "Checked, read, then the cover details"]),
+    ex("Why do you need my go-ahead?", ["Question · permission", "We keep, check and read the file", "You can withdraw it any time"]),
+    ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
+  ] },
   // Public screens.
   "/": { route: "/", page: "Beta access", reads: "the Knowvia beta page", examples: [
     ex("What does Knowvia do?", ["Question · Knowvia", "Reads your policy, shows what you would pay", "Then handles the follow-up"]),
