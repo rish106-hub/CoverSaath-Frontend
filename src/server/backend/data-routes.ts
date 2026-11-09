@@ -11,6 +11,7 @@ export async function withData(req: Request, run: (ctx: { send: Send; session: S
     const { config } = runtime();
     const session = await readSession(config.cookieSecret);
     if (!session) throw new DataError(401, "UNAUTHENTICATED");
+    if (session.d) throw new DataError(403, "FORBIDDEN"); // demo sessions never reach the backend
     const out = await run({ send: createSender({ baseUrl: config.apiUrl }), session });
     return json({ ok: true, ...(out && typeof out === "object" ? out : {}) }, status);
   } catch (e) {

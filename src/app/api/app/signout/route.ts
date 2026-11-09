@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const { config, client } = runtime();
     const session = await readSession(config.cookieSecret);
-    if (session) await client.revoke(session.t).catch(() => undefined);
+    if (session && !session.d) await client.revoke(session.t).catch(() => undefined);
     await clearSession();
     return json({ ok: true });
   } catch (e) {

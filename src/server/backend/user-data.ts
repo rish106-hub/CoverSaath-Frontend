@@ -149,6 +149,7 @@ export function userDataRoute(handler: (ctx: RouteCtx) => Promise<unknown>) {
       const { config } = runtime();
       const session = await readSession(config.cookieSecret);
       if (!session) throw new AppError(401, "UNAUTHENTICATED");
+      if (session.d) throw new AppError(403, "FORBIDDEN"); // demo sessions never reach the backend
       const client = createUserDataClient({ baseUrl: config.apiUrl });
       return json(await handler({ req, client, session }));
     } catch (e) {

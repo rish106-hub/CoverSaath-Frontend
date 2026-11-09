@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { GROUPS, pageFor, pagesIn, type GroupId } from "@/lib/ia";
+import { DemoGate } from "./EmptyState";
 import { readingList } from "@/data/mock/learn";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { UserChip } from "./UserChip";
@@ -140,7 +141,7 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
           <span aria-hidden>●</span> <span className={styles.label}>Emergency</span>
         </Link>
         {home ? (
-          <>
+          <DemoGate empty={null}>
             <hr className={`${styles.rule} ${styles.extra}`} />
             <div className={`${styles.block} ${styles.extra}`}>
               <div className={styles.blabel}>Today</div>
@@ -157,7 +158,7 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
                 </Link>
               ))}
             </div>
-          </>
+          </DemoGate>
         ) : null}
         <UserChip />
       </aside>

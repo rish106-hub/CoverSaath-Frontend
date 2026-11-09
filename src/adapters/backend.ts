@@ -1,7 +1,6 @@
 import type { AccessAdapter, HouseholdAdapter } from "./types";
 import { AdapterError } from "./types";
 import { accessResultSchema, householdSchema, meSchema } from "./schemas";
-import { mockAdapters } from "./mock";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser-side clients for the same-origin BFF (/api/app/*). They never see the backend token.
@@ -35,10 +34,13 @@ export const backendHousehold: HouseholdAdapter = {
     return meSchema.parse(await res.json());
   },
   async household() {
-    // backend gap: only the owner is stored today; the rest of the household is mock.
-    const [me, base] = await Promise.all([this.me(), mockAdapters.household.household()]);
-    if (!me) return base;
-    const members = base.members.map((m) => (m.relation === "self" ? { ...m, id: me.owner.id, name: me.owner.displayName } : m));
-    return householdSchema.parse({ ...base, id: me.householdId, displayName: me.householdName, members });
+    // Real pathway: the backend stores the owner only (more members via the members adapter). No mock people.
+    const me = await this.me();
+    if (!me) throw new AdapterError("UNAUTHENTICATED");
+    return householdSchema.parse({
+      id: me.householdId,
+      displayName: me.householdName,
+      members: [{ id: me.owner.id, name: me.owner.displayName, relation: "self", age: 0, invite: "joined" }],
+    });
   },
 };

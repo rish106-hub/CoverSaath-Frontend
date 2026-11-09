@@ -11,6 +11,8 @@ import styles from "./AccessCard.module.css";
 
 type State = { kind: "idle" } | { kind: "busy" } | { kind: "done"; name: string } | { kind: "error"; message: string };
 
+/** The default demo address; the field also appears whenever the server asks for a password. */
+const DEMO_HINT = "demo@demo.com";
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
 
 /** Beta access card on the landing page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
@@ -18,6 +20,8 @@ export function AccessCard() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [askPassword, setAskPassword] = useState(false);
   const [errors, setErrors] = useState<AccessErrors>({});
   const [state, setState] = useState<State>({ kind: "idle" });
   const flying = useRef(false); // blocks re-entry within the same tick; state alone is too slow
@@ -34,7 +38,9 @@ export function AccessCard() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (flying.current) return;
-    const check = validateAccess(name, email);
+    const demo = askPassword || email.trim().toLowerCase() === DEMO_HINT;
+    const who = demo && !name.trim() ? "Demo" : name;
+    const check = validateAccess(who, email);
     if (!check.ok) {
       setErrors(check.errors);
       return;
@@ -43,11 +49,12 @@ export function AccessCard() {
     flying.current = true;
     setState({ kind: "busy" });
     try {
-      const res = await adapters.access.submit({ name, email });
+      const res = await adapters.access.submit(demo ? { name: who, email, password } : { name: who, email });
       if (!alive.current) return;
       if (!res.ok) {
         flying.current = false;
-        setState({ kind: "error", message: res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : DOWN });
+        if (res.code === "INVALID_CREDENTIALS") setAskPassword(true);
+        setState({ kind: "error", message: res.code === "INVALID_CREDENTIALS" ? "That email and password do not match." : res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : DOWN });
         return;
       }
       const first = res.name ?? name.trim().split(" ")[0];
@@ -118,6 +125,12 @@ export function AccessCard() {
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "acc-mail-err" : undefined} />
         {errors.email ? <span id="acc-mail-err" className={styles.fieldErr}>{errors.email}</span> : null}
       </label>
+      {askPassword || email.trim().toLowerCase() === DEMO_HINT ? (
+        <label className={styles.field}>
+          <span>Password</span>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+        </label>
+      ) : null}
       <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Getting you in…" : "Get access"}</button>
       {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : null}
       <div className={styles.note}><span>No card needed. Leave any time.</span><a href="#">Privacy</a></div>

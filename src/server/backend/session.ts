@@ -1,7 +1,8 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
-export type SessionPayload = { t: string; h: string; m: string; exp: number };
+/** `d` marks the one demo session: a pure mock session with no backend token. */
+export type SessionPayload = { t: string; h: string; m: string; exp: number; d?: boolean };
 export const COOKIE_NAME = "kv_session";
 
 const key = (secret: string) => createHash("sha256").update(secret).digest();
@@ -23,6 +24,7 @@ export function open(sealed: string | undefined, secret: string): SessionPayload
     d.setAuthTag(tag);
     const p = JSON.parse(Buffer.concat([d.update(enc), d.final()]).toString("utf8")) as SessionPayload;
     if (typeof p.t !== "string" || typeof p.h !== "string" || typeof p.exp !== "number" || p.exp < Date.now()) return null;
+    if (p.d !== undefined && p.d !== true) return null;
     return p;
   } catch {
     return null;
