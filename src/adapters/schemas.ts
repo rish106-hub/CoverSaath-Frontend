@@ -75,7 +75,21 @@ export type BloodStock = z.infer<typeof bloodSchema>;
 export const learnPostSchema = z.object({ id: z.string(), kind: z.enum(["Video", "Guide", "News"]), title: z.string(), why: z.string(), minutes: z.number() });
 export type LearnPost = z.infer<typeof learnPostSchema>;
 
-export const assistantReplySchema = z.object({ reply: z.string(), steps: z.array(z.string()).length(3), route: z.string().optional(), goLabel: z.string().optional(), pageRef: z.string().optional() });
+/** Where an answer came from. Optional so older replies (and the demo) still parse. */
+export const answerSourceSchema = z.object({
+  tier: z.enum(["household_evidence", "reference", "none"]),
+  label: z.string().max(200),
+  page: z.number().int().positive().optional(),
+  quote: z.string().max(600).optional(),
+  evidenceId: z.string().max(100).optional(),
+});
+export type AnswerSource = z.infer<typeof answerSourceSchema>;
+export const answerStatusSchema = z.enum(["evidence_found", "unknown", "out_of_scope"]);
+export type AnswerStatus = z.infer<typeof answerStatusSchema>;
+export const assistantReplySchema = z.object({
+  reply: z.string(), steps: z.array(z.string()).length(3), route: z.string().optional(), goLabel: z.string().optional(), pageRef: z.string().optional(),
+  answerStatus: answerStatusSchema.optional(), sources: z.array(answerSourceSchema).max(10).optional(),
+});
 export type AssistantReply = z.infer<typeof assistantReplySchema>;
 
 export const inviteInputSchema = z.object({ relation: z.string().min(1), name: z.string().min(1), mobile: z.string().regex(/^\+?\d[\d\s-]{7,14}$/), via: z.enum(["whatsapp", "sms"]) });

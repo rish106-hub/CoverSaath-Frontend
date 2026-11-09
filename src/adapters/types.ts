@@ -43,6 +43,8 @@ export interface VoiceAdapter {
   listen(): Promise<string>;
   /** Ends listening early; listen() then resolves with what was heard. */
   stop?(): void;
+  /** Shown beside the microphone when audio leaves the browser. FOR LEGAL REVIEW. */
+  notice?: string;
 }
 export interface EmailAdapter {
   scan(): Promise<S.EmailScan>;

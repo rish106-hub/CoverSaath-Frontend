@@ -11,7 +11,8 @@ function matchExample(text: string, examples: readonly VoiceExample[]): VoiceExa
   return examples.find((e) => squash(e.say) === t);
 }
 
-function fromData(c: Classified): { reply: string; steps: [string, string, string]; pageRef?: string } | undefined {
+type Data = { reply: string; steps: [string, string, string]; pageRef?: string; sources?: AssistantReply["sources"] };
+function fromData(c: Classified): Data | undefined {
   const topic = c.topic?.toLowerCase();
   if (c.intent === "ask_policy" || c.intent === "explain_term") {
     const f = findings.find((x) => topic && x.label.toLowerCase().includes(topic.split(" ")[0]));
@@ -21,6 +22,7 @@ function fromData(c: Classified): { reply: string; steps: [string, string, strin
         reply: `${f.label}: ${f.answer}. ${f.disagrees ? "Your documents disagree on this, so check it before you rely on it." : ""}`.trim(),
         steps: [`${f.label} · ${p?.insurer ?? "policy"}`, `Read ${p?.name ?? "the policy"} ${f.pageRef}`, f.answer],
         pageRef: f.pageRef,
+        sources: [{ tier: "household_evidence", label: `${p?.name ?? "Your policy"}`, page: Number(/p\.(\d+)/.exec(f.pageRef)?.[1]) || undefined, quote: f.answer }],
       };
     }
   }
@@ -68,10 +70,14 @@ export function respond(text: string, page: string): AssistantReply {
   const steps = data?.steps ?? TEMPLATE[c.intent] ?? c.steps;
   const reply = data?.reply || c.reply || (c.intent === "smalltalk" ? "I can read your policies, track claims and find hospitals. Try one of the examples." : steps[2]);
   const action = c.actions[0];
+  const asksCover = c.intent === "ask_policy" || c.intent === "explain_term";
+  const answerStatus: NonNullable<AssistantReply["answerStatus"]> = data?.sources ? "evidence_found" : asksCover ? "unknown" : "out_of_scope";
   return {
     reply, steps: steps as [string, string, string],
     route: action?.href, goLabel: action?.label,
     pageRef: data?.pageRef ?? ctx.page,
+    answerStatus,
+    ...(data?.sources ? { sources: data.sources } : asksCover ? { sources: [{ tier: "none" as const, label: "Not found in your documents" }] } : {}),
   };
 }
 
