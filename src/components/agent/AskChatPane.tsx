@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { adapters } from "@/adapters";
+import { SourceLine } from "./SourceLine";
 import { usePageContext } from "@/agent/page-context";
 import { useAgent } from "./AgentProvider";
 import styles from "./AskChat.module.css";
@@ -42,6 +43,7 @@ export function AskChatPane() {
         {thread.map((m) => (
           <div key={m.id} className={`${styles.msg} ${m.role === "user" ? styles.mine : styles.theirs}`}>
             <p>{m.text}</p>
+            {m.role === "assistant" ? <SourceLine sources={m.sources} status={m.answerStatus} /> : null}
             {m.route ? (
               <Link href={m.route} className="k-btn k-btn--sm" onClick={close}>{m.goLabel ?? "Open"}</Link>
             ) : null}
@@ -60,6 +62,7 @@ export function AskChatPane() {
         ) : null}
         <button type="submit" className="k-btn k-btn--primary" disabled={!text.trim()}>Send</button>
       </form>
+      {canSpeak && adapters.voice.notice ? <p className={styles.source}>{adapters.voice.notice}</p> : null}
     </>
   );
 }

@@ -3,6 +3,8 @@ import { mockAdapters } from "./mock";
 import { backendAccess, backendHousehold } from "./backend";
 import { backendOnboarding, backendPreferences, backendProfile } from "./user-data";
 import { backendMembers, backendScenarios } from "./scenarios";
+import { backendAssistant } from "./chat";
+import { createGnaniVoice } from "@/agent/voice-gnani";
 import { useBackend } from "./mode";
 import { isDemoSession } from "./demo";
 
@@ -21,6 +23,9 @@ const real: Adapters = {
   onboarding: useBackend ? backendOnboarding : mockAdapters.onboarding,
   scenarios: useBackend ? backendScenarios : mockAdapters.scenarios,
   members: useBackend ? backendMembers : mockAdapters.members,
+  // Chat answers from the backend (stored evidence, cited). Voice transcribes through the BFF with browser speech as the fallback. Demo sessions stay on the mock (see demoSwitch).
+  assistant: useBackend ? backendAssistant : mockAdapters.assistant,
+  voice: useBackend ? createGnaniVoice({ getLanguage: () => backendPreferences.get().then((p) => p?.voice) }) : mockAdapters.voice,
 };
 
 /**
