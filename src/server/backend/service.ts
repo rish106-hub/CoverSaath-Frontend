@@ -12,7 +12,7 @@ export async function grantAccess(client: BackendClient, raw: unknown): Promise<
   if (!parsed.success) throw new AppError(400, "INVALID_INPUT");
   const created = await client.createHousehold(parsed.data);
   const exp = Math.min(Date.parse(created.expiresAt) || Date.now() + 86_400_000, Date.now() + 7 * 86_400_000);
-  return { session: { t: created.token, h: created.householdId, m: created.ownerMemberId, exp }, firstName: parsed.data.name.split(" ")[0] };
+  return { session: { t: created.token, h: created.householdId, m: created.ownerMemberId, a: created.adultUserId, exp }, firstName: parsed.data.name.split(" ")[0] };
 }
 
 export type MeView = { householdId: string; householdName: string; owner: { id: string; displayName: string }; source: "backend" };
