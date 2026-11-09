@@ -256,7 +256,7 @@ export function UploadView() {
                     <>
                       <p className={styles.alert} role="alert">{errorText(q.code ?? "")}</p>
                       <div className={styles.row}>
-                        {q.code === "FILE_TYPE_INVALID" || q.code === "FILE_TOO_LARGE" || q.code === "FILE_EMPTY" || q.code === "PDF_PROTECTED" || q.code === "PDF_UNREADABLE" || q.code === "DUPLICATE_DOCUMENT" ? null : (
+                        {q.code === "FILE_TYPE_INVALID" || q.code === "FILE_TOO_LARGE" || q.code === "FILE_EMPTY" || q.code === "PDF_PROTECTED" || q.code === "PDF_UNREADABLE" || q.code === "PDF_ACTIVE_CONTENT" || q.code === "PDF_TOO_LONG" || q.code === "PDF_TOO_COMPLEX" || q.code === "DUPLICATE_DOCUMENT" ? null : (
                           <button type="button" className="k-btn k-btn--secondary k-btn--sm" onClick={() => send(q)}>Try again</button>
                         )}
                         <button type="button" className="k-btn k-btn--sm" onClick={() => setQueue((x) => x.filter((i) => i.id !== q.id))}>Dismiss</button>

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { seal } from "@/server/backend/session";
+import { seal, sealValue, openValue } from "@/server/backend/session";
 
 const SECRET = "s".repeat(40);
 const jar = new Map<string, string>();
@@ -164,7 +164,14 @@ describe("upload", () => {
     const cases: [number, string, string, number][] = [
       [409, "DUPLICATE_DOCUMENT", "DUPLICATE_DOCUMENT", 409],
       [422, "PDF_PASSWORD_REQUIRED", "PDF_PROTECTED", 422],
-      [422, "PDF_ACTIVE_CONTENT", "PDF_UNREADABLE", 422],
+      [422, "PDF_ACTIVE_CONTENT", "PDF_ACTIVE_CONTENT", 422],
+      [422, "PDF_STRUCTURE_INVALID", "PDF_UNREADABLE", 422],
+      [422, "PDF_PAGE_LIMIT", "PDF_TOO_LONG", 422],
+      [422, "PDF_RESOURCE_LIMIT", "PDF_TOO_COMPLEX", 422],
+      [422, "PDF_UNSUPPORTED_ENCODING", "PDF_TOO_COMPLEX", 422],
+      [429, "PDF_INSPECTION_BUSY", "BACKEND_BUSY", 429],
+      [400, "EMPTY_FILE", "FILE_EMPTY", 400],
+      [400, "MIME_MISMATCH", "FILE_TYPE_INVALID", 415],
       [503, "DOCUMENT_STORAGE_NOT_CONFIGURED", "UPLOAD_UNAVAILABLE", 503],
       [429, "UPLOAD_CAPACITY_REACHED", "RATE_LIMITED", 429],
     ];
@@ -299,6 +306,102 @@ describe("status, advance, delete", () => {
     const res = await one.DELETE(req("/api/app/documents/doc-1", "DELETE"), params("doc-1"));
     expect(res.status).toBe(200);
     expect(calls.at(-1)).toMatchObject({ method: "DELETE", url: "/api/v1/documents/doc-1" });
+  });
+});
+
+const dropViewGrant = () => {
+  const st = openValue<{ exp: number; v?: string }>(jar.get(DOCS_COOKIE), SECRET)!;
+  jar.set(DOCS_COOKIE, sealValue({ ...st, v: undefined }, SECRET));
+};
+
+describe("case read grant (backend gates case reads on its own consent)", () => {
+  const viewGrants = () => calls.filter((c) => c.url === "/api/v1/consents" && (c.body as { scopes: { resourceType: string }[] }).scopes[0].resourceType === "case" && (c.body as { scopes: { action: string }[] }).scopes[0].action === "read");
+  it("makes the exact read grant right after the case is created, once", async () => {
+    await grant();
+    await docs.POST(upload());
+    const g = viewGrants();
+    expect(g).toHaveLength(1);
+    expect(g[0].body).toMatchObject({
+      householdId: "h1", subjectAdultId: "adult1", purpose: "document_processing",
+      scopes: [{ resourceType: "case", resourceId: "case-1", action: "read", dataCategory: "source_pack_metadata", recipient: "adult1" }],
+    });
+    expect(g[0].headers["idempotency-key"]).toMatch(/^view-case-1-/);
+    expect(calls.findIndex((c) => c.url === "/api/v1/cases")).toBeLessThan(calls.findIndex((c) => c === g[0]));
+    await docs.POST(upload(pdf(65), { "idempotency-key": "key-87654321" }));
+    await docs.GET(req("/api/app/documents"));
+    expect(viewGrants()).toHaveLength(1);
+  });
+  it("makes it lazily for a case that predates it, before the first list", async () => {
+    await grant();
+    await docs.POST(upload());
+    dropViewGrant();
+    calls = [];
+    const res = await docs.GET(req("/api/app/documents"));
+    expect(res.status).toBe(200);
+    expect(viewGrants()).toHaveLength(1);
+    expect(calls.findIndex((c) => c.method === "POST")).toBeLessThan(calls.findIndex((c) => c.method === "GET"));
+  });
+  it("renews the grant once when the backend still answers field access required, then lists", async () => {
+    await grant();
+    await docs.POST(upload());
+    let n = 0;
+    routes["GET /api/v1/cases/case-1/documents"] = () => (n++ === 0 ? { status: 403, body: bk("FIELD_ACCESS_REQUIRED") } : { status: 200, body: { caseId: "case-1", documents: [DOC] } });
+    const res = await docs.GET(req("/api/app/documents"));
+    expect(res.status).toBe(200);
+    expect((await res.json()).documents).toHaveLength(1);
+    expect(viewGrants()).toHaveLength(2);
+  });
+  it("gives a coded consent error, not a loop, when the renewed grant is refused too", async () => {
+    await grant();
+    await docs.POST(upload());
+    routes["GET /api/v1/cases/case-1/documents"] = { status: 403, body: bk("FIELD_ACCESS_REQUIRED") };
+    const res = await docs.GET(req("/api/app/documents"));
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("CONSENT_REQUIRED");
+    expect(viewGrants()).toHaveLength(2);
+  });
+  it("advance gets the document through the read grant too", async () => {
+    await grant();
+    await docs.POST(upload());
+    dropViewGrant();
+    calls = [];
+    await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    expect(viewGrants()).toHaveLength(1);
+  });
+  it("revokes the read grant with the others on withdrawal", async () => {
+    await grant();
+    await docs.POST(upload());
+    routes["POST /api/v1/consents"] = (() => { let i = 0; return () => ({ status: 201, body: { id: `consent-${++i}` } }); })();
+    jar.clear();
+    jar.set("kv_session", seal({ t: "tok-secret", h: "h1", m: "m1", a: "adult1", exp: Date.now() + 60_000 }, SECRET));
+    await grant();
+    await docs.POST(upload());
+    for (const id of ["consent-1", "consent-2"]) routes[`POST /api/v1/consents/${id}/revoke`] = { status: 200, body: {} };
+    calls = [];
+    await consent.DELETE(req("/api/app/documents/consent", "DELETE"));
+    expect(calls.filter((c) => c.url.endsWith("/revoke")).map((c) => c.url)).toEqual(["/api/v1/consents/consent-1/revoke", "/api/v1/consents/consent-2/revoke"]);
+  });
+});
+
+describe("OCR refresh", () => {
+  it("refreshes a submitted job so the step can finish", async () => {
+    await grant();
+    await docs.POST(upload());
+    routes["POST /api/v1/documents/doc-1/ocr-jobs"] = { status: 202, body: { job: { id: "ocr-1", status: "submitted", errorCode: null } } };
+    routes["POST /api/v1/ocr-jobs/ocr-1/refresh"] = { status: 200, body: { job: { id: "ocr-1", status: "succeeded", errorCode: null } } };
+    calls = [];
+    const d = (await (await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"))).json()).document;
+    expect(calls.find((c) => c.url === "/api/v1/ocr-jobs/ocr-1/refresh")?.body).toMatchObject({ consentGrantId: "consent-1" });
+    expect(d.steps.reading).toBe("done");
+  });
+  it("keeps reading while the provider is busy on refresh", async () => {
+    await grant();
+    await docs.POST(upload());
+    routes["POST /api/v1/documents/doc-1/ocr-jobs"] = { status: 202, body: { job: { id: "ocr-1", status: "processing", errorCode: null } } };
+    routes["POST /api/v1/ocr-jobs/ocr-1/refresh"] = { status: 503, body: null };
+    const res = await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    expect(res.status).toBe(200);
+    expect((await res.json()).document.steps.reading).toBe("active");
   });
 });
 

@@ -31,11 +31,19 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   DOCUMENT_VERSION_EXISTS: [409, "DUPLICATE_DOCUMENT", false],
   FILE_TOO_LARGE: [413, "FILE_TOO_LARGE", false],
   PDF_PASSWORD_REQUIRED: [422, "PDF_PROTECTED", false],
+  FIELD_ACCESS_REQUIRED: [403, "CONSENT_REQUIRED", false],
   PDF_STRUCTURE_INVALID: [422, "PDF_UNREADABLE", false],
-  PDF_ACTIVE_CONTENT: [422, "PDF_UNREADABLE", false],
-  PDF_PAGE_LIMIT: [422, "PDF_UNREADABLE", false],
-  PDF_RESOURCE_LIMIT: [422, "PDF_UNREADABLE", false],
-  PDF_UNSUPPORTED_ENCODING: [422, "PDF_UNREADABLE", false],
+  PDF_INSPECTION_FAILED: [422, "PDF_UNREADABLE", false],
+  PDF_ACTIVE_CONTENT: [422, "PDF_ACTIVE_CONTENT", false],
+  PDF_PAGE_LIMIT: [422, "PDF_TOO_LONG", false],
+  PDF_RESOURCE_LIMIT: [422, "PDF_TOO_COMPLEX", false],
+  PDF_UNSUPPORTED_ENCODING: [422, "PDF_TOO_COMPLEX", false],
+  PDF_INSPECTION_BUSY: [429, "BACKEND_BUSY", true],
+  PDF_INSPECTION_UNAVAILABLE: [503, "BACKEND_BUSY", true],
+  DOCUMENT_SCANNER_NOT_CONFIGURED: [503, "UPLOAD_UNAVAILABLE", false],
+  EMPTY_FILE: [400, "FILE_EMPTY", false],
+  MIME_MISMATCH: [415, "FILE_TYPE_INVALID", false],
+  EXTENSION_MISMATCH: [415, "FILE_TYPE_INVALID", false],
   CASE_NOT_FOUND: [404, "NOT_FOUND", false],
   DOCUMENT_NOT_FOUND: [404, "NOT_FOUND", false],
   DOCUMENT_STORAGE_NOT_CONFIGURED: [503, "UPLOAD_UNAVAILABLE", false],
@@ -149,6 +157,11 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
       });
       return parse(idOnly, r.body).id;
     },
+    async refreshOcr(token: string, jobId: string, consentGrantId: string): Promise<{ status: string; errorCode: string | null }> {
+      const r = await send("POST", `/api/v1/ocr-jobs/${encodeURIComponent(jobId)}/refresh`, token, { json: { consentGrantId }, timeoutMs: 15_000 });
+      const job = parse(z.object({ job: z.object({ status: z.string(), errorCode: z.string().nullish() }).loose() }), r.body).job;
+      return { status: job.status, errorCode: job.errorCode ?? null };
+    },
     async revokeGrant(token: string, grantId: string): Promise<void> {
       await send("POST", `/api/v1/consents/${encodeURIComponent(grantId)}/revoke`, token, { json: { reason: "withdrawn_by_person" } });
     },
@@ -170,10 +183,10 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
     async remove(token: string, documentId: string): Promise<void> {
       await send("DELETE", `/api/v1/documents/${encodeURIComponent(documentId)}`, token);
     },
-    async startOcr(token: string, documentId: string, consentGrantId: string, retry: boolean): Promise<{ status: string; errorCode: string | null }> {
+    async startOcr(token: string, documentId: string, consentGrantId: string, retry: boolean): Promise<{ id: string | null; status: string; errorCode: string | null }> {
       const r = await send("POST", `/api/v1/documents/${encodeURIComponent(documentId)}/ocr-jobs`, token, { json: { consentGrantId, retryFailed: retry }, timeoutMs: 15_000 });
-      const job = parse(z.object({ job: z.object({ status: z.string(), errorCode: z.string().nullish() }).loose() }), r.body).job;
-      return { status: job.status, errorCode: job.errorCode ?? null };
+      const job = parse(z.object({ job: z.object({ id: z.string().nullish(), status: z.string(), errorCode: z.string().nullish() }).loose() }), r.body).job;
+      return { id: job.id ?? null, status: job.status, errorCode: job.errorCode ?? null };
     },
     async startAnalysisRun(token: string, caseId: string, consentGrantId: string, key: string): Promise<string> {
       const r = await send("POST", `/api/v1/cases/${encodeURIComponent(caseId)}/analysis-runs`, token, {
@@ -193,8 +206,8 @@ export type DocumentsClient = ReturnType<typeof createDocumentsClient>;
 // ---- Sealed state (kv_docs) --------------------------------------------------------------------------------------------------
 
 type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode };
-/** c case, g reading grant, d per-document ids and progress, x grants whose revoke has not gone through yet. */
-export type DocsState = { h: string; exp: number; c?: string; g?: string; x?: string[]; d: Record<string, DocState> };
+/** c case, g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
+export type DocsState = { h: string; exp: number; c?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
 
 export async function readDocsState(secret: string, session: SessionPayload): Promise<DocsState> {
   const v = openValue<DocsState>((await cookies()).get(DOCS_COOKIE)?.value, secret);
@@ -239,6 +252,7 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
   need(ctx.session);
   const ids = [...(ctx.state.x ?? [])];
   if (ctx.state.g) ids.push(ctx.state.g);
+  if (ctx.state.v) ids.push(ctx.state.v);
   for (const e of Object.values(ctx.state.d)) ids.push(...[e.s, e.m, e.cg].filter((x): x is string => Boolean(x)));
   const left: string[] = [];
   for (const id of ids) {
@@ -250,6 +264,7 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
     }
   }
   ctx.state.g = undefined;
+  ctx.state.v = undefined;
   ctx.state.d = {};
   ctx.state.x = left.length > 0 ? left : undefined;
   await writeDocsState(ctx.state, ctx.secret);
@@ -257,11 +272,41 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
   return { consent: false };
 }
 
+/**
+ * The backend gates every read of a case's documents (list, one document, readings) on a consent of its own: purpose
+ * document_processing, scope case/<id>/read/source_pack_metadata, recipient the viewer. The collect grant does not cover it.
+ * Made once per case and consent generation, with a replay-safe key, tracked in state.v and revoked on withdrawal.
+ * `renew` makes a fresh grant when the backend still refuses the one we hold.
+ */
+export async function ensureReadGrant(ctx: Ctx, renew = false): Promise<void> {
+  if (!ctx.state.c || !ctx.state.g || (ctx.state.v && !renew)) return;
+  const adultId = need(ctx.session);
+  const c = ctx.state.c;
+  ctx.state.v = await ctx.client.grant(ctx.session.t, {
+    householdId: ctx.session.h, adultId, key: `view-${c}-${gen(ctx.state)}${renew ? `-${Date.now().toString(36)}` : ""}`, purpose: "document_processing",
+    scope: { resourceType: "case", resourceId: c, action: "read", dataCategory: "source_pack_metadata", recipient: adultId },
+  });
+  await writeDocsState(ctx.state, ctx.secret);
+}
+
+/** Runs a case read; if the backend says the read grant is missing, makes a fresh one and tries once more. */
+async function withReadGrant<T>(ctx: Ctx, run: () => Promise<T>): Promise<T> {
+  await ensureReadGrant(ctx);
+  try {
+    return await run();
+  } catch (e) {
+    if (!(e instanceof AppError && e.code === "CONSENT_REQUIRED" && ctx.state.g && ctx.state.c)) throw e;
+    await ensureReadGrant(ctx, true);
+    return await run();
+  }
+}
+
 export async function listDocuments(ctx: Ctx): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean }> {
   const consent = Boolean(ctx.state.g);
   const largeUpload = largeUploadEnabled();
   if (!ctx.state.c) return { consent, documents: [], largeUpload };
-  const docs = await ctx.client.list(ctx.session.t, ctx.state.c);
+  const c = ctx.state.c;
+  const docs = await withReadGrant(ctx, () => ctx.client.list(ctx.session.t, c));
   return { consent, documents: docs.filter((d) => d.status !== "deleted").map((d) => viewOf(d, ctx.state)), largeUpload };
 }
 
@@ -273,6 +318,7 @@ export async function uploadDocument(ctx: Ctx, f: { kind: string; filename: stri
     ctx.state.c = await ctx.client.createCase(ctx.session.t, ctx.session.h);
     await writeDocsState(ctx.state, ctx.secret);
   }
+  await ensureReadGrant(ctx);
   try {
     const doc = await ctx.client.upload(ctx.session.t, { caseId: ctx.state.c, consentGrantId: ctx.state.g, kind: f.kind, filename: f.filename, key: f.key, bytes: f.bytes });
     return viewOf(doc, ctx.state);
@@ -394,7 +440,7 @@ export async function uploadFromBlob(ctx: Ctx, f: { pathname: string; kind: stri
 }
 
 export async function getDocument(ctx: Ctx, id: string): Promise<DocView> {
-  return viewOf(await ctx.client.get(ctx.session.t, id), ctx.state);
+  return viewOf(await withReadGrant(ctx, () => ctx.client.get(ctx.session.t, id)), ctx.state);
 }
 
 export async function deleteDocument(ctx: Ctx, id: string): Promise<void> {
@@ -417,7 +463,7 @@ const soft = (e: unknown) => e instanceof AppError && (e.status < 500 || e.code 
 export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Promise<DocView> {
   const adultId = need(ctx.session);
   const { t: token, h: householdId } = ctx.session;
-  const doc = await ctx.client.get(token, id);
+  const doc = await withReadGrant(ctx, () => ctx.client.get(token, id));
   const k = (p: string, docId: string) => `${p}-${docId}-${gen(ctx.state)}`;
   const e: DocState = ctx.state.d[id] ?? {};
   const save = async () => {
@@ -434,7 +480,16 @@ export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Pro
         householdId, adultId, key: k("read", id), purpose: "document_processing", grantedToActor: "sarvam",
         scope: { resourceType: "document", resourceId: id, action: "derive", dataCategory: "insurance_document", recipient: "sarvam" },
       });
-      const job = await ctx.client.startOcr(token, id, e.s, retry && (e.r === "failed" || e.r === "unavailable"));
+      const started = await ctx.client.startOcr(token, id, e.s, retry && (e.r === "failed" || e.r === "unavailable"));
+      // Starting again returns the same job without asking the provider. A submitted job only moves when it is refreshed.
+      let job: { status: string; errorCode: string | null } = started;
+      if (started.id && (started.status === "submitted" || started.status === "processing")) {
+        try {
+          job = await ctx.client.refreshOcr(token, started.id, e.s);
+        } catch (err) {
+          if (!(err instanceof AppError && err.retryable)) throw err; // a busy provider keeps the step running
+        }
+      }
       if (job.status === "succeeded") e.r = "done";
       else if (job.status === "failed" || job.status === "cancelled") e.r = job.errorCode === "OCR_PROVIDER_DISABLED" ? "unavailable" : "failed";
       else e.r = "running";
