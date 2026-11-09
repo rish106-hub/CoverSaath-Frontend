@@ -1,5 +1,7 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { del, get, list as listBlobs } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { AppError } from "./errors";
@@ -8,7 +10,7 @@ import { runtime, readSession, json, failure } from "./index";
 import { openValue, sealValue, type SessionPayload } from "./session";
 import type { FetchLike } from "./client";
 import { guardedFetch } from "./resilience";
-import { DOCUMENT_KINDS, MAX_UPLOAD_BYTES, deriveView, type DocView, type ProgressCode } from "@/adapters/documents-contract";
+import { BLOB_NAME, BLOB_TOKEN_TTL_MS, DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, deriveView, type DocView, type ProgressCode } from "@/adapters/documents-contract";
 
 // BFF for the evidence pipeline: case, reading consent, upload, scan, OCR, structuring, delete, revoke (CoverSaath /api/v1).
 // Server only. The backend token stays in the sealed session cookie. The backend has no route that lists cases or consent grants,
@@ -68,13 +70,14 @@ export function mapDocFailure(status: number, body: unknown): AppError {
 // ---- Upload validation (before a byte goes to the backend) -------------------------------------------------------------------
 
 /** Type, size and signature checks. The backend inspects the PDF again; this stops obvious misses at the edge. */
-export function checkPdfUpload(o: { contentType: string | null; declaredLength: number | null; bytes?: Uint8Array }): void {
+export function checkPdfUpload(o: { contentType: string | null; declaredLength: number | null; bytes?: Uint8Array; max?: number }): void {
+  const max = o.max ?? MAX_UPLOAD_BYTES;
   const type = (o.contentType ?? "").split(";")[0].trim().toLowerCase();
   if (type !== "application/pdf") throw new AppError(415, "FILE_TYPE_INVALID");
-  if (o.declaredLength !== null && o.declaredLength > MAX_UPLOAD_BYTES) throw new AppError(413, "FILE_TOO_LARGE");
+  if (o.declaredLength !== null && o.declaredLength > max) throw new AppError(413, "FILE_TOO_LARGE");
   if (!o.bytes) return;
   if (o.bytes.byteLength === 0) throw new AppError(400, "FILE_EMPTY");
-  if (o.bytes.byteLength > MAX_UPLOAD_BYTES) throw new AppError(413, "FILE_TOO_LARGE");
+  if (o.bytes.byteLength > max) throw new AppError(413, "FILE_TOO_LARGE");
   const head = Buffer.from(o.bytes.subarray(0, 5)).toString("latin1");
   if (head !== "%PDF-") throw new AppError(415, "FILE_TYPE_INVALID");
 }
@@ -254,11 +257,12 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
   return { consent: false };
 }
 
-export async function listDocuments(ctx: Ctx): Promise<{ consent: boolean; documents: DocView[] }> {
+export async function listDocuments(ctx: Ctx): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean }> {
   const consent = Boolean(ctx.state.g);
-  if (!ctx.state.c) return { consent, documents: [] };
+  const largeUpload = largeUploadEnabled();
+  if (!ctx.state.c) return { consent, documents: [], largeUpload };
   const docs = await ctx.client.list(ctx.session.t, ctx.state.c);
-  return { consent, documents: docs.filter((d) => d.status !== "deleted").map((d) => viewOf(d, ctx.state)) };
+  return { consent, documents: docs.filter((d) => d.status !== "deleted").map((d) => viewOf(d, ctx.state)), largeUpload };
 }
 
 export async function uploadDocument(ctx: Ctx, f: { kind: string; filename: string; key: string; bytes: Uint8Array }): Promise<DocView> {
@@ -279,6 +283,113 @@ export async function uploadDocument(ctx: Ctx, f: { kind: string; filename: stri
       await writeDocsState(ctx.state, ctx.secret);
     }
     throw e;
+  }
+}
+
+// ---- Large PDFs (Vercel Blob handoff, docs/upload-large-pdf.md) --------------------------------------------------------------
+// The browser uploads straight to a private Blob store with a short-lived token from this server. The server then reads the blob,
+// checks it, sends it to the backend as usual and deletes the blob in a finally block, on success and on failure.
+
+/** Large uploads need a Blob store. Without BLOB_READ_WRITE_TOKEN the 4 MB direct path is the only one. */
+export const largeUploadEnabled = (): boolean => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+/** A blob older than this was never claimed (the browser stopped after uploading). It is swept on the next token request. */
+const STALE_BLOB_MS = 30 * 60_000;
+
+/** The household's blob folder. Hashed, so no household id appears in a path. */
+export const blobPrefix = (session: SessionPayload): string => `uploads/${createHash("sha256").update(session.h).digest("hex").slice(0, 24)}/`;
+
+function assertBlobPath(session: SessionPayload, pathname: unknown): asserts pathname is string {
+  const prefix = blobPrefix(session);
+  if (typeof pathname !== "string" || !pathname.startsWith(prefix) || !BLOB_NAME.test(pathname.slice(prefix.length))) throw new AppError(400, "INVALID_INPUT");
+}
+
+/** Large-upload calls need a real signed-in person (never the demo), a configured store, and the reading go-ahead. */
+function assertLargeUpload(ctx: Ctx): void {
+  if (ctx.session.d) throw new AppError(403, "FORBIDDEN");
+  need(ctx.session);
+  if (!largeUploadEnabled()) throw new AppError(503, "UPLOAD_UNAVAILABLE");
+  if (!ctx.state.g) throw new AppError(403, "CONSENT_REQUIRED");
+}
+
+/** The folder the browser must upload into. Also how the page learns a Blob store exists. */
+export function blobInfo(ctx: Ctx): { prefix: string } {
+  assertLargeUpload(ctx);
+  return { prefix: blobPrefix(ctx.session) };
+}
+
+async function sweepStale(prefix: string): Promise<void> {
+  try {
+    const { blobs } = await listBlobs({ prefix, limit: 100 });
+    const old = blobs.filter((b) => Date.now() - new Date(b.uploadedAt).getTime() > STALE_BLOB_MS).map((b) => b.url);
+    if (old.length > 0) await del(old);
+  } catch {
+    // Best effort: a failed sweep never blocks an upload.
+  }
+}
+
+/** Answers the Blob client's token request. Only token requests are served: nothing here accepts a completion callback. */
+export async function issueBlobToken(ctx: Ctx, req: Request): Promise<{ type: string; clientToken?: string }> {
+  assertLargeUpload(ctx);
+  const body = (await req.json().catch(() => null)) as HandleUploadBody | null;
+  if (!body || body.type !== "blob.generate-client-token") throw new AppError(400, "INVALID_INPUT");
+  await sweepStale(blobPrefix(ctx.session));
+  return handleUpload({
+    body,
+    request: req,
+    onBeforeGenerateToken: async (pathname) => {
+      assertBlobPath(ctx.session, pathname);
+      return {
+        allowedContentTypes: ["application/pdf"],
+        maximumSizeInBytes: MAX_LARGE_UPLOAD_BYTES,
+        validUntil: Date.now() + BLOB_TOKEN_TTL_MS,
+        addRandomSuffix: false,
+        allowOverwrite: false,
+      };
+    },
+  }) as Promise<{ type: string; clientToken?: string }>;
+}
+
+async function readCapped(stream: ReadableStream<Uint8Array>, max: number): Promise<Uint8Array> {
+  const reader = stream.getReader();
+  const parts: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      await reader.cancel().catch(() => undefined);
+      throw new AppError(413, "FILE_TOO_LARGE");
+    }
+    parts.push(value);
+  }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.byteLength;
+  }
+  return out;
+}
+
+/** Reads the blob the browser uploaded, runs the same checks as the direct path, hands it to the backend and always deletes the blob. */
+export async function uploadFromBlob(ctx: Ctx, f: { pathname: string; kind: string; filename: string; key: string }): Promise<DocView> {
+  assertLargeUpload(ctx);
+  // Checked before anything is read or deleted, so another household's blob can never be touched.
+  assertBlobPath(ctx.session, f.pathname);
+  try {
+    const res = await get(f.pathname, { access: "private", useCache: false });
+    if (!res || res.statusCode !== 200) throw new AppError(404, "BLOB_MISSING", true);
+    const contentType = res.blob.contentType;
+    checkPdfUpload({ contentType, declaredLength: res.blob.size, max: MAX_LARGE_UPLOAD_BYTES });
+    const bytes = await readCapped(res.stream, MAX_LARGE_UPLOAD_BYTES);
+    checkPdfUpload({ contentType, declaredLength: null, bytes, max: MAX_LARGE_UPLOAD_BYTES });
+    return await uploadDocument(ctx, { kind: f.kind, filename: f.filename, key: f.key, bytes });
+  } catch (e) {
+    if (e instanceof AppError) throw e;
+    throw new AppError(502, "BACKEND_UNREACHABLE", true); // the Blob store failed: no store text reaches the page
+  } finally {
+    await del(f.pathname).catch(() => undefined);
   }
 }
 

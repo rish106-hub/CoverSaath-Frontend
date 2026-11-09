@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AdapterError } from "@/adapters/types";
 import { backendUploads, makeRequestKey, precheck } from "@/adapters/uploads";
-import { DOCUMENT_KINDS, NOTE_TEXT, errorText, type DocView, type DocumentKind, type StepState } from "@/adapters/documents-contract";
+import { DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, NOTE_TEXT, errorText, type DocView, type DocumentKind, type StepState } from "@/adapters/documents-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import styles from "./UploadView.module.css";
 
@@ -43,6 +43,7 @@ export function Stepper({ doc }: { doc: DocView }) {
 
 export function UploadView() {
   const [consent, setConsent] = useState<boolean | null>(null);
+  const [large, setLarge] = useState(false);
   const [docs, setDocs] = useState<DocView[]>([]);
   const [queue, setQueue] = useState<Queued[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export function UploadView() {
     try {
       const r = await backendUploads.list();
       setConsent(r.consent);
+      setLarge(r.largeUpload);
       setDocs(r.documents);
       setError(null);
     } catch (e) {
@@ -73,6 +75,7 @@ export function UploadView() {
     backendUploads.list().then((r) => {
       if (!live) return;
       setConsent(r.consent);
+      setLarge(r.largeUpload);
       setDocs(r.documents);
     }).catch((e) => {
       if (!live) return;
@@ -136,7 +139,7 @@ export function UploadView() {
     setError(null);
     for (const file of Array.from(files)) {
       const id = makeRequestKey();
-      const pre = precheck(file);
+      const pre = precheck(file, large ? MAX_LARGE_UPLOAD_BYTES : MAX_UPLOAD_BYTES);
       if (pre) {
         setQueue((q) => [...q, { id, file, kind, key: id, state: "failed", code: pre }]);
         continue;
@@ -212,7 +215,7 @@ export function UploadView() {
       ) : null}
 
       {consent ? (
-        <SectionHeading title="Your policy PDF" description="PDF only, up to 4 MB.">
+        <SectionHeading title="Your policy PDF" description={`PDF only, up to ${large ? 15 : 4} MB.`}>
           <div
             className={styles.drop}
             data-over={over}

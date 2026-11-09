@@ -1,11 +1,12 @@
 import { AdapterError } from "./types";
-import { MAX_UPLOAD_BYTES, consentOut, deleteOut, listOut, oneOut, type DocView, type DocumentKind } from "./documents-contract";
+import { upload as blobUpload } from "@vercel/blob/client";
+import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, blobInfoOut, consentOut, deleteOut, listOut, oneOut, type DocView, type DocumentKind } from "./documents-contract";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser client for the same-origin documents BFF (/api/app/documents/*). It never sees the backend token or the backend.
 
 export type UploadAdapter = {
-  list(): Promise<{ consent: boolean; documents: DocView[] }>;
+  list(): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean }>;
   /** `requestId` is reused when the call is repeated, so a retry cannot create a second grant. */
   grantConsent(requestId: string): Promise<void>;
   revokeConsent(): Promise<void>;
@@ -17,11 +18,11 @@ export type UploadAdapter = {
 };
 
 /** Checks the browser can do before sending. The server checks again. Returns an error code or null. */
-export function precheck(file: { name: string; type: string; size: number }): "FILE_TYPE_INVALID" | "FILE_TOO_LARGE" | "FILE_EMPTY" | null {
+export function precheck(file: { name: string; type: string; size: number }, max: number = MAX_UPLOAD_BYTES): "FILE_TYPE_INVALID" | "FILE_TOO_LARGE" | "FILE_EMPTY" | null {
   const pdf = file.type === "application/pdf" || (file.type === "" && /\.pdf$/i.test(file.name));
   if (!pdf) return "FILE_TYPE_INVALID";
   if (file.size === 0) return "FILE_EMPTY";
-  if (file.size > MAX_UPLOAD_BYTES) return "FILE_TOO_LARGE";
+  if (file.size > max) return "FILE_TOO_LARGE";
   return null;
 }
 
@@ -51,10 +52,39 @@ const parse = <T>(schema: { safeParse(v: unknown): { success: true; data: T } | 
 };
 const id = (v: string) => encodeURIComponent(v);
 
+/**
+ * Over 4 MB: ask the server for the household's folder (this also tells us whether a Blob store exists), send the file straight to
+ * Blob, then ask the server to take it from there. A new blob name per attempt; `key` stays the same, so a retry cannot store twice.
+ */
+async function uploadLarge(file: File, kind: DocumentKind, key: string): Promise<DocView> {
+  let info: { prefix: string };
+  try {
+    info = parse(blobInfoOut, await call("/api/app/documents/blob-token"));
+  } catch (e) {
+    // No store set up here (or the server refused): the file is simply over the limit this server takes.
+    if (e instanceof AdapterError && e.code === "UPLOAD_UNAVAILABLE") throw new AdapterError("FILE_TOO_LARGE");
+    throw e;
+  }
+  const pathname = `${info.prefix}${makeRequestKey()}.pdf`;
+  try {
+    await blobUpload(pathname, file, {
+      access: "private",
+      handleUploadUrl: "/api/app/documents/blob-token",
+      contentType: "application/pdf",
+      headers: { "x-knowvia-app": "1" },
+      multipart: file.size > 8 * 1024 * 1024,
+    });
+  } catch {
+    throw new AdapterError("BACKEND_UNREACHABLE", true);
+  }
+  const r = await call("/api/app/documents/from-blob", { method: "POST", headers: json, body: JSON.stringify({ pathname, filename: file.name, kind, key }) });
+  return parse(oneOut, r).document;
+}
+
 export const backendUploads: UploadAdapter = {
   async list() {
     const r = parse(listOut, await call("/api/app/documents"));
-    return { consent: r.consent, documents: r.documents };
+    return { consent: r.consent, documents: r.documents, largeUpload: r.largeUpload === true };
   },
   async grantConsent(requestId) {
     parse(consentOut, await call("/api/app/documents/consent", { method: "POST", headers: json, body: JSON.stringify({ accept: true, requestId }) }));
@@ -63,8 +93,9 @@ export const backendUploads: UploadAdapter = {
     parse(consentOut, await call("/api/app/documents/consent", { method: "DELETE" }));
   },
   async upload(file, kind, key) {
-    const pre = precheck(file);
+    const pre = precheck(file, MAX_LARGE_UPLOAD_BYTES);
     if (pre) throw new AdapterError(pre);
+    if (file.size > MAX_UPLOAD_BYTES) return uploadLarge(file, kind, key);
     const r = await call("/api/app/documents", {
       method: "POST",
       headers: { "content-type": "application/pdf", "x-filename": encodeURIComponent(file.name), "x-document-kind": kind, "idempotency-key": key },

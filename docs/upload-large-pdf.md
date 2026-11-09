@@ -1,6 +1,8 @@
 # Uploading PDFs larger than 4 MB
 
-Status: decision recorded, not built. Current limit: 4 MB (`MAX_UPLOAD_BYTES` in `src/adapters/documents-contract.ts`).
+Status: built (option 1), not yet run against a real Blob store. Direct limit: 4 MB (`MAX_UPLOAD_BYTES`); with `BLOB_READ_WRITE_TOKEN` set, up to 15 MB (`MAX_LARGE_UPLOAD_BYTES`).
+
+As built: `GET/POST /api/app/documents/blob-token` (folder lookup, client upload token) and `POST /api/app/documents/from-blob` (reads, checks, forwards, deletes in `finally`). No separate feature flags: the large path is on when the Blob token exists. Blobs the browser never claims are swept on the next token request after 30 minutes.
 
 ## Why 4 MB
 

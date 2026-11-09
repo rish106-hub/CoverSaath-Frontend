@@ -1,9 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { backendUploads, precheck } from "@/adapters/uploads";
 import { AdapterError } from "@/adapters/types";
-import { MAX_UPLOAD_BYTES, QUARANTINE_AFTER_MS, deriveView } from "@/adapters/documents-contract";
+import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, QUARANTINE_AFTER_MS, deriveView } from "@/adapters/documents-contract";
 
-afterEach(() => vi.unstubAllGlobals());
+const blobClient = vi.hoisted(() => ({ upload: vi.fn() }));
+vi.mock("@vercel/blob/client", () => ({ upload: blobClient.upload }));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  blobClient.upload.mockReset();
+});
 
 const view = {
   id: "d1", kind: "policy_wording", sizeBytes: 10, uploadedAt: null,
@@ -22,6 +28,92 @@ describe("precheck", () => {
     expect(precheck({ name: "a.png", type: "image/png", size: 10 })).toBe("FILE_TYPE_INVALID");
     expect(precheck({ name: "a.pdf", type: "application/pdf", size: 0 })).toBe("FILE_EMPTY");
     expect(precheck({ name: "a.pdf", type: "application/pdf", size: MAX_UPLOAD_BYTES + 1 })).toBe("FILE_TOO_LARGE");
+  });
+});
+
+const PREFIX = "uploads/0123456789abcdef01234567/";
+const bigFile = (size = MAX_UPLOAD_BYTES + 1) => new File([new Uint8Array(size)], "big policy.pdf", { type: "application/pdf" });
+const route = (table: Record<string, { status: number; body: unknown }>) => {
+  const f = vi.fn(async (path: string, init?: RequestInit) => {
+    const r = table[`${init?.method ?? "GET"} ${path}`] ?? { status: 404, body: { ok: false, code: "NOT_FOUND" } };
+    return new Response(JSON.stringify(r.body), { status: r.status });
+  });
+  vi.stubGlobal("fetch", f);
+  return f;
+};
+
+describe("large uploads", () => {
+  it("precheck takes the limit as an argument", () => {
+    const f = { name: "a.pdf", type: "application/pdf", size: MAX_UPLOAD_BYTES + 1 };
+    expect(precheck(f, MAX_LARGE_UPLOAD_BYTES)).toBeNull();
+    expect(precheck({ ...f, size: MAX_LARGE_UPLOAD_BYTES + 1 }, MAX_LARGE_UPLOAD_BYTES)).toBe("FILE_TOO_LARGE");
+  });
+  it("sends a file over 4 MB to Blob, then asks the server to take it", async () => {
+    const f = route({
+      "GET /api/app/documents/blob-token": { status: 200, body: { ok: true, prefix: PREFIX } },
+      "POST /api/app/documents/from-blob": { status: 201, body: { ok: true, document: view } },
+    });
+    blobClient.upload.mockResolvedValue({ pathname: "x" });
+    const file = bigFile();
+    const doc = await backendUploads.upload(file, "policy_schedule", "key-12345678");
+    expect(doc.id).toBe("d1");
+    const [pathname, body, opts] = blobClient.upload.mock.calls[0];
+    expect(pathname).toMatch(new RegExp(`^${PREFIX}k-[A-Za-z0-9_-]+\\.pdf$`));
+    expect(body).toBe(file);
+    expect(opts).toMatchObject({ access: "private", handleUploadUrl: "/api/app/documents/blob-token", contentType: "application/pdf", headers: { "x-knowvia-app": "1" } });
+    const claim = f.mock.calls.find((c) => c[0] === "/api/app/documents/from-blob")!;
+    expect(JSON.parse((claim[1] as RequestInit).body as string)).toEqual({ pathname, filename: "big policy.pdf", kind: "policy_schedule", key: "key-12345678" });
+    expect((claim[1] as RequestInit).headers).toMatchObject({ "x-knowvia-app": "1" });
+    expect(f.mock.calls.some((c) => c[0] === "/api/app/documents" && (c[1] as RequestInit | undefined)?.method === "POST")).toBe(false);
+  });
+  it("uses a fresh blob name on every attempt, with the same key", async () => {
+    route({
+      "GET /api/app/documents/blob-token": { status: 200, body: { ok: true, prefix: PREFIX } },
+      "POST /api/app/documents/from-blob": { status: 201, body: { ok: true, document: view } },
+    });
+    blobClient.upload.mockResolvedValue({});
+    await backendUploads.upload(bigFile(), "policy_wording", "key-12345678");
+    await backendUploads.upload(bigFile(), "policy_wording", "key-12345678");
+    expect(blobClient.upload.mock.calls[0][0]).not.toBe(blobClient.upload.mock.calls[1][0]);
+  });
+  it("reports FILE_TOO_LARGE when the server has no Blob store", async () => {
+    route({ "GET /api/app/documents/blob-token": { status: 503, body: { ok: false, code: "UPLOAD_UNAVAILABLE", retryable: false } } });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
+    expect(blobClient.upload).not.toHaveBeenCalled();
+  });
+  it("passes on a refusal such as no consent or the demo", async () => {
+    route({ "GET /api/app/documents/blob-token": { status: 403, body: { ok: false, code: "CONSENT_REQUIRED", retryable: false } } });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "CONSENT_REQUIRED" });
+    route({ "GET /api/app/documents/blob-token": { status: 403, body: { ok: false, code: "FORBIDDEN", retryable: false } } });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(blobClient.upload).not.toHaveBeenCalled();
+  });
+  it("refuses over 15 MB and a wrong type without any call", async () => {
+    const f = route({});
+    await expect(backendUploads.upload(bigFile(MAX_LARGE_UPLOAD_BYTES + 1), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
+    await expect(backendUploads.upload(new File([new Uint8Array(MAX_UPLOAD_BYTES + 1)], "a.png", { type: "image/png" }), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
+    expect(f).not.toHaveBeenCalled();
+    expect(blobClient.upload).not.toHaveBeenCalled();
+  });
+  it("is retryable and skips the claim when the Blob upload fails", async () => {
+    const f = route({ "GET /api/app/documents/blob-token": { status: 200, body: { ok: true, prefix: PREFIX } } });
+    blobClient.upload.mockRejectedValue(new Error("network"));
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "BACKEND_UNREACHABLE", retryable: true });
+    expect(f.mock.calls.some((c) => c[0] === "/api/app/documents/from-blob")).toBe(false);
+  });
+  it("passes on the server's answer when the claim fails", async () => {
+    route({
+      "GET /api/app/documents/blob-token": { status: 200, body: { ok: true, prefix: PREFIX } },
+      "POST /api/app/documents/from-blob": { status: 404, body: { ok: false, code: "BLOB_MISSING", retryable: true } },
+    });
+    blobClient.upload.mockResolvedValue({});
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "BLOB_MISSING", retryable: true });
+  });
+  it("reports largeUpload from the list, false when absent", async () => {
+    stub(200, { ok: true, consent: true, documents: [], largeUpload: true });
+    expect((await backendUploads.list()).largeUpload).toBe(true);
+    stub(200, { ok: true, consent: true, documents: [] });
+    expect((await backendUploads.list()).largeUpload).toBe(false);
   });
 });
 

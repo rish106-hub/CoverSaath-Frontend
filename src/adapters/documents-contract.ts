@@ -5,6 +5,13 @@ import { z } from "zod";
 
 /** Vercel functions accept a 4.5 MB request body. The upload stays under it with room for headers. Larger PDFs need the handoff in docs/upload-large-pdf.md. */
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+/** The backend accepts 15 MB. PDFs between 4 and 15 MB take the Blob handoff (docs/upload-large-pdf.md) when the server has a Blob store. */
+export const MAX_LARGE_UPLOAD_BYTES = 15 * 1024 * 1024;
+/** A client upload token lives this long. */
+export const BLOB_TOKEN_TTL_MS = 5 * 60_000;
+/** Blob names under the household folder: random, PDF only. The folder itself is issued by the server. */
+export const BLOB_NAME = /^[A-Za-z0-9_-]{8,100}\.pdf$/;
+export const BLOB_PREFIX = /^uploads\/[a-f0-9]{24}\/$/;
 export const DOCUMENT_KINDS = ["policy_wording", "policy_schedule", "endorsement"] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 
@@ -29,7 +36,15 @@ export const docView = z.object({
 });
 export type DocView = z.infer<typeof docView>;
 
-export const listOut = z.object({ ok: z.literal(true), consent: z.boolean(), documents: z.array(docView) });
+export const listOut = z.object({ ok: z.literal(true), consent: z.boolean(), documents: z.array(docView), /** True when PDFs up to 15 MB can be added (a Blob store is set up). */ largeUpload: z.boolean().optional() });
+export const blobInfoOut = z.object({ ok: z.literal(true), prefix: z.string().regex(BLOB_PREFIX) });
+/** Body of POST /api/app/documents/from-blob. `pathname` is the blob the browser just uploaded. */
+export const fromBlobIn = z.strictObject({
+  pathname: z.string().max(200),
+  filename: z.string().max(200),
+  kind: z.enum(DOCUMENT_KINDS),
+  key: z.string().regex(/^[A-Za-z0-9_-]{8,100}$/),
+});
 export const oneOut = z.object({ ok: z.literal(true), document: docView });
 export const consentOut = z.object({ ok: z.literal(true), consent: z.boolean() });
 export const deleteOut = z.object({ ok: z.literal(true) });
@@ -79,11 +94,12 @@ export const NOTE_TEXT: Record<DocNote, string> = {
 export const ERROR_TEXT: Record<string, string> = {
   CONSENT_REQUIRED: "We need your go-ahead before we read a document.",
   FILE_TYPE_INVALID: "Only PDF files can be added.",
-  FILE_TOO_LARGE: "That file is too big. Keep it under 4 MB.",
+  FILE_TOO_LARGE: "That file is too big. Check the size limit shown above and try again.",
   FILE_EMPTY: "That file is empty.",
   DUPLICATE_DOCUMENT: "This document is already added.",
   PDF_PROTECTED: "This PDF is password protected. Remove the password and try again.",
   PDF_UNREADABLE: "We could not open this PDF. Try another copy.",
+  BLOB_MISSING: "The file did not arrive. Try adding it again.",
   UPLOAD_UNAVAILABLE: "Uploads are not available right now. Try again later.",
   RATE_LIMITED: "Too many requests. Wait a moment and try again.",
   BACKEND_BUSY: "We are busy. Try again in a few seconds.",

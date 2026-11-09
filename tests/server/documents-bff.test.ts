@@ -207,7 +207,7 @@ describe("status, advance, delete", () => {
     expect(list.documents[0]).toMatchObject({ id: "doc-1", steps: { scanned: "done", reading: "active" }, busy: true });
   });
   it("lists nothing before a case exists", async () => {
-    expect(await (await docs.GET(req("/api/app/documents"))).json()).toEqual({ ok: true, consent: false, documents: [] });
+    expect(await (await docs.GET(req("/api/app/documents"))).json()).toEqual({ ok: true, consent: false, documents: [], largeUpload: false });
   });
   it("waits while the scan is pending and marks the file quarantined when the scan does not come", async () => {
     await grant();

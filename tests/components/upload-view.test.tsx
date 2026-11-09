@@ -16,17 +16,19 @@ let consent: boolean;
 let documents: Doc[];
 let uploadReplies: { status: number; body: unknown }[];
 let paths: string[];
+let largeUpload = false;
 
 beforeEach(() => {
   consent = false;
   documents = [];
   uploadReplies = [];
   paths = [];
+  largeUpload = false;
   vi.stubGlobal("fetch", async (path: string, init: RequestInit = {}) => {
     const method = init.method ?? "GET";
     paths.push(`${method} ${path}`);
     const r = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
-    if (path === "/api/app/documents" && method === "GET") return r(200, { ok: true, consent, documents });
+    if (path === "/api/app/documents" && method === "GET") return r(200, { ok: true, consent, documents, largeUpload });
     if (path === "/api/app/documents/consent" && method === "POST") { consent = true; return r(200, { ok: true, consent: true }); }
     if (path === "/api/app/documents/consent" && method === "DELETE") { consent = false; documents = []; return r(200, { ok: true, consent: false }); }
     if (path === "/api/app/documents" && method === "POST") {
@@ -44,6 +46,28 @@ afterEach(() => {
 
 const pick = (files: File[]) => fireEvent.change(screen.getByTestId("file-input"), { target: { files } });
 const pdf = () => new File([new Uint8Array([37, 80, 68, 70, 45])], "policy.pdf", { type: "application/pdf" });
+
+const sized = (size: number) => new File([new Uint8Array(size)], "big.pdf", { type: "application/pdf" });
+
+describe("UploadView size limit", () => {
+  it("says 4 MB and refuses a bigger file before sending when there is no Blob store", async () => {
+    consent = true;
+    render(<UploadView />);
+    expect(await screen.findByText("PDF only, up to 4 MB.")).toBeInTheDocument();
+    pick([sized(5 * 1024 * 1024)]);
+    expect(await screen.findByText(/too big/)).toBeInTheDocument();
+    expect(paths.filter((p) => p.startsWith("POST"))).toEqual([]);
+  });
+  it("says 15 MB and does not refuse a 5 MB file when a Blob store is set up", async () => {
+    consent = true;
+    largeUpload = true;
+    render(<UploadView />);
+    expect(await screen.findByText("PDF only, up to 15 MB.")).toBeInTheDocument();
+    pick([sized(5 * 1024 * 1024)]);
+    await waitFor(() => expect(paths).toContain("GET /api/app/documents/blob-token"));
+    expect(screen.queryByText(/too big/)).toBeNull();
+  });
+});
 
 describe("UploadView", () => {
   it("asks for the go-ahead first and only then shows the drop area", async () => {
