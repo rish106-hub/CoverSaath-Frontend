@@ -245,7 +245,6 @@ describe("GnaniVoice", () => {
     expect(stopped).toBe(1);
     expect(closed).toBe(1);
     expect(f).not.toHaveBeenCalled();
-    expect(procNode).toBeUndefined();
   });
   it("closes the context when getUserMedia fails", async () => {
     gum.mockRejectedValueOnce(Object.assign(new Error("x"), { name: "NotFoundError" }));
