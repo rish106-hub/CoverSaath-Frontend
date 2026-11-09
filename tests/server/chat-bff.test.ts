@@ -11,8 +11,10 @@ type Call = { url: string; headers: Record<string, string>; body: Record<string,
 let calls: Call[];
 let reply: { status: number; body: unknown } | "throw";
 
-const req = (body: unknown, extra: Record<string, string> = {}) =>
-  new Request("http://app.test/api/app/chat", { method: "POST", headers: { host: "app.test", "x-knowvia-app": "1", "content-type": "application/json", ...extra }, body: JSON.stringify(body) });
+const req = (body: unknown, extra: Record<string, string> = {}) => {
+  const raw = JSON.stringify(body);
+  return new Request("http://app.test/api/app/chat", { method: "POST", headers: { host: "app.test", "x-knowvia-app": "1", "content-type": "application/json", "content-length": String(new TextEncoder().encode(raw).length), ...extra }, body: raw });
+};
 const GOOD = { reply: "Covered up to Rs 40,000.", steps: ["a", "b", "c"], answerStatus: "evidence_found", sources: [{ tier: "household_evidence", label: "Policy", page: 14, quote: "up to Rs 40,000" }], contextOnly: true, evil: "x" };
 
 beforeEach(() => {
@@ -82,5 +84,30 @@ describe("chat BFF", () => {
     reply = "throw";
     const r = await POST(req({ text: "x" }));
     expect(JSON.stringify(await r.json())).not.toContain("secret");
+  });
+  it("caps the body at 4 KB, needs application/json and a Content-Length", async () => {
+    const big = await POST(req({ text: "x", pad: "y".repeat(5000) }));
+    expect(big.status).toBe(413);
+    expect((await POST(req({ text: "x" }, { "content-type": "text/plain" }))).status).toBe(415);
+    expect((await POST(req({ text: "x" }, { "content-length": "abc" }))).status).toBe(411);
+    const noLen = await POST(new Request("http://app.test/api/app/chat", {
+      method: "POST", duplex: "half", headers: { host: "app.test", "x-knowvia-app": "1", "content-type": "application/json" },
+      body: new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"text":"x"}')); c.close(); } }),
+    } as RequestInit));
+    expect(noLen.status).toBe(411);
+    // a body that lies about its size is cut off while streaming
+    const lying = new Request("http://app.test/api/app/chat", {
+      method: "POST", duplex: "half", headers: { host: "app.test", "x-knowvia-app": "1", "content-type": "application/json", "content-length": "10" },
+      body: new ReadableStream({ start(c) { c.enqueue(new Uint8Array(9000)); c.close(); } }),
+    } as RequestInit);
+    expect((await POST(lying)).status).toBe(413);
+    expect(calls).toHaveLength(0);
+  });
+  it("does not retry the non-idempotent chat POST, and sends an abort signal", async () => {
+    const signals: unknown[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => { calls.push({ url, headers: {}, body: {} }); signals.push(init.signal); return new Response("{}", { status: 500 }); });
+    expect((await POST(req({ text: "x" }))).status).toBe(502);
+    expect(calls).toHaveLength(1); // guardedFetch is a bulkhead plus breaker: it never retries
+    expect(signals[0]).toBeInstanceOf(AbortSignal);
   });
 });
