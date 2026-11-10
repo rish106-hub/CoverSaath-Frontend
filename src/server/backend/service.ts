@@ -3,7 +3,7 @@ import { z } from "zod";
 import { AppError } from "./errors";
 import type { BackendClient } from "./client";
 import type { SessionPayload } from "./session";
-import { DEMO_NAME, checkDemoLogin, demoCredentials, demoSession, isDemoEmail } from "./demo";
+import { DEMO_NAME, checkDemoLogin, demoMe as demoMeView, demoSession, isDemoEmail } from "./demo";
 
 export const accessInput = z.object({ name: z.string().trim().min(1).max(120), email: z.string().trim().email().max(254), password: z.string().max(200).optional() });
 
@@ -21,19 +21,15 @@ export async function grantAccess(client: BackendClient, raw: unknown): Promise<
   return { session: { t: created.token, h: created.householdId, m: created.ownerMemberId, a: created.adultUserId, exp }, firstName: parsed.data.name.split(" ")[0] };
 }
 
-export type MeView = { householdId: string; householdName: string; owner: { id: string; displayName: string; email?: string }; source: "backend" | "demo" };
+export type MeView = { householdId: string; householdName: string; owner: { id: string; displayName: string; email?: string }; source: "backend" | "mock" };
 
 /** Who is signed in, read back from the backend (not from what the form sent). */
 export async function readMe(client: BackendClient, session: SessionPayload): Promise<MeView> {
-  if (session.d) return demoMe();
+  if (session.demo) return demoMeView();
   const v = await client.household(session.t, session.h);
   const owner = v.members.find((m) => m.id === session.m) ?? v.members[0];
   if (!owner) throw new AppError(502, "BACKEND_BAD_RESPONSE");
   return { householdId: v.household.id, householdName: v.household.display_name ?? "Your household", owner: { id: owner.id, displayName: owner.displayName }, source: "backend" };
-}
-
-function demoMe(): MeView {
-  return { householdId: "demo", householdName: "Rao household", owner: { id: "meera", displayName: DEMO_NAME, email: demoCredentials().email }, source: "demo" };
 }
 
 export async function readStatus(client: BackendClient): Promise<{ health: boolean; ready: boolean }> {

@@ -4,6 +4,7 @@ import { seal } from "@/server/backend/session";
 const SECRET = "s".repeat(40);
 const jar = new Map<string, string>();
 vi.mock("next/headers", () => ({
+  headers: async () => ({ get: (n: string) => ({ host: "localhost:3200" })[n.toLowerCase()] ?? null }),
   cookies: async () => ({
     get: (n: string) => (jar.has(n) ? { value: jar.get(n) } : undefined),
     set: (n: string, v: string) => void jar.set(n, v),
@@ -123,10 +124,10 @@ describe("blob token route", () => {
     expect(blob.handleUpload).not.toHaveBeenCalled();
   });
   it("refuses the demo session", async () => {
-    signIn({ t: "demo", h: "demo", m: "demo", a: undefined, d: true });
+    signIn({ t: "demo", h: "demo", m: "demo", a: undefined, demo: true });
     const res = await tokenReq();
     expect(res.status).toBe(403);
-    expect((await res.json()).code).toBe("FORBIDDEN");
+    expect((await res.json()).code).toBe("DEMO_READ_ONLY"); // main's readSession refuses demo sessions with a coded 403
     expect(blob.handleUpload).not.toHaveBeenCalled();
   });
   it("refuses without the app header or from another origin", async () => {
@@ -259,7 +260,7 @@ describe("from-blob route", () => {
     blob.get.mockResolvedValue(found(pdf()));
     expect((await claim({ kind: "nope" })).status).toBe(400);
     expect((await claim({ extra: 1 })).status).toBe(400);
-    signIn({ t: "demo", h: "demo", m: "demo", a: undefined, d: true });
+    signIn({ t: "demo", h: "demo", m: "demo", a: undefined, demo: true });
     expect((await claim()).status).toBe(403);
     jar.delete("kv_session");
     expect((await claim()).status).toBe(401);

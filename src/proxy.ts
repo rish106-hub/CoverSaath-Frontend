@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE, SESSION_COOKIE_SECURE } from "@/server/backend/cookie-policy";
 
 /**
  * Cheap first guard: no session cookie, no app page. The cookie is sealed, so only the BFF can say
@@ -6,7 +7,9 @@ import { NextResponse, type NextRequest } from "next/server";
  * signed-out visitors from loading the page shell and firing requests that can only answer 401.
  */
 export function proxy(request: NextRequest) {
-  if (request.cookies.has("kv_session")) return NextResponse.next();
+  // Mock adapters (local dev and the e2e suite) never set the sealed cookie, so there is nothing to gate on.
+  if (process.env.NEXT_PUBLIC_ADAPTERS === "mock") return NextResponse.next();
+  if (request.cookies.has(SESSION_COOKIE_SECURE) || request.cookies.has(SESSION_COOKIE)) return NextResponse.next();
   return NextResponse.redirect(new URL("/signin", request.url));
 }
 

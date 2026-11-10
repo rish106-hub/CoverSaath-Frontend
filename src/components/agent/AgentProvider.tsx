@@ -3,17 +3,18 @@
 import { prefersReducedMotion } from "@/lib/use-reduced-motion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { adapters, type AssistantReply } from "@/adapters";
+import { adapters, AdapterError, type AssistantReply } from "@/adapters";
 import { resolveNavigation } from "@/agent/navigate";
 import { holdReducer, initialHold, type Hold } from "@/agent/hold";
 import { isEditable, PAGE_SHORTCUT_EVENT, SHORTCUTS, useShortcuts } from "@/lib/shortcuts";
 import { useTheme } from "@/components/theme";
+import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
 
 export type Anchor = "dock" | "strip";
 export type Mode = "voice" | "text";
 /** One panel, three states: closed, voice (primary) and chat (the same panel expanded upward). */
 export type View = "closed" | "voice" | "chat";
-export type ChatMessage = { id: number; role: "user" | "assistant"; text: string; route?: string; goLabel?: string };
+export type ChatMessage = { id: number; role: "user" | "assistant"; text: string; route?: string; goLabel?: string; answerStatus?: AssistantReply["answerStatus"]; sources?: AssistantReply["sources"] };
 
 type Ctx = {
   hold: Hold;
@@ -93,7 +94,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") window.speechSynthesis?.cancel?.();
     setSpeaking(false);
   };
-  useEffect(() => () => { run.current += 1; clearTimer(); }, []);
+  useEffect(() => () => { run.current += 1; clearTimer(); adapters.voice.stop?.(); }, []); // unmount: release the microphone and any pending capture
 
   const speak = useCallback((text: string) => {
     const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
@@ -138,7 +139,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     }
     adapters.assistant.ask(said, pathRef.current).then((r) => {
       if (id !== run.current || !alive.current) return;
-      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: r.reply, route: r.route, goLabel: r.goLabel }]);
+      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: r.reply, route: r.route, goLabel: r.goLabel, answerStatus: r.answerStatus, sources: r.sources }]);
       setReply(r);
       setThinking(false);
       if (fromVoice) speak(r.reply);
@@ -149,11 +150,12 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         setDone(n);
         if (n >= 3) { clearTimer(); dispatch({ type: "finish" }); }
       }, 650);
-    }).catch(() => {
+    }).catch((e: unknown) => {
       if (id !== run.current || !alive.current) return;
       setThinking(false);
-      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: "That did not work. Try again." }]);
-      setNote("That did not work. Try again.");
+      const line = e instanceof AdapterError && e.code === "CHAT_NOT_CONFIGURED" ? "Chat is not switched on yet." : "That did not work. Try again.";
+      setThread((t) => [...t, { id: ++msgId.current, role: "assistant", text: line }]);
+      setNote(line);
       dispatch({ type: "rest" });
     });
   }, [speak, router]);
@@ -173,9 +175,16 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       if (!alive.current) return;
       if (heard) { spokenRef.current = true; submit(heard); }
       else { setNote("I did not catch that. Tap the mic and try again."); dispatch({ type: "rest" }); }
-    }).catch(() => {
+    }).catch((e: unknown) => {
       if (!alive.current) return;
-      setNote("Voice is not available here. Type your question.");
+      const code = e instanceof AdapterError ? e.code : "";
+      // FOR LEGAL REVIEW: the fallback notice names where the audio goes. The person starts again on purpose; the panel stays on voice.
+      if (code === "VOICE_FALLBACK_NOTICE") { setNote(`${FALLBACK_NOTICE} Tap the mic to continue.`); dispatch({ type: "rest" }); return; }
+      if (code === "VOICE_BAD_AUDIO") { setNote("I could not read that audio. Tap the mic and try again."); dispatch({ type: "rest" }); return; }
+      setNote(code === "VOICE_MIC_DENIED" ? "The microphone is blocked. Type your question, or allow it in your browser."
+        : code === "VOICE_BUSY" ? "Voice is busy. Try again in a moment."
+        : code === "VOICE_RATE_LIMITED" ? "Voice has reached its limit for now. Type your question."
+        : "Voice is not available here. Type your question.");
       setView("chat");
       dispatch({ type: "rest" });
     });

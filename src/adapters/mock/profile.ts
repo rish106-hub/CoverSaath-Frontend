@@ -4,7 +4,7 @@ import { addressSchema, currentLocationSchema, mobileSchema, placeAddressSchema,
 import { roundCoarse } from "@/lib/india";
 import { delay } from "./delay";
 
-// backend gap: wired in P2a. In memory for the session; nothing is stored in the backend yet.
+// Mock mode only (NEXT_PUBLIC_ADAPTERS=mock, tests). In memory for the session; the real implementation is ../user-data.ts.
 // The Rao family address is synthetic.
 const RAO_ADDRESS: Address = {
   line1: "14, Lakeview Residency", line2: "3rd Cross, Indiranagar", landmark: "Near the metro station",

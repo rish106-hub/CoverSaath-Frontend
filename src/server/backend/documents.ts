@@ -351,7 +351,7 @@ function assertBlobPath(session: SessionPayload, pathname: unknown): asserts pat
 
 /** Large-upload calls need a real signed-in person (never the demo), a configured store, and the reading go-ahead. */
 function assertLargeUpload(ctx: Ctx): void {
-  if (ctx.session.d) throw new AppError(403, "FORBIDDEN");
+  if (ctx.session.demo) throw new AppError(403, "FORBIDDEN");
   need(ctx.session);
   if (!largeUploadEnabled()) throw new AppError(503, "UPLOAD_UNAVAILABLE");
   if (!ctx.state.g) throw new AppError(403, "CONSENT_REQUIRED");

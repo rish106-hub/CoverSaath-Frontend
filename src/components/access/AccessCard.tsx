@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { adapters, AdapterError, usingBackend } from "@/adapters";
+import { adapters, AdapterError, googleSignIn, usingBackend } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
 import { invalidateMe } from "@/components/shell/useMe";
 import { validateAccess, type AccessErrors } from "@/components/public/validate";
@@ -13,7 +13,21 @@ type State = { kind: "idle" } | { kind: "busy" } | { kind: "done"; name: string 
 
 /** The default demo address; the field also appears whenever the server asks for a password. */
 const DEMO_HINT = "demo@demo.com";
+const GOOGLE_ERRORS: Record<string, string> = {
+  google_denied: "Google sign-in was cancelled.",
+  google_failed: "Google sign-in didn’t complete. Try again.",
+  google_unavailable: "Google sign-in isn’t available right now.",
+  google_busy: "Too many sign-ins right now. Try again in a minute.",
+};
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
+
+/** "rishav.dewan@x.com" -> "Rishav Dewan". Waitlist hero signups carry no name; the access schema needs one. */
+function nameFromEmail(email: string): string {
+  const local = email.split("@")[0]?.replace(/\+.*$/, "") ?? "";
+  const words = local.split(/[._-]+/).map((w) => w.replace(/\d+/g, "")).filter(Boolean).slice(0, 3);
+  const out = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+  return (out || "there").slice(0, 80);
+}
 
 /** Beta access card on the landing page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
 export function AccessCard() {
@@ -24,9 +38,12 @@ export function AccessCard() {
   const [askPassword, setAskPassword] = useState(false);
   const [errors, setErrors] = useState<AccessErrors>({});
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [auto, setAuto] = useState(false); // true while a waitlist link is being signed in automatically
   const flying = useRef(false); // blocks re-entry within the same tick; state alone is too slow
   const alive = useRef(true);
   const nav = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const urlError = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("error"), () => null);
+  const urlMessage = urlError ? GOOGLE_ERRORS[urlError] : undefined;
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -35,8 +52,12 @@ export function AccessCard() {
     };
   }, []);
 
-  async function onSubmit(e: FormEvent) {
+  function onSubmit(e: FormEvent) {
     e.preventDefault();
+    void submit(name, email, false);
+  }
+
+  async function submit(name: string, email: string, viaLink: boolean) {
     if (flying.current) return;
     const demo = askPassword || email.trim().toLowerCase() === DEMO_HINT;
     const who = demo && !name.trim() ? "Demo" : name;
@@ -53,23 +74,46 @@ export function AccessCard() {
       if (!alive.current) return;
       if (!res.ok) {
         flying.current = false;
+        setAuto(false);
         if (res.code === "INVALID_CREDENTIALS") setAskPassword(true);
         setState({ kind: "error", message: res.code === "INVALID_CREDENTIALS" ? "That email and password do not match." : res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : DOWN });
         return;
       }
       const first = res.name ?? name.trim().split(" ")[0];
       invalidateMe();
+      if (viaLink) {
+        router.replace("/welcome");
+        return;
+      }
       setState({ kind: "done", name: first });
       nav.current = setTimeout(() => {
         window.location.href = "https://knowviafrontend.vercel.app/";
       }, 700);
     } catch (err) {
       flying.current = false;
+      setAuto(false);
       if (!alive.current) return;
       setState({ kind: "error", message: err instanceof AdapterError ? DOWN : "Something went wrong. Try again." });
     }
   }
 
+  useEffect(() => {
+    // Waitlist visitors arrive with ?email=&name= from the Knowvia site. Valid email: sign them in straight away, no form.
+    // Anything else (shared link, bad email, failure) falls back to the normal form, prefilled.
+    const q = new URLSearchParams(window.location.search);
+    const pe = q.get("email")?.trim().slice(0, 320);
+    const pn = q.get("name")?.trim().slice(0, 80);
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time read of the URL, which only exists in the browser */
+    if (pe) setEmail((cur) => cur || pe);
+    if (pn) setName((cur) => cur || pn);
+    if (pe && !q.get("error") && validateAccess(pn || nameFromEmail(pe), pe).ok) {
+      window.history.replaceState(null, "", window.location.pathname); // keep the email out of the address bar and history
+      setAuto(true);
+      void submit(pn || nameFromEmail(pe), pe, true);
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   async function withGoogle() {
     if (flying.current) return;
     flying.current = true;
@@ -104,9 +148,27 @@ export function AccessCard() {
     );
   }
   const busy = state.kind === "busy";
+  if (auto) {
+    return (
+      <div className={styles.card} role="status" aria-live="polite">
+        <div className={styles.done}>
+          <div className={styles.doneT}>Getting you in…</div>
+          <div className={styles.doneD}>Opening your Knowvia beta.</div>
+        </div>
+      </div>
+    );
+  }
   return (
     <form className={styles.card} onSubmit={onSubmit} noValidate aria-label="Get access">
       <div className={styles.title}>Get access in 10 seconds</div>
+      {usingBackend && googleSignIn ? (
+        <>
+      <a className={styles.ghost} href="/api/app/auth/google">
+        <BrandLogo id="google" size={24} />Continue with Google
+      </a>
+      <div className={styles.or} aria-hidden><span />or<span /></div>
+        </>
+      ) : null}
       {usingBackend ? null : (
         <>
       <button type="button" className={styles.ghost} onClick={withGoogle} disabled={busy}>
@@ -132,7 +194,7 @@ export function AccessCard() {
         </label>
       ) : null}
       <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Getting you in…" : "Get access"}</button>
-      {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : null}
+      {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : urlMessage ? <p className={styles.err} role="alert">{urlMessage}</p> : null}
       <div className={styles.note}><span>No card needed. Leave any time.</span><a href="#">Privacy</a></div>
     </form>
   );

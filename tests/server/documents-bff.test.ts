@@ -4,6 +4,7 @@ import { seal, sealValue, openValue } from "@/server/backend/session";
 const SECRET = "s".repeat(40);
 const jar = new Map<string, string>();
 vi.mock("next/headers", () => ({
+  headers: async () => ({ get: (n: string) => ({ host: "localhost:3200" })[n.toLowerCase()] ?? null }),
   cookies: async () => ({
     get: (n: string) => (jar.has(n) ? { value: jar.get(n) } : undefined),
     set: (n: string, v: string) => void jar.set(n, v),

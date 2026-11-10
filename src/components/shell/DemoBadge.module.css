@@ -1,0 +1,8 @@
+.badge { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 12px 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); font: 500 12px var(--font-sans); color: var(--graphite); }
+.label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.out { background: none; border: 0; padding: 0; font: inherit; color: var(--harbour); text-decoration: underline; cursor: pointer; }
+.out:disabled { opacity: 0.6; cursor: progress; }
+@media (min-width: 960px) and (max-width: 1199px) {
+  .label { display: none; }
+  .badge { justify-content: center; margin: 8px 0 0; padding: 4px; }
+}

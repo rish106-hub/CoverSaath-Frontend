@@ -4,6 +4,8 @@ import { backendAccess, backendHousehold } from "./backend";
 import { backendOnboarding, backendPreferences, backendProfile } from "./user-data";
 import { backendMembers, backendScenarios } from "./scenarios";
 import { mockAdapters } from "./mock";
+import { backendAssistant } from "./chat";
+import { createGnaniVoice } from "@/agent/voice-gnani";
 import { detectWalletPlatform } from "@/lib/wallet-detect";
 
 // The real pathway: every account except the one demo login. Features the backend has no tables for yet answer with honest
@@ -44,8 +46,8 @@ export const realAdapters: Adapters = {
   document: emptyDocument,
   reading: emptyReading,
   policy: emptyPolicy,
-  assistant: emptyAssistant,
-  voice: mockAdapters.voice, // browser speech, no personal data
+  assistant: backendAssistant, // answers from stored evidence, cited; with none it says so
+  voice: createGnaniVoice({ getLanguage: () => backendPreferences.get().then((p) => p?.voice) }), // Gnani via the BFF, browser speech as the fallback
   email: emptyEmail,
   reconcile: mockAdapters.reconcile, // pure arithmetic on what it is given
   desk: emptyDesk,

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { adapters, addressSchema, mobileSchema, type Address, type PermissionState, type Profile, type SavedPlace, type UiPrefs } from "@/adapters";
+import { adapters, features, addressSchema, mobileSchema, type Address, type PermissionState, type Profile, type SavedPlace, type UiPrefs } from "@/adapters";
 import { SectionHeading } from "@/components/type";
 import { BrandLogo } from "@/components/logos";
 import { SaveState, useSave } from "@/components/ui/SaveState";
@@ -134,7 +134,7 @@ function AddressSection({ profile }: { profile: Profile }) {
     void sv.save(async () => {
       const saved = await adapters.profile.saveAddress(parsed.data, "user_typed");
       setAddress(saved); setSource("user_typed"); setEditing(false); setFetchFailed(false);
-    }); // backend gap: wired in P2a
+    });
   };
 
   const remove = () =>
@@ -159,10 +159,12 @@ function AddressSection({ profile }: { profile: Profile }) {
         ) : null}
         {!address && !showForm ? (
           <div className={s.row}>
-            <button type="button" className="k-btn k-btn--primary" onClick={fetchIt} disabled={fetcher.busy || sv.busy}>
-              {fetcher.busy ? "Fetching from DigiLocker" : "Fetch from DigiLocker"}
-            </button>
-            <button type="button" className="k-btn k-btn--secondary" onClick={() => setEditing(true)}>Add it yourself</button>
+            {features.digilockerFetch ? (
+              <button type="button" className="k-btn k-btn--primary" onClick={fetchIt} disabled={fetcher.busy || sv.busy}>
+                {fetcher.busy ? "Fetching from DigiLocker" : "Fetch from DigiLocker"}
+              </button>
+            ) : null}
+            <button type="button" className={features.digilockerFetch ? "k-btn k-btn--secondary" : "k-btn k-btn--primary"} onClick={() => setEditing(true)}>{features.digilockerFetch ? "Add it yourself" : "Add your address"}</button>
             <SaveState status={sv.status} />
           </div>
         ) : null}
@@ -502,6 +504,8 @@ export const PROFILE_SECTIONS = [
   { id: "account", title: "Account" },
 ] as const;
 type SectionId = (typeof PROFILE_SECTIONS)[number]["id"];
+/** Sections shown now: Contact is off while the backend has nowhere to store a mobile number (features.profileMobile). */
+const SECTIONS = PROFILE_SECTIONS.filter((x) => x.id !== "contact" || features.profileMobile);
 const anchor = (id: string) => `profile-${id}`;
 
 function SectionNav({ active, onPick }: { active: SectionId; onPick: (id: SectionId) => void }) {
@@ -515,7 +519,7 @@ function SectionNav({ active, onPick }: { active: SectionId; onPick: (id: Sectio
   return (
     <nav className={s.nav} aria-label="Profile sections">
       <ul className={s.navList}>
-        {PROFILE_SECTIONS.map((x) => (
+        {SECTIONS.map((x) => (
           <li key={x.id} className={s.navItem}>
             <a href={`#${anchor(x.id)}`} className={cx(s.navLink, active === x.id && s.navActive)} aria-current={active === x.id ? "location" : undefined} onClick={(e) => go(e, x.id)}>{x.title}</a>
           </li>
@@ -544,7 +548,7 @@ export function ProfileView({ logos }: { logos: Logos }) {
     const io = new IntersectionObserver(
       (entries) => {
         for (const en of entries) seen.set(en.target.id, en.isIntersecting);
-        const first = PROFILE_SECTIONS.find((x) => seen.get(anchor(x.id)));
+        const first = SECTIONS.find((x) => seen.get(anchor(x.id)));
         if (first) setActive(first.id);
       },
       { rootMargin: "-10% 0px -70% 0px" },
@@ -571,7 +575,7 @@ export function ProfileView({ logos }: { logos: Logos }) {
     <div className={s.layout} ref={root}>
       <SectionNav active={active} onPick={setActive} />
       <div className={s.col}>
-        {PROFILE_SECTIONS.map((x) => (
+        {SECTIONS.map((x) => (
           <div key={x.id} id={anchor(x.id)} data-profile-section className={s.anchor}>
             <SectionHeading title={x.title}>{body[x.id]}</SectionHeading>
           </div>

@@ -30,7 +30,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("per-session adapters", () => {
   it("a real session never receives mock data from any data adapter", async () => {
-    stubSession("backend");
+    const fetchMock = stubSession("backend");
     const a = buildAdapters(mockAdapters, realAdapters);
     const out = {
       household: await a.household.household(),
@@ -47,7 +47,6 @@ describe("per-session adapters", () => {
       groups: await a.blood.groups(),
       banks: await a.blood.banks("O+"),
       posts: await a.learn.posts(),
-      reply: await a.assistant.ask("which policy covers my father?", "/home"),
     };
     expect(out.policies).toEqual([]);
     expect(out.policy).toBeNull();
@@ -64,6 +63,9 @@ describe("per-session adapters", () => {
     expect(out.posts).toEqual([]);
     expect(out.household.members.map((m) => m.name)).toEqual(["Asha Verma"]);
     expect(JSON.stringify(out)).not.toMatch(MOCK_NAMES);
+    // Chat is the backend's, never the mock's canned replies: a real session's question goes to the BFF chat route.
+    await a.assistant.ask("which policy covers my father?", "/home").catch(() => undefined);
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes("/api/app/chat"))).toBe(true);
     await expect(a.invite.invite({ relation: "x", name: "x", mobile: "9999999999", via: "sms" })).rejects.toMatchObject({ code: "NOT_AVAILABLE" });
     await expect(a.wallet.pass("apple")).rejects.toMatchObject({ code: "NOT_AVAILABLE" });
   });

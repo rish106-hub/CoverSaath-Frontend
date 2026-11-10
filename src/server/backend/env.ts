@@ -17,3 +17,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     cookieSecret: env.SESSION_COOKIE_SECRET as string,
   };
 }
+
+/**
+ * Previous session secret, accepted for reading only during a rotation window. Ignored unless it is at least as strong as
+ * the current one and different from it. Sessions are always re-sealed with the current secret.
+ */
+export function previousCookieSecret(env: NodeJS.ProcessEnv = process.env): string | null {
+  const prev = env.SESSION_COOKIE_SECRET_PREVIOUS;
+  if (!prev || prev.length < 32 || prev === env.SESSION_COOKIE_SECRET) return null;
+  return prev;
+}
+
+/** Kid-less cookies (sealed before rotation existed) are accepted with the current key until SESSION_COOKIE_ACCEPT_LEGACY=0. */
+export function acceptLegacyCookies(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.SESSION_COOKIE_ACCEPT_LEGACY !== "0";
+}
