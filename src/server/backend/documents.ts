@@ -57,6 +57,8 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   // The case is not in the state analysis needs. Not retryable: repeating the same call cannot fix it (it used to loop every 3 s).
   CASE_NOT_READY_FOR_ANALYSIS: [409, "NOT_READY", false],
   STALE_REVISION: [409, "NOT_READY", true],
+  // An earlier structuring attempt failed or was interrupted. The backend wants an explicit restart (a new paid attempt).
+  STRUCTURING_RESTART_REQUIRED: [409, "STRUCTURING_RESTART", false],
   INVALID_CASE_TRANSITION: [409, "NOT_READY", false],
 };
 
@@ -580,6 +582,12 @@ export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Pro
       else if (s.status === "running") e.t = "running";
       else e.t = "failed";
     } catch (err) {
+      // The earlier attempt failed: show "try again" (which sends restart) instead of polling a refusal forever.
+      if (err instanceof AppError && err.code === "STRUCTURING_RESTART") {
+        e.t = "failed";
+        await save();
+        return viewOf(doc, ctx.state);
+      }
       // Structuring may be switched off or not set up for this case yet. The reading stays; only the last step is marked.
       if (!soft(err)) {
         await save();

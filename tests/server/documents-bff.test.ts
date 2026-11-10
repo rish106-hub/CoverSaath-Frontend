@@ -448,6 +448,23 @@ describe("case moves to processing before the analysis run (R0.0)", () => {
   });
 });
 
+describe("structuring needs a restart after a failed attempt", () => {
+  it("shows the step as failed (no endless polling) and sends restart only on retry", async () => {
+    routes["POST /api/v1/documents/doc-1/structuring-runs"] = { status: 409, body: bk("STRUCTURING_RESTART_REQUIRED") };
+    await grant();
+    await docs.POST(upload());
+    const first = await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    const d = (await first.json()).document;
+    expect(d.steps.structured).toBe("failed");
+    expect(d.busy).toBe(false);
+    expect(d.note).toBe("STRUCTURING_FAILED");
+    routes["POST /api/v1/documents/doc-1/structuring-runs"] = { status: 200, body: { structuring: { status: "running" } } };
+    calls = [];
+    await advance.POST(req("/api/app/documents/doc-1/advance", "POST", { body: JSON.stringify({ retry: true }), headers: { "content-type": "application/json" } }), params("doc-1"));
+    expect(calls.find((c) => c.url.endsWith("structuring-runs"))?.body).toMatchObject({ restart: true });
+  });
+});
+
 describe("OCR refresh", () => {
   it("refreshes a submitted job so the step can finish", async () => {
     await grant();
