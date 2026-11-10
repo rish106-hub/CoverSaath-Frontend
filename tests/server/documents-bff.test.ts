@@ -50,7 +50,12 @@ beforeEach(() => {
   calls = [];
   down = false;
   routes = {
-    "POST /api/v1/cases": { status: 201, body: { id: "case-1" } },
+    "POST /api/v1/cases": { status: 201, body: { id: "case-1", status: "created", revision: "r0" } },
+    "POST /api/v1/cases/case-1/transitions": () => {
+      const body = calls[calls.length - 1].body as { toStatus: string; expectedRevision: string };
+      const n = Number(body.expectedRevision.slice(1)) + 1;
+      return { status: 200, body: { id: "case-1", status: body.toStatus, revision: `r${n}` } };
+    },
     "POST /api/v1/consents": { status: 201, body: { id: "consent-1" } },
     "POST /api/v1/cases/case-1/documents": { status: 201, body: { document: DOC } },
     "GET /api/v1/cases/case-1/documents": { status: 200, body: { caseId: "case-1", documents: [DOC] } },
@@ -381,6 +386,65 @@ describe("case read grant (backend gates case reads on its own consent)", () => 
     calls = [];
     await consent.DELETE(req("/api/app/documents/consent", "DELETE"));
     expect(calls.filter((c) => c.url.endsWith("/revoke")).map((c) => c.url)).toEqual(["/api/v1/consents/consent-1/revoke", "/api/v1/consents/consent-2/revoke"]);
+  });
+});
+
+describe("case moves to processing before the analysis run (R0.0)", () => {
+  const transitions = () => calls.filter((c) => c.url === "/api/v1/cases/case-1/transitions");
+  const order = (url: string) => calls.findIndex((c) => c.url === url);
+  it("walks created -> collecting -> processing with each returned revision, then starts the run", async () => {
+    await grant();
+    await docs.POST(upload());
+    calls = [];
+    await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    expect(transitions().map((c) => c.body)).toEqual([
+      { toStatus: "collecting", expectedRevision: "r0" },
+      { toStatus: "processing", expectedRevision: "r1" },
+    ]);
+    expect(order("/api/v1/cases/case-1/transitions")).toBeLessThan(order("/api/v1/cases/case-1/analysis-runs"));
+  });
+  it("does not transition again on later polls", async () => {
+    await grant();
+    await docs.POST(upload());
+    await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    calls = [];
+    await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    expect(transitions()).toHaveLength(0);
+    expect(calls.filter((c) => c.url.endsWith("analysis-runs"))).toHaveLength(0);
+  });
+  it("stops with a final state, not a loop, when the backend still says the case is not ready", async () => {
+    routes["POST /api/v1/cases/case-1/analysis-runs"] = { status: 409, body: bk("CASE_NOT_READY_FOR_ANALYSIS") };
+    await grant();
+    await docs.POST(upload());
+    const res = await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    const d = (await res.json()).document;
+    expect(d.steps.structured).toBe("unavailable");
+    expect(d.busy).toBe(false);
+    expect(JSON.stringify(d)).not.toContain("backend words");
+  });
+  it("forgets the revision on a stale answer so the next poll can try again, and does not mark structuring final", async () => {
+    routes["POST /api/v1/cases/case-1/transitions"] = { status: 409, body: bk("STALE_REVISION") };
+    await grant();
+    await docs.POST(upload());
+    const res = await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ ok: false, code: "NOT_READY", retryable: true });
+    const st = openValue<{ exp: number; rv?: string; cs?: string; d: Record<string, { t?: string }> }>(jar.get(DOCS_COOKIE), SECRET)!;
+    expect(st.rv).toBeUndefined();
+    expect(st.d["doc-1"]?.t).not.toBe("unavailable");
+  });
+  it("reads a case made before the revision was kept, once, then moves it", async () => {
+    await grant();
+    await docs.POST(upload());
+    const st = openValue<{ exp: number; rv?: string; cs?: string }>(jar.get(DOCS_COOKIE), SECRET)!;
+    delete st.rv;
+    delete st.cs;
+    jar.set(DOCS_COOKIE, sealValue(st, SECRET));
+    routes["GET /api/v1/cases/case-1"] = { status: 200, body: { id: "case-1", status: "collecting", revision: "r5" } };
+    calls = [];
+    await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"));
+    expect(calls.filter((c) => c.method === "GET" && c.url === "/api/v1/cases/case-1")).toHaveLength(1);
+    expect(transitions().map((c) => c.body)).toEqual([{ toStatus: "processing", expectedRevision: "r5" }]);
   });
 });
 
