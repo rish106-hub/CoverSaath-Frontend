@@ -10,7 +10,7 @@ import { runtime, readSession, json, failure } from "./index";
 import { openValue, sealValue, type SessionPayload } from "./session";
 import type { FetchLike } from "./client";
 import { guardedFetch } from "./resilience";
-import { BLOB_NAME, BLOB_TOKEN_TTL_MS, DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, deriveView, policyType, type DocView, type PolicyType, type ProgressCode } from "@/adapters/documents-contract";
+import { BLOB_NAME, BLOB_TOKEN_TTL_MS, DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, deriveView, policyType, whyFromBackendCode, type DocView, type PolicyType, type ProgressCode, type StructuringWhy } from "@/adapters/documents-contract";
 
 // BFF for the evidence pipeline: case, reading consent, upload, scan, OCR, structuring, delete, revoke (CoverSaath /api/v1).
 // Server only. The backend token stays in the sealed session cookie. The backend has no route that lists cases or consent grants,
@@ -62,6 +62,12 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   INVALID_CASE_TRANSITION: [409, "NOT_READY", false],
 };
 
+/** The prior attempt's failure code on a restart-required answer. Only a pattern-valid code is read; any message is ignored. */
+function priorErrorCode(body: unknown): string | null {
+  const c = (body as { error?: { priorErrorCode?: unknown } } | null)?.error?.priorErrorCode;
+  return typeof c === "string" && /^[A-Z][A-Z0-9_]{1,63}$/.test(c) ? c : null;
+}
+
 function backendCode(body: unknown): string | null {
   const c = (body as { error?: { code?: unknown } } | null)?.error?.code;
   return typeof c === "string" ? c : null;
@@ -70,7 +76,11 @@ function backendCode(body: unknown): string | null {
 /** A failed backend answer becomes a coded, client-safe error. Only the code and status are read; the message never leaves. */
 export function mapDocFailure(status: number, body: unknown): AppError {
   const known = BY_CODE[backendCode(body) ?? ""];
-  if (known) return new AppError(known[0], known[1], known[2]);
+  if (known) {
+    const err = new AppError(known[0], known[1], known[2]);
+    if (known[1] === "STRUCTURING_RESTART") err.reason = whyFromBackendCode(priorErrorCode(body));
+    return err;
+  }
   if (status === 401) return new AppError(401, "UNAUTHENTICATED");
   if (status === 403) return new AppError(403, "FORBIDDEN");
   if (status === 404) return new AppError(404, "NOT_FOUND");
@@ -224,7 +234,7 @@ export type DocumentsClient = ReturnType<typeof createDocumentsClient>;
 
 // ---- Sealed state (kv_docs) --------------------------------------------------------------------------------------------------
 
-type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode };
+type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode; f?: StructuringWhy; fa?: number };
 /** c case, pt the policy type the case was started with, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
 export type DocsState = { h: string; exp: number; c?: string; pt?: PolicyType; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
 
@@ -253,7 +263,10 @@ const need = (s: SessionPayload): string => {
   return s.a;
 };
 
-const viewOf = (doc: BackendDocDto, state: DocsState): DocView => deriveView(doc, state.d[doc.id]?.r ?? "none", state.d[doc.id]?.t ?? "none");
+const viewOf = (doc: BackendDocDto, state: DocsState): DocView => {
+  const e = state.d[doc.id];
+  return deriveView(doc, e?.r ?? "none", e?.t ?? "none", Date.now(), { why: e?.f ?? null, failedAt: e?.fa ?? null });
+};
 
 export async function grantReadingConsent(ctx: Ctx, requestId: string): Promise<{ consent: boolean }> {
   const adultId = need(ctx.session);
@@ -583,6 +596,8 @@ export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Pro
         scope: { resourceType: "document", resourceId: id, action: "derive", dataCategory: "insurance_document", recipient: "google-gemini" },
       });
       const s = await ctx.client.startStructuring(token, id, { workflowRunId: e.w, consentGrantId: e.m, restart: retry && e.t === "failed" });
+      e.f = undefined;
+      e.fa = undefined;
       if (s.status === "finished") e.t = s.evidenceOutcome === "failed" ? "failed" : "done";
       else if (s.status === "running") e.t = "running";
       else e.t = "failed";
@@ -590,6 +605,8 @@ export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Pro
       // The earlier attempt failed: show "try again" (which sends restart) instead of polling a refusal forever.
       if (err instanceof AppError && err.code === "STRUCTURING_RESTART") {
         e.t = "failed";
+        e.f = err.reason === "unavailable" || err.reason === "quota" || err.reason === "auth" || err.reason === "budget" ? err.reason : "other";
+        e.fa = Date.now();
         await save();
         return viewOf(doc, ctx.state);
       }
