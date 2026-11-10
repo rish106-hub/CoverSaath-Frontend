@@ -1,17 +1,17 @@
 import { AdapterError } from "./types";
 import { upload as blobUpload } from "@vercel/blob/client";
-import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, blobInfoOut, consentOut, deleteOut, listOut, oneOut, type DocView, type DocumentKind } from "./documents-contract";
+import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, blobInfoOut, consentOut, deleteOut, listOut, oneOut, type DocView, type DocumentKind, type PolicyType } from "./documents-contract";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 
 // Browser client for the same-origin documents BFF (/api/app/documents/*). It never sees the backend token or the backend.
 
 export type UploadAdapter = {
-  list(): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean }>;
+  list(): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean; policyType: PolicyType | null }>;
   /** `requestId` is reused when the call is repeated, so a retry cannot create a second grant. */
   grantConsent(requestId: string): Promise<void>;
   revokeConsent(): Promise<void>;
   /** `key` is reused when the same file is retried, so a retry cannot store the file twice. */
-  upload(file: File, kind: DocumentKind, key: string): Promise<DocView>;
+  upload(file: File, kind: DocumentKind, key: string, policyType: PolicyType): Promise<DocView>;
   /** Moves a scanned document one step on (reading, then cover details). */
   advance(id: string, retry?: boolean): Promise<DocView>;
   remove(id: string): Promise<void>;
@@ -56,7 +56,7 @@ const id = (v: string) => encodeURIComponent(v);
  * Over 4 MB: ask the server for the household's folder (this also tells us whether a Blob store exists), send the file straight to
  * Blob, then ask the server to take it from there. A new blob name per attempt; `key` stays the same, so a retry cannot store twice.
  */
-async function uploadLarge(file: File, kind: DocumentKind, key: string): Promise<DocView> {
+async function uploadLarge(file: File, kind: DocumentKind, key: string, policyType: PolicyType): Promise<DocView> {
   let info: { prefix: string };
   try {
     info = parse(blobInfoOut, await call("/api/app/documents/blob-token"));
@@ -77,14 +77,14 @@ async function uploadLarge(file: File, kind: DocumentKind, key: string): Promise
   } catch {
     throw new AdapterError("BACKEND_UNREACHABLE", true);
   }
-  const r = await call("/api/app/documents/from-blob", { method: "POST", headers: json, body: JSON.stringify({ pathname, filename: file.name, kind, key }) });
+  const r = await call("/api/app/documents/from-blob", { method: "POST", headers: json, body: JSON.stringify({ pathname, filename: file.name, kind, policyType, key }) });
   return parse(oneOut, r).document;
 }
 
 export const backendUploads: UploadAdapter = {
   async list() {
     const r = parse(listOut, await call("/api/app/documents"));
-    return { consent: r.consent, documents: r.documents, largeUpload: r.largeUpload === true };
+    return { consent: r.consent, documents: r.documents, largeUpload: r.largeUpload === true, policyType: r.policyType ?? null };
   },
   async grantConsent(requestId) {
     parse(consentOut, await call("/api/app/documents/consent", { method: "POST", headers: json, body: JSON.stringify({ accept: true, requestId }) }));
@@ -92,13 +92,13 @@ export const backendUploads: UploadAdapter = {
   async revokeConsent() {
     parse(consentOut, await call("/api/app/documents/consent", { method: "DELETE" }));
   },
-  async upload(file, kind, key) {
+  async upload(file, kind, key, policyType) {
     const pre = precheck(file, MAX_LARGE_UPLOAD_BYTES);
     if (pre) throw new AdapterError(pre);
-    if (file.size > MAX_UPLOAD_BYTES) return uploadLarge(file, kind, key);
+    if (file.size > MAX_UPLOAD_BYTES) return uploadLarge(file, kind, key, policyType);
     const r = await call("/api/app/documents", {
       method: "POST",
-      headers: { "content-type": "application/pdf", "x-filename": encodeURIComponent(file.name), "x-document-kind": kind, "idempotency-key": key },
+      headers: { "content-type": "application/pdf", "x-filename": encodeURIComponent(file.name), "x-document-kind": kind, "x-policy-type": policyType, "idempotency-key": key },
       body: file,
     });
     return parse(oneOut, r).document;

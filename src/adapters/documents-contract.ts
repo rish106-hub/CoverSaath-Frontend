@@ -15,6 +15,15 @@ export const BLOB_PREFIX = /^uploads\/[a-f0-9]{24}\/$/;
 export const DOCUMENT_KINDS = ["policy_wording", "policy_schedule", "endorsement"] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 
+/**
+ * What kind of policy the person says this is. Required before an upload. The backend (CoverSaath src/contracts/policy-type.js) owns
+ * the same list and rejects anything else with POLICY_TYPE_INVALID; keep the two in step.
+ */
+export const POLICY_TYPES = ["personal_health", "group_health", "term_life", "other"] as const;
+export const policyType = z.enum(POLICY_TYPES);
+export type PolicyType = z.infer<typeof policyType>;
+export const POLICY_TYPE_LABEL: Record<PolicyType, string> = { personal_health: "Personal health", group_health: "Group health", term_life: "Term life", other: "Other" };
+
 export const STEP_STATES = ["pending", "active", "done", "failed", "unavailable"] as const;
 export const stepState = z.enum(STEP_STATES);
 export type StepState = z.infer<typeof stepState>;
@@ -36,13 +45,14 @@ export const docView = z.object({
 });
 export type DocView = z.infer<typeof docView>;
 
-export const listOut = z.object({ ok: z.literal(true), consent: z.boolean(), documents: z.array(docView), /** True when PDFs up to 15 MB can be added (a Blob store is set up). */ largeUpload: z.boolean().optional() });
+export const listOut = z.object({ ok: z.literal(true), consent: z.boolean(), documents: z.array(docView), /** The type the case was started with, when the server knows it. The page keeps later uploads on the same type. */ policyType: policyType.nullish(), /** True when PDFs up to 15 MB can be added (a Blob store is set up). */ largeUpload: z.boolean().optional() });
 export const blobInfoOut = z.object({ ok: z.literal(true), prefix: z.string().regex(BLOB_PREFIX) });
 /** Body of POST /api/app/documents/from-blob. `pathname` is the blob the browser just uploaded. */
 export const fromBlobIn = z.strictObject({
   pathname: z.string().max(200),
   filename: z.string().max(200),
   kind: z.enum(DOCUMENT_KINDS),
+  policyType,
   key: z.string().regex(/^[A-Za-z0-9_-]{8,100}$/),
 });
 export const oneOut = z.object({ ok: z.literal(true), document: docView });
@@ -93,6 +103,7 @@ export const NOTE_TEXT: Record<DocNote, string> = {
 
 export const ERROR_TEXT: Record<string, string> = {
   CONSENT_REQUIRED: "We need your go-ahead before we read a document.",
+  POLICY_TYPE_REQUIRED: "Choose the type of policy first.",
   FILE_TYPE_INVALID: "Only PDF files can be added.",
   FILE_TOO_LARGE: "That file is too big. Check the size limit shown above and try again.",
   FILE_EMPTY: "That file is empty.",
