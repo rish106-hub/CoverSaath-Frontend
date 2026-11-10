@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { backendUploads, precheck } from "@/adapters/uploads";
 import { AdapterError } from "@/adapters/types";
-import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, QUARANTINE_AFTER_MS, deriveView } from "@/adapters/documents-contract";
+import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, PROVIDER_RECHECK_AFTER_MS, QUARANTINE_AFTER_MS, deriveView } from "@/adapters/documents-contract";
 
 const blobClient = vi.hoisted(() => ({ upload: vi.fn() }));
 vi.mock("@vercel/blob/client", () => ({ upload: blobClient.upload }));
@@ -177,6 +177,9 @@ describe("deriveView", () => {
     expect(deriveView(doc("accepted"), "failed", "none").note).toBe("READING_FAILED");
     expect(deriveView(doc("accepted"), "unavailable", "none").note).toBe("READING_UNAVAILABLE");
     expect(deriveView(doc("accepted"), "done", "failed").note).toBe("STRUCTURING_FAILED");
+    expect(deriveView(doc("accepted"), "done", "failed", Date.now(), { why: "quota", failedAt: Date.now() })).toMatchObject({ note: "STRUCTURING_PROVIDER_DOWN", why: "quota", busy: false });
+    expect(deriveView(doc("accepted"), "done", "failed", Date.now(), { why: "quota", failedAt: Date.now() - PROVIDER_RECHECK_AFTER_MS - 1 }).note).toBe("STRUCTURING_FAILED");
+    expect(deriveView(doc("accepted"), "done", "failed", Date.now(), { why: "other", failedAt: Date.now() }).note).toBe("STRUCTURING_FAILED");
     expect(deriveView(doc("deletion_pending"), "done", "done").note).toBe("DELETING");
   });
 });

@@ -465,6 +465,29 @@ describe("structuring needs a restart after a failed attempt", () => {
   });
 });
 
+describe("structuring failure reason", () => {
+  const restartBody = (priorErrorCode?: string) => ({ error: { code: "STRUCTURING_RESTART_REQUIRED", message: "backend words that must not leak", priorErrorCode } });
+  const advanceOnce = async () => {
+    await grant();
+    await docs.POST(upload());
+    return (await (await advance.POST(req("/api/app/documents/doc-1/advance", "POST"), params("doc-1"))).json()).document;
+  };
+  it.each(["STRUCTURING_PROVIDER_QUOTA", "STRUCTURING_PROVIDER_UNAVAILABLE", "STRUCTURING_PROVIDER_AUTH", "STRUCTURING_BUDGET_REFUSED"])("%s shows provider-down copy with no retry note", async (code) => {
+    routes["POST /api/v1/documents/doc-1/structuring-runs"] = { status: 409, body: restartBody(code) };
+    const d = await advanceOnce();
+    expect(d.steps.structured).toBe("failed");
+    expect(d.busy).toBe(false);
+    expect(d.note).toBe("STRUCTURING_PROVIDER_DOWN");
+    expect(JSON.stringify(d)).not.toContain("backend words");
+  });
+  it.each([undefined, "STRUCTURING_FAILED", "quota exceeded key AIza", "STRUCTURING_EVIDENCE_INSUFFICIENT"])("keeps the plain failed note for %s", async (code) => {
+    routes["POST /api/v1/documents/doc-1/structuring-runs"] = { status: 409, body: restartBody(code) };
+    const d = await advanceOnce();
+    expect(d.note).toBe("STRUCTURING_FAILED");
+    expect(d.why).toBe("other");
+  });
+});
+
 describe("OCR refresh", () => {
   it("refreshes a submitted job so the step can finish", async () => {
     await grant();

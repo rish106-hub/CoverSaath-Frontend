@@ -20,9 +20,29 @@ export const stepState = z.enum(STEP_STATES);
 export type StepState = z.infer<typeof stepState>;
 
 /** What the person is told when a step stops. Closed set: backend text never reaches the page. */
-export const DOC_NOTES = ["REJECTED", "QUARANTINED", "READING_FAILED", "READING_UNAVAILABLE", "STRUCTURING_FAILED", "STRUCTURING_UNAVAILABLE", "DELETING"] as const;
+export const DOC_NOTES = ["REJECTED", "QUARANTINED", "READING_FAILED", "READING_UNAVAILABLE", "STRUCTURING_FAILED", "STRUCTURING_PROVIDER_DOWN", "STRUCTURING_UNAVAILABLE", "DELETING"] as const;
 export const docNote = z.enum(DOC_NOTES);
 export type DocNote = z.infer<typeof docNote>;
+
+/** Why the last structuring attempt stopped, from a closed set of backend failure codes. Never backend text. */
+export const STRUCTURING_WHY = ["unavailable", "quota", "auth", "budget", "other"] as const;
+export const structuringWhy = z.enum(STRUCTURING_WHY);
+export type StructuringWhy = z.infer<typeof structuringWhy>;
+/** Causes where an immediate new attempt would fail again (and cost a paid call). */
+const PROVIDER_DOWN: ReadonlySet<StructuringWhy> = new Set(["unavailable", "quota", "auth", "budget"]);
+/** After this long a provider-side stop is treated like any failure again, so the person can try once more. */
+export const PROVIDER_RECHECK_AFTER_MS = 10 * 60_000;
+
+/** Pure: backend `priorErrorCode` to the closed set. Anything unknown is "other". */
+export function whyFromBackendCode(code: unknown): StructuringWhy {
+  switch (code) {
+    case "STRUCTURING_PROVIDER_UNAVAILABLE": return "unavailable";
+    case "STRUCTURING_PROVIDER_QUOTA": return "quota";
+    case "STRUCTURING_PROVIDER_AUTH": return "auth";
+    case "STRUCTURING_BUDGET_REFUSED": return "budget";
+    default: return "other";
+  }
+}
 
 export const docView = z.object({
   id: z.string().min(1),
@@ -31,6 +51,8 @@ export const docView = z.object({
   uploadedAt: z.string().nullish(),
   steps: z.object({ uploaded: stepState, scanned: stepState, reading: stepState, structured: stepState }),
   note: docNote.nullable(),
+  /** Set when the structuring step failed: the closed-set cause. Not shown as text. */
+  why: structuringWhy.nullish(),
   /** True while the page should keep asking for progress. */
   busy: z.boolean(),
 });
@@ -58,7 +80,7 @@ export const QUARANTINE_AFTER_MS = 2 * 60_000;
 type BackendDoc = { id: string; documentKind: string; byteSize: number; status: string; uploadedAt?: string | null };
 
 /** Pure: the backend document plus what the BFF knows about reading and structuring becomes the four-step view. */
-export function deriveView(doc: BackendDoc, reading: ProgressCode, structuring: ProgressCode, now = Date.now()): DocView {
+export function deriveView(doc: BackendDoc, reading: ProgressCode, structuring: ProgressCode, now = Date.now(), failure: { why?: StructuringWhy | null; failedAt?: number | null } = {}): DocView {
   const base = { id: doc.id, kind: doc.documentKind, sizeBytes: doc.byteSize, uploadedAt: doc.uploadedAt ?? null };
   const view = (steps: DocView["steps"], note: DocNote | null, busy: boolean): DocView => ({ ...base, steps, note, busy });
   const start: DocView["steps"] = { uploaded: "done", scanned: "pending", reading: "pending", structured: "pending" };
@@ -75,7 +97,11 @@ export function deriveView(doc: BackendDoc, reading: ProgressCode, structuring: 
   if (reading === "unavailable") return view({ ...steps, reading: "unavailable" }, "READING_UNAVAILABLE", false);
   steps.reading = "done";
   if (structuring === "none" || structuring === "running") return view({ ...steps, structured: "active" }, null, true);
-  if (structuring === "failed") return view({ ...steps, structured: "failed" }, "STRUCTURING_FAILED", false);
+  if (structuring === "failed") {
+    const why = failure.why ?? null;
+    const recent = why !== null && PROVIDER_DOWN.has(why) && (failure.failedAt == null || now - failure.failedAt < PROVIDER_RECHECK_AFTER_MS);
+    return { ...view({ ...steps, structured: "failed" }, recent ? "STRUCTURING_PROVIDER_DOWN" : "STRUCTURING_FAILED", false), why };
+  }
   if (structuring === "unavailable") return view({ ...steps, structured: "unavailable" }, "STRUCTURING_UNAVAILABLE", false);
   return view({ ...steps, structured: "done" }, null, false);
 }
@@ -87,6 +113,7 @@ export const NOTE_TEXT: Record<DocNote, string> = {
   READING_FAILED: "We could not read this document. You can try again.",
   READING_UNAVAILABLE: "Saved safely. Reading is not switched on yet, so nothing has been read.",
   STRUCTURING_FAILED: "We read the document but could not pull the cover details out of it. You can try again.",
+  STRUCTURING_PROVIDER_DOWN: "We read the document, but the step that pulls out the cover details is not available right now. Check back in a little while.",
   STRUCTURING_UNAVAILABLE: "Read, but the cover details are not ready yet.",
   DELETING: "Deleting. This can take a minute.",
 };

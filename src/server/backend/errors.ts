@@ -11,6 +11,8 @@ export type AppErrorCode =
 
 /** Client-safe error: code and status only, never backend bodies or tokens. `retryAfter` is seconds, sent as Retry-After. */
 export class AppError extends Error {
+  /** `reason`: closed-set cause carried with STRUCTURING_RESTART only. */
+  public reason?: string;
   constructor(public status: number, public code: AppErrorCode, public retryable = false, public retryAfter?: number) {
     super(code);
     this.name = "AppError";
