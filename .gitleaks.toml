@@ -1,8 +1,8 @@
-# Extends the default ruleset. Test fixtures use fake tokens; only the generic-api-key rule is waived, only under tests/.
+# Extends the default ruleset. Test fixtures use synthetic fake tokens (policy: synthetic data only), so tests/ is
+# allowlisted. Plain [allowlist] syntax on purpose: CI pins gitleaks 8.21.2, which ignores the newer [[allowlists]] tables.
 [extend]
 useDefault = true
 
-[[allowlists]]
+[allowlist]
 description = "Synthetic fake tokens in test fixtures"
-targetRules = ["generic-api-key"]
 paths = ['''^tests/''']
