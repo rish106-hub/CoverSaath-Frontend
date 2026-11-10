@@ -4,6 +4,7 @@ import { backendAccess, backendHousehold } from "./backend";
 import { backendOnboarding, backendPreferences, backendProfile } from "./user-data";
 import { backendMembers, backendScenarios } from "./scenarios";
 import { mockAdapters } from "./mock";
+import { backendReference } from "./reference";
 import { backendAssistant } from "./chat";
 import { createGnaniVoice } from "@/agent/voice-gnani";
 import { detectWalletPlatform } from "@/lib/wallet-detect";
@@ -62,4 +63,5 @@ export const realAdapters: Adapters = {
   onboarding: backendOnboarding,
   scenarios: backendScenarios,
   members: backendMembers,
+  reference: backendReference,
 };
