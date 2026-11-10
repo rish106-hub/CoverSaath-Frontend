@@ -4,6 +4,7 @@ import { detectWalletPlatform } from "@/lib/wallet-detect";
 import { delay } from "./delay";
 import { mockProfile } from "./profile";
 import { mockPreferences, mockOnboarding } from "./user-data";
+import { mockReference } from "./reference";
 import { mockMembers, mockScenarios } from "./scenarios";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
@@ -87,4 +88,5 @@ export const mockAdapters: Adapters = {
   onboarding: mockOnboarding,
   scenarios: mockScenarios,
   members: mockMembers,
+  reference: mockReference,
 };
