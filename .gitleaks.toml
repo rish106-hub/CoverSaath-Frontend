@@ -1,0 +1,8 @@
+# Extends the default ruleset. Test fixtures use fake tokens; only the generic-api-key rule is waived, only under tests/.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic fake tokens in test fixtures"
+targetRules = ["generic-api-key"]
+paths = ['''^tests/''']
