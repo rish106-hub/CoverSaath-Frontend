@@ -55,7 +55,7 @@ export async function finishGoogle(req: Request): Promise<Response> {
     const claims = readIdToken(idToken, { clientId: cfg.clientId, nonce: saved.n });
     const signedIn = await client.identitySession(toSignInInput(claims));
     const exp = Math.min(Date.parse(signedIn.expiresAt) || Date.now() + 86_400_000, Date.now() + 7 * 86_400_000);
-    await writeSession({ t: signedIn.token, h: signedIn.householdId, m: signedIn.memberId, exp }, config.cookieSecret, secureFor(req));
+    await writeSession({ t: signedIn.token, h: signedIn.householdId, m: signedIn.memberId, ...(signedIn.adultUserId ? { a: signedIn.adultUserId } : {}), exp }, config.cookieSecret, secureFor(req));
     return go(signedIn.returning ? "/home" : "/welcome");
   } catch (e) {
     if (e instanceof AppError && e.code === "RATE_LIMITED") return back("google_busy");

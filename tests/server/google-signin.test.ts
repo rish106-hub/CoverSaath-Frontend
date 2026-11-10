@@ -87,6 +87,9 @@ describe("Google sign-in callback", () => {
     const token = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com/"));
     expect(token?.body).toContain("code_verifier=");
     expect(jar.has("__Host-kv_session")).toBe(true);
+    // The adult id must ride in the session: document upload needs it to grant consent.
+    const { open } = await import("@/server/backend/session");
+    expect(open(jar.get("__Host-kv_session"), "s".repeat(40))?.a).toBe("a1");
     expect(jar.has("__Secure-kv_oauth")).toBe(false);
   });
 
