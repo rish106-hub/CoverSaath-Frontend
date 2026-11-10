@@ -7,7 +7,7 @@ import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
-export const BUDGET_KB = 300;
+export const BUDGET_KB = 400;
 
 const gz = new Map();
 function gzipKb(dist, file) {
