@@ -1,5 +1,6 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
+import type { SessionPayload } from "./session";
 
 // Public synthetic demo login. The credentials are deliberately public. The session it opens carries no backend token and every
 // backend route refuses it (readSession), so it can only ever be served synthetic data from the browser mock adapters.
@@ -7,7 +8,16 @@ export const DEMO_EMAIL = "demo@demo.com";
 const DEMO_PASSWORD = "demo123";
 export const DEMO_SESSION_MS = 12 * 60 * 60 * 1000;
 
-export const demoEnabled = (env: NodeJS.ProcessEnv = process.env): boolean => env.DEMO_LOGIN_ENABLED === "true";
+/** The one demo credential is public and fixed (no env override). On by default; DEMO_LOGIN_ENABLED=false is the kill switch (also ends existing demo sessions). */
+export const demoEnabled = (env: NodeJS.ProcessEnv = process.env): boolean => env.DEMO_LOGIN_ENABLED !== "false";
+export const DEMO_NAME = "Meera Rao";
+export const demoCredentials = (): { email: string; password: string } => ({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
+
+/** True when the email is the demo account's. The password is checked separately, so the demo email can never fall through to a real account. */
+export const isDemoEmail = (email: unknown): boolean => typeof email === "string" && email.trim().toLowerCase() === DEMO_EMAIL;
+
+/** Sealed like any session but flagged demo, with no backend token or household. */
+export const demoSession = (): SessionPayload => ({ t: "", h: "demo", m: "demo", exp: Date.now() + DEMO_SESSION_MS, demo: true });
 
 const CAP = 256;
 
@@ -35,6 +45,9 @@ export function demoCredentialsMatch(email: unknown, password: unknown): boolean
   const p = same(password, DEMO_PASSWORD, false);
   return e && p;
 }
+
+/** Both fields, constant time. Alias used by the access path. */
+export const checkDemoLogin = (email: unknown, password: unknown): boolean => demoCredentialsMatch(email, password);
 
 /** Synthetic identity for GET /me. Same shape as the real one; nothing here is a real person. */
 export const demoMe = () => ({

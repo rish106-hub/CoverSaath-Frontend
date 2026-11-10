@@ -4,7 +4,7 @@ import { DEMO_SESSION_MS, clientIp, demoCredentialsMatch, demoEnabled, demoNoteF
 
 export const dynamic = "force-dynamic";
 
-/** Public demo login. Off unless DEMO_LOGIN_ENABLED=true. Opens a sealed session with no backend token and no backend call. */
+/** Public demo login. On unless DEMO_LOGIN_ENABLED=false. Opens a sealed session with no backend token and no backend call. */
 export async function POST(req: Request) {
   try {
     if (!demoEnabled()) throw new AppError(404, "NOT_FOUND");

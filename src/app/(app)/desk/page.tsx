@@ -1,3 +1,4 @@
+import { DemoGate, EmptyState } from "@/components/shell/EmptyState";
 import { HelpHead } from "@/components/help/HelpHead";
 import { DeskView } from "@/components/help/DeskView";
 
@@ -7,7 +8,7 @@ export default function Page() {
   return (
     <>
       <HelpHead route="/desk" />
-      <DeskView />
+      <DemoGate empty={<EmptyState title="No claims or insurer talks yet" body="Claims and insurer conversations appear here once you have a policy on Knowvia." />}><DeskView /></DemoGate>
     </>
   );
 }

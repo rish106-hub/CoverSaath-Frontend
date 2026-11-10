@@ -156,3 +156,5 @@ export type Adapters = {
   scenarios: ScenarioAdapter;
   members: MemberAdapter;
 };
+
+export * from "./uploads";

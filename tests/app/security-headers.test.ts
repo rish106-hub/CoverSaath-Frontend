@@ -30,7 +30,9 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");
-    expect(csp).not.toMatch(/https?:\/\/\*/);
+    // The one wildcard is the Blob store host, for the large-PDF client upload.
+    expect(csp.replace("https://*.blob.vercel-storage.com", "")).not.toMatch(/https?:\/\/\*/);
+    expect(csp).toContain("connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com");
   });
 
   it("never caches API responses", async () => {

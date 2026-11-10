@@ -153,7 +153,7 @@ export function SignIn() {
   );
 }
 
-/** Public synthetic demo. Shown only for /signin?demo=1. The server enables it with DEMO_LOGIN_ENABLED=true. */
+/** Public synthetic demo. Shown only for /signin?demo=1. The server turns it off with DEMO_LOGIN_ENABLED=false. */
 function DemoCard() {
   const { run: once, busy, alive } = useSingleFlight();
   const [error, setError] = useState("");

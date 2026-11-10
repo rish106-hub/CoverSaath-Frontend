@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const body: unknown = await req.json().catch(() => null);
     const { session, firstName } = await grantAccess(client, body);
     await writeSession(session, config.cookieSecret);
-    return json({ ok: true, name: firstName });
+    return json({ ok: true, name: firstName, demo: session.demo === true });
   } catch (e) {
     return failure(e);
   }

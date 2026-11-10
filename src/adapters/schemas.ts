@@ -19,13 +19,13 @@ export const meSchema = z.object({
   householdId: z.string(),
   householdName: z.string(),
   owner: z.object({ id: z.string(), displayName: z.string(), email: z.string().optional() }),
-  source: z.enum(["backend", "mock"]),
+  source: z.enum(["backend", "mock", "demo"]),
 });
 export type Me = z.infer<typeof meSchema>;
 
-export const accessInputSchema = z.object({ name: z.string().trim().min(1).max(120), email: z.string().trim().email().max(254) });
+export const accessInputSchema = z.object({ name: z.string().trim().min(1).max(120), email: z.string().trim().email().max(254), password: z.string().max(200).optional() });
 export type AccessInput = z.infer<typeof accessInputSchema>;
-export const accessResultSchema = z.object({ ok: z.boolean(), name: z.string().optional(), code: z.string().optional() });
+export const accessResultSchema = z.object({ ok: z.boolean(), name: z.string().optional(), code: z.string().optional(), demo: z.boolean().optional() });
 export type AccessResult = z.infer<typeof accessResultSchema>;
 
 export const authResultSchema = z.object({ ok: z.boolean(), message: z.string().optional() });

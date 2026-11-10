@@ -27,7 +27,7 @@ const identitySchema = z.object({
 }).loose();
 
 export type SignedIn = { returning: boolean; householdId: string; memberId: string; token: string; expiresAt: string };
-export type CreatedHousehold = { householdId: string; ownerMemberId: string; token: string; expiresAt: string };
+export type CreatedHousehold = { householdId: string; ownerMemberId: string; adultUserId: string; token: string; expiresAt: string };
 export type HouseholdView = z.infer<typeof matrixSchema>;
 
 /** Typed backend client. 5 s timeout, coded errors, tokens never logged. */
@@ -98,7 +98,7 @@ export function createBackendClient(opts: ClientOptions) {
       });
       if (r.status === 401 || r.status === 403) throw new AppError(503, "CONFIG_MISSING");
       const d = parse(createSchema, ok(r, false));
-      return { householdId: d.household.id, ownerMemberId: d.ownerMember.id, token: d.session.token, expiresAt: d.session.expiresAt };
+      return { householdId: d.household.id, ownerMemberId: d.ownerMember.id, adultUserId: d.session.adultUserId, token: d.session.token, expiresAt: d.session.expiresAt };
     },
     /** Sign-in identity (ADR 0012 D3): the backend maps (issuer, subject) to one adult and starts a session. */
     async identitySession(input: { issuer: string; subject: string; displayName: string; contactEmail: string | null }): Promise<SignedIn> {

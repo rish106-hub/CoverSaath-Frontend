@@ -8,6 +8,7 @@ const isProd = process.env.NODE_ENV === "production";
  * and Vercel Speed Insights posts to a same-origin /_vercel path.
  * 'unsafe-inline' scripts are needed for the theme-init script and Next's inline
  * bootstrap; a nonce-based policy would force every page to render dynamically.
+ * connect-src also allows the Vercel Blob client upload (large PDFs go browser to Blob, docs/upload-large-pdf.md).
  * 'unsafe-eval' and ws: are dev only (React refresh, HMR).
  */
 const csp = [
@@ -16,7 +17,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  `connect-src 'self'${isProd ? "" : " ws: wss:"}`,
+  `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com${isProd ? "" : " ws: wss:"}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

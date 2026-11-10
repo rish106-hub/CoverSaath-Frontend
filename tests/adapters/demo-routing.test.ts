@@ -23,7 +23,7 @@ describe("adapters: demo sessions", () => {
   it("a non-demo session gets the backend assistant (BFF call)", async () => {
     const { adapters } = await import("@/adapters");
     await adapters.assistant.ask("hello", "/home").catch(() => undefined);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect((fetchSpy.mock.calls[0] as unknown as [string])[0]).toBe("/api/app/chat");
+    // one session lookup (/me) to learn it is not the demo, then the chat call
+    expect(fetchSpy.mock.calls.map((c) => (c as unknown as [string])[0])).toContain("/api/app/chat");
   });
 });

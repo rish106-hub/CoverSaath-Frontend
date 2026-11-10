@@ -44,13 +44,13 @@ afterEach(() => {
 });
 
 describe("demo login", () => {
-  it("is off by default", async () => {
-    vi.stubEnv("DEMO_LOGIN_ENABLED", "");
+  it("is on by default and off only with DEMO_LOGIN_ENABLED=false", async () => {
+    vi.stubEnv("DEMO_LOGIN_ENABLED", "false");
     const res = await demoLogin(req(GOOD));
     expect(res.status).toBe(404);
     expect(setCookie("kv_session")).toHaveLength(0);
-    vi.stubEnv("DEMO_LOGIN_ENABLED", "1");
-    expect((await demoLogin(req(GOOD))).status).toBe(404);
+    vi.stubEnv("DEMO_LOGIN_ENABLED", "");
+    expect((await demoLogin(req(GOOD))).status).toBe(200);
   });
 
   it("rejects a wrong password and a wrong email", async () => {
@@ -133,7 +133,7 @@ describe("demo login", () => {
   it("kill switch: existing demo sessions end when the flag is turned off, and the marker is cleared", async () => {
     inbound.set("kv_session", seal({ t: "", h: "demo", m: "demo", exp: Date.now() + 3_600_000, demo: true }, SECRET));
     expect((await readAnySession(SECRET))?.demo).toBe(true);
-    vi.stubEnv("DEMO_LOGIN_ENABLED", "");
+    vi.stubEnv("DEMO_LOGIN_ENABLED", "false");
     expect(await readAnySession(SECRET)).toBeNull();
     expect(await readSession(SECRET)).toBeNull();
     expect(setCookie("kv_demo")[0]).toMatch(/Max-Age=0|Expires=Thu, 01 Jan 1970/i);

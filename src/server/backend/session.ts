@@ -2,8 +2,8 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { MAX_SESSION_MS, SESSION_COOKIE } from "./cookie-policy";
 
-/** `demo: true` marks the public synthetic demo session: it carries no backend token and is refused by every backend route. */
-export type SessionPayload = { t: string; h: string; m: string; exp: number; demo?: true };
+/** `demo: true` marks the public synthetic demo session: it carries no backend token and is refused by every backend route. `a` is the owner's adult id (needed to grant consent; absent on older and identity-provider sessions). */
+export type SessionPayload = { t: string; h: string; m: string; a?: string; exp: number; demo?: true };
 export const COOKIE_NAME = SESSION_COOKIE;
 
 const key = (secret: string) => createHash("sha256").update(secret).digest();
@@ -74,6 +74,8 @@ export function unseal(sealed: string | undefined, secret: string, opts: OpenOpt
     reseal = true;
   }
   if (!payload) return null;
+  if (payload.demo !== undefined && payload.demo !== true) return null;
+  if (payload.a !== undefined && typeof payload.a !== "string") return null;
   if (typeof payload.t !== "string" || typeof payload.h !== "string" || typeof payload.m !== "string" || typeof payload.exp !== "number") return null;
   if (!Number.isFinite(payload.exp) || payload.exp < now || payload.exp > now + MAX_SESSION_MS + 60_000) return null;
   return { payload, reseal };
@@ -81,4 +83,22 @@ export function unseal(sealed: string | undefined, secret: string, opts: OpenOpt
 
 export function open(sealed: string | undefined, secret: string, opts: OpenOptions = {}): SessionPayload | null {
   return unseal(sealed, secret, opts)?.payload ?? null;
+}
+
+/** Same seal for other small server-held state (the documents cookie): iv.tag.ciphertext, no kid. Null on any tamper, wrong key or expiry. */
+export function sealValue<T extends { exp: number }>(value: T, secret: string): string {
+  return sealLegacy(value as unknown as SessionPayload, secret);
+}
+export function openValue<T extends { exp: number }>(sealed: string | undefined, secret: string): T | null {
+  if (!sealed) return null;
+  try {
+    const [iv, tag, enc] = sealed.split(".").map((x) => Buffer.from(x, "base64url"));
+    if (!iv || !tag || !enc) return null;
+    const d = createDecipheriv("aes-256-gcm", key(secret), iv);
+    d.setAuthTag(tag);
+    const v = JSON.parse(Buffer.concat([d.update(enc), d.final()]).toString("utf8")) as T;
+    return typeof v.exp === "number" && v.exp >= Date.now() ? v : null;
+  } catch {
+    return null;
+  }
 }

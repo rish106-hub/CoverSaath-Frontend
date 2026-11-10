@@ -1,3 +1,4 @@
+import { DemoGate, EmptyState } from "@/components/shell/EmptyState";
 import { HelpHead } from "@/components/help/HelpHead";
 import { AssistantView } from "@/components/help/AssistantView";
 
@@ -7,7 +8,7 @@ export default function Page() {
   return (
     <>
       <HelpHead route="/assistant" />
-      <AssistantView />
+      <DemoGate empty={<EmptyState title="Nothing to ask about yet" body="Upload your policy and Knowvia reads it for you. Then you can ask questions about your cover." />}><AssistantView /></DemoGate>
     </>
   );
 }

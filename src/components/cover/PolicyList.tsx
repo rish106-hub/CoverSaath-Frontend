@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adapters, type Member, type Policy } from "@/adapters";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { PeopleChips } from "./PeopleChips";
 import styles from "./PolicyList.module.css";
 
@@ -40,7 +41,7 @@ export function PolicyList() {
       </div>
       <SectionHeading title="Your policies">
         {policies === null ? <p className={styles.quiet} role="status">Loading your policies...</p> : null}
-        {policies?.length === 0 ? <p className={styles.quiet}>No policies yet.</p> : null}
+        {policies?.length === 0 ? <EmptyState title="No policies yet" body="Upload your policy and Knowvia reads it for you. It shows here with its cover, renewal date and who it covers." /> : null}
         <div className={styles.grid}>
           {policies?.map((p) => (
             <Link key={p.id} href={`/policies/${p.id}`} className={styles.card}>
