@@ -54,6 +54,10 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   STRUCTURING_DISABLED: [503, "READING_UNAVAILABLE", false],
   STRUCTURING_BUSY: [503, "BACKEND_BUSY", true],
   DOCUMENT_NOT_OCR_READY: [409, "NOT_READY", true],
+  // The case is not in the state analysis needs. Not retryable: repeating the same call cannot fix it (it used to loop every 3 s).
+  CASE_NOT_READY_FOR_ANALYSIS: [409, "NOT_READY", false],
+  STALE_REVISION: [409, "NOT_READY", true],
+  INVALID_CASE_TRANSITION: [409, "NOT_READY", false],
 };
 
 function backendCode(body: unknown): string | null {
@@ -96,6 +100,7 @@ const keyPattern = /^[A-Za-z0-9_-]{8,100}$/;
 
 type Out = { status: number; body: unknown };
 const idOnly = z.object({ id: z.string().min(1) }).loose();
+const caseDto = z.object({ id: z.string().min(1), status: z.string().nullish(), revision: z.string().nullish() }).loose();
 const docDto = z.object({
   id: z.string(), documentKind: z.string(), byteSize: z.number(), status: z.string(), uploadedAt: z.string().nullish(),
 }).loose();
@@ -145,9 +150,21 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
   const idem = (key: string) => ({ "idempotency-key": key });
 
   return {
-    async createCase(token: string, householdId: string): Promise<string> {
+    async createCase(token: string, householdId: string): Promise<{ id: string; status: string | null; revision: string | null }> {
       const r = await send("POST", "/api/v1/cases", token, { json: { householdId, triggerType: "user_requested_review" } });
-      return parse(idOnly, r.body).id;
+      const c = parse(caseDto, r.body);
+      return { id: c.id, status: c.status ?? null, revision: c.revision ?? null };
+    },
+    /** Moves the case one step. `expectedRevision` is the revision the caller last saw; a stale one is refused by the backend. */
+    async transitionCase(token: string, caseId: string, toStatus: string, expectedRevision: string): Promise<{ status: string | null; revision: string | null }> {
+      const r = await send("POST", `/api/v1/cases/${encodeURIComponent(caseId)}/transitions`, token, { json: { toStatus, expectedRevision } });
+      const c = parse(caseDto, r.body);
+      return { status: c.status ?? null, revision: c.revision ?? null };
+    },
+    /** Only for a case this app made before it kept the revision. Needs the backend's case-summary read consent. */
+    async readCase(token: string, caseId: string): Promise<{ status: string | null; revision: string | null }> {
+      const c = parse(caseDto, (await send("GET", `/api/v1/cases/${encodeURIComponent(caseId)}`, token)).body);
+      return { status: c.status ?? null, revision: c.revision ?? null };
     },
     /** Replay-safe: the same key returns the same grant. */
     async grant(token: string, g: { householdId: string; adultId: string; key: string; purpose: string; grantedToActor?: string; scope: { resourceType: string; resourceId: string | null; action: string; dataCategory: string; recipient?: string } }): Promise<string> {
@@ -206,8 +223,8 @@ export type DocumentsClient = ReturnType<typeof createDocumentsClient>;
 // ---- Sealed state (kv_docs) --------------------------------------------------------------------------------------------------
 
 type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode };
-/** c case, g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
-export type DocsState = { h: string; exp: number; c?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
+/** c case, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
+export type DocsState = { h: string; exp: number; c?: string; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
 
 export async function readDocsState(secret: string, session: SessionPayload): Promise<DocsState> {
   const v = openValue<DocsState>((await cookies()).get(DOCS_COOKIE)?.value, secret);
@@ -315,7 +332,10 @@ export async function uploadDocument(ctx: Ctx, f: { kind: string; filename: stri
   if (!ctx.state.g) throw new AppError(403, "CONSENT_REQUIRED");
   if (!(DOCUMENT_KINDS as readonly string[]).includes(f.kind) || !keyPattern.test(f.key)) throw new AppError(400, "INVALID_INPUT");
   if (!ctx.state.c) {
-    ctx.state.c = await ctx.client.createCase(ctx.session.t, ctx.session.h);
+    const made = await ctx.client.createCase(ctx.session.t, ctx.session.h);
+    ctx.state.c = made.id;
+    ctx.state.cs = made.status ?? undefined;
+    ctx.state.rv = made.revision ?? undefined;
     await writeDocsState(ctx.state, ctx.secret);
   }
   await ensureReadGrant(ctx);
@@ -453,7 +473,42 @@ export async function deleteDocument(ctx: Ctx, id: string): Promise<void> {
 
 /** Idempotency keys carry the reading grant, so consenting again after a withdrawal makes fresh grants instead of replaying revoked ones. */
 const gen = (state: DocsState) => (state.g ?? "none").slice(-8);
-const soft = (e: unknown) => e instanceof AppError && (e.status < 500 || e.code === "READING_UNAVAILABLE") && e.code !== "UNAUTHENTICATED";
+// A retryable "not ready" (another request moved the case) is tried again on the next poll, not turned into a final state.
+const soft = (e: unknown) => e instanceof AppError && (e.status < 500 || e.code === "READING_UNAVAILABLE") && e.code !== "UNAUTHENTICATED" && !(e.code === "NOT_READY" && e.retryable);
+
+/**
+ * The backend only queues an analysis run for a case in `processing`; a new case starts as `created` and nothing else moves it.
+ * Walks created -> collecting -> processing, carrying the revision each answer returns. Repeat calls do nothing once there.
+ * A case this app made before it kept the revision is read once; if that read is refused, the coded error reaches the page.
+ */
+async function ensureCaseProcessing(ctx: Ctx, caseId: string): Promise<void> {
+  if (ctx.state.cs === "processing") return;
+  const token = ctx.session.t;
+  if (!ctx.state.rv || !ctx.state.cs) {
+    const seen = await ctx.client.readCase(token, caseId);
+    ctx.state.cs = seen.status ?? undefined;
+    ctx.state.rv = seen.revision ?? undefined;
+    if (!ctx.state.rv || !ctx.state.cs) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  }
+  try {
+    while (ctx.state.cs !== "processing") {
+      const to = ctx.state.cs === "created" ? "collecting" : "processing";
+      const next = await ctx.client.transitionCase(token, caseId, to, ctx.state.rv as string);
+      if (!next.revision || !next.status) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+      ctx.state.cs = next.status;
+      ctx.state.rv = next.revision;
+      await writeDocsState(ctx.state, ctx.secret);
+    }
+  } catch (e) {
+    // A stale revision means another request moved the case. Forget ours so the next try reads it fresh.
+    if (e instanceof AppError && e.code === "NOT_READY") {
+      ctx.state.cs = undefined;
+      ctx.state.rv = undefined;
+      await writeDocsState(ctx.state, ctx.secret);
+    }
+    throw e;
+  }
+}
 
 /**
  * One idempotent step of the pipeline for a scanned document: per-document reading grant, OCR job, then analysis run,
@@ -513,6 +568,7 @@ export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Pro
           householdId, adultId, key: k("cover", id), purpose: "coverage_reconstruction",
           scope: { resourceType: "case", resourceId: ctx.state.c, action: "derive", dataCategory: "insurance_document" },
         });
+        await ensureCaseProcessing(ctx, ctx.state.c);
         e.w = await ctx.client.startAnalysisRun(token, ctx.state.c, e.cg, k("run", id));
       }
       e.m ??= await ctx.client.grant(token, {

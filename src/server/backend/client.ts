@@ -23,10 +23,11 @@ const identitySchema = z.object({
   returning: z.boolean(),
   household: z.object({ id: z.string() }).loose(),
   memberId: z.string(),
-  session: z.object({ token: z.string().min(16), expiresAt: z.string() }).loose(),
+  adultId: z.string().optional(),
+  session: z.object({ token: z.string().min(16), expiresAt: z.string(), adultUserId: z.string().optional() }).loose(),
 }).loose();
 
-export type SignedIn = { returning: boolean; householdId: string; memberId: string; token: string; expiresAt: string };
+export type SignedIn = { adultUserId?: string; returning: boolean; householdId: string; memberId: string; token: string; expiresAt: string };
 export type CreatedHousehold = { householdId: string; ownerMemberId: string; adultUserId: string; token: string; expiresAt: string };
 export type HouseholdView = z.infer<typeof matrixSchema>;
 
@@ -108,7 +109,7 @@ export function createBackendClient(opts: ClientOptions) {
       if (r.status === 401 || r.status === 403) throw new AppError(401, "UNAUTHENTICATED");
       if (r.status === 429) throw new AppError(429, "RATE_LIMITED", true);
       const d = parse(identitySchema, ok(r, false));
-      return { returning: d.returning, householdId: d.household.id, memberId: d.memberId, token: d.session.token, expiresAt: d.session.expiresAt };
+      return { adultUserId: d.adultId ?? d.session.adultUserId, returning: d.returning, householdId: d.household.id, memberId: d.memberId, token: d.session.token, expiresAt: d.session.expiresAt };
     },
     async household(token: string, id: string): Promise<HouseholdView> {
       return parse(matrixSchema, ok(await send("GET", `/api/v1/households/${encodeURIComponent(id)}`, { token }), true));
