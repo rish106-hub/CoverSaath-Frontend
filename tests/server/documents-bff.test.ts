@@ -35,7 +35,7 @@ const req = (path: string, method = "GET", o: { body?: BodyInit; headers?: Recor
 const upload = (bytes: Uint8Array = pdf(), headers: Record<string, string> = {}) =>
   req("/api/app/documents", "POST", {
     body: bytes as unknown as BodyInit,
-    headers: { "content-type": "application/pdf", "x-filename": encodeURIComponent("my policy.pdf"), "x-document-kind": "policy_wording", "idempotency-key": "key-12345678", ...headers },
+    headers: { "content-type": "application/pdf", "x-filename": encodeURIComponent("my policy.pdf"), "x-document-kind": "policy_wording", "x-policy-type": "personal_health", "idempotency-key": "key-12345678", ...headers },
   });
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 const DOC = { id: "doc-1", documentKind: "policy_wording", byteSize: 64, status: "accepted", uploadedAt: new Date().toISOString() };
@@ -160,6 +160,28 @@ describe("upload", () => {
     expect(declared.status).toBe(413);
     expect(calls).toHaveLength(0);
   });
+  it("sends the policy type when it creates the case and keeps it for later uploads", async () => {
+    await grant();
+    calls = [];
+    await docs.POST(upload(pdf(), { "x-policy-type": "term_life" }));
+    const made = calls.find((c) => c.url === "/api/v1/cases")!;
+    expect(made.body).toEqual({ householdId: "h1", triggerType: "user_requested_review", policyType: "term_life" });
+    calls = [];
+    await docs.POST(upload(pdf(65), { "idempotency-key": "key-87654321", "x-policy-type": "other" }));
+    expect(calls.filter((c) => c.url === "/api/v1/cases")).toHaveLength(0);
+    const listed = await (await docs.GET(req("/api/app/documents"))).json();
+    expect(listed.policyType).toBe("term_life");
+  });
+  it("requires a known policy type before anything reaches the backend", async () => {
+    await grant();
+    calls = [];
+    for (const value of [undefined, "", "life", "TERM_LIFE"]) {
+      const res = await docs.POST(upload(pdf(), { "x-policy-type": value as string }));
+      expect(res.status).toBe(400);
+      expect((await res.json()).code).toBe("INVALID_INPUT");
+    }
+    expect(calls).toHaveLength(0);
+  });
   it("rejects an unknown kind and a bad key", async () => {
     await grant();
     expect((await docs.POST(upload(pdf(), { "x-document-kind": "medical_record" }))).status).toBe(400);
@@ -220,7 +242,7 @@ describe("status, advance, delete", () => {
     expect(list.documents[0]).toMatchObject({ id: "doc-1", steps: { scanned: "done", reading: "active" }, busy: true });
   });
   it("lists nothing before a case exists", async () => {
-    expect(await (await docs.GET(req("/api/app/documents"))).json()).toEqual({ ok: true, consent: false, documents: [], largeUpload: false });
+    expect(await (await docs.GET(req("/api/app/documents"))).json()).toEqual({ ok: true, consent: false, documents: [], largeUpload: false, policyType: null });
   });
   it("waits while the scan is pending and marks the file quarantined when the scan does not come", async () => {
     await grant();
