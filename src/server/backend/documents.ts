@@ -10,7 +10,7 @@ import { runtime, readSession, json, failure } from "./index";
 import { openValue, sealValue, type SessionPayload } from "./session";
 import type { FetchLike } from "./client";
 import { guardedFetch } from "./resilience";
-import { BLOB_NAME, BLOB_TOKEN_TTL_MS, DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, deriveView, whyFromBackendCode, type DocView, type ProgressCode, type StructuringWhy } from "@/adapters/documents-contract";
+import { BLOB_NAME, BLOB_TOKEN_TTL_MS, DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, deriveView, policyType, whyFromBackendCode, type DocView, type PolicyType, type ProgressCode, type StructuringWhy } from "@/adapters/documents-contract";
 
 // BFF for the evidence pipeline: case, reading consent, upload, scan, OCR, structuring, delete, revoke (CoverSaath /api/v1).
 // Server only. The backend token stays in the sealed session cookie. The backend has no route that lists cases or consent grants,
@@ -162,8 +162,8 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
   const idem = (key: string) => ({ "idempotency-key": key });
 
   return {
-    async createCase(token: string, householdId: string): Promise<{ id: string; status: string | null; revision: string | null }> {
-      const r = await send("POST", "/api/v1/cases", token, { json: { householdId, triggerType: "user_requested_review" } });
+    async createCase(token: string, householdId: string, policyType: PolicyType): Promise<{ id: string; status: string | null; revision: string | null }> {
+      const r = await send("POST", "/api/v1/cases", token, { json: { householdId, triggerType: "user_requested_review", policyType } });
       const c = parse(caseDto, r.body);
       return { id: c.id, status: c.status ?? null, revision: c.revision ?? null };
     },
@@ -235,8 +235,8 @@ export type DocumentsClient = ReturnType<typeof createDocumentsClient>;
 // ---- Sealed state (kv_docs) --------------------------------------------------------------------------------------------------
 
 type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode; f?: StructuringWhy; fa?: number };
-/** c case, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
-export type DocsState = { h: string; exp: number; c?: string; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
+/** c case, pt the policy type the case was started with, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
+export type DocsState = { h: string; exp: number; c?: string; pt?: PolicyType; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
 
 export async function readDocsState(secret: string, session: SessionPayload): Promise<DocsState> {
   const v = openValue<DocsState>((await cookies()).get(DOCS_COOKIE)?.value, secret);
@@ -333,22 +333,27 @@ async function withReadGrant<T>(ctx: Ctx, run: () => Promise<T>): Promise<T> {
   }
 }
 
-export async function listDocuments(ctx: Ctx): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean }> {
+export async function listDocuments(ctx: Ctx): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean; policyType: PolicyType | null }> {
   const consent = Boolean(ctx.state.g);
   const largeUpload = largeUploadEnabled();
-  if (!ctx.state.c) return { consent, documents: [], largeUpload };
+  const kept = ctx.state.c ? ctx.state.pt ?? null : null;
+  if (!ctx.state.c) return { consent, documents: [], largeUpload, policyType: null };
   const c = ctx.state.c;
   const docs = await withReadGrant(ctx, () => ctx.client.list(ctx.session.t, c));
-  return { consent, documents: docs.filter((d) => d.status !== "deleted").map((d) => viewOf(d, ctx.state)), largeUpload };
+  return { consent, documents: docs.filter((d) => d.status !== "deleted").map((d) => viewOf(d, ctx.state)), largeUpload, policyType: kept };
 }
 
-export async function uploadDocument(ctx: Ctx, f: { kind: string; filename: string; key: string; bytes: Uint8Array }): Promise<DocView> {
+/** `policyType` is required. It is sent when the case is created; a case that already exists keeps the type it was started with. */
+export async function uploadDocument(ctx: Ctx, f: { kind: string; policyType: string; filename: string; key: string; bytes: Uint8Array }): Promise<DocView> {
   need(ctx.session);
   if (!ctx.state.g) throw new AppError(403, "CONSENT_REQUIRED");
   if (!(DOCUMENT_KINDS as readonly string[]).includes(f.kind) || !keyPattern.test(f.key)) throw new AppError(400, "INVALID_INPUT");
+  const type = policyType.safeParse(f.policyType);
+  if (!type.success) throw new AppError(400, "INVALID_INPUT");
   if (!ctx.state.c) {
-    const made = await ctx.client.createCase(ctx.session.t, ctx.session.h);
+    const made = await ctx.client.createCase(ctx.session.t, ctx.session.h, type.data);
     ctx.state.c = made.id;
+    ctx.state.pt = type.data;
     ctx.state.cs = made.status ?? undefined;
     ctx.state.rv = made.revision ?? undefined;
     await writeDocsState(ctx.state, ctx.secret);
@@ -454,7 +459,7 @@ async function readCapped(stream: ReadableStream<Uint8Array>, max: number): Prom
 }
 
 /** Reads the blob the browser uploaded, runs the same checks as the direct path, hands it to the backend and always deletes the blob. */
-export async function uploadFromBlob(ctx: Ctx, f: { pathname: string; kind: string; filename: string; key: string }): Promise<DocView> {
+export async function uploadFromBlob(ctx: Ctx, f: { pathname: string; kind: string; policyType: string; filename: string; key: string }): Promise<DocView> {
   assertLargeUpload(ctx);
   // Checked before anything is read or deleted, so another household's blob can never be touched.
   assertBlobPath(ctx.session, f.pathname);
@@ -465,7 +470,7 @@ export async function uploadFromBlob(ctx: Ctx, f: { pathname: string; kind: stri
     checkPdfUpload({ contentType, declaredLength: res.blob.size, max: MAX_LARGE_UPLOAD_BYTES });
     const bytes = await readCapped(res.stream, MAX_LARGE_UPLOAD_BYTES);
     checkPdfUpload({ contentType, declaredLength: null, bytes, max: MAX_LARGE_UPLOAD_BYTES });
-    return await uploadDocument(ctx, { kind: f.kind, filename: f.filename, key: f.key, bytes });
+    return await uploadDocument(ctx, { kind: f.kind, policyType: f.policyType, filename: f.filename, key: f.key, bytes });
   } catch (e) {
     if (e instanceof AppError) throw e;
     throw new AppError(502, "BACKEND_UNREACHABLE", true); // the Blob store failed: no store text reaches the page

@@ -1,4 +1,5 @@
 import type * as S from "./schemas";
+import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 
 export class AdapterError extends Error {
@@ -132,6 +133,11 @@ export interface OnboardingAdapter {
   save(next: UiOnboarding): Promise<UiOnboarding>;
 }
 
+export interface ReferenceAdapter {
+  /** Public product reference context (never the person's own cover). Rejects with AdapterError; REFERENCE_UNAVAILABLE means the reference data is not configured or stale. */
+  products(query: ReferenceQuery): Promise<ReferenceProducts>;
+}
+
 export type Adapters = {
   auth: AuthAdapter;
   access: AccessAdapter;
@@ -155,6 +161,7 @@ export type Adapters = {
   onboarding: OnboardingAdapter;
   scenarios: ScenarioAdapter;
   members: MemberAdapter;
+  reference: ReferenceAdapter;
 };
 
 export * from "./uploads";

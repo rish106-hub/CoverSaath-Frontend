@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AdapterError } from "@/adapters/types";
 import { backendUploads, makeRequestKey, precheck } from "@/adapters/uploads";
-import { DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, NOTE_TEXT, errorText, type DocView, type DocumentKind, type StepState } from "@/adapters/documents-contract";
+import { DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, NOTE_TEXT, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type DocView, type DocumentKind, type PolicyType, type StepState } from "@/adapters/documents-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import styles from "./UploadView.module.css";
 
@@ -20,7 +20,7 @@ const RETRY_NOTES = new Set(["READING_FAILED", "READING_UNAVAILABLE", "STRUCTURI
 const POLL_MS = 3000;
 const SLOW_POLL_MS = 15_000;
 
-type Queued = { id: string; file: File; kind: DocumentKind; key: string; state: "uploading" | "failed"; code?: string };
+type Queued = { id: string; file: File; kind: DocumentKind; policyType: PolicyType; key: string; state: "uploading" | "failed"; code?: string };
 const codeOf = (e: unknown) => (e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE");
 const mb = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 
@@ -50,6 +50,8 @@ export function UploadView() {
   const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [kind, setKind] = useState<DocumentKind>("policy_wording");
+  const [policyType, setPolicyType] = useState<PolicyType | "">("");
+  const [typeLocked, setTypeLocked] = useState(false);
   const [over, setOver] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
@@ -63,6 +65,7 @@ export function UploadView() {
       setConsent(r.consent);
       setLarge(r.largeUpload);
       setDocs(r.documents);
+      if (r.policyType) { setPolicyType(r.policyType); setTypeLocked(true); }
       setError(null);
     } catch (e) {
       setError(codeOf(e));
@@ -77,6 +80,7 @@ export function UploadView() {
       setConsent(r.consent);
       setLarge(r.largeUpload);
       setDocs(r.documents);
+      if (r.policyType) { setPolicyType(r.policyType); setTypeLocked(true); }
     }).catch((e) => {
       if (!live) return;
       setError(codeOf(e));
@@ -125,7 +129,7 @@ export function UploadView() {
   async function send(item: Queued) {
     setQueue((q) => q.map((x) => (x.id === item.id ? { ...x, state: "uploading", code: undefined } : x)));
     try {
-      const doc = await backendUploads.upload(item.file, item.kind, item.key);
+      const doc = await backendUploads.upload(item.file, item.kind, item.key, item.policyType);
       setQueue((q) => q.filter((x) => x.id !== item.id));
       setDocs((d) => (d.some((x) => x.id === doc.id) ? d.map((x) => (x.id === doc.id ? doc : x)) : [doc, ...d]));
     } catch (e) {
@@ -137,14 +141,18 @@ export function UploadView() {
 
   function add(files: FileList | File[]) {
     setError(null);
+    if (policyType === "") {
+      setError("POLICY_TYPE_REQUIRED");
+      return;
+    }
     for (const file of Array.from(files)) {
       const id = makeRequestKey();
       const pre = precheck(file, large ? MAX_LARGE_UPLOAD_BYTES : MAX_UPLOAD_BYTES);
       if (pre) {
-        setQueue((q) => [...q, { id, file, kind, key: id, state: "failed", code: pre }]);
+        setQueue((q) => [...q, { id, file, kind, policyType, key: id, state: "failed", code: pre }]);
         continue;
       }
-      const item: Queued = { id, file, kind, key: id, state: "uploading" };
+      const item: Queued = { id, file, kind, policyType, key: id, state: "uploading" };
       setQueue((q) => [...q, item]);
       void send(item);
     }
@@ -226,12 +234,19 @@ export function UploadView() {
             <p className={styles.lead}>Drop your policy here</p>
             <div className={styles.row}>
               <label className={styles.kind}>
+                <span>Type of policy</span>
+                <select value={policyType} required disabled={typeLocked} onChange={(e) => { setPolicyType(e.target.value as PolicyType | ""); setError(null); }} data-testid="policy-type">
+                  <option value="" disabled>Choose one</option>
+                  {POLICY_TYPES.map((t) => <option key={t} value={t}>{POLICY_TYPE_LABEL[t]}</option>)}
+                </select>
+              </label>
+              <label className={styles.kind}>
                 <span>This is a</span>
                 <select value={kind} onChange={(e) => setKind(e.target.value as DocumentKind)}>
                   {DOCUMENT_KINDS.map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
                 </select>
               </label>
-              <button type="button" className="k-btn k-btn--primary" onClick={() => input.current?.click()}>Choose a PDF</button>
+              <button type="button" className="k-btn k-btn--primary" disabled={policyType === ""} onClick={() => input.current?.click()}>Choose a PDF</button>
             </div>
             <input
               ref={input}

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => "/upload" }));
 
@@ -44,7 +44,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const pick = (files: File[]) => fireEvent.change(screen.getByTestId("file-input"), { target: { files } });
+const choose = (value = "personal_health") => fireEvent.change(screen.getByTestId("policy-type"), { target: { value } });
+const pick = (files: File[]) => {
+  const select = screen.getByTestId("policy-type") as HTMLSelectElement;
+  if (!select.disabled && select.value === "") choose();
+  fireEvent.change(screen.getByTestId("file-input"), { target: { files } });
+};
 const pdf = () => new File([new Uint8Array([37, 80, 68, 70, 45])], "policy.pdf", { type: "application/pdf" });
 
 const sized = (size: number) => new File([new Uint8Array(size)], "big.pdf", { type: "application/pdf" });
@@ -145,5 +150,41 @@ describe("UploadView", () => {
     render(<UploadView />);
     expect(await screen.findByText(/Please sign in again/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/signin");
+  });
+});
+
+describe("UploadView policy type", () => {
+  it("needs a policy type before a file can be chosen, then sends it", async () => {
+    consent = true;
+    let header: string | undefined;
+    const base = globalThis.fetch;
+    vi.stubGlobal("fetch", async (path: string, init: RequestInit = {}) => {
+      if (path === "/api/app/documents" && init.method === "POST") header = (init.headers as Record<string, string>)["x-policy-type"];
+      return base(path, init);
+    });
+    render(<UploadView />);
+    await screen.findByTestId("file-input");
+    expect(screen.getByRole("button", { name: "Choose a PDF" })).toBeDisabled();
+    expect(within(screen.getByTestId("policy-type")).getAllByRole("option").map((o) => o.textContent)).toEqual(["Choose one", "Personal health", "Group health", "Term life", "Other"]);
+    fireEvent.change(screen.getByTestId("file-input"), { target: { files: [pdf()] } });
+    expect(await screen.findByText("Choose the type of policy first.")).toBeInTheDocument();
+    expect(paths.filter((p) => p === "POST /api/app/documents")).toHaveLength(0);
+    choose("group_health");
+    expect(screen.getByRole("button", { name: "Choose a PDF" })).toBeEnabled();
+    pick([pdf()]);
+    await waitFor(() => expect(header).toBe("group_health"));
+  });
+
+  it("keeps the type the case was started with", async () => {
+    consent = true;
+    const base = globalThis.fetch;
+    vi.stubGlobal("fetch", async (path: string, init: RequestInit = {}) => {
+      if (path === "/api/app/documents" && (init.method ?? "GET") === "GET") return new Response(JSON.stringify({ ok: true, consent: true, documents: [], largeUpload: false, policyType: "term_life" }), { status: 200 });
+      return base(path, init);
+    });
+    render(<UploadView />);
+    await screen.findByTestId("file-input");
+    await waitFor(() => expect(screen.getByTestId("policy-type")).toBeDisabled());
+    expect((screen.getByTestId("policy-type") as HTMLSelectElement).value).toBe("term_life");
   });
 });
