@@ -58,7 +58,7 @@ const req = (path: string, method = "GET", o: { body?: BodyInit; headers?: Recor
 const post = (route: { POST: (r: Request) => Promise<Response> }, path: string, body: unknown, headers: Record<string, string> = {}) =>
   route.POST(req(path, "POST", { body: JSON.stringify(body), headers: { "content-type": "application/json", ...headers } }));
 const claim = (over: Record<string, unknown> = {}) =>
-  post(fromBlob, "/api/app/documents/from-blob", { pathname: NAME, filename: "big policy.pdf", kind: "policy_wording", key: "key-12345678", ...over });
+  post(fromBlob, "/api/app/documents/from-blob", { pathname: NAME, filename: "big policy.pdf", kind: "policy_wording", policyType: "group_health", key: "key-12345678", ...over });
 const tokenReq = (over: Record<string, unknown> = {}, headers: Record<string, string> = {}) =>
   post(tokenRoute, "/api/app/documents/blob-token", { type: "blob.generate-client-token", payload: { pathname: NAME, clientPayload: null, multipart: false }, ...over }, headers);
 

@@ -8,7 +8,7 @@ export const GET = (req: Request) => withDocuments(req, (ctx) => listDocuments(c
 
 /**
  * Upload one PDF as the raw request body (content-type application/pdf). Name, kind and a retry-safe key travel in headers:
- * x-filename (URI encoded), x-document-kind, idempotency-key. Up to 4 MB: the Vercel request body limit is 4.5 MB.
+ * x-filename (URI encoded), x-document-kind, x-policy-type (required), idempotency-key. Up to 4 MB: the Vercel request body limit is 4.5 MB.
  */
 export async function POST(req: Request): Promise<Response> {
   return withDocuments(req, async (ctx) => {
@@ -26,6 +26,7 @@ export async function POST(req: Request): Promise<Response> {
     }
     const document = await uploadDocument(ctx, {
       kind: req.headers.get("x-document-kind") ?? "policy_wording",
+      policyType: req.headers.get("x-policy-type") ?? "",
       filename,
       key: req.headers.get("idempotency-key") ?? "",
       bytes,

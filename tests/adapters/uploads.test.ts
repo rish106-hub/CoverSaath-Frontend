@@ -55,14 +55,14 @@ describe("large uploads", () => {
     });
     blobClient.upload.mockResolvedValue({ pathname: "x" });
     const file = bigFile();
-    const doc = await backendUploads.upload(file, "policy_schedule", "key-12345678");
+    const doc = await backendUploads.upload(file, "policy_schedule", "key-12345678", "personal_health");
     expect(doc.id).toBe("d1");
     const [pathname, body, opts] = blobClient.upload.mock.calls[0];
     expect(pathname).toMatch(new RegExp(`^${PREFIX}k-[A-Za-z0-9_-]+\\.pdf$`));
     expect(body).toBe(file);
     expect(opts).toMatchObject({ access: "private", handleUploadUrl: "/api/app/documents/blob-token", contentType: "application/pdf", headers: { "x-knowvia-app": "1" } });
     const claim = f.mock.calls.find((c) => c[0] === "/api/app/documents/from-blob")!;
-    expect(JSON.parse((claim[1] as RequestInit).body as string)).toEqual({ pathname, filename: "big policy.pdf", kind: "policy_schedule", key: "key-12345678" });
+    expect(JSON.parse((claim[1] as RequestInit).body as string)).toEqual({ pathname, filename: "big policy.pdf", kind: "policy_schedule", policyType: "personal_health", key: "key-12345678" });
     expect((claim[1] as RequestInit).headers).toMatchObject({ "x-knowvia-app": "1" });
     expect(f.mock.calls.some((c) => c[0] === "/api/app/documents" && (c[1] as RequestInit | undefined)?.method === "POST")).toBe(false);
   });
@@ -72,33 +72,33 @@ describe("large uploads", () => {
       "POST /api/app/documents/from-blob": { status: 201, body: { ok: true, document: view } },
     });
     blobClient.upload.mockResolvedValue({});
-    await backendUploads.upload(bigFile(), "policy_wording", "key-12345678");
-    await backendUploads.upload(bigFile(), "policy_wording", "key-12345678");
+    await backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health");
+    await backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health");
     expect(blobClient.upload.mock.calls[0][0]).not.toBe(blobClient.upload.mock.calls[1][0]);
   });
   it("reports FILE_TOO_LARGE when the server has no Blob store", async () => {
     route({ "GET /api/app/documents/blob-token": { status: 503, body: { ok: false, code: "UPLOAD_UNAVAILABLE", retryable: false } } });
-    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
     expect(blobClient.upload).not.toHaveBeenCalled();
   });
   it("passes on a refusal such as no consent or the demo", async () => {
     route({ "GET /api/app/documents/blob-token": { status: 403, body: { ok: false, code: "CONSENT_REQUIRED", retryable: false } } });
-    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "CONSENT_REQUIRED" });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "CONSENT_REQUIRED" });
     route({ "GET /api/app/documents/blob-token": { status: 403, body: { ok: false, code: "FORBIDDEN", retryable: false } } });
-    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(blobClient.upload).not.toHaveBeenCalled();
   });
   it("refuses over 15 MB and a wrong type without any call", async () => {
     const f = route({});
-    await expect(backendUploads.upload(bigFile(MAX_LARGE_UPLOAD_BYTES + 1), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
-    await expect(backendUploads.upload(new File([new Uint8Array(MAX_UPLOAD_BYTES + 1)], "a.png", { type: "image/png" }), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
+    await expect(backendUploads.upload(bigFile(MAX_LARGE_UPLOAD_BYTES + 1), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
+    await expect(backendUploads.upload(new File([new Uint8Array(MAX_UPLOAD_BYTES + 1)], "a.png", { type: "image/png" }), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
     expect(f).not.toHaveBeenCalled();
     expect(blobClient.upload).not.toHaveBeenCalled();
   });
   it("is retryable and skips the claim when the Blob upload fails", async () => {
     const f = route({ "GET /api/app/documents/blob-token": { status: 200, body: { ok: true, prefix: PREFIX } } });
     blobClient.upload.mockRejectedValue(new Error("network"));
-    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "BACKEND_UNREACHABLE", retryable: true });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "BACKEND_UNREACHABLE", retryable: true });
     expect(f.mock.calls.some((c) => c[0] === "/api/app/documents/from-blob")).toBe(false);
   });
   it("passes on the server's answer when the claim fails", async () => {
@@ -107,7 +107,7 @@ describe("large uploads", () => {
       "POST /api/app/documents/from-blob": { status: 404, body: { ok: false, code: "BLOB_MISSING", retryable: true } },
     });
     blobClient.upload.mockResolvedValue({});
-    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "BLOB_MISSING", retryable: true });
+    await expect(backendUploads.upload(bigFile(), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "BLOB_MISSING", retryable: true });
   });
   it("reports largeUpload from the list, false when absent", async () => {
     stub(200, { ok: true, consent: true, documents: [], largeUpload: true });
@@ -125,15 +125,15 @@ describe("backendUploads", () => {
   it("sends the file raw with the app header, key, kind and name", async () => {
     const f = stub(201, { ok: true, document: view });
     const file = new File([new Uint8Array([37, 80, 68, 70, 45])], "my policy.pdf", { type: "application/pdf" });
-    await backendUploads.upload(file, "policy_schedule", "key-12345678");
+    await backendUploads.upload(file, "policy_schedule", "key-12345678", "personal_health");
     const [url, init] = f.mock.calls[0];
     expect(url).toBe("/api/app/documents");
-    expect(init?.headers).toMatchObject({ "x-knowvia-app": "1", "content-type": "application/pdf", "x-document-kind": "policy_schedule", "idempotency-key": "key-12345678", "x-filename": "my%20policy.pdf" });
+    expect(init?.headers).toMatchObject({ "x-knowvia-app": "1", "content-type": "application/pdf", "x-document-kind": "policy_schedule", "x-policy-type": "personal_health", "idempotency-key": "key-12345678", "x-filename": "my%20policy.pdf" });
     expect(init?.body).toBe(file);
   });
   it("refuses a wrong file without calling the server", async () => {
     const f = stub(200, {});
-    await expect(backendUploads.upload(new File(["x"], "a.png", { type: "image/png" }), "policy_wording", "key-12345678")).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
+    await expect(backendUploads.upload(new File(["x"], "a.png", { type: "image/png" }), "policy_wording", "key-12345678", "personal_health")).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
     expect(f).not.toHaveBeenCalled();
   });
   it("turns a coded failure into an AdapterError with the retry flag", async () => {
