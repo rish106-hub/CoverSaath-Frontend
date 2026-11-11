@@ -26,6 +26,8 @@ const PAGE_MODULES: Record<string, () => Promise<{ default: (p: never) => unknow
   "/covers/add": () => import("@/app/(app)/covers/add/page"),
   "/covers/declarations": () => import("@/app/(app)/covers/declarations/page"),
   "/covers/review": () => import("@/app/(app)/covers/review/page"),
+  "/chat": () => import("@/app/(app)/chat/page"),
+  "/hospitals": () => import("@/app/(app)/hospitals/page"),
   "/stress-test": () => import("@/app/(app)/stress-test/page"),
   "/compare": () => import("@/app/(app)/compare/page"),
   "/review": () => import("@/app/(app)/review/page"),
