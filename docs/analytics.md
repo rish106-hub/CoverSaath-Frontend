@@ -18,3 +18,9 @@ Status: FOR LEGAL REVIEW. Engineering record, not legal advice. Off by default.
 - The backend S5 notices (`GET /api/v1/notices`, backend PR #72) define the disclosed purposes. Analytics must be itemised there as a purpose, with legal basis and retention, before `ANALYTICS_ENABLED=1` in any real environment. Until then keep it unset.
 - Add a processor contract for PostHog and a consent choice UI whose wording legal has approved.
 - The page CSP stays `connect-src 'self'`; no change is needed because the browser only calls this app.
+
+## Backend server-side events (CoverSaath ADR 0033)
+A second channel, separate from the browser proxy above. The backend sends nine allow-listed events (`cover_uploaded`, `insurer_confirmed`, `parse_completed`, `conflict_resolved`, `declaration_added`, `premium_recorded`, `chat_turn`, `voice_turn`, `hospital_search`) from its worker outbox to PostHog. The app sends nothing for them and holds no key for them.
+- `src/lib/analytics-allowlist.ts` mirrors the backend allowlist and names the consent scope of the backend `analytics` grant. `tests/lib/analytics-allowlist.test.ts` compares it with `tests/fixtures/backend-analytics-events.json`, a snapshot of the backend contract. Change the backend file, regenerate the snapshot, update the mirror in the same change.
+- The backend stores an event only when its `ANALYTICS_ENABLED` is exactly `true`, a salt is set, and the household holds an active `analytics` grant (purpose `analytics`, scope `household / share / usage_events / posthog`). Nothing in the app creates that grant yet: the consent choice UI and its legal wording come first (FOR LEGAL REVIEW).
+- `posthog-js` is deliberately not added: the browser never talks to PostHog (CSP `connect-src 'self'`), which the existing proxy already guarantees.
