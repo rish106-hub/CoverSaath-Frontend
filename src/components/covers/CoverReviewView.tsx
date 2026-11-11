@@ -161,6 +161,8 @@ export function CoverReviewView({ holding }: { holding?: string }) {
 
       <div className={s.row}>
         <Link className="k-btn k-btn--secondary" href="/covers/declarations">Declarations and money</Link>
+        <Link className="k-btn k-btn--secondary" href={id ? `/hospitals?holding=${encodeURIComponent(id)}` : "/hospitals"}>Network hospitals</Link>
+        <Link className="k-btn k-btn--secondary" href="/chat">Ask about your cover</Link>
       </div>
     </div>
   );

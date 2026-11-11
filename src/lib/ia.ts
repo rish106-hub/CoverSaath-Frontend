@@ -69,6 +69,16 @@ export const PAGES: readonly PageDef[] = [
     sections: [{ heading: "Needs your decision" }, { heading: "Limits" }, { heading: "Waiting" }, { heading: "Exclusions" }, { heading: "Cashless" }, { heading: "Money" }],
   },
   {
+    route: "/chat", href: "/chat", tab: "Ask about your cover", group: "cover",
+    title: "Ask about your cover", kicker: "Your family’s cover",
+    sections: [{ heading: "Conversation" }],
+  },
+  {
+    route: "/hospitals", href: "/hospitals", tab: "Network hospitals", group: "cover",
+    title: "Network hospitals", kicker: "Your family’s cover",
+    sections: [{ heading: "Search by pincode" }],
+  },
+  {
     route: "/policies/[id]", href: "/policies/northstar-floater", tab: "My policies", group: "cover",
     title: "Your policy, read clause by clause", kicker: "Answers for you",
     sections: [{ heading: "Answers from your policy" }, { heading: "Where the documents disagree" }],
