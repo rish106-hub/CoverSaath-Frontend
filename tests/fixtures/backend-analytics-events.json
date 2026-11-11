@@ -1,0 +1,147 @@
+{
+  "source": "CoverSaath src/contracts/analytics-events.js (ADR 0033)",
+  "purpose": "analytics",
+  "recipient": "posthog",
+  "consentScope": {
+    "resourceType": "household",
+    "action": "share",
+    "dataCategory": "usage_events",
+    "recipient": "posthog"
+  },
+  "events": {
+    "cover_uploaded": {
+      "kind": {
+        "kind": "enum",
+        "values": [
+          "policy_wording",
+          "policy_schedule",
+          "endorsement",
+          "member_card"
+        ]
+      },
+      "pages": {
+        "kind": "count",
+        "max": 2000
+      }
+    },
+    "insurer_confirmed": {
+      "candidate_rank": {
+        "kind": "count",
+        "max": 3
+      },
+      "manual": {
+        "kind": "boolean"
+      }
+    },
+    "parse_completed": {
+      "facts": {
+        "kind": "count",
+        "max": 10000
+      },
+      "conflicts": {
+        "kind": "count",
+        "max": 10000
+      },
+      "ms": {
+        "kind": "count",
+        "max": 86400000
+      }
+    },
+    "conflict_resolved": {
+      "choice": {
+        "kind": "enum",
+        "values": [
+          "primary",
+          "alternative"
+        ]
+      }
+    },
+    "declaration_added": {
+      "kind": {
+        "kind": "enum",
+        "values": [
+          "pre_existing_disease",
+          "prior_condition",
+          "habit",
+          "occupation",
+          "nominee",
+          "other"
+        ]
+      }
+    },
+    "premium_recorded": {
+      "channel": {
+        "kind": "enum",
+        "values": [
+          "upi",
+          "card",
+          "netbanking",
+          "cheque",
+          "cash",
+          "salary_deduction",
+          "unknown"
+        ]
+      },
+      "via": {
+        "kind": "enum",
+        "values": [
+          "self",
+          "agent",
+          "employer",
+          "bank"
+        ]
+      }
+    },
+    "chat_turn": {
+      "intent": {
+        "kind": "enum",
+        "values": [
+          "coverage_question",
+          "waiting_period",
+          "sub_limit",
+          "procedure_planning",
+          "claim_process",
+          "premium_due",
+          "document_help",
+          "general",
+          "unknown"
+        ]
+      },
+      "provider": {
+        "kind": "enum",
+        "values": [
+          "none",
+          "anthropic",
+          "gemini",
+          "deepseek",
+          "kimi",
+          "openai"
+        ]
+      },
+      "tokens": {
+        "kind": "count",
+        "max": 10000000
+      },
+      "ms": {
+        "kind": "count",
+        "max": 3600000
+      },
+      "facts_used": {
+        "kind": "count",
+        "max": 1000
+      }
+    },
+    "voice_turn": {
+      "seconds": {
+        "kind": "count",
+        "max": 3600
+      }
+    },
+    "hospital_search": {
+      "results": {
+        "kind": "count",
+        "max": 1000
+      }
+    }
+  }
+}
