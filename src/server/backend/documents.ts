@@ -85,6 +85,10 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   MEMORY_CONFLICT_ALREADY_RESOLVED: [409, "CONFLICT_ALREADY_RESOLVED", false],
   MEMORY_CONFLICT_CHOICE_INVALID: [400, "INVALID_INPUT", false],
   MEMORY_CONFLICT_STALE: [409, "CONFLICT_STALE", true],
+  // Declarations, premiums and dues (CoverSaath #104). Only the code is read.
+  DECLARATION_NOT_FOUND: [404, "NOT_FOUND", false],
+  PREMIUM_NOT_FOUND: [404, "NOT_FOUND", false],
+  REVISION_CONFLICT: [409, "REVISION_CONFLICT", false],
   // Chat threads and turns (backend ADR 0031). Only the code is read.
   MEMORY_DISABLED: [503, "MEMORY_DISABLED", false],
   CHAT_THREAD_NOT_FOUND: [404, "NOT_FOUND", false],
@@ -163,7 +167,7 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
   const base = opts.baseUrl.replace(/\/+$/, "");
   const doFetch: FetchLike = opts.fetch ?? guardedFetch;
 
-  async function send(method: "GET" | "POST" | "DELETE", path: string, token: string, o: { json?: unknown; headers?: Record<string, string>; bytes?: Uint8Array; timeoutMs?: number } = {}): Promise<Out> {
+  async function send(method: "GET" | "POST" | "PUT" | "DELETE", path: string, token: string, o: { json?: unknown; headers?: Record<string, string>; bytes?: Uint8Array; timeoutMs?: number } = {}): Promise<Out> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), o.timeoutMs ?? 8000);
     const headers: Record<string, string> = { accept: "application/json", authorization: `Bearer ${token}`, ...o.headers };

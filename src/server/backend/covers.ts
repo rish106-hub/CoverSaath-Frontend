@@ -2,10 +2,10 @@ import "server-only";
 import type { z } from "zod";
 import { AppError } from "./errors";
 import { need, withDocuments, withReadGrant, type Ctx } from "./documents";
-import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, factsIn, holdingsIn, premiumIn, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
+import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
 
-// BFF for the cover screens: holdings, product candidates, confirm product, facts, conflicts and their resolution, declarations and
-// premiums (CoverSaath /api/v1/holdings and /api/v1/households/{id}/holdings). Server only. The backend token stays in the sealed
+// BFF for the cover screens: holdings, product candidates, confirm product, facts, conflicts and their resolution, declarations,
+// premiums and dues and dues (CoverSaath /api/v1/holdings and /api/v1/households/{id}/...). Server only. The backend token stays in the sealed
 // session cookie and is read here, never by a client component. Every body is parsed against the contract before it leaves, so a
 // field the contract does not name is dropped, and a body that still looks like it holds a UIN is refused. Deterministic backend
 // code owns consent, eligibility and release; nothing here upgrades a status.
@@ -64,23 +64,78 @@ export async function resolveConflict(ctx: Ctx, holdingId: string, conflictId: s
   return out(shape(resolvedIn, r.body));
 }
 
-// ---- Declarations and premiums: BACKEND ROUTE MISSING ------------------------------------------------------------------------
-// The backend has repositories (declaration-repository.js, premium-repository.js) but no HTTP route yet. These handlers check the
-// input against the repository's own rules and then answer a coded NOT_AVAILABLE (501) without calling the backend. Nothing is
-// stored and no path is guessed. Replace the throw with a send() when the routes exist; the mock adapter already stores in memory.
+// ---- Declarations, premiums, dues (CoverSaath #104) ---------------------------------------------------------------------------
+// Household-scoped backend routes. Off unless the backend's HOLDINGS_ENABLED is on: 503 HOLDINGS_DISABLED comes back as the coded
+// HOLDINGS_DISABLED. The write consent (purpose profile_intake) is resolved by the backend itself; no grant id is sent from here, and a
+// missing one is the coded CONSENT_REQUIRED (403). Inputs are checked against the contract first, so a stray key is a 400 here.
+// Legal review: the consent grant, notice and wording for these records are FOR LEGAL REVIEW, not final.
 
-const missing = (): never => {
-  throw new AppError(501, "NOT_AVAILABLE");
+const hh = (ctx: Ctx): string => `/api/v1/households/${enc(ctx.session.h)}`;
+const filterId = (v: string | null): string | null => {
+  if (v === null || v === "") return null;
+  if (!PATH_ID.test(v)) throw new AppError(400, "INVALID_INPUT");
+  return v;
+};
+const qs = (o: Record<string, string | null>): string => {
+  const e = Object.entries(o).filter((x): x is [string, string] => x[1] !== null);
+  return e.length ? `?${e.map(([k, v]) => `${k}=${enc(v)}`).join("&")}` : "";
+};
+const input = <T extends z.ZodType>(schema: T, body: unknown): z.output<T> => {
+  const r = schema.safeParse(body);
+  if (!r.success) throw new AppError(400, "INVALID_INPUT");
+  return r.data;
 };
 
-export async function declarationsRoute(ctx: Ctx, method: "GET" | "POST", body: unknown): Promise<{ data: unknown }> {
+export async function listDeclarations(ctx: Ctx, memberId: string | null): Promise<{ data: unknown }> {
   need(ctx.session);
-  if (method === "POST" && !declarationIn.safeParse(body).success) throw new AppError(400, "INVALID_INPUT");
-  return missing();
+  const r = await ctx.client.send("GET", `${hh(ctx)}/declarations${qs({ memberId: filterId(memberId) })}`, ctx.session.t);
+  return out(shape(declarationsIn, r.body));
+}
+export async function createDeclaration(ctx: Ctx, body: unknown): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("POST", `${hh(ctx)}/declarations`, ctx.session.t, { json: input(declarationIn, body) });
+  return out(shape(declarationView, r.body));
+}
+export async function updateDeclaration(ctx: Ctx, declarationId: string, body: unknown): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("PUT", `${hh(ctx)}/declarations/${enc(declarationId)}`, ctx.session.t, { json: input(declarationUpdateIn, body) });
+  return out(shape(declarationView, r.body));
+}
+export async function deleteDeclaration(ctx: Ctx, declarationId: string): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("DELETE", `${hh(ctx)}/declarations/${enc(declarationId)}`, ctx.session.t);
+  return out(shape(deletedOut, r.body));
 }
 
-export async function premiumsRoute(ctx: Ctx, method: "GET" | "POST", body: unknown): Promise<{ data: unknown }> {
+export async function listPremiums(ctx: Ctx, holdingId: string | null): Promise<{ data: unknown }> {
   need(ctx.session);
-  if (method === "POST" && !premiumIn.safeParse(body).success) throw new AppError(400, "INVALID_INPUT");
-  return missing();
+  const r = await ctx.client.send("GET", `${hh(ctx)}/premiums${qs({ holdingId: filterId(holdingId) })}`, ctx.session.t);
+  return out(shape(premiumsIn, r.body));
+}
+export async function createPremium(ctx: Ctx, body: unknown): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("POST", `${hh(ctx)}/premiums`, ctx.session.t, { json: input(premiumIn, body) });
+  return out(shape(premiumView, r.body));
+}
+export async function deletePremium(ctx: Ctx, paymentId: string): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("DELETE", `${hh(ctx)}/premiums/${enc(paymentId)}`, ctx.session.t);
+  return out(shape(deletedOut, r.body));
+}
+
+export async function listDues(ctx: Ctx, holdingId: string | null, state: string | null): Promise<{ data: unknown }> {
+  need(ctx.session);
+  if (state !== null && !(DUE_STATES as readonly string[]).includes(state)) throw new AppError(400, "INVALID_INPUT");
+  const r = await ctx.client.send("GET", `${hh(ctx)}/premium-dues${qs({ holdingId: filterId(holdingId), state })}`, ctx.session.t);
+  return out(shape(duesIn, r.body));
+}
+export async function createDue(ctx: Ctx, body: unknown): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("POST", `${hh(ctx)}/premium-dues`, ctx.session.t, { json: input(dueIn, body) });
+  return out(shape(dueView, r.body));
+}
+export async function payDue(ctx: Ctx, dueId: string, body: unknown): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("POST", `${hh(ctx)}/premium-dues/${enc(dueId)}/pay`, ctx.session.t, { json: input(payDueIn, body) });
+  return out(shape(dueView, r.body));
 }

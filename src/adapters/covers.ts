@@ -1,9 +1,9 @@
+import type { z } from "zod";
 import { AdapterError, type CoversAdapter } from "./types";
 import { MAX_UPLOAD_BYTES } from "./documents-contract";
 import { backendUploads, precheck } from "./uploads";
-import { candidatesIn, confirmedIn, conflictsIn, coverOut, declarationView, factsIn, holdingsIn, premiumView, resolvedIn } from "./covers-contract";
+import { candidatesIn, confirmedIn, conflictsIn, coverOut, declarationView, deletedOut, declarationsIn, dueView, duesIn, factsIn, holdingsIn, premiumsIn, premiumView, resolvedIn } from "./covers-contract";
 import { hospitalsIn } from "./chat-contract";
-import { z } from "zod";
 
 // Browser client for the same-origin cover BFF (/api/app/covers). It never sees the backend token or the backend: every call goes to
 // this app's own routes. Uploads stay under the 4 MB the BFF takes (the large-file handoff is not used here).
@@ -12,7 +12,7 @@ const enc = encodeURIComponent;
 const POLL_MS = 2000;
 const POLL_TRIES = 8;
 
-async function call(path: string, init: { method?: "GET" | "POST"; json?: unknown; key?: string } = {}): Promise<unknown> {
+async function call(path: string, init: { method?: "GET" | "POST" | "PUT" | "DELETE"; json?: unknown; key?: string } = {}): Promise<unknown> {
   const headers: Record<string, string> = { "x-knowvia-app": "1" };
   if (init.json !== undefined) headers["content-type"] = "application/json";
   if (init.key) headers["idempotency-key"] = init.key;
@@ -75,17 +75,36 @@ export const backendCovers: CoversAdapter = {
   async resolveConflict(holdingId, conflictId, choice) {
     return parse(resolvedIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/conflicts/${enc(conflictId)}/resolve`, { method: "POST", json: choice }));
   },
-  async declarations() {
-    return parse(z.object({ declarations: z.array(declarationView) }), await call("/api/app/covers/declarations")).declarations;
+  async declarations(memberId) {
+    return parse(declarationsIn, await call(`/api/app/covers/declarations${memberId ? `?memberId=${enc(memberId)}` : ""}`)).declarations;
   },
   async addDeclaration(input) {
     return parse(declarationView, await call("/api/app/covers/declarations", { method: "POST", json: input }));
   },
-  async premiums() {
-    return parse(z.object({ premiums: z.array(premiumView) }), await call("/api/app/covers/premiums")).premiums;
+  async updateDeclaration(declarationId, input) {
+    return parse(declarationView, await call(`/api/app/covers/declarations/${enc(declarationId)}`, { method: "PUT", json: input }));
+  },
+  async deleteDeclaration(declarationId) {
+    parse(deletedOut, await call(`/api/app/covers/declarations/${enc(declarationId)}`, { method: "DELETE" }));
+  },
+  async premiums(holdingId) {
+    return parse(premiumsIn, await call(`/api/app/covers/premiums${holdingId ? `?holdingId=${enc(holdingId)}` : ""}`)).premiums;
   },
   async addPremium(input) {
     return parse(premiumView, await call("/api/app/covers/premiums", { method: "POST", json: input }));
+  },
+  async deletePremium(paymentId) {
+    parse(deletedOut, await call(`/api/app/covers/premiums/${enc(paymentId)}`, { method: "DELETE" }));
+  },
+  async premiumDues(filter = {}) {
+    const q = [filter.holdingId ? `holdingId=${enc(filter.holdingId)}` : "", filter.state ? `state=${enc(filter.state)}` : ""].filter(Boolean).join("&");
+    return parse(duesIn, await call(`/api/app/covers/premium-dues${q ? `?${q}` : ""}`)).dues;
+  },
+  async addPremiumDue(input) {
+    return parse(dueView, await call("/api/app/covers/premium-dues", { method: "POST", json: input }));
+  },
+  async payPremiumDue(dueId, input) {
+    return parse(dueView, await call(`/api/app/covers/premium-dues/${enc(dueId)}/pay`, { method: "POST", json: input }));
   },
   async hospitals(holdingId, pincode) {
     return parse(hospitalsIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/hospitals?pincode=${enc(pincode)}`)).hospitals;

@@ -1,7 +1,7 @@
-import { declarationsRoute, withCovers } from "@/server/backend/covers";
+import { createDeclaration, listDeclarations, withCovers } from "@/server/backend/covers";
 
 export const dynamic = "force-dynamic";
 
-// BACKEND ROUTE MISSING: answers NOT_AVAILABLE (501) after checking input. See src/server/backend/covers.ts.
-export const GET = (req: Request) => withCovers(req, (ctx) => declarationsRoute(ctx, "GET", null));
-export const POST = (req: Request) => withCovers(req, async (ctx) => declarationsRoute(ctx, "POST", await req.json().catch(() => null)), 201);
+/** Member declarations. Backend: /api/v1/households/{id}/declarations (CoverSaath #104). */
+export const GET = (req: Request) => withCovers(req, (ctx) => listDeclarations(ctx, new URL(req.url).searchParams.get("memberId")));
+export const POST = (req: Request) => withCovers(req, async (ctx) => createDeclaration(ctx, await req.json().catch(() => null)), 201);

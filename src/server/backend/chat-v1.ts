@@ -27,7 +27,7 @@ export async function createThread(ctx: Ctx, holdingId: string | null): Promise<
   return out(p.data);
 }
 
-/** Hospitals in the holding's network for one pincode. BACKEND ROUTE PENDING (S-C2): until it exists the backend answers 404 and the page shows a coded error. */
+/** Hospitals in the holding's network for one pincode. Backend route (S-C2, CoverSaath #105): off with the holdings flag (HOLDINGS_DISABLED, 503); a foreign or missing holding is a 404. */
 export async function listHospitals(ctx: Ctx, holdingId: string, pincode: string): Promise<{ data: unknown }> {
   need(ctx.session);
   const r = await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/hospitals?pincode=${enc(pincode)}`, ctx.session.t);
