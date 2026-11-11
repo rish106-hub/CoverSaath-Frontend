@@ -71,6 +71,20 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   EVIDENCE_DISABLED: [503, "EVIDENCE_DISABLED", false],
   POLICY_EVIDENCE_UNAVAILABLE: [409, "POLICY_EVIDENCE_UNAVAILABLE", false],
   IDEMPOTENCY_CONFLICT: [409, "IDEMPOTENCY_CONFLICT", false],
+  // Holdings and facts (backend ADR 0032). Only the code is read; the backend message never leaves.
+  HOLDINGS_DISABLED: [503, "HOLDINGS_DISABLED", false],
+  HOLDING_NOT_FOUND: [404, "NOT_FOUND", false],
+  HOLDING_NOT_READY: [409, "NOT_READY", true],
+  HOLDING_TRANSITION_INVALID: [409, "NOT_READY", false],
+  HOLDING_DOCUMENT_NOT_READABLE: [409, "NOT_READY", true],
+  HOLDING_REGISTRY_UNAVAILABLE: [503, "HOLDING_REGISTRY_UNAVAILABLE", true],
+  HOLDING_PRODUCT_INVALID: [400, "INVALID_INPUT", false],
+  HOLDING_PRODUCT_NOT_FOUND: [404, "NOT_FOUND", false],
+  HOLDING_PRODUCT_UNSUPPORTED: [422, "HOLDING_PRODUCT_UNSUPPORTED", false],
+  MEMORY_CONFLICT_NOT_FOUND: [404, "NOT_FOUND", false],
+  MEMORY_CONFLICT_ALREADY_RESOLVED: [409, "CONFLICT_ALREADY_RESOLVED", false],
+  MEMORY_CONFLICT_CHOICE_INVALID: [400, "INVALID_INPUT", false],
+  MEMORY_CONFLICT_STALE: [409, "CONFLICT_STALE", true],
 };
 
 /** The prior attempt's failure code on a restart-required answer. Only a pattern-valid code is read; any message is ignored. */
