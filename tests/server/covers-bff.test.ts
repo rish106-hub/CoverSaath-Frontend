@@ -22,6 +22,10 @@ import * as conflicts from "@/app/api/app/covers/holdings/[id]/conflicts/route";
 import * as resolve from "@/app/api/app/covers/holdings/[id]/conflicts/[cid]/resolve/route";
 import * as declarations from "@/app/api/app/covers/declarations/route";
 import * as premiums from "@/app/api/app/covers/premiums/route";
+import * as declarationRow from "@/app/api/app/covers/declarations/[did]/route";
+import * as premiumRow from "@/app/api/app/covers/premiums/[pid]/route";
+import * as dues from "@/app/api/app/covers/premium-dues/route";
+import * as duePay from "@/app/api/app/covers/premium-dues/[did]/pay/route";
 
 type Call = { url: string; method: string; headers: Record<string, string>; body: unknown };
 type Reply = { status: number; body: unknown };
@@ -169,19 +173,120 @@ describe("facts, conflicts, resolve", () => {
   });
 });
 
-describe("declarations and premiums (backend route missing)", () => {
-  it("checks input, then answers NOT_AVAILABLE without calling the backend", async () => {
-    const decl = { memberId: "m1", kind: "pre_existing_disease", label: "Example condition" };
-    const ok = await declarations.POST(req("/x", "POST", { json: decl }));
-    expect(ok.status).toBe(501);
-    expect((await ok.json()).code).toBe("NOT_AVAILABLE");
+const BASE = "/api/v1/households/h1";
+const decl = { memberId: "m1", kind: "pre_existing_disease", label: "Example condition" };
+const declRow = { id: "decl-1", memberId: "m1", holdingId: null, kind: "pre_existing_disease", label: "Example condition", declaredOn: null, declaredToInsurer: null, revision: 1, documentId: "x", createdAt: "t" };
+const payRow = { id: "ppay-1", holdingId: "holding-1", amountPaise: 1850000, paidOn: "2026-10-01", channel: "upi", paidVia: "self", agentName: null, agentCode: null, amountBand: "b", createdAt: "t" };
+const dueRow = { id: "pdue-1", holdingId: "holding-1", dueOn: "2026-12-01", amountPaise: 1850000, state: "expected", paidPaymentId: null, amountBand: "b" };
+
+describe("declarations (household-scoped backend routes)", () => {
+  it("lists, creates, updates and deletes on the exact backend paths with no consent grant sent", async () => {
+    routes[`GET ${BASE}/declarations`] = { status: 200, body: { declarations: [declRow], truncated: false } };
+    routes[`POST ${BASE}/declarations`] = { status: 201, body: declRow };
+    routes[`PUT ${BASE}/declarations/decl-1`] = { status: 200, body: { ...declRow, revision: 2 } };
+    routes[`DELETE ${BASE}/declarations/decl-1`] = { status: 200, body: { deleted: true } };
+    const list = await declarations.GET(req("/api/app/covers/declarations?memberId=m1"));
+    expect((await list.json()).data.declarations[0]).toEqual({ id: "decl-1", memberId: "m1", holdingId: null, kind: "pre_existing_disease", label: "Example condition", declaredOn: null, declaredToInsurer: null, revision: 1 });
+    expect(calls.at(-1)).toMatchObject({ method: "GET", url: `${BASE}/declarations?memberId=m1` });
+    const made = await declarations.POST(req("/x", "POST", { json: decl }));
+    expect(made.status).toBe(201);
+    const sent = calls.at(-1);
+    expect(sent).toMatchObject({ method: "POST", url: `${BASE}/declarations` });
+    expect(JSON.stringify(sent?.body)).not.toContain("consentGrantId");
+    const upd = await declarationRow.PUT(req("/x", "PUT", { json: { label: "Changed", ifMatch: 1 } }), p({ did: "decl-1" }));
+    expect(upd.status).toBe(200);
+    expect(calls.at(-1)).toMatchObject({ method: "PUT", url: `${BASE}/declarations/decl-1`, body: { label: "Changed", declaredOn: null, declaredToInsurer: null, ifMatch: 1 } });
+    const del = await declarationRow.DELETE(req("/x", "DELETE"), p({ did: "decl-1" }));
+    expect((await del.json()).data).toEqual({ deleted: true });
+    expect(calls.at(-1)).toMatchObject({ method: "DELETE", url: `${BASE}/declarations/decl-1` });
+  });
+  it("refuses bad input before the backend", async () => {
     expect((await declarations.POST(req("/x", "POST", { json: { ...decl, kind: "nope" } }))).status).toBe(400);
-    expect((await declarations.GET(req("/x"))).status).toBe(501);
+    expect((await declarations.POST(req("/x", "POST", { json: { ...decl, consentGrantId: "g" } }))).status).toBe(400);
+    expect((await declarationRow.PUT(req("/x", "PUT", { json: { label: "" } }), p({ did: "decl-1" }))).status).toBe(400);
+    expect((await declarationRow.DELETE(req("/x", "DELETE"), p({ did: "../x" }))).status).toBe(400);
+    expect((await declarations.GET(req("/x?memberId=a/b"))).status).toBe(400);
+    expect(calls).toHaveLength(0);
+  });
+  it("maps a stale revision and a missing row to coded errors", async () => {
+    routes[`PUT ${BASE}/declarations/decl-1`] = { status: 409, body: bk("REVISION_CONFLICT") };
+    const res = await declarationRow.PUT(req("/x", "PUT", { json: { label: "Changed", ifMatch: 0 } }), p({ did: "decl-1" }));
+    expect([res.status, (await res.json()).code]).toEqual([409, "REVISION_CONFLICT"]);
+    routes[`DELETE ${BASE}/declarations/decl-9`] = { status: 404, body: bk("DECLARATION_NOT_FOUND") };
+    const gone = await declarationRow.DELETE(req("/x", "DELETE"), p({ did: "decl-9" }));
+    expect([gone.status, (await gone.json()).code]).toEqual([404, "NOT_FOUND"]);
+  });
+});
+
+describe("premiums and dues (household-scoped backend routes)", () => {
+  it("lists, records and deletes premiums", async () => {
+    routes[`GET ${BASE}/premiums`] = { status: 200, body: { premiums: [payRow] } };
+    routes[`POST ${BASE}/premiums`] = { status: 201, body: payRow };
+    routes[`DELETE ${BASE}/premiums/ppay-1`] = { status: 200, body: { deleted: true } };
+    const list = await premiums.GET(req("/x?holdingId=holding-1"));
+    expect((await list.json()).data.premiums[0].amountBand).toBeUndefined();
+    expect(calls.at(-1)).toMatchObject({ method: "GET", url: `${BASE}/premiums?holdingId=holding-1` });
     const pay = { holdingId: "holding-1", amountPaise: 1850000, paidOn: "2026-10-01", channel: "upi", paidVia: "agent", agentName: "Example Agent", agentCode: "A-1" };
-    expect((await premiums.POST(req("/x", "POST", { json: pay }))).status).toBe(501);
+    expect((await premiums.POST(req("/x", "POST", { json: pay }))).status).toBe(201);
+    expect(calls.at(-1)).toMatchObject({ method: "POST", url: `${BASE}/premiums`, body: { holdingId: "holding-1", paidVia: "agent", payerMemberId: null } });
     expect((await premiums.POST(req("/x", "POST", { json: { ...pay, paidVia: "self" } }))).status).toBe(400); // agent only when paidVia is agent
     expect((await premiums.POST(req("/x", "POST", { json: { ...pay, amountPaise: 0 } }))).status).toBe(400);
+    expect((await premiumRow.DELETE(req("/x", "DELETE"), p({ pid: "ppay-1" }))).status).toBe(200);
+    expect(calls.at(-1)).toMatchObject({ method: "DELETE", url: `${BASE}/premiums/ppay-1` });
+  });
+  it("lists and creates dues, then marks one paid", async () => {
+    routes[`GET ${BASE}/premium-dues`] = { status: 200, body: { dues: [dueRow] } };
+    routes[`POST ${BASE}/premium-dues`] = { status: 201, body: dueRow };
+    routes[`POST ${BASE}/premium-dues/pdue-1/pay`] = { status: 200, body: { ...dueRow, state: "paid", paidPaymentId: "ppay-1" } };
+    const list = await dues.GET(req("/x?holdingId=holding-1&state=expected"));
+    expect((await list.json()).data.dues[0]).toEqual({ id: "pdue-1", holdingId: "holding-1", dueOn: "2026-12-01", amountPaise: 1850000, state: "expected", paidPaymentId: null });
+    expect(calls.at(-1)).toMatchObject({ method: "GET", url: `${BASE}/premium-dues?holdingId=holding-1&state=expected` });
+    expect((await dues.POST(req("/x", "POST", { json: { holdingId: "holding-1", dueOn: "2026-12-01", amountPaise: 1850000 } }))).status).toBe(201);
+    const paid = await duePay.POST(req("/x", "POST", { json: { paymentId: "ppay-1" } }), p({ did: "pdue-1" }));
+    expect((await paid.json()).data.state).toBe("paid");
+    expect(calls.at(-1)).toMatchObject({ method: "POST", url: `${BASE}/premium-dues/pdue-1/pay`, body: { paymentId: "ppay-1" } });
+  });
+  it("refuses bad dues input before the backend", async () => {
+    expect((await dues.GET(req("/x?state=late"))).status).toBe(400);
+    expect((await dues.POST(req("/x", "POST", { json: { holdingId: "holding-1", dueOn: "soon", amountPaise: 1 } }))).status).toBe(400);
+    expect((await duePay.POST(req("/x", "POST", { json: {} }), p({ did: "pdue-1" }))).status).toBe(400);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("holdings flag off and consent required", () => {
+  const writes: [string, () => Promise<Response>][] = [
+    [`POST ${BASE}/declarations`, () => declarations.POST(req("/x", "POST", { json: decl }))],
+    [`POST ${BASE}/premiums`, () => premiums.POST(req("/x", "POST", { json: { holdingId: "holding-1", amountPaise: 5, paidOn: "2026-10-01" } }))],
+    [`POST ${BASE}/premium-dues`, () => dues.POST(req("/x", "POST", { json: { holdingId: "holding-1", dueOn: "2026-12-01", amountPaise: 5 } }))],
+  ];
+  it("maps 503 HOLDINGS_DISABLED on every new read and write", async () => {
+    const off = { status: 503, body: bk("HOLDINGS_DISABLED") };
+    for (const k of ["GET /declarations", "POST /declarations", "PUT /declarations/decl-1", "DELETE /declarations/decl-1", "GET /premiums", "POST /premiums", "DELETE /premiums/ppay-1", "GET /premium-dues", "POST /premium-dues", "POST /premium-dues/pdue-1/pay"]) {
+      const [m, path] = k.split(" ");
+      routes[`${m} ${BASE}${path}`] = off;
+    }
+    routes["GET /api/v1/holdings/holding-1/hospitals"] = off;
+    const all: Promise<Response>[] = [
+      declarations.GET(req("/x")), ...writes.map(([, f]) => f()),
+      declarationRow.PUT(req("/x", "PUT", { json: { label: "L" } }), p({ did: "decl-1" })), declarationRow.DELETE(req("/x", "DELETE"), p({ did: "decl-1" })),
+      premiums.GET(req("/x")), premiumRow.DELETE(req("/x", "DELETE"), p({ pid: "ppay-1" })), dues.GET(req("/x")),
+      duePay.POST(req("/x", "POST", { json: { paymentId: "ppay-1" } }), p({ did: "pdue-1" })),
+    ];
+    for (const res of await Promise.all(all)) {
+      const text = await res.text();
+      expect(res.status).toBe(503);
+      expect(JSON.parse(text)).toMatchObject({ ok: false, code: "HOLDINGS_DISABLED" });
+      expect(text).not.toContain("must not leak");
+    }
+  });
+  it("maps 403 CONSENT_REQUIRED on writes and keeps the session", async () => {
+    for (const [k, run] of writes) {
+      routes[k.replace("POST ", "POST ").replace(" /", " /")] = { status: 403, body: bk("CONSENT_REQUIRED") };
+      const res = await run();
+      expect([res.status, (await res.json()).code]).toEqual([403, "CONSENT_REQUIRED"]);
+    }
+    expect(jar.has("kv_session")).toBe(true);
   });
 });
 
@@ -194,7 +299,7 @@ describe("no client component calls the backend", () => {
     }
   });
   it("no cover route runs on the edge", () => {
-    for (const f of ["src/app/api/app/covers/holdings/route.ts", "src/app/api/app/covers/declarations/route.ts", "src/app/api/app/covers/premiums/route.ts", "src/server/backend/covers.ts"]) {
+    for (const f of ["src/app/api/app/covers/holdings/route.ts", "src/app/api/app/covers/declarations/route.ts", "src/app/api/app/covers/premiums/route.ts", "src/app/api/app/covers/declarations/[did]/route.ts", "src/app/api/app/covers/premiums/[pid]/route.ts", "src/app/api/app/covers/premium-dues/route.ts", "src/app/api/app/covers/premium-dues/[did]/pay/route.ts", "src/server/backend/covers.ts"]) {
       expect(readFileSync(f, "utf8")).not.toMatch(/runtime\s*=\s*["']edge["']/);
     }
   });

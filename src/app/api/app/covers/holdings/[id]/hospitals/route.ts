@@ -6,7 +6,7 @@ import { PINCODE } from "@/adapters/chat-contract";
 
 export const dynamic = "force-dynamic";
 
-/** Network hospitals of one cover for a six-digit pincode. The backend route is pending (S-C2). */
+/** Network hospitals of one cover for a six-digit pincode. Backend: GET /api/v1/holdings/{id}/hospitals (CoverSaath #105). */
 export const GET = (req: Request, { params }: { params: Promise<{ id: string }> }) =>
   withCovers(req, async (ctx) => {
     const holdingId = pathId((await params).id);

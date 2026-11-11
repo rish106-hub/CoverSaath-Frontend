@@ -1,7 +1,7 @@
 import { AdapterError, type CoversAdapter } from "../types";
 import { MAX_UPLOAD_BYTES } from "../documents-contract";
 import { precheck } from "../uploads";
-import { containsUin, type Conflicts, type DeclarationView, type Facts, type PremiumView } from "../covers-contract";
+import { containsUin, type Conflicts, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
 import { PINCODE, type HospitalView } from "../chat-contract";
 import { delay } from "./delay";
 
@@ -29,8 +29,10 @@ const conflictsSeed = (): Conflicts["conflicts"] => [
 type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null };
 const holdings = new Map<string, { documentId: string; state: State }>();
 let n = 0;
+let seq = 0;
 const declarations: DeclarationView[] = [];
 const premiums: PremiumView[] = [];
+const dues: DueView[] = [];
 
 // Fictional hospitals for two seeded pincodes. Anything else has no network hospital, which is a valid answer.
 const HOSPITALS: Record<string, HospitalView[]> = {
@@ -115,17 +117,56 @@ export const mockCovers: CoversAdapter = {
     if (h.state.conflicts.every((x) => x.resolution !== "pending")) h.state.status = "ready";
     return delay({ conflictId, resolvingFactId: `decl-${conflictId}`, status: "user_confirmed" as const, holdingStatus: h.state.status, replay: false });
   },
-  declarations: () => delay(structuredClone(declarations)),
+  declarations: (memberId) => delay(structuredClone(declarations.filter((d) => !memberId || d.memberId === memberId))),
   addDeclaration: async (input) => {
-    const row: DeclarationView = { id: `declaration-mock-${declarations.length + 1}`, memberId: input.memberId, holdingId: input.holdingId ?? null, kind: input.kind, label: input.label, declaredOn: input.declaredOn ?? null, declaredToInsurer: input.declaredToInsurer ?? null };
+    const row: DeclarationView = { id: `declaration-mock-${++seq}`, memberId: input.memberId, holdingId: input.holdingId ?? null, kind: input.kind, label: input.label, declaredOn: input.declaredOn ?? null, declaredToInsurer: input.declaredToInsurer ?? null, revision: 1 };
     declarations.push(row);
-    return delay(row);
+    return delay(structuredClone(row));
   },
-  premiums: () => delay(structuredClone(premiums)),
+  updateDeclaration: async (declarationId, input) => {
+    const row = declarations.find((d) => d.id === declarationId);
+    if (!row) throw new AdapterError("NOT_FOUND");
+    if (input.ifMatch !== undefined && input.ifMatch !== row.revision) throw new AdapterError("REVISION_CONFLICT");
+    row.label = input.label;
+    row.declaredOn = input.declaredOn ?? null;
+    row.declaredToInsurer = input.declaredToInsurer ?? null;
+    row.revision = (row.revision ?? 0) + 1;
+    return delay(structuredClone(row));
+  },
+  deleteDeclaration: async (declarationId) => {
+    const i = declarations.findIndex((d) => d.id === declarationId);
+    if (i < 0) throw new AdapterError("NOT_FOUND");
+    declarations.splice(i, 1);
+    return delay(undefined);
+  },
+  premiums: (holdingId) => delay(structuredClone(premiums.filter((p) => !holdingId || p.holdingId === holdingId))),
   addPremium: async (input) => {
-    const row: PremiumView = { id: `premium-mock-${premiums.length + 1}`, holdingId: input.holdingId, amountPaise: input.amountPaise, paidOn: input.paidOn, channel: input.channel ?? "unknown", paidVia: input.paidVia ?? "self", agentName: input.agentName ?? null, agentCode: input.agentCode ?? null };
+    const row: PremiumView = { id: `premium-mock-${++seq}`, holdingId: input.holdingId, amountPaise: input.amountPaise, paidOn: input.paidOn, channel: input.channel ?? "unknown", paidVia: input.paidVia ?? "self", agentName: input.agentName ?? null, agentCode: input.agentCode ?? null };
     premiums.push(row);
-    return delay(row);
+    return delay(structuredClone(row));
+  },
+  deletePremium: async (paymentId) => {
+    const i = premiums.findIndex((p) => p.id === paymentId);
+    if (i < 0) throw new AdapterError("NOT_FOUND");
+    premiums.splice(i, 1);
+    return delay(undefined);
+  },
+  premiumDues: (filter = {}) => delay(structuredClone(dues.filter((d) => (!filter.holdingId || d.holdingId === filter.holdingId) && (!filter.state || d.state === filter.state)))),
+  // One due per holding and day: a repeat returns the existing one, as the backend does.
+  addPremiumDue: async (input) => {
+    const same = dues.find((d) => d.holdingId === input.holdingId && d.dueOn === input.dueOn);
+    if (same) return delay(structuredClone(same));
+    const row: DueView = { id: `due-mock-${++seq}`, holdingId: input.holdingId, dueOn: input.dueOn, amountPaise: input.amountPaise, state: "expected", paidPaymentId: null };
+    dues.push(row);
+    return delay(structuredClone(row));
+  },
+  payPremiumDue: async (dueId, input) => {
+    const row = dues.find((d) => d.id === dueId);
+    if (!row) throw new AdapterError("NOT_FOUND");
+    if (!premiums.some((p) => p.id === input.paymentId)) throw new AdapterError("NOT_FOUND");
+    row.state = "paid";
+    row.paidPaymentId = input.paymentId;
+    return delay(structuredClone(row));
   },
   hospitals: async (holdingId, pincode) => {
     if (holdingId && !holdings.has(holdingId)) throw new AdapterError("NOT_FOUND");

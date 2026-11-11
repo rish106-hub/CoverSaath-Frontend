@@ -93,7 +93,7 @@ export type ResolveConflict = z.infer<typeof resolveConflictIn>;
 export const resolvedIn = z.object({ conflictId: z.string().max(128), resolvingFactId: z.string().max(128), status: z.literal("user_confirmed"), holdingStatus: z.enum(HOLDING_STATUSES), replay: z.boolean() });
 export type Resolved = z.infer<typeof resolvedIn>;
 
-// ---- Declarations and premiums (backend route missing: input allow-lists mirror the repositories; see covers.ts) -----------------
+// ---- Declarations and premiums (CoverSaath #104: household-scoped routes; input allow-lists mirror the backend) -----------------
 
 export const DECLARATION_KINDS = ["pre_existing_disease", "prior_condition", "habit", "occupation", "nominee", "other"] as const;
 export type DeclarationKind = (typeof DECLARATION_KINDS)[number];
@@ -111,9 +111,19 @@ export const declarationIn = z
 export type DeclarationInput = z.input<typeof declarationIn>;
 export const declarationView = z.object({
   id: z.string().max(128), memberId: z.string().max(128), holdingId: z.string().max(128).nullish(), kind: z.enum(DECLARATION_KINDS),
-  label: z.string().max(500), declaredOn: z.string().max(20).nullish(), declaredToInsurer: z.boolean().nullish(),
+  label: z.string().max(500), declaredOn: z.string().max(20).nullish(), declaredToInsurer: z.boolean().nullish(), revision: z.number().int().nullish(),
 });
 export type DeclarationView = z.infer<typeof declarationView>;
+/** Edit of an existing declaration. `ifMatch` is the revision the person saw; a stale one is REVISION_CONFLICT. */
+export const declarationUpdateIn = z
+  .object({
+    label: z.string().trim().min(1).max(500),
+    declaredOn: day.nullable().default(null),
+    declaredToInsurer: z.boolean().nullable().default(null),
+    ifMatch: z.number().int().min(0).optional(),
+  })
+  .strict();
+export type DeclarationUpdateInput = z.input<typeof declarationUpdateIn>;
 
 export const PAYMENT_CHANNELS = ["upi", "card", "netbanking", "cheque", "cash", "salary_deduction", "unknown"] as const;
 export const PAID_VIA = ["self", "agent", "employer", "bank"] as const;
@@ -138,6 +148,24 @@ export const premiumView = z.object({
   channel: z.string().max(30), paidVia: z.string().max(20), agentName: z.string().max(120).nullish(), agentCode: z.string().max(120).nullish(),
 });
 export type PremiumView = z.infer<typeof premiumView>;
+
+export const DUE_STATES = ["expected", "paid", "overdue"] as const;
+export type DueState = (typeof DUE_STATES)[number];
+export const dueIn = z
+  .object({ holdingId: id, dueOn: day, amountPaise: z.number().int().min(1).max(100_000_000_000) })
+  .strict();
+export type DueInput = z.input<typeof dueIn>;
+export const dueView = z.object({
+  id: z.string().max(128), holdingId: z.string().max(128), dueOn: z.string().max(20), amountPaise: z.number().int(),
+  state: z.enum(DUE_STATES), paidPaymentId: z.string().max(128).nullish(),
+});
+export type DueView = z.infer<typeof dueView>;
+export const payDueIn = z.object({ paymentId: id }).strict();
+export type PayDueInput = z.input<typeof payDueIn>;
+export const declarationsIn = z.object({ declarations: z.array(declarationView).max(500) });
+export const premiumsIn = z.object({ premiums: z.array(premiumView).max(500) });
+export const duesIn = z.object({ dues: z.array(dueView).max(500) });
+export const deletedOut = z.object({ deleted: z.literal(true) });
 
 /** What every cover route answers: `{ ok: true, data }`. */
 export const coverOut = z.object({ ok: z.literal(true).optional(), data: z.unknown() });

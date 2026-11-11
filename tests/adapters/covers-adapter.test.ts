@@ -25,6 +25,8 @@ describe("real covers adapter", () => {
   it("turns a coded failure into an AdapterError and a body outside the contract into BACKEND_BAD_RESPONSE", async () => {
     vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: false, code: "NOT_AVAILABLE", retryable: false }), { status: 501 }));
     await expect(backendCovers.declarations()).rejects.toMatchObject({ code: "NOT_AVAILABLE" });
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: false, code: "HOLDINGS_DISABLED", retryable: false }), { status: 503 }));
+    await expect(backendCovers.premiumDues()).rejects.toMatchObject({ code: "HOLDINGS_DISABLED", retryable: true });
     vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: true, data: { facts: "nope" } }), { status: 200 }));
     await expect(backendCovers.facts("h1")).rejects.toMatchObject({ code: "BACKEND_BAD_RESPONSE" });
   });
@@ -66,6 +68,39 @@ describe("mock covers adapter", () => {
     expect(r.holdingStatus).toBe("ready");
     await expect(mockCovers.resolveConflict(holdingId as string, cf.id, { chosenFactId: cf.candidates[1]!.id })).rejects.toMatchObject({ code: "CONFLICT_ALREADY_RESOLVED" });
     expect((await mockCovers.facts(holdingId as string)).facts.every((f) => f.status !== "conflicting")).toBe(true);
+  });
+  it("real adapter sends the new verbs to same-origin paths only", async () => {
+    const seen: { url: string; method?: string }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      seen.push({ url, method: init.method });
+      const body = url.includes("premium-dues/") ? { id: "d", holdingId: "h", dueOn: "2026-12-01", amountPaise: 1, state: "paid" } : { deleted: true };
+      return new Response(JSON.stringify({ ok: true, data: body }), { status: 200 });
+    });
+    await backendCovers.deleteDeclaration("d1");
+    await backendCovers.deletePremium("p1");
+    await backendCovers.payPremiumDue("d1", { paymentId: "p1" });
+    expect(seen).toEqual([
+      { url: "/api/app/covers/declarations/d1", method: "DELETE" },
+      { url: "/api/app/covers/premiums/p1", method: "DELETE" },
+      { url: "/api/app/covers/premium-dues/d1/pay", method: "POST" },
+    ]);
+  });
+  it("mock covers edit, delete, dues and pay match the backend rules", async () => {
+    const d = await mockCovers.addDeclaration({ memberId: "m9", kind: "habit", label: "Example" });
+    await expect(mockCovers.updateDeclaration(d.id, { label: "Changed", ifMatch: 99 })).rejects.toMatchObject({ code: "REVISION_CONFLICT" });
+    const upd = await mockCovers.updateDeclaration(d.id, { label: "Changed", ifMatch: d.revision ?? 0 });
+    expect([upd.label, upd.revision]).toEqual(["Changed", 2]);
+    expect((await mockCovers.declarations("m9")).map((x) => x.id)).toEqual([d.id]);
+    await mockCovers.deleteDeclaration(d.id);
+    await expect(mockCovers.deleteDeclaration(d.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const pay = await mockCovers.addPremium({ holdingId: "h7", amountPaise: 500, paidOn: "2026-10-01" });
+    const due = await mockCovers.addPremiumDue({ holdingId: "h7", dueOn: "2026-12-01", amountPaise: 500 });
+    expect((await mockCovers.addPremiumDue({ holdingId: "h7", dueOn: "2026-12-01", amountPaise: 500 })).id).toBe(due.id);
+    await expect(mockCovers.payPremiumDue(due.id, { paymentId: "nope" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect((await mockCovers.payPremiumDue(due.id, { paymentId: pay.id })).state).toBe("paid");
+    expect(await mockCovers.premiumDues({ holdingId: "h7", state: "expected" })).toEqual([]);
+    await mockCovers.deletePremium(pay.id);
+    expect(await mockCovers.premiums("h7")).toEqual([]);
   });
   it("stores declarations and premiums in memory", async () => {
     const d = await mockCovers.addDeclaration({ memberId: "m1", kind: "habit", label: "Example habit" });

@@ -69,6 +69,17 @@ describe("backend guard", () => {
     expect(b.state().open).toBe(true);
   });
 
+  it("a coded HOLDINGS_DISABLED 503 is a flag that is off and never opens it; an uncoded 503 still does", async () => {
+    const guard = createGuard({ failureThreshold: 2 });
+    const off = guard.wrap(async () => new Response(JSON.stringify({ error: { code: "HOLDINGS_DISABLED" } }), { status: 503 }));
+    for (let i = 0; i < 5; i += 1) await off("u");
+    expect(guard.state()).toMatchObject({ consecutiveFailures: 0, open: false });
+    const down = guard.wrap(async () => new Response(JSON.stringify({ error: { code: "OTHER" } }), { status: 503 }));
+    await down("u");
+    await down("u");
+    expect(guard.state().open).toBe(true);
+  });
+
   it("repeated 500s from the identity sign-in POST cannot open the shared breaker", async () => {
     const guard = createGuard({ failureThreshold: 3 });
     const client = createBackendClient({ baseUrl: "http://api.test", bootstrapToken: "b", identityToken: "i".repeat(40), fetch: guard.wrap(async () => new Response("{}", { status: 500 })) });
