@@ -1,6 +1,7 @@
 import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
+import type { HospitalView, ThreadView, TurnEvent, TurnInput } from "./chat-contract";
 import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationView, Facts, HoldingView, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
 
@@ -170,6 +171,16 @@ export interface CoversAdapter {
   addDeclaration(input: DeclarationInput): Promise<DeclarationView>;
   premiums(): Promise<PremiumView[]>;
   addPremium(input: PremiumInput): Promise<PremiumView>;
+  /** Network hospitals of one cover for a six-digit pincode. The backend route is pending (S-C2). */
+  hospitals(holdingId: string, pincode: string): Promise<HospitalView[]>;
+}
+
+/** Chat about the household's cover: a thread, then streamed turns. The browser never sees the backend token or calls the backend. */
+export interface ChatAdapter {
+  /** Opens a thread, optionally about one cover. Rejects with AdapterError. */
+  startThread(holdingId?: string): Promise<ThreadView>;
+  /** Sends one turn and calls `onEvent` for each streamed event (meta, delta, answer, then done). Resolves after `done`; rejects with AdapterError if the turn fails or the stream stops early. Aborting `signal` ends it quietly. */
+  turn(threadId: string, input: TurnInput, onEvent: (e: TurnEvent) => void, signal?: AbortSignal): Promise<void>;
 }
 
 export type Adapters = {
@@ -198,6 +209,7 @@ export type Adapters = {
   reference: ReferenceAdapter;
   evidence: EvidenceAdapter;
   covers: CoversAdapter;
+  chat: ChatAdapter;
 };
 
 export * from "./uploads";

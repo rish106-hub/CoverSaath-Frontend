@@ -2,6 +2,7 @@ import { AdapterError, type CoversAdapter } from "../types";
 import { MAX_UPLOAD_BYTES } from "../documents-contract";
 import { precheck } from "../uploads";
 import { containsUin, type Conflicts, type DeclarationView, type Facts, type PremiumView } from "../covers-contract";
+import { PINCODE, type HospitalView } from "../chat-contract";
 import { delay } from "./delay";
 
 // In-memory stand-in for the cover routes, with the same rules as the BFF: PDF only, 4 MB cap, a coded error for each refusal, a
@@ -30,6 +31,16 @@ const holdings = new Map<string, { documentId: string; state: State }>();
 let n = 0;
 const declarations: DeclarationView[] = [];
 const premiums: PremiumView[] = [];
+
+// Fictional hospitals for two seeded pincodes. Anything else has no network hospital, which is a valid answer.
+const HOSPITALS: Record<string, HospitalView[]> = {
+  "400053": [
+    { id: "hosp-ex-1", name: "Example City Hospital", address: "12 Example Road, Andheri West", city: "Mumbai", pincode: "400053", cashless: true },
+    { id: "hosp-ex-2", name: "Northwind General Hospital", address: "4 Sample Lane, Andheri West", city: "Mumbai", pincode: "400053", cashless: true },
+    { id: "hosp-ex-3", name: "Lakeside Care Centre", address: "88 Lake View Marg, Andheri West", city: "Mumbai", pincode: "400053", cashless: false },
+  ],
+  "110001": [{ id: "hosp-ex-4", name: "Example Central Hospital", address: "1 Example Chowk", city: "New Delhi", pincode: "110001", cashless: true }],
+};
 
 const CANDIDATES = [
   { candidateId: "product-example-01", insurerName: "Example Insurer", productName: "Example Health Plan 01", rank: 1 },
@@ -115,5 +126,10 @@ export const mockCovers: CoversAdapter = {
     const row: PremiumView = { id: `premium-mock-${premiums.length + 1}`, holdingId: input.holdingId, amountPaise: input.amountPaise, paidOn: input.paidOn, channel: input.channel ?? "unknown", paidVia: input.paidVia ?? "self", agentName: input.agentName ?? null, agentCode: input.agentCode ?? null };
     premiums.push(row);
     return delay(row);
+  },
+  hospitals: async (holdingId, pincode) => {
+    if (holdingId && !holdings.has(holdingId)) throw new AdapterError("NOT_FOUND");
+    if (!PINCODE.test(pincode)) throw new AdapterError("INVALID_INPUT");
+    return delay(guard(structuredClone(HOSPITALS[pincode] ?? [])));
   },
 };
