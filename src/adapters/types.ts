@@ -1,6 +1,7 @@
 import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
+import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
 
 export class AdapterError extends Error {
   constructor(public code: string, public retryable = false) {
@@ -138,6 +139,22 @@ export interface ReferenceAdapter {
   products(query: ReferenceQuery): Promise<ReferenceProducts>;
 }
 
+export interface EvidenceAdapter {
+  /** What a document is, as the backend proposes it. Unverified until the owner confirms. Rejects with AdapterError. */
+  policyProfile(documentId: string): Promise<PassThrough>;
+  /** `key` is reused when the same statement is repeated, so a retry cannot record it twice. */
+  confirmPolicyProfile(documentId: string, statement: ConfirmPolicyProfile, key: string): Promise<PassThrough>;
+  ask(caseId: string, input: AskQuestion, key: string): Promise<PassThrough>;
+  answer(caseId: string, answerId: string): Promise<PassThrough>;
+  handoff(caseId: string, query: HandoffQuery): Promise<PassThrough>;
+  review(caseId: string, input: CatalogueReview, key: string): Promise<PassThrough>;
+  designateConfirmer(adultUserId: string): Promise<PassThrough>;
+  preview(body: CoveragePreview): Promise<PassThrough>;
+  sourcePack(caseId: string): Promise<PassThrough>;
+  deletionInventory(caseId: string): Promise<PassThrough>;
+  integrations(): Promise<PassThrough>;
+}
+
 export type Adapters = {
   auth: AuthAdapter;
   access: AccessAdapter;
@@ -162,6 +179,7 @@ export type Adapters = {
   scenarios: ScenarioAdapter;
   members: MemberAdapter;
   reference: ReferenceAdapter;
+  evidence: EvidenceAdapter;
 };
 
 export * from "./uploads";

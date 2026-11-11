@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { AppError } from "./errors";
 import { assertSameOrigin } from "./guard";
-import { runtime, readSession, json, failure } from "./index";
+import { runtime, readSession, clearSession, json, failure } from "./index";
 import { openValue, sealValue, type SessionPayload } from "./session";
 import type { FetchLike } from "./client";
 import { guardedFetch } from "./resilience";
@@ -60,6 +60,17 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   // An earlier structuring attempt failed or was interrupted. The backend wants an explicit restart (a new paid attempt).
   STRUCTURING_RESTART_REQUIRED: [409, "STRUCTURING_RESTART", false],
   INVALID_CASE_TRANSITION: [409, "NOT_READY", false],
+  // Policy profile (backend ADR 0024) and evidence answers.
+  POLICY_PROFILE_NOT_FOUND: [404, "POLICY_PROFILE_NOT_FOUND", false],
+  POLICY_PROFILE_VERSION_CONFLICT: [409, "POLICY_PROFILE_VERSION_CONFLICT", false],
+  POLICY_PROFILE_CONFLICTING_FACTS: [409, "POLICY_PROFILE_CONFLICTING_FACTS", false],
+  POLICY_PROFILE_NOT_READY: [409, "POLICY_PROFILE_NOT_READY", true],
+  POLICY_PROFILE_INVALID_UIN: [422, "POLICY_PROFILE_INVALID_UIN", false],
+  POLICY_PROFILE_INVALID: [422, "POLICY_PROFILE_INVALID", false],
+  POLICY_FACTS_DISABLED: [503, "POLICY_FACTS_DISABLED", false],
+  EVIDENCE_DISABLED: [503, "EVIDENCE_DISABLED", false],
+  POLICY_EVIDENCE_UNAVAILABLE: [409, "POLICY_EVIDENCE_UNAVAILABLE", false],
+  IDEMPOTENCY_CONFLICT: [409, "IDEMPOTENCY_CONFLICT", false],
 };
 
 /** The prior attempt's failure code on a restart-required answer. Only a pattern-valid code is read; any message is ignored. */
@@ -74,12 +85,22 @@ function backendCode(body: unknown): string | null {
 }
 
 /** A failed backend answer becomes a coded, client-safe error. Only the code and status are read; the message never leaves. */
-export function mapDocFailure(status: number, body: unknown): AppError {
+export function mapDocFailure(status: number, body: unknown, strict401 = false): AppError {
   const known = BY_CODE[backendCode(body) ?? ""];
   if (known) {
     const err = new AppError(known[0], known[1], known[2]);
     if (known[1] === "STRUCTURING_RESTART") err.reason = whyFromBackendCode(priorErrorCode(body));
     return err;
+  }
+  if (status === 401 && strict401) {
+    // Only the backend's own coded rejection of the bearer token ends the session. An uncoded 401 (a proxy, a gateway) says nothing
+    // about the session: it is a retryable failure and the person stays signed in.
+    if (backendCode(body) === "AUTHENTICATION_REQUIRED") {
+      const ended = new AppError(401, "UNAUTHENTICATED");
+      ended.clearSession = true;
+      return ended;
+    }
+    return new AppError(502, "BACKEND_UNREACHABLE", true);
   }
   if (status === 401) return new AppError(401, "UNAUTHENTICATED");
   if (status === 403) return new AppError(403, "FORBIDDEN");
@@ -118,7 +139,9 @@ const docDto = z.object({
 }).loose();
 type BackendDocDto = z.infer<typeof docDto>;
 
-export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike }) {
+type GrantScope = { resourceType: string; resourceId: string | null; action: string; dataCategory: string; recipient?: string };
+
+export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike; strict401?: boolean }) {
   const base = opts.baseUrl.replace(/\/+$/, "");
   const doFetch: FetchLike = opts.fetch ?? guardedFetch;
 
@@ -143,7 +166,7 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
       } catch {
         if (res.ok) throw new AppError(502, "BACKEND_BAD_RESPONSE");
       }
-      if (res.status < 200 || res.status >= 300) throw mapDocFailure(res.status, parsed);
+      if (res.status < 200 || res.status >= 300) throw mapDocFailure(res.status, parsed, opts.strict401 === true);
       return { status: res.status, body: parsed };
     } catch (e) {
       if (e instanceof AppError) throw e;
@@ -162,6 +185,8 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
   const idem = (key: string) => ({ "idempotency-key": key });
 
   return {
+    /** For the evidence routes (src/server/backend/evidence.ts): same guarded send, same coded failures. */
+    send,
     async createCase(token: string, householdId: string, policyType: PolicyType): Promise<{ id: string; status: string | null; revision: string | null }> {
       const r = await send("POST", "/api/v1/cases", token, { json: { householdId, triggerType: "user_requested_review", policyType } });
       const c = parse(caseDto, r.body);
@@ -179,10 +204,10 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
       return { status: c.status ?? null, revision: c.revision ?? null };
     },
     /** Replay-safe: the same key returns the same grant. */
-    async grant(token: string, g: { householdId: string; adultId: string; key: string; purpose: string; grantedToActor?: string; scope: { resourceType: string; resourceId: string | null; action: string; dataCategory: string; recipient?: string } }): Promise<string> {
+    async grant(token: string, g: { householdId: string; adultId: string; key: string; purpose: string; grantedToActor?: string; scope: GrantScope; scopes?: GrantScope[] }): Promise<string> {
       const r = await send("POST", "/api/v1/consents", token, {
         headers: idem(g.key),
-        json: { householdId: g.householdId, subjectAdultId: g.adultId, purpose: g.purpose, ...(g.grantedToActor ? { grantedToActor: g.grantedToActor } : {}), evidenceMethod: "typed", scopes: [g.scope] },
+        json: { householdId: g.householdId, subjectAdultId: g.adultId, purpose: g.purpose, ...(g.grantedToActor ? { grantedToActor: g.grantedToActor } : {}), evidenceMethod: "typed", scopes: g.scopes ?? [g.scope] },
       });
       return parse(idOnly, r.body).id;
     },
@@ -235,8 +260,8 @@ export type DocumentsClient = ReturnType<typeof createDocumentsClient>;
 // ---- Sealed state (kv_docs) --------------------------------------------------------------------------------------------------
 
 type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode; f?: StructuringWhy; fa?: number };
-/** c case, pt the policy type the case was started with, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet. */
-export type DocsState = { h: string; exp: number; c?: string; pt?: PolicyType; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; d: Record<string, DocState> };
+/** c case, pt the policy type the case was started with, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet, q grants for questions about documents (revoked with the rest). */
+export type DocsState = { h: string; exp: number; c?: string; pt?: PolicyType; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; q?: string[]; d: Record<string, DocState> };
 
 export async function readDocsState(secret: string, session: SessionPayload): Promise<DocsState> {
   const v = openValue<DocsState>((await cookies()).get(DOCS_COOKIE)?.value, secret);
@@ -258,7 +283,7 @@ export async function writeDocsState(state: DocsState, secret: string): Promise<
 
 export type Ctx = { client: DocumentsClient; session: SessionPayload; state: DocsState; secret: string };
 
-const need = (s: SessionPayload): string => {
+export const need = (s: SessionPayload): string => {
   if (!s.a) throw new AppError(401, "UNAUTHENTICATED"); // session made before documents existed: sign in again
   return s.a;
 };
@@ -285,6 +310,7 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
   const ids = [...(ctx.state.x ?? [])];
   if (ctx.state.g) ids.push(ctx.state.g);
   if (ctx.state.v) ids.push(ctx.state.v);
+  ids.push(...(ctx.state.q ?? []));
   for (const e of Object.values(ctx.state.d)) ids.push(...[e.s, e.m, e.cg].filter((x): x is string => Boolean(x)));
   const left: string[] = [];
   for (const id of ids) {
@@ -297,6 +323,7 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
   }
   ctx.state.g = undefined;
   ctx.state.v = undefined;
+  ctx.state.q = undefined;
   ctx.state.d = {};
   ctx.state.x = left.length > 0 ? left : undefined;
   await writeDocsState(ctx.state, ctx.secret);
@@ -322,7 +349,7 @@ export async function ensureReadGrant(ctx: Ctx, renew = false): Promise<void> {
 }
 
 /** Runs a case read; if the backend says the read grant is missing, makes a fresh one and tries once more. */
-async function withReadGrant<T>(ctx: Ctx, run: () => Promise<T>): Promise<T> {
+export async function withReadGrant<T>(ctx: Ctx, run: () => Promise<T>): Promise<T> {
   await ensureReadGrant(ctx);
   try {
     return await run();
@@ -492,7 +519,7 @@ export async function deleteDocument(ctx: Ctx, id: string): Promise<void> {
 }
 
 /** Idempotency keys carry the reading grant, so consenting again after a withdrawal makes fresh grants instead of replaying revoked ones. */
-const gen = (state: DocsState) => (state.g ?? "none").slice(-8);
+export const gen = (state: DocsState) => (state.g ?? "none").slice(-8);
 // A retryable "not ready" (another request moved the case) is tried again on the next poll, not turned into a final state.
 const soft = (e: unknown) => e instanceof AppError && (e.status < 500 || e.code === "READING_UNAVAILABLE") && e.code !== "UNAUTHENTICATED" && !(e.code === "NOT_READY" && e.retryable);
 
@@ -624,16 +651,18 @@ export async function advanceDocument(ctx: Ctx, id: string, retry: boolean): Pro
 
 // ---- Route wrapper -----------------------------------------------------------------------------------------------------------
 
-export async function withDocuments(req: Request, run: (ctx: Ctx) => Promise<unknown>, status = 200): Promise<Response> {
+export async function withDocuments(req: Request, run: (ctx: Ctx) => Promise<unknown>, status = 200, opts: { strict401?: boolean } = {}): Promise<Response> {
   try {
     assertSameOrigin(req);
     const { config } = runtime();
     const session = await readSession(config.cookieSecret);
     if (!session) throw new AppError(401, "UNAUTHENTICATED");
     const state = await readDocsState(config.cookieSecret, session);
-    const out = await run({ client: createDocumentsClient({ baseUrl: config.apiUrl }), session, state, secret: config.cookieSecret });
+    const out = await run({ client: createDocumentsClient({ baseUrl: config.apiUrl, strict401: opts.strict401 }), session, state, secret: config.cookieSecret });
     return json({ ok: true, ...(out && typeof out === "object" ? out : {}) }, status);
   } catch (e) {
+    // The backend itself said the token is finished: end the session here too, so the page sends the person to sign in.
+    if (e instanceof AppError && e.clearSession) await clearSession().catch(() => undefined);
     return failure(e);
   }
 }

@@ -22,3 +22,11 @@ Short log of choices that go beyond [build-spec.md](build-spec.md).
 - Emergency is light by default (root `data-theme="light"`); there is no forced dark theme. Its fixed colours (white e-card, call tiles) are covered by the contrast test in both themes.
 - Copy fix found by the banned-words test: "Knowvia can draft the message" became "Knowvia can write the message".
 - Playwright specs live in `e2e/`. `@playwright/test` was already a devDependency; browsers are not installed by this repo's setup.
+
+## BFF consolidation (S-B3)
+
+- This app is the only BFF. The evidence routes the website used to proxy (policy profile, questions, decision catalogue and reviews, coverage preview, source pack, deletion inventory, integrations) now live here, in `src/server/backend/evidence.ts`, with browser and mock adapters in `src/adapters/evidence.ts` and `src/adapters/mock/evidence.ts`. The backend is the only database writer: this app has no `pg` dependency.
+- Case, consent, upload, OCR and structuring routes were already here (`/api/app/documents/*`); the website's duplicates of them were not ported.
+- Evidence routes end the session only on the backend's coded `AUTHENTICATION_REQUIRED` 401. An uncoded 401 (proxy, gateway) is a retryable `BACKEND_UNREACHABLE` and keeps the session.
+- A question grant (document set, model recipient) is made server-side with a replay-safe key and kept in the sealed docs state, so withdrawing the reading consent revokes it. A person can only name themselves as a catalogue confirmer. Every case-scoped route refuses a case that is not the one this session made.
+- PDF upload through the BFF stays capped at 4 MB (Vercel request body limit) with the coded `FILE_TOO_LARGE`.
