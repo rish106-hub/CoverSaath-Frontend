@@ -85,6 +85,10 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   MEMORY_CONFLICT_ALREADY_RESOLVED: [409, "CONFLICT_ALREADY_RESOLVED", false],
   MEMORY_CONFLICT_CHOICE_INVALID: [400, "INVALID_INPUT", false],
   MEMORY_CONFLICT_STALE: [409, "CONFLICT_STALE", true],
+  // Chat threads and turns (backend ADR 0031). Only the code is read.
+  MEMORY_DISABLED: [503, "MEMORY_DISABLED", false],
+  CHAT_THREAD_NOT_FOUND: [404, "NOT_FOUND", false],
+  CHAT_REQUEST_INVALID: [400, "INVALID_INPUT", false],
 };
 
 /** The prior attempt's failure code on a restart-required answer. Only a pattern-valid code is read; any message is ignored. */
