@@ -148,5 +148,14 @@ export const ERROR_TEXT: Record<string, string> = {
   BACKEND_TIMEOUT: "That took too long. Try again.",
   UNAUTHENTICATED: "Please sign in again.",
   NOT_FOUND: "We could not find that document.",
+  HOLDINGS_DISABLED: "Cover details are not switched on yet.",
+  HOLDING_REGISTRY_UNAVAILABLE: "The list of insurers is not ready yet. Try again in a moment.",
+  HOLDING_PRODUCT_UNSUPPORTED: "That plan cannot be chosen here. Pick another or choose Something else.",
+  NOT_READY: "Still being read. Check again in a moment.",
+  CONFLICT_ALREADY_RESOLVED: "This one is already settled.",
+  CONFLICT_STALE: "Things changed while you were looking. Refresh and choose again.",
+  NOT_AVAILABLE: "This part is not available yet.",
+  INVALID_INPUT: "Check what you entered and try again.",
+  POLICY_PROFILE_VERSION_CONFLICT: "Things changed while you were looking. Refresh and try again.",
 };
 export const errorText = (code: string) => ERROR_TEXT[code] ?? "Something went wrong. Try again.";
