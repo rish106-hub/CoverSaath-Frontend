@@ -153,8 +153,11 @@ describe("hospitals", () => {
     jsonReply = { status: 200, body: { hospitals: [{ id: "h1", name: `Plan ${FAKE_UIN}`, cashless: true }] } };
     expect((await hospitals.GET(req("/x?pincode=400053", "GET"), P("hold-1"))).status).toBe(502);
   });
-  it("answers a coded error while the backend route is pending", async () => {
-    jsonReply = { status: 404, body: { error: { code: "ROUTE_NOT_FOUND" } } };
+  it("answers 503 HOLDINGS_DISABLED while the flag is off, and the same 404 for a foreign holding", async () => {
+    jsonReply = { status: 503, body: { error: { code: "HOLDINGS_DISABLED" } } };
+    const off = await hospitals.GET(req("/x?pincode=400053", "GET"), P("hold-1"));
+    expect([off.status, (await off.json()).code]).toEqual([503, "HOLDINGS_DISABLED"]);
+    jsonReply = { status: 404, body: { error: { code: "HOLDING_NOT_FOUND" } } };
     const res = await hospitals.GET(req("/x?pincode=400053", "GET"), P("hold-1"));
     expect(res.status).toBe(404);
     expect((await res.json()).code).toBe("NOT_FOUND");

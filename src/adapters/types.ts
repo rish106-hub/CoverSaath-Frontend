@@ -2,7 +2,7 @@ import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 import type { HospitalView, ThreadView, TurnEvent, TurnInput } from "./chat-contract";
-import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationView, Facts, HoldingView, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
+import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingView, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
 
 export class AdapterError extends Error {
@@ -167,11 +167,18 @@ export interface CoversAdapter {
   facts(holdingId: string): Promise<Facts>;
   conflicts(holdingId: string): Promise<Conflicts>;
   resolveConflict(holdingId: string, conflictId: string, choice: ResolveConflict): Promise<Resolved>;
-  declarations(): Promise<DeclarationView[]>;
+  declarations(memberId?: string): Promise<DeclarationView[]>;
   addDeclaration(input: DeclarationInput): Promise<DeclarationView>;
-  premiums(): Promise<PremiumView[]>;
+  updateDeclaration(declarationId: string, input: DeclarationUpdateInput): Promise<DeclarationView>;
+  deleteDeclaration(declarationId: string): Promise<void>;
+  premiums(holdingId?: string): Promise<PremiumView[]>;
   addPremium(input: PremiumInput): Promise<PremiumView>;
-  /** Network hospitals of one cover for a six-digit pincode. The backend route is pending (S-C2). */
+  deletePremium(paymentId: string): Promise<void>;
+  premiumDues(filter?: { holdingId?: string; state?: DueState }): Promise<DueView[]>;
+  addPremiumDue(input: DueInput): Promise<DueView>;
+  /** Marks a due paid by an already recorded premium payment. */
+  payPremiumDue(dueId: string, input: PayDueInput): Promise<DueView>;
+  /** Network hospitals of one cover for a six-digit pincode. */
   hospitals(holdingId: string, pincode: string): Promise<HospitalView[]>;
 }
 
