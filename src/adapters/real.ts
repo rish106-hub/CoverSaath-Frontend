@@ -7,6 +7,7 @@ import { mockAdapters } from "./mock";
 import { backendReference } from "./reference";
 import { backendEvidence } from "./evidence";
 import { backendCovers } from "./covers";
+import { backendChat } from "./threads";
 import { backendAssistant } from "./chat";
 import { createGnaniVoice } from "@/agent/voice-gnani";
 import { detectWalletPlatform } from "@/lib/wallet-detect";
@@ -68,4 +69,5 @@ export const realAdapters: Adapters = {
   reference: backendReference,
   evidence: backendEvidence,
   covers: backendCovers,
+  chat: backendChat,
 };

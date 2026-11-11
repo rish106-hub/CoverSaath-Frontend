@@ -7,6 +7,7 @@ import { mockPreferences, mockOnboarding } from "./user-data";
 import { mockReference } from "./reference";
 import { mockEvidence } from "./evidence";
 import { mockCovers } from "./covers";
+import { mockChat } from "./chat";
 import { mockMembers, mockScenarios } from "./scenarios";
 import { respond } from "@/agent/responder";
 import { webVoice } from "@/agent/voice";
@@ -93,4 +94,5 @@ export const mockAdapters: Adapters = {
   reference: mockReference,
   evidence: mockEvidence,
   covers: mockCovers,
+  chat: mockChat,
 };
