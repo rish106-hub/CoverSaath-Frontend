@@ -115,6 +115,17 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("What is the waiting period?", ["Waiting", "Read from your document", "Shown with the page it came from"]),
     ex("Add my declarations", ["Declarations", "Health details and premium", "Opening Declarations and money"], "/covers/declarations", "Open declarations"),
   ] },
+  // Chat and hospitals (S-C1).
+  "/chat": { route: "/chat", page: "Ask about your cover", reads: "your cover facts and the insurer's wording", examples: [
+    ex("Is my planned knee surgery covered?", ["Cover question", "Checked waiting period and limits", "Answer with the facts used"]),
+    ex("What are my waiting periods?", ["Waiting", "Read from your document", "Shown with where each came from"]),
+    ex("Find cashless hospitals", ["Hospitals", "Search by pincode", "Opening Network hospitals"], "/hospitals", "Open network hospitals"),
+  ] },
+  "/hospitals": { route: "/hospitals", page: "Network hospitals", reads: "the hospitals in your cover's network", examples: [
+    ex("Hospitals near 400053", ["Hospitals", "Search by pincode", "Network hospitals listed"]),
+    ex("Is it cashless there?", ["Cashless", "Shown on each hospital", "Ask about your cover for more"], "/chat", "Ask about your cover"),
+    ex("Ask about my cover", ["Question", "Opening the chat", "Ask in your own words"], "/chat", "Open the chat"),
+  ] },
   // Public screens.
   "/": { route: "/", page: "Beta access", reads: "the Knowvia beta page", examples: [
     ex("What does Knowvia do?", ["Question · Knowvia", "Reads your policy, shows what you would pay", "Then handles the follow-up"]),

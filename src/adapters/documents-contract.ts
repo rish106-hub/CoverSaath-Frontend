@@ -155,6 +155,9 @@ export const ERROR_TEXT: Record<string, string> = {
   CONFLICT_ALREADY_RESOLVED: "This one is already settled.",
   CONFLICT_STALE: "Things changed while you were looking. Refresh and choose again.",
   NOT_AVAILABLE: "This part is not available yet.",
+  MEMORY_DISABLED: "Questions about your cover are not switched on yet.",
+  CHAT_STREAM_FAILED: "The answer stopped part way. Ask again.",
+  DEMO_READ_ONLY: "Sign in with your own account to ask about your cover.",
   INVALID_INPUT: "Check what you entered and try again.",
   POLICY_PROFILE_VERSION_CONFLICT: "Things changed while you were looking. Refresh and try again.",
 };

@@ -2,6 +2,7 @@ import { AdapterError, type CoversAdapter } from "./types";
 import { MAX_UPLOAD_BYTES } from "./documents-contract";
 import { backendUploads, precheck } from "./uploads";
 import { candidatesIn, confirmedIn, conflictsIn, coverOut, declarationView, factsIn, holdingsIn, premiumView, resolvedIn } from "./covers-contract";
+import { hospitalsIn } from "./chat-contract";
 import { z } from "zod";
 
 // Browser client for the same-origin cover BFF (/api/app/covers). It never sees the backend token or the backend: every call goes to
@@ -85,5 +86,8 @@ export const backendCovers: CoversAdapter = {
   },
   async addPremium(input) {
     return parse(premiumView, await call("/api/app/covers/premiums", { method: "POST", json: input }));
+  },
+  async hospitals(holdingId, pincode) {
+    return parse(hospitalsIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/hospitals?pincode=${enc(pincode)}`)).hospitals;
   },
 };
