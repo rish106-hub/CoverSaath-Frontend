@@ -54,6 +54,21 @@ export const PAGES: readonly PageDef[] = [
     sections: [{ heading: "Your policy PDF" }, { heading: "Your documents" }],
   },
   {
+    route: "/covers/add", href: "/covers/add", tab: "Add a cover", group: "cover",
+    title: "Add a cover", kicker: "Your family’s cover",
+    sections: [{ heading: "Your policy PDF" }, { heading: "Which plan is this?" }],
+  },
+  {
+    route: "/covers/declarations", href: "/covers/declarations", tab: "Declarations and money", group: "cover",
+    title: "Declarations and money", kicker: "Your family’s cover",
+    sections: [{ heading: "What you told the insurer" }, { heading: "Premium you paid" }],
+  },
+  {
+    route: "/covers/review", href: "/covers/review", tab: "What we found", group: "cover",
+    title: "What we found in your policy", kicker: "Your family’s cover",
+    sections: [{ heading: "Needs your decision" }, { heading: "Limits" }, { heading: "Waiting" }, { heading: "Exclusions" }, { heading: "Cashless" }, { heading: "Money" }],
+  },
+  {
     route: "/policies/[id]", href: "/policies/northstar-floater", tab: "My policies", group: "cover",
     title: "Your policy, read clause by clause", kicker: "Answers for you",
     sections: [{ heading: "Answers from your policy" }, { heading: "Where the documents disagree" }],
