@@ -1,6 +1,7 @@
 import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
+import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationView, Facts, HoldingView, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
 
 export class AdapterError extends Error {
@@ -155,6 +156,22 @@ export interface EvidenceAdapter {
   integrations(): Promise<PassThrough>;
 }
 
+/** The cover screens: add a cover, say which product it is, read the facts, settle conflicts, declarations and premiums. */
+export interface CoversAdapter {
+  /** Adds one PDF (up to 4 MB). `key` is reused on a retry. Resolves with the holding once the backend has made it (null while it has not). */
+  upload(file: File, key: string): Promise<{ documentId: string; holdingId: string | null }>;
+  holdings(): Promise<HoldingView[]>;
+  candidates(holdingId: string): Promise<Candidates>;
+  confirmProduct(holdingId: string, statement: ConfirmProduct, key: string): Promise<Confirmed>;
+  facts(holdingId: string): Promise<Facts>;
+  conflicts(holdingId: string): Promise<Conflicts>;
+  resolveConflict(holdingId: string, conflictId: string, choice: ResolveConflict): Promise<Resolved>;
+  declarations(): Promise<DeclarationView[]>;
+  addDeclaration(input: DeclarationInput): Promise<DeclarationView>;
+  premiums(): Promise<PremiumView[]>;
+  addPremium(input: PremiumInput): Promise<PremiumView>;
+}
+
 export type Adapters = {
   auth: AuthAdapter;
   access: AccessAdapter;
@@ -180,6 +197,7 @@ export type Adapters = {
   members: MemberAdapter;
   reference: ReferenceAdapter;
   evidence: EvidenceAdapter;
+  covers: CoversAdapter;
 };
 
 export * from "./uploads";

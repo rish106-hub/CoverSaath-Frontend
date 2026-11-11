@@ -6,6 +6,7 @@ import { backendMembers, backendScenarios } from "./scenarios";
 import { mockAdapters } from "./mock";
 import { backendReference } from "./reference";
 import { backendEvidence } from "./evidence";
+import { backendCovers } from "./covers";
 import { backendAssistant } from "./chat";
 import { createGnaniVoice } from "@/agent/voice-gnani";
 import { detectWalletPlatform } from "@/lib/wallet-detect";
@@ -66,4 +67,5 @@ export const realAdapters: Adapters = {
   members: backendMembers,
   reference: backendReference,
   evidence: backendEvidence,
+  covers: backendCovers,
 };
