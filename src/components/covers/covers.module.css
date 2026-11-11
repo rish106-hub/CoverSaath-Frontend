@@ -1,0 +1,42 @@
+.stack { display: flex; flex-direction: column; gap: 28px; }
+.lead { margin: 0; font: 400 16px/1.5 var(--font-sans); color: var(--ink); }
+.quiet { margin: 0; font: 400 14px/1.5 var(--font-sans); color: var(--graphite); }
+.alert { margin: 0; padding: 10px 14px; border-radius: var(--r-md); background: var(--signal-bg); color: var(--signal-ink); font: 500 14px var(--font-sans); }
+.alert a { color: inherit; }
+.card { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); max-width: 720px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.drop { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; padding: 24px 20px; border-radius: var(--r-xl); border: 2px dashed var(--line); background: var(--sheet); max-width: 720px; }
+.drop[data-over="true"] { border-color: var(--harbour); background: var(--mist); }
+.choices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.choice { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--paper); cursor: pointer; font: 400 15px/1.4 var(--font-sans); }
+.choice[data-on="true"] { border-color: var(--harbour); background: var(--mist); }
+.choice input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--btn-accent); flex: none; }
+.choice b { display: block; font-weight: 600; }
+.choice span { color: var(--graphite); }
+.field { display: flex; flex-direction: column; gap: 6px; font: 500 14px var(--font-sans); color: var(--graphite); min-width: 0; }
+.field input, .field select, .field textarea { min-height: var(--btn-h); padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 400 15px var(--font-sans); max-width: 100%; }
+.field textarea { padding: 10px 12px; min-height: 88px; }
+.grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.done { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--r-lg); background: var(--mist); color: var(--ink); font: 500 15px/1.4 var(--font-sans); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.entry { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); font: 400 14px/1.4 var(--font-sans); }
+.entry b { font-weight: 600; }
+.entry span { color: var(--graphite); }
+/* Review */
+.groups { display: flex; flex-direction: column; gap: 28px; }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.fact { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--sheet); }
+.fact[data-open="true"] { border-color: var(--ochre); background: var(--g-money-bg); }
+.factName { font: 500 13px var(--font-sans); color: var(--graphite); }
+.factValue { font: 400 22px/1.2 var(--font-serif); color: var(--ink); overflow-wrap: anywhere; }
+.status { font: 600 12px var(--font-sans); color: var(--graphite); }
+.fact[data-open="true"] .status { color: var(--g-money); }
+.src { margin: 0; font: 400 13px/1.4 var(--font-sans); color: var(--graphite); overflow-wrap: anywhere; }
+.conflict { display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: var(--r-xl); border: 1px solid var(--ochre); background: var(--g-money-bg); max-width: 820px; }
+.conflict h3 { margin: 0; font: 600 17px/1.3 var(--font-sans); color: var(--ink); }
+.sides { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.side { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--r-lg); background: var(--sheet); border: 1px solid var(--line); }
+.side b { font: 400 20px/1.25 var(--font-serif); overflow-wrap: anywhere; }
+.tag { font: 600 12px var(--font-sans); color: var(--graphite); }
+.settled { padding: 12px 14px; border-radius: var(--r-md); background: var(--mist); font: 500 14px var(--font-sans); color: var(--ink); }
+.pick { display: flex; gap: 8px; flex-wrap: wrap; }

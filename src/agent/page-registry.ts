@@ -99,6 +99,22 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("Why do you need my go-ahead?", ["Question · permission", "We keep, check and read the file", "You can withdraw it any time"]),
     ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
   ] },
+  // Cover screens (S-B2).
+  "/covers/add": { route: "/covers/add", page: "Add a cover", reads: "the policy PDF you add and the plan guesses", examples: [
+    ex("Add my health policy", ["Add a cover", "Choose the PDF", "We read it and guess the plan"]),
+    ex("It picked the wrong plan", ["Plan choice", "Choose Something else", "Search by insurer or plan name"]),
+    ex("How big can the file be?", ["Add a cover", "Up to 4 MB, PDF only", "Larger files go through Add a policy"], "/upload", "Open Add a policy"),
+  ] },
+  "/covers/declarations": { route: "/covers/declarations", page: "Declarations and money", reads: "what you declared and the premium you paid", examples: [
+    ex("Add Papa’s diabetes", ["Declaration", "Choose Papa and the kind", "Saved, sealed"]),
+    ex("Record my premium", ["Premium", "Amount, date and how", "Saved against this cover"]),
+    ex("Can I skip this?", ["Skip", "Yes, come back any time", "Opening the review"], "/covers/review", "Go to the review"),
+  ] },
+  "/covers/review": { route: "/covers/review", page: "What we found", reads: "the facts read from your policy and any conflicts", examples: [
+    ex("What needs my decision?", ["Conflicts", "Two readings differ", "You choose which is right"]),
+    ex("What is the waiting period?", ["Waiting", "Read from your document", "Shown with the page it came from"]),
+    ex("Add my declarations", ["Declarations", "Health details and premium", "Opening Declarations and money"], "/covers/declarations", "Open declarations"),
+  ] },
   // Public screens.
   "/": { route: "/", page: "Beta access", reads: "the Knowvia beta page", examples: [
     ex("What does Knowvia do?", ["Question · Knowvia", "Reads your policy, shows what you would pay", "Then handles the follow-up"]),
