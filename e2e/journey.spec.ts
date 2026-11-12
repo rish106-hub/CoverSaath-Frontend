@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-// The one-person journey against the mock adapters (no backend): profile, both policy PDFs added to one policy with per-document progress,
+// The one-person journey against the mock adapters (no backend): profile, the one schedule PDF added (insurer terms are attached by the system),
 // the chat go-ahead, then a clause question answered with its document and page. The dev server runs with NEXT_PUBLIC_ADAPTERS=mock.
 // Mock state lives in the page, so moves between pages use the app's own links. No browser call may go to /api/v1.
 
 const PDF = (n: string) => Buffer.from(`%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%% ${n}\n%%EOF\n`);
 
-test("profile, schedule and terms PDFs, go-ahead, clause question with citation", async ({ page }) => {
+test("profile, one schedule PDF, go-ahead, clause question with citation", async ({ page }) => {
   test.setTimeout(120_000);
   const backendCalls: string[] = [];
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
@@ -20,7 +20,7 @@ test("profile, schedule and terms PDFs, go-ahead, clause question with citation"
   await page.waitForURL(/\/welcome/);
   await expect(page.getByText(/You.re in, Meera/).first()).toBeVisible();
 
-  // Both documents of one policy: the schedule makes the cover, the terms and conditions are linked to it.
+  // One upload: the schedule makes the cover. There is no second slot.
   await page.goto("/upload");
   await page.waitForURL(/\/covers\/add/);
   await expect(page.getByText("Before we start")).toBeVisible();
@@ -34,8 +34,7 @@ test("profile, schedule and terms PDFs, go-ahead, clause question with citation"
   };
   await add("policy_schedule", "schedule.pdf");
   await expect(page.getByText("schedule.pdf: added.")).toBeVisible();
-  await add("policy_wording", "terms.pdf");
-  await expect(page.getByText("terms.pdf: added.")).toBeVisible();
+  await expect(page.locator('[data-slot="policy_wording"]')).toHaveCount(0);
 
   // Chat: go-ahead, then a clause question.
   await page.getByRole("link", { name: "Ask about your cover" }).first().click();

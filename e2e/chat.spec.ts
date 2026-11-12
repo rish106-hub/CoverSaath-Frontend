@@ -44,8 +44,7 @@ test("hospital list renders for a seeded pincode", async ({ page }) => {
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
-  // Keyboard, because the assistant dock floats over the bottom of a 1280x800 viewport and covers this link.
-  await page.getByRole("link", { name: "See what we found" }).press("Enter");
+  await page.getByRole("link", { name: "See what we found" }).click();
   await page.locator("a.k-btn", { hasText: "Network hospitals" }).press("Enter");
 
   await expect(page.getByRole("heading", { name: "Network hospitals", level: 1 })).toBeVisible({ timeout: 20_000 }); // the dev server compiles this page on first visit

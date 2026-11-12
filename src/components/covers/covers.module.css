@@ -1,4 +1,5 @@
-.stack { display: flex; flex-direction: column; gap: 28px; }
+/* Bottom room so the fixed assistant dock and its tip never sit over the last buttons. */
+.stack { display: flex; flex-direction: column; gap: 28px; padding-bottom: 120px; }
 .lead { margin: 0; font: 400 16px/1.5 var(--font-sans); color: var(--ink); }
 .quiet { margin: 0; font: 400 14px/1.5 var(--font-sans); color: var(--graphite); }
 .alert { margin: 0; padding: 10px 14px; border-radius: var(--r-md); background: var(--signal-bg); color: var(--signal-ink); font: 500 14px var(--font-sans); }

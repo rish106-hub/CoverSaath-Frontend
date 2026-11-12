@@ -1,8 +1,8 @@
-import type { ConflictView, FactView, Headline, HoldingStatus, HoldingSummary, HoldingView, ResolvedStatus } from "./covers-contract";
+import type { ConflictView, WordingReason, WordingState, FactView, Headline, HoldingStatus, HoldingSummary, HoldingView, ResolvedStatus } from "./covers-contract";
 import type { Finding, Policy } from "./schemas";
 import { AdapterError, type PolicyAdapter, type ReadingAdapter } from "./types";
 import { backendCovers } from "./covers";
-import { STATUS_TEXT, documentKindText, formatValue, isOpen, labelOf, pageText, rupees, tierText } from "@/components/covers/format";
+import { STATUS_TEXT, documentKindText, formatValue, isOpen, labelOf, pageText, rupees, sourceLabel, tierText } from "@/components/covers/format";
 
 // Real-mode policy view: the household's stored holdings and their facts, mapped for /home, /policies and /policies/[id].
 // Nothing here decides anything. A status is shown as the backend gave it; a model-read value is never presented as verified.
@@ -20,6 +20,8 @@ export type FactLine = {
   value: string;
   status: ResolvedStatus;
   statusText: string;
+  /** Where the value came from: "Your schedule", "Insurer terms (verified)", "Conflicting" or "Confirmed by you". */
+  sourceText: string;
   open: boolean;
   /** "Your document, Page 2", or null when the backend returned no citation. */
   citation: string | null;
@@ -46,6 +48,9 @@ export type PolicyView = {
   /** Empty before the product is confirmed and when the backend sent no summary. */
   headlines: HeadlineLine[];
   stage: Stage;
+  /** Insurer terms: attached from the reference, added by the person, or not attached. Missing when an older backend sends nothing. */
+  wordingState: WordingState;
+  wordingReason: WordingReason | null;
   facts: FactLine[];
   pending: { id: string; label: string }[];
   notFound: number;
@@ -64,6 +69,7 @@ export function factLine(f: FactView): FactLine {
     value: f.status === "conflicting" ? "Two readings" : f.status === "unknown" ? "Not found" : formatValue(f.value, f.unit, f.valueType),
     status: f.status,
     statusText: STATUS_TEXT[f.status],
+    sourceText: sourceLabel(f.status, f.sourceTier ?? src?.tier),
     open: isOpen(f.status),
     citation: src ? [tierText(src.tier), documentKindText(src.page?.documentKind), page].filter(Boolean).join(", ") : null,
     quote: src?.quote ?? null,
@@ -120,6 +126,8 @@ export function toPolicyView(h: HoldingView, loaded: { facts: FactView[]; unknow
     productName: product,
     headlines: stage === "reading" || stage === "choose_plan" ? [] : headlinesOf(h.summary),
     stage,
+    wordingState: h.summary?.wordingState ?? "missing",
+    wordingReason: h.summary?.wordingReason ?? null,
     facts: facts.map(factLine),
     pending: (loaded?.conflicts ?? []).filter((c) => c.resolution === "pending").map((c) => ({ id: c.id, label: labelOf(c.factKey) })),
     notFound: loaded?.unknownKeys.length ?? 0,

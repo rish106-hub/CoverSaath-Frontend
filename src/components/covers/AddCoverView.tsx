@@ -8,23 +8,23 @@ import { makeRequestKey, uploads } from "@/adapters/uploads";
 import type { CandidateView, Candidates } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf } from "./use-holdings";
-import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, runTerms, type Slot } from "./add-cover-flow";
+import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, type Slot } from "./add-cover-flow";
 import s from "./covers.module.css";
 
 const MB = MAX_UPLOAD_BYTES / 1024 / 1024;
 type Pick = { candidateId: string; label: string } | null;
 
 /** One slot's progress line: what it is doing, or why it stopped. */
-function SlotStatus({ slot, name, waitingText }: { slot: Slot; name: string; waitingText?: string }) {
+function SlotStatus({ slot, name }: { slot: Slot; name: string }) {
   if (slot.status === "empty") return <p className={s.quiet}>Drop the PDF here, or choose it from your device.</p>;
   const file = slot.file?.name ?? name;
-  if (slot.status === "working") return <p className={s.quiet} role="status" data-state="working">{file}: working on it.</p>;
-  if (slot.status === "waiting") return <p className={s.quiet} role="status" data-state="waiting">{waitingText ?? `${file}: still setting it up.`}</p>;
+  if (slot.status === "working") return <p className={s.quiet} role="status" data-state="working">Reading your schedule&hellip;</p>;
+  if (slot.status === "waiting") return <p className={s.quiet} role="status" data-state="waiting">Reading your schedule&hellip;</p>;
   if (slot.status === "done") return <p className={s.lead} role="status" data-state="done">{file}: added.</p>;
   return <p className={s.alert} role="alert" data-state="failed">{file}: {errorText(slot.code ?? "")}</p>;
 }
 
-/** Add cover: pick the cover type, add the policy schedule and the terms and conditions (both end up on one cover), say which plan it is (up to three guesses, or search), confirm. Insurer and plan names only; never a UIN. */
+/** Add cover: pick the cover type, add the policy schedule (the one upload; the insurer's terms are attached by the system), say which plan it is (up to three guesses, or search), confirm. Insurer and plan names only; never a UIN. */
 export function AddCoverView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +33,6 @@ export function AddCoverView() {
   const [policyType, setPolicyType] = useState<PolicyType | "">("");
   const [typeLocked, setTypeLocked] = useState(false);
   const [schedule, setSchedule] = useState<Slot>(emptySlot);
-  const [terms, setTerms] = useState<Slot>(emptySlot);
   const [holdingId, setHoldingId] = useState<string | null>(null);
   const [cands, setCands] = useState<Candidates | null>(null);
   const [pick, setPick] = useState<Pick>(null);
@@ -41,9 +40,9 @@ export function AddCoverView() {
   const [q, setQ] = useState("");
   const [found, setFound] = useState<{ productId: string; productName: string }[] | null>(null);
   const [done, setDone] = useState(false);
-  const [over, setOver] = useState<"schedule" | "terms" | null>(null);
+  const [over, setOver] = useState(false);
+  const [checking, setChecking] = useState(false);
   const scheduleInput = useRef<HTMLInputElement>(null);
-  const termsInput = useRef<HTMLInputElement>(null);
   const consentKey = useRef(makeRequestKey());
   const confirmKey = useRef(makeRequestKey());
 
@@ -99,7 +98,9 @@ export function AddCoverView() {
     setBusy(true);
     setError(null);
     try {
-      await afterSchedule(await runSchedule(adapters.covers, pickFile(file), policyType));
+      const picked = pickFile(file);
+      setSchedule(picked);
+      await afterSchedule(await runSchedule(adapters.covers, picked, policyType));
     } finally {
       setBusy(false);
       if (scheduleInput.current) scheduleInput.current.value = "";
@@ -110,6 +111,7 @@ export function AddCoverView() {
     if (busy || policyType === "") return;
     setBusy(true);
     try {
+      setSchedule({ ...schedule, status: "working", code: null });
       await afterSchedule(await runSchedule(adapters.covers, schedule, policyType));
     } finally {
       setBusy(false);
@@ -122,20 +124,6 @@ export function AddCoverView() {
       await afterSchedule(await checkSchedule(adapters.covers, schedule));
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function takeTerms(file: File | undefined, again = false) {
-    if ((!file && !again) || busy || policyType === "" || !holdingId) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const next = await runTerms(adapters.covers, file ? pickFile(file) : terms, policyType, holdingId);
-      setTerms(next);
-      if (next.code === "CONSENT_REQUIRED") setConsent(false);
-    } finally {
-      setBusy(false);
-      if (termsInput.current) termsInput.current.value = "";
     }
   }
 
@@ -158,6 +146,7 @@ export function AddCoverView() {
   async function confirm() {
     if (!pick || !holdingId || !cands) return;
     setBusy(true);
+    setChecking(true);
     try {
       await adapters.covers.confirmProduct(holdingId, { candidateId: pick.candidateId, expectedVersion: cands.profileVersion }, confirmKey.current);
       setDone(true);
@@ -168,6 +157,7 @@ export function AddCoverView() {
       fail(e);
     } finally {
       setBusy(false);
+      setChecking(false);
     }
   }
 
@@ -224,9 +214,9 @@ export function AddCoverView() {
       ) : null}
 
       {consent ? (
-        <SectionHeading title="Policy schedule" description={`PDF only, up to ${MB} MB. The schedule lists who is covered, the sum insured and the dates.`}>
-          <div className={s.drop} data-over={over === "schedule"} onDragOver={(e) => { e.preventDefault(); setOver("schedule"); }} onDragLeave={() => setOver(null)} onDrop={(e) => { e.preventDefault(); setOver(null); void takeSchedule(e.dataTransfer.files[0]); }}>
-            <SlotStatus slot={schedule} name="Policy schedule" waitingText="Your schedule is in. We are still reading it." />
+        <SectionHeading title="Your policy schedule" description={`PDF only, up to ${MB} MB. The schedule lists who is covered, the sum insured and the dates.`}>
+          <div className={s.drop} data-over={over} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); void takeSchedule(e.dataTransfer.files[0]); }}>
+            <SlotStatus slot={schedule} name="Your policy schedule" />
             <input ref={scheduleInput} aria-label="Policy schedule PDF" data-testid="schedule-input" type="file" accept="application/pdf,.pdf" hidden onChange={(e) => void takeSchedule(e.target.files?.[0])} />
             <div className={s.row}>
               {schedule.status === "empty" || schedule.status === "failed" ? (
@@ -236,24 +226,6 @@ export function AddCoverView() {
               ) : null}
               {canRetry(schedule) ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void retrySchedule()}>Try again</button> : null}
               {schedule.status === "waiting" ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void checkAgain()}>Check again</button> : null}
-            </div>
-          </div>
-        </SectionHeading>
-      ) : null}
-
-      {consent ? (
-        <SectionHeading title="Policy terms and conditions" description={holdingId ? `PDF only, up to ${MB} MB. This is the full wording of your policy.` : "Add this after your schedule is in."}>
-          <div className={s.drop} data-over={over === "terms"} onDragOver={(e) => { e.preventDefault(); if (holdingId) setOver("terms"); }} onDragLeave={() => setOver(null)} onDrop={(e) => { e.preventDefault(); setOver(null); void takeTerms(e.dataTransfer.files[0]); }}>
-            <SlotStatus slot={terms} name="Policy terms and conditions" />
-            <input ref={termsInput} aria-label="Policy terms and conditions PDF" data-testid="terms-input" type="file" accept="application/pdf,.pdf" hidden onChange={(e) => void takeTerms(e.target.files?.[0])} />
-            <div className={s.row}>
-              {terms.status === "empty" || terms.status === "failed" ? (
-                <button type="button" className="k-btn" disabled={busy || !holdingId} data-slot="policy_wording" onClick={() => termsInput.current?.click()}>
-                  {terms.status === "failed" ? "Choose another PDF" : "Choose the terms and conditions PDF"}
-                </button>
-              ) : null}
-              {terms.status === "failed" && terms.code === "HOLDING_DOCUMENT_HAS_HOLDING" ? <Link className="k-btn k-btn--secondary" href="/policies">Open your policies</Link> : null}
-              {canRetry(terms) ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void takeTerms(undefined, true)}>Try again</button> : null}
             </div>
           </div>
         </SectionHeading>
@@ -310,10 +282,12 @@ export function AddCoverView() {
         </SectionHeading>
       ) : null}
 
+      {checking ? <p className={s.quiet} role="status" data-state="checking">Checking your insurer&rsquo;s terms&hellip;</p> : null}
+
       {done && holdingId ? (
         <SectionHeading title="Next">
           <div className={s.done} role="status">
-            <span>{terms.status === "done" ? "Saved. We are reading the plan against your documents." : "Saved. Add the terms and conditions above to finish this cover."}</span>
+            <span>Your cover is saved.</span>
             <div className={s.row}>
               <Link className="k-btn" href={`/policies/${encodeURIComponent(holdingId)}`}>Open my policy</Link>
               <Link className="k-btn k-btn--secondary" href={`/covers/review?holding=${encodeURIComponent(holdingId)}`}>See what we found</Link>

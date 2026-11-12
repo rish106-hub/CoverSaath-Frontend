@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
 import { AdapterError } from "@/adapters/types";
 import { realAdapters } from "@/adapters/real";
-import { containsUin, type ConflictView, type CreationIssue, type FactView, type HoldingView } from "@/adapters/covers-contract";
+import { backendUploads } from "@/adapters/uploads";
+import { containsUin, holdingsIn, type ConflictView, type CreationIssue, type FactView, type HoldingView } from "@/adapters/covers-contract";
 import { factLine, keyFacts, loadPolicies, realPolicy, stageOf, stateOf, toPolicyView } from "@/adapters/real-policy";
 import { RealHome } from "@/components/cover-real/RealHome";
 import { RealPolicies } from "@/components/cover-real/RealPolicies";
@@ -251,5 +252,51 @@ describe("screens", () => {
     stub([holding("ready", "other")]);
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Policy not found")).toBeInTheDocument();
+  });
+  it("labels each fact with where it came from", () => {
+    const l = (o: Partial<FactView>) => factLine(fact({ factKey: "a", ...o })).sourceText;
+    expect(l({ sourceTier: "own_pdf" })).toBe("Your schedule");
+    expect(l({ status: "reviewed_reference", sourceTier: "ida_wording" })).toBe("Insurer terms (verified)");
+    expect(l({ status: "reviewed_reference" })).toBe("Insurer terms (verified)");
+    expect(l({ status: "conflicting" })).toBe("Conflicting");
+    expect(l({ status: "user_confirmed", sourceTier: "own_pdf" })).toBe("Confirmed by you");
+  });
+  it("reads wordingState from the summary; a missing or unknown value is missing", () => {
+    const parse = (summary: unknown) => holdingsIn.parse({ holdings: [{ id: "h1", status: "ready", summary }] }).holdings[0]!;
+    expect(toPolicyView(parse({ wordingState: "fss", wordingReason: "attached" }), null)).toMatchObject({ wordingState: "fss", wordingReason: "attached" });
+    expect(toPolicyView(parse({ wordingState: "manual" }), null)).toMatchObject({ wordingState: "manual", wordingReason: null });
+    expect(toPolicyView(parse({}), null)).toMatchObject({ wordingState: "missing", wordingReason: null });
+    expect(toPolicyView(parse({ wordingState: "later", wordingReason: "other" }), null)).toMatchObject({ wordingState: "missing", wordingReason: null });
+    expect(toPolicyView(holding(), null)).toMatchObject({ wordingState: "missing" });
+  });
+  it("detail shows a source label on each fact", async () => {
+    stub([holding("conflicts")]);
+    render(<RealPolicyDetail id="h1" />);
+    await screen.findByRole("heading", { name: "Waiting" });
+    expect(screen.getAllByTestId("fact-source").map((n) => n.textContent)).toEqual(expect.arrayContaining(["Your schedule", "Confirmed by you", "Conflicting"]));
+  });
+  it.each([
+    ["fss", "Insurer terms attached (verified)"],
+    ["manual", "Insurer terms added by you"],
+    ["missing", "Insurer terms not attached yet"],
+  ] as const)("detail shows the terms line for %s", async (state, text) => {
+    stub([{ ...holding("ready"), summary: { ...SUMMARY, wordingState: state } }]);
+    const { container } = render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByTestId("terms-status")).toHaveTextContent(text);
+    expect(screen.queryByRole("button", { name: "Add the terms yourself" }) !== null).toBe(state === "missing");
+    expect(container.textContent).not.toMatch(/sample|draft|disclaimer|inaccurate|\bUIN\b/i);
+  });
+  it("Add the terms yourself uploads the wording, links it to this holding, then reloads", async () => {
+    stub([{ ...holding("ready"), summary: { ...SUMMARY, wordingState: "missing" } }]);
+    vi.spyOn(backendUploads, "list").mockResolvedValue({ consent: true, documents: [], largeUpload: false, policyType: "personal_health" });
+    const up = vi.spyOn(backendCovers, "uploadDocument").mockResolvedValue({ documentId: "doc-w" });
+    const link = vi.spyOn(backendCovers, "linkDocument").mockResolvedValue({ holdingId: "h1", documentId: "doc-w", kind: "wording", linked: true });
+    render(<RealPolicyDetail id="h1" />);
+    await screen.findByTestId("terms-status");
+    const holdingsCalls = vi.mocked(backendCovers.holdingsView).mock.calls.length;
+    fireEvent.change(screen.getByTestId("terms-input"), { target: { files: [new File([new Uint8Array(8)], "terms.pdf", { type: "application/pdf" })] } });
+    await waitFor(() => expect(link).toHaveBeenCalledWith("h1", { documentId: "doc-w", kind: "wording" }));
+    expect(up).toHaveBeenCalledWith(expect.anything(), expect.any(String), "policy_wording", "personal_health");
+    await waitFor(() => expect(vi.mocked(backendCovers.holdingsView).mock.calls.length).toBeGreaterThan(holdingsCalls));
   });
 });
