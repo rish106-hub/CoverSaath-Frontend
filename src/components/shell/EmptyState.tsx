@@ -6,7 +6,7 @@ import { useMe } from "./useMe";
 import styles from "./EmptyState.module.css";
 
 /** Where "Upload your policy" goes. One place, so the upload flow can move without touching every page. */
-export const UPLOAD_HREF = "/upload";
+export const UPLOAD_HREF = "/covers/add";
 
 /** An honest empty page: what is missing and the one next action. */
 export function EmptyState({ title, body, cta = "Upload your policy", href = UPLOAD_HREF, children }: { title: string; body: string; cta?: string; href?: string; children?: ReactNode }) {

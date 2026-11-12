@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { addSchedule } from "./add-cover";
 
 // Smoke for the cover screens against the mock adapter (no backend): upload a synthetic PDF, confirm the plan, see the facts grid,
 // settle a conflict. The mock adapters need no session. The dev server runs with NEXT_PUBLIC_ADAPTERS=mock (playwright.config.ts).
@@ -9,9 +10,8 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   const backendCalls: string[] = [];
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
 
-  await page.goto("/covers/add");
+  await addSchedule(page, { name: "policy.pdf", buffer: SYNTHETIC_PDF });
   await expect(page.getByRole("heading", { name: "Add a cover" })).toBeVisible();
-  await page.locator("input[type=file]").setInputFiles({ name: "policy.pdf", mimeType: "application/pdf", buffer: SYNTHETIC_PDF });
 
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await expect(page.getByText("Example Insurer – Example Health Plan 01")).toBeVisible();
@@ -40,8 +40,7 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
 });
 
 test("declarations and money saves a premium", async ({ page }) => {
-  await page.goto("/covers/add");
-  await page.locator("input[type=file]").setInputFiles({ name: "policy.pdf", mimeType: "application/pdf", buffer: SYNTHETIC_PDF });
+  await addSchedule(page, { name: "policy.pdf", buffer: SYNTHETIC_PDF });
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
@@ -56,7 +55,6 @@ test("declarations and money saves a premium", async ({ page }) => {
 });
 
 test("a file over 4 MB is refused with a coded message", async ({ page }) => {
-  await page.goto("/covers/add");
-  await page.locator("input[type=file]").setInputFiles({ name: "big.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(4 * 1024 * 1024 + 10) });
+  await addSchedule(page, { name: "big.pdf", buffer: Buffer.alloc(4 * 1024 * 1024 + 10) });
   await expect(page.getByText(/too big/i)).toBeVisible();
 });
