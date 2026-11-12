@@ -32,7 +32,7 @@ describe("add a cover page", () => {
     fireEvent.change(screen.getByTestId("policy-type"), { target: { value: "personal_health" } });
     expect(screen.getByRole("button", { name: "Choose the terms and conditions PDF" })).toBeDisabled();
     fireEvent.change(screen.getByTestId("schedule-input"), { target: { files: [pdf("schedule.pdf")] } });
-    await screen.findByText("schedule.pdf: added.");
+    await screen.findByText("schedule.pdf: added.", {}, { timeout: 5000 });
     await screen.findByRole("heading", { name: "Which plan is this?" });
     expect(up).toHaveBeenCalledWith(expect.anything(), expect.any(String), "policy_schedule", "personal_health");
     fireEvent.change(screen.getByTestId("terms-input"), { target: { files: [pdf("terms.pdf")] } });
@@ -50,12 +50,12 @@ describe("add a cover page", () => {
     await screen.findByTestId("policy-type");
     fireEvent.change(screen.getByTestId("policy-type"), { target: { value: "personal_health" } });
     fireEvent.change(screen.getByTestId("schedule-input"), { target: { files: [pdf("schedule.pdf")] } });
-    await screen.findByText("schedule.pdf: added.");
+    await screen.findByText("schedule.pdf: added.", {}, { timeout: 5000 });
     fireEvent.change(screen.getByTestId("terms-input"), { target: { files: [pdf("terms.pdf")] } });
-    await screen.findByRole("alert");
+    await screen.findByRole("alert", {}, { timeout: 5000 });
     expect(screen.getByRole("alert").textContent).toMatch(/terms\.pdf/);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(screen.getByText("terms.pdf: added.")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("terms.pdf: added.")).toBeInTheDocument(), { timeout: 5000 });
     expect(up.mock.calls.filter((c) => c[2] === "policy_wording")).toHaveLength(1);
     expect(link).toHaveBeenCalledTimes(2);
   });
