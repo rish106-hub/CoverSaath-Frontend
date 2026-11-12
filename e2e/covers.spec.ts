@@ -30,12 +30,12 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   await expect(page.getByText("Rs 5,00,000").first()).toBeVisible();
 
   const card = page.getByRole("article", { name: "Room rent limit" });
-  await expect(card.getByText("Your document", { exact: true })).toBeVisible();
-  await expect(card.getByText("The insurer's wording", { exact: true })).toBeVisible();
-  await card.getByRole("button", { name: /Use the insurer's wording for Room rent limit/ }).click();
+  await expect(card.getByText("Your schedule, page 3", { exact: true })).toBeVisible();
+  await expect(card.getByText("Insurer terms (verified), page 12", { exact: true })).toBeVisible();
+  await card.getByRole("button", { name: /Use Insurer terms \(verified\), page 12 for Room rent limit/ }).click();
   await expect(page.getByText("Room rent limit settled.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Needs your decision" })).toHaveCount(0);
-  await expect(page.getByText("You confirmed this")).toBeVisible();
+  await expect(page.getByText("Confirmed by you")).toBeVisible();
 
   expect(backendCalls, "no browser call to the backend API").toEqual([]);
 });

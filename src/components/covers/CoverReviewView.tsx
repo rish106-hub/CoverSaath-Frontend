@@ -7,28 +7,29 @@ import { errorText } from "@/adapters/documents-contract";
 import type { ConflictView, FactView, Facts, SourceView } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "./use-holdings";
-import { STATUS_TEXT, formatValue, groupFacts, isOpen, labelOf, pageText, tierText } from "./format";
+import { STATUS_TEXT, formatValue, groupFacts, isOpen, labelOf, pageText, sideLabel, sourceLabel, tierText } from "./format";
 import s from "./covers.module.css";
 
 function Source({ src, unit, type }: { src: SourceView; unit?: string | null; type?: string | null }) {
-  const page = pageText(src.page);
   return (
     <>
-      <span className={s.tag}>{tierText(src.tier)}</span>
+      <span className={s.tag}>{sideLabel(src)}</span>
       <b>{formatValue(src.value, unit, type)}</b>
       {src.quote ? <p className={s.src}>&ldquo;{src.quote}&rdquo;</p> : null}
-      {page ? <p className={s.src}>{page}</p> : null}
     </>
   );
 }
 
 function ConflictCard({ c, onChoose, busy }: { c: ConflictView; onChoose: (c: ConflictView, factId: string) => void; busy: boolean }) {
   const sides = c.candidates.filter((x) => x.current !== false);
-  const own = sides.find((x) => x.tier === "own_pdf");
-  const other = sides.find((x) => x.tier !== "own_pdf");
-  const title = own && other
-    ? `Your document says ${formatValue(own.value, null, c.valueType)}, ${tierText(other.tier).toLowerCase()} says ${formatValue(other.value, null, c.valueType)}. Which is right?`
-    : "These readings do not match. Which is right?";
+  const isOwn = (x: SourceView) => x.source === "own_document" || (!x.source && x.tier === "own_pdf");
+  const own = sides.find(isOwn);
+  const other = sides.find((x) => !isOwn(x));
+  const title = c.kind === "own_vs_insurer" && own && other
+    ? `Your schedule says ${formatValue(own.value, null, c.valueType)}, insurer terms say ${formatValue(other.value, null, c.valueType)}. Which is right?`
+    : own && other && !c.kind
+      ? `Your document says ${formatValue(own.value, null, c.valueType)}, ${tierText(other.tier).toLowerCase()} says ${formatValue(other.value, null, c.valueType)}. Which is right?`
+      : "These readings do not match. Which is right?";
   return (
     <article className={s.conflict} aria-label={labelOf(c.factKey)}>
       <h3>{labelOf(c.factKey)}: {title}</h3>
@@ -37,7 +38,7 @@ function ConflictCard({ c, onChoose, busy }: { c: ConflictView; onChoose: (c: Co
           <div key={x.id} className={s.side}>
             <Source src={x} type={c.valueType} />
             <div className={s.pick}>
-              <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => onChoose(c, x.id)} aria-label={`Use ${tierText(x.tier).toLowerCase()} for ${labelOf(c.factKey)}`}>This one is right</button>
+              <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => onChoose(c, x.id)} aria-label={`Use ${sideLabel(x)} for ${labelOf(c.factKey)}`}>This one is right</button>
             </div>
           </div>
         ))}
@@ -55,7 +56,7 @@ function FactCard({ f }: { f: FactView }) {
     <li className={s.fact} data-open={isOpen(f.status)}>
       <span className={s.factName}>{labelOf(f.factKey)}</span>
       <span className={s.factValue}>{f.status === "conflicting" ? "Two readings" : formatValue(f.value, f.unit, f.valueType)}</span>
-      <span className={s.status}>{STATUS_TEXT[f.status]}</span>
+      <span className={s.status}>{f.status === "user_confirmed" ? sourceLabel(f.status, f.sourceTier) : STATUS_TEXT[f.status]}</span>
       {first?.quote ? <p className={s.src}>&ldquo;{first.quote}&rdquo;{page ? ` · ${page}` : ""}</p> : null}
     </li>
   );

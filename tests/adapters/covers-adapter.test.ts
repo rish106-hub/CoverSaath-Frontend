@@ -49,6 +49,20 @@ describe("mock covers adapter", () => {
     await expect(mockCovers.upload(pdf(0), "k", OPTS)).rejects.toMatchObject({ code: "FILE_EMPTY" });
     await expect(mockCovers.upload(pdf(4 * 1024 * 1024 + 1), "k", OPTS)).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
   });
+  it("seeds one own_vs_insurer conflict with named sides on the plan with insurer terms attached", async () => {
+    const { holdingId } = await mockCovers.upload(pdf(), "k-xd", OPTS);
+    const c = await mockCovers.candidates(holdingId as string);
+    await mockCovers.confirmProduct(holdingId as string, { candidateId: "product-example-01", expectedVersion: c.profileVersion }, "ck-xd-1234567");
+    const { conflicts } = await mockCovers.conflicts(holdingId as string);
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]).toMatchObject({ kind: "own_vs_insurer", resolution: "pending" });
+    expect(conflicts[0]!.candidates.map((x) => [x.source, x.documentName, x.pageNumber])).toEqual([["own_document", "Your schedule", 3], ["reviewed_reference", "Insurer terms", 12]]);
+    expect(containsUin(conflicts)).toBe(false);
+    await mockCovers.resolveConflict(holdingId as string, conflicts[0]!.id, { chosenFactId: "f-room-ida" });
+    const after = await mockCovers.facts(holdingId as string);
+    expect(after.facts.find((f) => f.factKey === "room_rent_limit")).toMatchObject({ status: "user_confirmed", sourceTier: "user_declaration" });
+  });
+
   it("runs upload, candidates, confirm, facts, conflict resolve, and no body holds a UIN", async () => {
     const { holdingId } = await mockCovers.upload(pdf(), "k", OPTS);
     const c = await mockCovers.candidates(holdingId as string);

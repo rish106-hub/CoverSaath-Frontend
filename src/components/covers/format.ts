@@ -76,6 +76,18 @@ export const DOCUMENT_KIND_TEXT: Record<string, string> = { policy_schedule: "Po
 /** "Policy schedule" for a backend document kind; null when the kind is absent or not one of the two shown. */
 export const documentKindText = (kind: string | null | undefined): string | null => DOCUMENT_KIND_TEXT[kind ?? ""] ?? null;
 
+const isReferenceSide = (src: SourceView): boolean => src.source === "reviewed_reference" || (!src.source && src.tier === "ida_wording");
+const isOwnSide = (src: SourceView): boolean => src.source === "own_document" || (!src.source && src.tier === "own_pdf");
+/** One side of a conflict: "Your schedule, page 3" or "Insurer terms (verified), page 12". Absent document name falls back to those defaults. */
+export function sideLabel(src: SourceView): string {
+  const ref = isReferenceSide(src);
+  const name = src.documentName?.trim() || (ref ? "Insurer terms" : isOwnSide(src) ? "Your schedule" : tierText(src.tier));
+  const verified = ref && src.verificationStatus !== "unverified" ? " (verified)" : "";
+  const m = src.page ? /(\d+)\s*$/.exec(src.page.pageId) : null;
+  const n = src.pageNumber ?? (m ? Number(m[1]) : null);
+  return `${name}${verified}${n ? `, page ${n}` : ""}`;
+}
+
 export function pageText(page: SourceView["page"]): string | null {
   if (!page) return null;
   const m = /(\d+)\s*$/.exec(page.pageId);

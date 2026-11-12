@@ -21,11 +21,16 @@ const factsSeed = (wording: WordingState): Facts["facts"] => [
   { factKey: "cashless_network", factClass: "product_term", valueType: "bool", unit: "none", group: "cashless", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-cl-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-1", blockIndex: 6 }, quote: "Cashless at network hospitals", current: true }] },
   { factKey: "premium_total", factClass: "personal_value", valueType: "money", unit: "paise", group: "money", status: "extracted_unverified", value: 1_850_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-pr-own", tier: "own_pdf", status: "extracted_unverified", value: 1_850_000, page: { pageId: "page-1", blockIndex: 9 }, quote: "Total premium Rs 18,500", current: true }] },
 ];
-const conflictsSeed = (): Conflicts["conflicts"] => [
-  { id: "c-room", factKey: "room_rent_limit", factClass: "product_term", valueType: "text", reason: "own_vs_insurer", resolution: "pending", resolvedAt: null, resolvingFactId: null, checkWithInsurer: true, candidates: [
-    { id: "f-room-own", tier: "own_pdf", status: "extracted_unverified", value: "1 percent of the sum insured per day", ...quote(2, "Room rent up to 1% of the sum insured per day"), current: true },
-    { id: "f-room-ida", tier: "ida_wording", status: "reviewed_reference", value: "2 percent of the sum insured per day", page: null, quote: "Room rent is limited to 2% of the sum insured per day.", current: true },
-  ] },
+const conflictsSeed = (wording: WordingState): Conflicts["conflicts"] => [
+  wording === "fss"
+    ? { id: "c-room", factKey: "room_rent_limit", factClass: "product_term", valueType: "text", reason: "own_vs_insurer", kind: "own_vs_insurer", resolution: "pending", resolvedAt: null, resolvingFactId: null, checkWithInsurer: true, candidates: [
+      { id: "f-room-own", tier: "own_pdf", source: "own_document", documentName: "Your schedule", pageNumber: 3, status: "extracted_unverified", value: "1 percent of the sum insured per day", ...quote(3, "Room rent up to 1% of the sum insured per day"), current: true },
+      { id: "f-room-ida", tier: "ida_wording", source: "reviewed_reference", documentName: "Insurer terms", pageNumber: 12, verificationStatus: "verified", status: "reviewed_reference", value: "2 percent of the sum insured per day", page: null, quote: "Room rent is limited to 2% of the sum insured per day.", current: true },
+    ] }
+    : { id: "c-room", factKey: "room_rent_limit", factClass: "product_term", valueType: "text", reason: "own_vs_insurer", resolution: "pending", resolvedAt: null, resolvingFactId: null, checkWithInsurer: true, candidates: [
+      { id: "f-room-own", tier: "own_pdf", status: "extracted_unverified", value: "1 percent of the sum insured per day", ...quote(2, "Room rent up to 1% of the sum insured per day"), current: true },
+      { id: "f-room-ida", tier: "ida_wording", status: "reviewed_reference", value: "2 percent of the sum insured per day", page: null, quote: "Room rent is limited to 2% of the sum insured per day.", current: true },
+    ] },
 ];
 
 type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null; wording: WordingState };
@@ -141,7 +146,7 @@ export const mockCovers: CoversAdapter = {
     h.state.confirmed = statement.candidateId;
     h.state.wording = WORDING_OF_CANDIDATE[statement.candidateId] ?? "missing";
     h.state.facts = factsSeed(h.state.wording);
-    h.state.conflicts = conflictsSeed();
+    h.state.conflicts = conflictsSeed(h.state.wording);
     h.state.status = "conflicts";
     return delay({ holdingId, status: h.state.status, profileVersion: h.state.version, replay: false });
   },

@@ -108,6 +108,11 @@ export const sourceView = z.object({
   quote: z.string().max(2000).nullish(),
   captureMethod: z.string().max(60).nullish(),
   current: z.boolean().optional(),
+  /** Cross-document conflict sides: own_document | reviewed_reference | user_confirmed. Kept loose so a new value renders rather than fails. */
+  source: z.string().max(40).nullish(),
+  documentName: z.string().max(200).nullish(),
+  pageNumber: z.number().int().min(1).max(10000).nullish(),
+  verificationStatus: z.string().max(40).nullish(),
 });
 export type SourceView = z.infer<typeof sourceView>;
 
@@ -135,6 +140,8 @@ export const conflictView = z.object({
   factClass: z.string().max(40).nullish(),
   valueType: z.string().max(20).nullish(),
   reason: z.string().max(40),
+  /** own_vs_insurer (schedule against insurer terms) or another kind; an unknown kind renders with generic copy. */
+  kind: z.string().max(40).nullish(),
   resolution: z.string().max(40),
   resolvedAt: z.string().max(60).nullish(),
   resolvingFactId: z.string().max(128).nullish(),
