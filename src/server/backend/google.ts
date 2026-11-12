@@ -61,13 +61,13 @@ export function authorizeUrl(cfg: GoogleConfig, start: OAuthStart, redirect: str
 
 // ---- Short-lived sealed cookie carrying state, nonce and the PKCE verifier (AES-256-GCM, domain-separated key) ----------
 
-export type OAuthCookie = { s: string; n: string; v: string; exp: number };
+export type OAuthCookie = { s: string; n: string; v: string; exp: number; r?: string };
 const cookieKey = (secret: string) => createHash("sha256").update(`kv-oauth-v1:${secret}`).digest();
 
-export function sealOAuth(start: OAuthStart, secret: string, now = Date.now()): string {
+export function sealOAuth(start: OAuthStart, secret: string, now = Date.now(), returnTo?: string | null): string {
   const iv = randomBytes(12);
   const c = createCipheriv("aes-256-gcm", cookieKey(secret), iv);
-  const payload: OAuthCookie = { s: start.state, n: start.nonce, v: start.verifier, exp: now + STATE_TTL_MS };
+  const payload: OAuthCookie = { s: start.state, n: start.nonce, v: start.verifier, exp: now + STATE_TTL_MS, ...(returnTo ? { r: returnTo } : {}) };
   const enc = Buffer.concat([c.update(JSON.stringify(payload), "utf8"), c.final()]);
   return [iv, c.getAuthTag(), enc].map(b64).join(".");
 }

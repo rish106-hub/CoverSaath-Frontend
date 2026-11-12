@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { errorText } from "@/adapters/documents-contract";
+import type { CreationIssue } from "@/adapters/covers-contract";
 import type { FactLine, PolicyView, Stage } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
 
@@ -64,5 +65,28 @@ export function Pending({ p }: { p: PolicyView }): ReactNode {
       <p className={s.lead}>{p.pending.length === 1 ? "One detail needs your decision" : `${p.pending.length} details need your decision`}: {p.pending.map((c) => c.label).join(", ")}.</p>
       <div className={s.row}><Link className="k-btn" href={`/covers/review?holding=${encodeURIComponent(p.id)}`}>Review and decide</Link></div>
     </div>
+  );
+}
+
+/** Documents the backend could not turn into a policy yet. `retrying` is still being read; `failed` needs the person to add it again. */
+export function CreationIssues({ issues, onRetry }: { issues: CreationIssue[]; onRetry?: () => void }) {
+  if (issues.length === 0) return null;
+  const failed = issues.filter((i) => i.state === "failed").length;
+  const retrying = issues.length - failed;
+  return (
+    <>
+      {retrying > 0 ? (
+        <div className={s.card} role="status" data-testid="creation-retrying">
+          <p className={s.lead}><b>Still being read.</b> {retrying === 1 ? "A document you added is" : `${retrying} documents you added are`} still being read. Check again in a moment.</p>
+          {onRetry ? <div className={s.row}><button type="button" className="k-btn k-btn--secondary" onClick={onRetry}>Check again</button></div> : null}
+        </div>
+      ) : null}
+      {failed > 0 ? (
+        <div className={s.card} role="alert" data-testid="creation-failed">
+          <p className={s.lead}><b>We could not read {failed === 1 ? "a document" : `${failed} documents`}.</b> {errorText("HOLDING_CREATE_FAILED")}</p>
+          <div className={s.row}><Link className="k-btn" href="/covers/add">Add the document again</Link></div>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -95,7 +95,9 @@ function Checks({ a }: { a: TurnAnswer }) {
 }
 
 export function ChatView() {
-  const { holdings, current, select, error: listError } = useHoldings();
+  // /chat?holding=<id> opens the conversation on that policy (the policy page links here).
+  const wanted = useSyncExternalStore(() => () => undefined, () => new URLSearchParams(window.location.search).get("holding") ?? undefined, () => undefined);
+  const { holdings, current, select, error: listError } = useHoldings(wanted);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);

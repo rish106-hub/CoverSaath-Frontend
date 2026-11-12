@@ -146,6 +146,28 @@ describe("documents of a holding", () => {
     expect(r).toEqual({ documentId: "doc-9", holdingId: "h9" });
     expect(seen[0]).toMatchObject({ "x-document-kind": "policy_wording", "x-policy-type": "group_health" });
   });
+  const reply = (data: unknown) => vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: true, data }), { status: 200 }));
+  it("holdingsView: creation issues absent (older backend) is an empty list", async () => {
+    reply({ holdings: [{ id: "h1", documentId: "d1", status: "uploaded" }] });
+    expect(await backendCovers.holdingsView()).toEqual({ holdings: [{ id: "h1", documentId: "d1", status: "uploaded" }], creationIssues: [] });
+    expect(await backendCovers.holdings()).toHaveLength(1);
+  });
+  it("holdingsView: retrying and failed come through", async () => {
+    reply({ holdings: [], creationIssues: [{ documentId: "d1", state: "retrying", code: null }, { documentId: "d2", state: "failed", code: "HOLDING_CREATE_FAILED" }] });
+    expect((await backendCovers.holdingsView()).creationIssues.map((i) => i.state)).toEqual(["retrying", "failed"]);
+  });
+  it("holdingFor throws HOLDING_CREATE_FAILED for a failed document, without waiting", async () => {
+    reply({ holdings: [], creationIssues: [{ documentId: "d1", state: "failed", code: "HOLDING_CREATE_FAILED" }] });
+    await expect(backendCovers.holdingFor("d1")).rejects.toMatchObject({ code: "HOLDING_CREATE_FAILED" });
+  });
+  it("holdingFor keeps waiting on a retrying document, then gives null", async () => {
+    vi.useFakeTimers();
+    reply({ holdings: [], creationIssues: [{ documentId: "d1", state: "retrying", code: null }] });
+    const p = backendCovers.holdingFor("d1");
+    await vi.runAllTimersAsync();
+    expect(await p).toBeNull();
+    vi.useRealTimers();
+  });
   it("mock links a second document once and refuses an unknown holding or document", async () => {
     const sched = await mockCovers.uploadDocument(pdf(), "k1", "policy_schedule", "personal_health");
     const holdingId = (await mockCovers.holdingFor(sched.documentId))!;

@@ -1,7 +1,7 @@
 import { AdapterError, type CoversAdapter } from "../types";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES } from "../documents-contract";
 import { precheck } from "../uploads";
-import { containsUin, type Conflicts, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
+import { containsUin, type Conflicts, type CreationIssue, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
 import { PINCODE, type HospitalView } from "../chat-contract";
 import { delay } from "./delay";
 
@@ -29,6 +29,12 @@ const conflictsSeed = (): Conflicts["conflicts"] => [
 type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null };
 const holdings = new Map<string, { documentId: string; state: State; linked: { documentId: string; kind: string }[] }>();
 const docs = new Map<string, string>();
+/** Test hook: documents the mock backend could not make a holding from. */
+const issues = new Map<string, CreationIssue>();
+export const setMockCreationIssue = (documentId: string, state: CreationIssue["state"] | null): void => {
+  if (state) issues.set(documentId, { documentId, state, code: state === "failed" ? "HOLDING_CREATE_FAILED" : null });
+  else issues.delete(documentId);
+};
 let n = 0;
 let seq = 0;
 const declarations: DeclarationView[] = [];
@@ -73,7 +79,10 @@ export const mockCovers: CoversAdapter = {
     void key;
     return delay({ documentId });
   },
-  holdingFor: async (documentId) => delay([...holdings].find(([, h]) => h.documentId === documentId)?.[0] ?? null),
+  holdingFor: async (documentId) => {
+    if (issues.get(documentId)?.state === "failed") throw new AdapterError("HOLDING_CREATE_FAILED");
+    return delay([...holdings].find(([, h]) => h.documentId === documentId)?.[0] ?? null);
+  },
   upload: async (file, key, opts) => {
     const { documentId } = await mockCovers.uploadDocument(file, key, opts.kind, opts.policyType);
     return { documentId, holdingId: await mockCovers.holdingFor(documentId) };
@@ -90,6 +99,7 @@ export const mockCovers: CoversAdapter = {
     if (linked) h.linked.push({ documentId: input.documentId, kind });
     return delay({ holdingId, documentId: input.documentId, kind, linked });
   },
+  holdingsView: async () => ({ holdings: await mockCovers.holdings(), creationIssues: [...issues.values()] }),
   holdings: () => delay([...holdings].map(([id, h]) => ({ id, documentId: h.documentId, kind: docs.get(h.documentId) ?? "policy_wording", status: h.state.status }))),
   candidates: async (holdingId) => {
     const h = get(holdingId);

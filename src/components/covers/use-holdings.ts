@@ -33,6 +33,6 @@ export function useHoldings(preferred?: string) {
     return () => { live = false; };
   }, []);
 
-  const current = holdings?.find((h) => h.id === picked) ?? holdings?.[holdings.length - 1];
+  const current = holdings?.find((h) => h.id === picked) ?? holdings?.find((h) => h.id === preferred) ?? holdings?.[holdings.length - 1];
   return { holdings, current, select: setPicked, error, reload };
 }

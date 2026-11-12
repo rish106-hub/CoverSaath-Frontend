@@ -83,6 +83,18 @@ describe("holdings and candidates", () => {
     expect(calls[0]).toMatchObject({ url: "/api/v1/households/h1/holdings" });
     expect(calls[0]?.headers.authorization).toBe("Bearer tok-secret");
   });
+  it("passes creation_issues through (retrying and failed), in either key style", async () => {
+    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [], creation_issues: [{ document_id: "doc-2", state: "retrying", code: null, extra: "dropped" }, { document_id: "doc-3", state: "failed", code: "HOLDING_CREATE_FAILED" }] } };
+    const body = await (await holdingsRoute.GET(req("/api/app/covers/holdings"))).json();
+    expect(body.data.creationIssues).toEqual([{ documentId: "doc-2", state: "retrying", code: null }, { documentId: "doc-3", state: "failed", code: "HOLDING_CREATE_FAILED" }]);
+    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [], creationIssues: [{ documentId: "doc-4", state: "failed", code: "HOLDING_CREATE_FAILED" }] } };
+    expect((await (await holdingsRoute.GET(req("/api/app/covers/holdings"))).json()).data.creationIssues).toHaveLength(1);
+  });
+  it("tolerates a backend that does not send creation_issues", async () => {
+    const res = await holdingsRoute.GET(req("/api/app/covers/holdings"));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.creationIssues).toBeUndefined();
+  });
   it("needs a session", async () => {
     jar.delete("kv_session");
     expect((await holdingsRoute.GET(req("/api/app/covers/holdings"))).status).toBe(401);

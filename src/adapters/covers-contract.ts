@@ -23,7 +23,22 @@ export const containsUin = (body: unknown): boolean => UIN_SHAPE.test(JSON.strin
 
 export const holdingView = z.object({ id, documentId: id.nullish(), kind: z.string().max(60).nullish(), status: z.enum(HOLDING_STATUSES) });
 export type HoldingView = z.infer<typeof holdingView>;
-export const holdingsIn = z.object({ holdings: z.array(holdingView).max(200), truncated: z.boolean().optional() });
+/**
+ * A document the backend could not (yet) make a holding from. `retrying`: still being worked on. `failed`: gave up (code HOLDING_CREATE_FAILED).
+ * Older backends do not send this at all, so the list is optional. Read both `document_id` and `documentId`.
+ */
+export const CREATION_STATES = ["retrying", "failed"] as const;
+export const creationIssueView = z.preprocess(
+  (v) => (v && typeof v === "object" && "document_id" in v && !("documentId" in v) ? { ...(v as object), documentId: (v as { document_id: unknown }).document_id } : v),
+  z.object({ documentId: id, state: z.enum(CREATION_STATES), code: z.string().max(80).nullish() }),
+);
+export type CreationIssue = z.infer<typeof creationIssueView>;
+export const holdingsIn = z.object({
+  holdings: z.array(holdingView).max(200),
+  truncated: z.boolean().optional(),
+  creationIssues: z.array(creationIssueView).max(200).optional(),
+});
+export type HoldingsView = { holdings: HoldingView[]; creationIssues: CreationIssue[] };
 
 /** Insurer and product name only. Never a UIN. */
 export const candidateView = z.object({ candidateId: id, insurerName: z.string().max(200), productName: z.string().max(200), rank: z.number().int().min(0).max(100) });

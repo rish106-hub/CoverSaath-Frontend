@@ -226,7 +226,7 @@ export function AddCoverView() {
       {consent ? (
         <SectionHeading title="Policy schedule" description={`PDF only, up to ${MB} MB. The schedule lists who is covered, the sum insured and the dates.`}>
           <div className={s.drop} data-over={over === "schedule"} onDragOver={(e) => { e.preventDefault(); setOver("schedule"); }} onDragLeave={() => setOver(null)} onDrop={(e) => { e.preventDefault(); setOver(null); void takeSchedule(e.dataTransfer.files[0]); }}>
-            <SlotStatus slot={schedule} name="Policy schedule" waitingText="Your schedule is in. We are still setting it up." />
+            <SlotStatus slot={schedule} name="Policy schedule" waitingText="Your schedule is in. We are still reading it." />
             <input ref={scheduleInput} aria-label="Policy schedule PDF" data-testid="schedule-input" type="file" accept="application/pdf,.pdf" hidden onChange={(e) => void takeSchedule(e.target.files?.[0])} />
             <div className={s.row}>
               {schedule.status === "empty" || schedule.status === "failed" ? (
@@ -314,7 +314,8 @@ export function AddCoverView() {
           <div className={s.done} role="status">
             <span>{terms.status === "done" ? "Saved. We are reading the plan against your documents." : "Saved. Add the terms and conditions above to finish this cover."}</span>
             <div className={s.row}>
-              <Link className="k-btn" href={`/covers/review?holding=${encodeURIComponent(holdingId)}`}>See what we found</Link>
+              <Link className="k-btn" href={`/policies/${encodeURIComponent(holdingId)}`}>Open my policy</Link>
+              <Link className="k-btn k-btn--secondary" href={`/covers/review?holding=${encodeURIComponent(holdingId)}`}>See what we found</Link>
               <Link className="k-btn k-btn--secondary" href={`/covers/declarations?holding=${encodeURIComponent(holdingId)}`}>Add declarations and premium</Link>
             </div>
           </div>

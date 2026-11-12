@@ -150,6 +150,7 @@ export const ERROR_TEXT: Record<string, string> = {
   NOT_FOUND: "We could not find that document.",
   HOLDINGS_DISABLED: "Cover details are not switched on yet.",
   HOLDING_REGISTRY_UNAVAILABLE: "The list of insurers is not ready yet. Try again in a moment.",
+  HOLDING_CREATE_FAILED: "We could not read this document. Add it again, or try another copy.",
   HOLDING_PRODUCT_UNSUPPORTED: "That plan cannot be chosen here. Pick another or choose Something else.",
   NOT_READY: "Still being read. Check again in a moment.",
   CONFLICT_ALREADY_RESOLVED: "This one is already settled.",

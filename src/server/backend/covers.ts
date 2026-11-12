@@ -27,7 +27,9 @@ function shape<T extends z.ZodType>(schema: T, body: unknown): z.output<T> {
 export async function listHoldings(ctx: Ctx): Promise<{ data: unknown }> {
   need(ctx.session);
   const r = await ctx.client.send("GET", `/api/v1/households/${enc(ctx.session.h)}/holdings`, ctx.session.t);
-  return out(shape(holdingsIn, r.body));
+  // The backend's `creation_issues` (snake_case) is the same list as `creationIssues`; older backends send neither.
+  const body = r.body && typeof r.body === "object" && "creation_issues" in r.body && !("creationIssues" in r.body) ? { ...(r.body as object), creationIssues: (r.body as { creation_issues: unknown }).creation_issues } : r.body;
+  return out(shape(holdingsIn, body));
 }
 
 /** Up to three candidates: insurer and product name, nothing else. The page confirms one by `candidateId`. */
