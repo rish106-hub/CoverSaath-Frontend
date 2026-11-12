@@ -11,14 +11,17 @@ test("profile, schedule and terms PDFs, go-ahead, clause question with citation"
   const backendCalls: string[] = [];
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
 
+  await page.route("https://knowviafrontend.vercel.app/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<html><body>site</body></html>" }));
+
   // Profile.
   await page.goto("/");
   await page.getByLabel(/name/i).first().fill("Meera Rao");
   await page.getByLabel(/email/i).first().fill("meera.rao@company.com");
   await page.getByRole("button", { name: /get access/i }).click();
-  // The card moves on to /welcome by itself; going elsewhere before that lands aborts the navigation.
-  await page.waitForURL(/\/welcome/);
-  await expect(page.getByText(/You.re in, Meera/).first()).toBeVisible();
+  // Access submit hands over to the public site after a beat. Stub that host (no real network), let the hand-over land,
+  // then go on: a goto while it is pending is aborted (net::ERR_ABORTED).
+  await expect(page.getByText(/You.re in, Meera/)).toBeVisible();
+  await page.waitForURL("https://knowviafrontend.vercel.app/");
 
   // Both documents of one policy.
   await page.goto("/upload");
