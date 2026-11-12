@@ -53,8 +53,11 @@ export const backendCovers: CoversAdapter = {
   async holdingFor(documentId) {
     // The backend makes the holding; the page waits a little for it, then lets the person check again.
     for (let i = 0; i < POLL_TRIES; i += 1) {
-      const found = (await this.holdings()).find((h) => h.documentId === documentId);
+      const view = await this.holdingsView();
+      const found = view.holdings.find((h) => h.documentId === documentId);
       if (found) return found.id;
+      // Gave up: no point waiting. `retrying` just keeps waiting.
+      if (view.creationIssues.some((x) => x.documentId === documentId && x.state === "failed")) throw new AdapterError("HOLDING_CREATE_FAILED");
       await wait(POLL_MS);
     }
     return null;
@@ -70,7 +73,11 @@ export const backendCovers: CoversAdapter = {
     return parse(linkedIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/documents`, { method: "POST", json: input }));
   },
   async holdings() {
-    return parse(holdingsIn, await call("/api/app/covers/holdings")).holdings;
+    return (await this.holdingsView()).holdings;
+  },
+  async holdingsView() {
+    const r = parse(holdingsIn, await call("/api/app/covers/holdings"));
+    return { holdings: r.holdings, creationIssues: r.creationIssues ?? [] };
   },
   async candidates(holdingId) {
     return parse(candidatesIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/candidates`));

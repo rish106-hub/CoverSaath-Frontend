@@ -22,7 +22,7 @@ export const pickFile = (file: File): Slot => ({ ...emptySlot(), status: "workin
 type Deps = Pick<CoversAdapter, "uploadDocument" | "holdingFor" | "linkDocument">;
 const codeOf = (e: unknown): string => (e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE");
 /** Refusals a second try with the same file cannot fix. */
-const FINAL = new Set(["FILE_TYPE_INVALID", "FILE_TOO_LARGE", "FILE_EMPTY", "PDF_PROTECTED", "PDF_UNREADABLE", "PDF_ACTIVE_CONTENT", "PDF_TOO_LONG", "PDF_TOO_COMPLEX", "DUPLICATE_DOCUMENT", "POLICY_TYPE_INVALID"]);
+const FINAL = new Set(["FILE_TYPE_INVALID", "FILE_TOO_LARGE", "FILE_EMPTY", "PDF_PROTECTED", "PDF_UNREADABLE", "PDF_ACTIVE_CONTENT", "PDF_TOO_LONG", "PDF_TOO_COMPLEX", "DUPLICATE_DOCUMENT", "POLICY_TYPE_INVALID", "HOLDING_CREATE_FAILED"]);
 export const canRetry = (slot: Slot): boolean => slot.status === "failed" && !(slot.code && FINAL.has(slot.code));
 
 const fail = (slot: Slot, e: unknown): Slot => ({ ...slot, status: "failed", code: codeOf(e) });

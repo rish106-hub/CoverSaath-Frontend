@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
 import { AdapterError } from "@/adapters/types";
 import { realAdapters } from "@/adapters/real";
-import { containsUin, type ConflictView, type FactView, type HoldingView } from "@/adapters/covers-contract";
+import { containsUin, type ConflictView, type CreationIssue, type FactView, type HoldingView } from "@/adapters/covers-contract";
 import { keyFacts, loadPolicies, stageOf, stateOf, toPolicyView } from "@/adapters/real-policy";
 import { RealHome } from "@/components/cover-real/RealHome";
 import { RealPolicies } from "@/components/cover-real/RealPolicies";
@@ -100,9 +100,9 @@ describe("loading from the backend routes", () => {
   });
 });
 
-function stub(list: HoldingView[] | AdapterError) {
-  if (list instanceof AdapterError) vi.spyOn(backendCovers, "holdings").mockRejectedValue(list);
-  else vi.spyOn(backendCovers, "holdings").mockResolvedValue(list);
+function stub(list: HoldingView[] | AdapterError, creationIssues: CreationIssue[] = []) {
+  if (list instanceof AdapterError) vi.spyOn(backendCovers, "holdingsView").mockRejectedValue(list);
+  else vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: list, creationIssues });
   vi.spyOn(backendCovers, "facts").mockResolvedValue({ holdingId: "h1", status: "conflicts", facts: FACTS, unknownKeys: ["a", "b"] });
   vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "conflicts", conflicts: [CONFLICT] });
 }
@@ -115,6 +115,30 @@ describe("screens", () => {
     expect(screen.getByText(/Page 2/)).toBeInTheDocument();
     expect(screen.getAllByText("Read from your document").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Review and decide" })).toHaveAttribute("href", "/covers/review?holding=h1");
+  });
+  it("home shows a document that is still retrying as still being read, next to the ready policy", async () => {
+    stub([holding("ready")], [{ documentId: "d2", state: "retrying", code: null }]);
+    render(<RealHome />);
+    expect(await screen.findByTestId("creation-retrying")).toHaveTextContent(/still being read/i);
+    expect(screen.queryByTestId("creation-failed")).toBeNull();
+    expect(await screen.findByText("Room rent limit")).toBeInTheDocument();
+  });
+  it("home shows a failed document with an add-again action, and no empty state", async () => {
+    stub([], [{ documentId: "d2", state: "failed", code: "HOLDING_CREATE_FAILED" }]);
+    render(<RealHome />);
+    expect(await screen.findByTestId("creation-failed")).toHaveTextContent(/could not read a document/i);
+    expect(screen.getByRole("link", { name: "Add the document again" })).toHaveAttribute("href", "/covers/add");
+    expect(screen.queryByTestId("empty-state")).toBeNull();
+  });
+  it("policies list shows a failed document too", async () => {
+    stub([holding("ready")], [{ documentId: "d2", state: "failed", code: "HOLDING_CREATE_FAILED" }]);
+    render(<RealPolicies />);
+    expect(await screen.findByTestId("creation-failed")).toBeInTheDocument();
+  });
+  it("policy page offers chat about this policy", async () => {
+    stub([holding("ready", "h1")]);
+    render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByRole("link", { name: "Ask about this policy" })).toHaveAttribute("href", "/chat?holding=h1");
   });
   it("home with no holdings shows the empty state with a link to /covers/add", async () => {
     stub([]);

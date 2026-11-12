@@ -172,7 +172,6 @@ function DemoCard({ returnTo }: { returnTo: string | null }) {
         if (!alive()) return;
         if (!res.ok) return setError(res.status === 404 ? "The demo isn’t available right now." : DOWN);
         invalidateMe();
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load on purpose
         window.location.href = returnTo ?? "/home"; // full load: no mock state carried over
       } catch {
         if (alive()) setError(DOWN);

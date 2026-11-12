@@ -46,8 +46,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function begin() {
-  const res = await start.GET(at("/api/app/auth/google"));
+async function begin(query = "") {
+  const res = await start.GET(at(`/api/app/auth/google${query}`));
   const url = new URL(res.headers.get("location") as string);
   return { res, url, state: url.searchParams.get("state") as string, nonce: url.searchParams.get("nonce") as string };
 }
@@ -72,6 +72,24 @@ describe("Google sign-in start", () => {
     const res = await start.GET(at("/api/app/auth/google"));
     expect(res.headers.get("location")).toBe("/signin?error=google_unavailable");
     expect(jar.has("__Secure-kv_oauth")).toBe(false);
+  });
+});
+
+describe("Google sign-in return path", () => {
+  const land = async (query: string, returning = false) => {
+    identityReply = { ...identityReply, body: { ...(identityReply.body as object), returning } };
+    const s = await begin(query);
+    idTokenClaims = claims(s.nonce);
+    return (await callback.GET(at(`/api/app/auth/google/callback?code=abc&state=${s.state}`))).headers.get("location");
+  };
+  it("lands a new person on the page they were going to", async () => {
+    expect(await land("?next=%2Fcovers%2Fadd")).toBe("/covers/add");
+  });
+  it("lands a returning person there too", async () => {
+    expect(await land("?next=%2Fchat", true)).toBe("/chat");
+  });
+  it.each(["//evil.example", "https://evil.example", "/%2F%2Fevil.example", "/\\evil.example", "/admin"])("falls back for %s", async (bad) => {
+    expect(await land(`?next=${encodeURIComponent(bad)}`)).toBe("/welcome");
   });
 });
 

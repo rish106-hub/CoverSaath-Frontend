@@ -2,7 +2,7 @@ import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 import type { HospitalView, ThreadView, TurnEvent, TurnInput } from "./chat-contract";
-import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingDocuments, HoldingView, LinkDocumentInput, Linked, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
+import type { Candidates, Confirmed, CreationIssue, HoldingsView, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingDocuments, HoldingView, LinkDocumentInput, Linked, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
 import type { DocumentKind, PolicyType } from "./documents-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
 
@@ -171,6 +171,8 @@ export interface CoversAdapter {
   /** Links an uploaded document to a holding (the terms and conditions of the policy the schedule made). Safe to repeat. */
   linkDocument(holdingId: string, input: LinkDocumentInput): Promise<Linked>;
   holdings(): Promise<HoldingView[]>;
+  /** The holdings plus the documents the backend could not make a holding from yet (`retrying`) or at all (`failed`). */
+  holdingsView(): Promise<HoldingsView>;
   candidates(holdingId: string): Promise<Candidates>;
   confirmProduct(holdingId: string, statement: ConfirmProduct, key: string): Promise<Confirmed>;
   facts(holdingId: string): Promise<Facts>;

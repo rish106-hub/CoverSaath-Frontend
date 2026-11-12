@@ -35,7 +35,7 @@ export function RealPolicyDetail({ id }: { id: string }) {
       {p.notFound > 0 ? <p className={s.quiet}>{p.notFound} {p.notFound === 1 ? "detail was" : "details were"} not found in your document.</p> : null}
       <div className={s.row}>
         <Link className="k-btn k-btn--secondary" href="/policies">All policies</Link>
-        <Link className="k-btn k-btn--secondary" href="/chat">Ask about your cover</Link>
+        <Link className="k-btn k-btn--secondary" href={`/chat?holding=${encodeURIComponent(p.id)}`}>Ask about this policy</Link>
       </div>
     </div>
   );
