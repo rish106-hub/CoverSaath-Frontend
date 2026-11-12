@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { RETURN_PARAM, returnPathFromSearch } from "@/lib/return-path";
+import { useReturnPath } from "@/lib/use-return-path";
 import { adapters, AdapterError, googleSignIn, usingBackend } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
 import { invalidateMe } from "@/components/shell/useMe";
@@ -32,6 +34,10 @@ function nameFromEmail(email: string): string {
 /** Beta access card on the landing page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
 export function AccessCard() {
   const router = useRouter();
+  const returnTo = useReturnPath();
+  const dest = returnTo ?? "/welcome";
+  // Handlers read the URL when they run: the first-render closure used by the mount effect predates hydration.
+  const target = () => returnPathFromSearch(window.location.search);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,10 +88,15 @@ export function AccessCard() {
       const first = res.name ?? name.trim().split(" ")[0];
       invalidateMe();
       if (viaLink) {
-        router.replace("/welcome");
+        router.replace(target() ?? "/welcome");
         return;
       }
       setState({ kind: "done", name: first });
+      const back = target();
+      if (back) {
+        nav.current = setTimeout(() => router.replace(back), 700);
+        return;
+      }
       nav.current = setTimeout(() => {
         window.location.href = "https://knowviafrontend.vercel.app/";
       }, 700);
@@ -107,7 +118,9 @@ export function AccessCard() {
     if (pe) setEmail((cur) => cur || pe);
     if (pn) setName((cur) => cur || pn);
     if (pe && !q.get("error") && validateAccess(pn || nameFromEmail(pe), pe).ok) {
-      window.history.replaceState(null, "", window.location.pathname); // keep the email out of the address bar and history
+      // keep the email out of the address bar and history; the return path is a plain app path, so it stays
+      const keep = returnPathFromSearch(window.location.search);
+      window.history.replaceState(null, "", keep ? `${window.location.pathname}?${RETURN_PARAM}=${encodeURIComponent(keep)}` : window.location.pathname);
       setAuto(true);
       void submit(pn || nameFromEmail(pe), pe, true);
     }
@@ -127,7 +140,7 @@ export function AccessCard() {
         return;
       }
       invalidateMe();
-      router.push("/welcome");
+      router.push(target() ?? "/welcome");
     } catch {
       flying.current = false;
       if (!alive.current) return;
@@ -142,7 +155,7 @@ export function AccessCard() {
           <span className={styles.tick} aria-hidden>✓</span>
           <div className={styles.doneT}>You’re in, {state.name}.</div>
           <div className={styles.doneD}>Access is open on this device. First step: add one policy. It takes about a minute.</div>
-          <Link href="/welcome" className={styles.cta}>Open Knowvia</Link>
+          <Link href={dest} className={styles.cta}>Open Knowvia</Link>
         </div>
       </div>
     );
@@ -163,7 +176,7 @@ export function AccessCard() {
       <div className={styles.title}>Get access in 10 seconds</div>
       {usingBackend && googleSignIn ? (
         <>
-      <a className={styles.ghost} href="/api/app/auth/google">
+      <a className={styles.ghost} href={returnTo ? `/api/app/auth/google?next=${encodeURIComponent(returnTo)}` : "/api/app/auth/google"}>
         <BrandLogo id="google" size={24} />Continue with Google
       </a>
       <div className={styles.or} aria-hidden><span />or<span /></div>

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { AppError, runtime, writeSession } from "./index";
 import { loadConfig, previousCookieSecret } from "./env";
 import { expiring, isSecureRequest, oauthCookieName, oauthFlags } from "./cookie-policy";
+import { safeReturnPath, RETURN_PARAM } from "@/lib/return-path";
 import { authorizeUrl, exchangeCode, googleConfig, newOAuthStart, openOAuth, readIdToken, redirectUri, sealOAuth, toSignInInput } from "./google";
 
 export type SignInError = "google_unavailable" | "google_denied" | "google_failed" | "google_busy";
@@ -28,7 +29,7 @@ export async function startGoogle(req: Request): Promise<Response> {
     const { cookieSecret } = loadConfig();
     const start = newOAuthStart();
     // Lax, not Strict: the callback is a top-level navigation from Google, and Strict would drop the cookie.
-    (await cookies()).set(oauthCookieName(secureFor(req)), sealOAuth(start, cookieSecret), oauthFlags(secureFor(req)));
+    (await cookies()).set(oauthCookieName(secureFor(req)), sealOAuth(start, cookieSecret, Date.now(), safeReturnPath(new URL(req.url).searchParams.get(RETURN_PARAM))), oauthFlags(secureFor(req)));
     return go(authorizeUrl(cfg, start, redirectUri(req)));
   } catch {
     return back("google_unavailable");
@@ -56,7 +57,8 @@ export async function finishGoogle(req: Request): Promise<Response> {
     const signedIn = await client.identitySession(toSignInInput(claims));
     const exp = Math.min(Date.parse(signedIn.expiresAt) || Date.now() + 86_400_000, Date.now() + 7 * 86_400_000);
     await writeSession({ t: signedIn.token, h: signedIn.householdId, m: signedIn.memberId, ...(signedIn.adultUserId ? { a: signedIn.adultUserId } : {}), exp }, config.cookieSecret, secureFor(req));
-    return go(signedIn.returning ? "/home" : "/welcome");
+    // Re-validated here even though it was checked at the start: the cookie is sealed, but this is the redirect.
+    return go(safeReturnPath(saved.r) ?? (signedIn.returning ? "/home" : "/welcome"));
   } catch (e) {
     if (e instanceof AppError && e.code === "RATE_LIMITED") return back("google_busy");
     if (e instanceof AppError && e.code === "CONFIG_MISSING") return back("google_unavailable");

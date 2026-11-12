@@ -3,6 +3,7 @@
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
+import { useReturnPath } from "@/lib/use-return-path";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters, usingBackend } from "@/adapters";
 import { AccessCard } from "@/components/access/AccessCard";
@@ -27,6 +28,7 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const { run: once, busy, alive } = useSingleFlight();
+  const returnTo = useReturnPath();
   const demoRequested = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("demo") === "1", () => false);
 
   function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
@@ -79,7 +81,7 @@ export function SignIn() {
               <p className={styles.sub}>Private beta. Get access to start.</p>
             </div>
             <AccessCard />
-            {demoRequested ? <DemoCard /> : null}
+            {demoRequested ? <DemoCard returnTo={returnTo} /> : null}
           </div>
         ) : null}
 
@@ -135,8 +137,8 @@ export function SignIn() {
           <div className={styles.form} role="status">
             <div className={styles.tickBig} aria-hidden>✓</div>
             <h1 className={styles.h1}>You’re in.</h1>
-            <p className={styles.sub}>Next, add your policy.</p>
-            <Link href="/welcome/add" className={styles.cta}>Add my policy</Link>
+            <p className={styles.sub}>{returnTo ? "Taking you back." : "Next, add your policy."}</p>
+            <Link href={returnTo ?? "/welcome/add"} className={styles.cta}>{returnTo ? "Continue" : "Add my policy"}</Link>
           </div>
         ) : null}
 
@@ -154,7 +156,7 @@ export function SignIn() {
 }
 
 /** Public synthetic demo. Shown only for /signin?demo=1. The server turns it off with DEMO_LOGIN_ENABLED=false. */
-function DemoCard() {
+function DemoCard({ returnTo }: { returnTo: string | null }) {
   const { run: once, busy, alive } = useSingleFlight();
   const [error, setError] = useState("");
   const enter = () =>
@@ -171,7 +173,7 @@ function DemoCard() {
         if (!res.ok) return setError(res.status === 404 ? "The demo isn’t available right now." : DOWN);
         invalidateMe();
         // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load on purpose
-        window.location.href = "/home"; // full load: no mock state carried over
+        window.location.href = returnTo ?? "/home"; // full load: no mock state carried over
       } catch {
         if (alive()) setError(DOWN);
       }
