@@ -164,13 +164,13 @@ describe("UploadView policy type", () => {
     });
     render(<UploadView />);
     await screen.findByTestId("file-input");
-    expect(screen.getByRole("button", { name: "Choose a PDF" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add policy schedule" })).toBeDisabled();
     expect(within(screen.getByTestId("policy-type")).getAllByRole("option").map((o) => o.textContent)).toEqual(["Choose one", "Personal health", "Group health", "Term life", "Other"]);
     fireEvent.change(screen.getByTestId("file-input"), { target: { files: [pdf()] } });
     expect(await screen.findByText("Choose the type of policy first.")).toBeInTheDocument();
     expect(paths.filter((p) => p === "POST /api/app/documents")).toHaveLength(0);
     choose("group_health");
-    expect(screen.getByRole("button", { name: "Choose a PDF" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Add policy schedule" })).toBeEnabled();
     pick([pdf()]);
     await waitFor(() => expect(header).toBe("group_health"));
   });

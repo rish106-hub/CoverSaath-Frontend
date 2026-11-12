@@ -10,6 +10,7 @@ vi.mock("next/headers", () => ({
 
 import * as threads from "@/app/api/app/chat/threads/route";
 import * as turns from "@/app/api/app/chat/threads/[id]/turns/route";
+import * as consent from "@/app/api/app/chat/consent/route";
 import * as hospitals from "@/app/api/app/covers/holdings/[id]/hospitals/route";
 
 type Call = { url: string; method: string; headers: Record<string, string>; body: unknown };
@@ -74,6 +75,59 @@ describe("chat threads", () => {
     const t = await res.text();
     expect(JSON.parse(t).code).toBe("MEMORY_DISABLED");
     expect(t).not.toContain("backend words");
+  });
+});
+
+describe("chat go-ahead", () => {
+  it("grants one household grant naming anthropic and voyage, with a replay-safe key, and remembers it", async () => {
+    jsonReply = { status: 201, body: { id: "grant-chat-1" } };
+    const res = await consent.POST(req("/x", "POST", { json: { accept: true, requestId: "req-12345678" } }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).consent).toBe(true);
+    expect(calls[0]).toMatchObject({ method: "POST", url: "/api/v1/consents", body: { householdId: "h1", subjectAdultId: "adult1", purpose: "coverage_reconstruction" } });
+    expect(calls[0]?.headers["idempotency-key"]).toBe("chat-req-12345678");
+    const scopes = (calls[0]?.body as { scopes: { recipient: string; resourceType: string; action: string; dataCategory: string }[] }).scopes;
+    expect(scopes.map((s) => s.recipient).sort()).toEqual(["anthropic", "voyage"]);
+    for (const s of scopes) expect(s).toMatchObject({ resourceType: "household", action: "derive", dataCategory: "insurance_question" });
+    const cookie = jar.get("kv_docs");
+    expect(cookie).toBeTruthy();
+    const status = await consent.GET(req("/x", "GET"));
+    expect((await status.json()).consent).toBe(true);
+  });
+  it("withdraws it: revokes the grant and the next status is false", async () => {
+    jsonReply = { status: 201, body: { id: "grant-chat-1" } };
+    await consent.POST(req("/x", "POST", { json: { accept: true, requestId: "req-12345678" } }));
+    calls.length = 0;
+    jsonReply = { status: 200, body: {} };
+    const res = await consent.DELETE(req("/x", "DELETE"));
+    expect((await res.json()).consent).toBe(false);
+    expect(calls[0]).toMatchObject({ method: "POST", url: "/api/v1/consents/grant-chat-1/revoke" });
+    expect((await (await consent.GET(req("/x", "GET"))).json()).consent).toBe(false);
+  });
+  it("refuses a bad body, a missing marker and a missing session before any backend call", async () => {
+    expect((await consent.POST(req("/x", "POST", { json: { accept: false, requestId: "req-12345678" } }))).status).toBe(400);
+    expect((await consent.POST(req("/x", "POST", { json: { accept: true, requestId: "x" } }))).status).toBe(400);
+    expect((await consent.POST(req("/x", "POST", { json: { accept: true, requestId: "req-12345678" }, marker: false }))).status).toBe(403);
+    jar.delete("kv_session");
+    jar.delete("__Host-kv_session"); // a request that read the session re-sealed it under the secure name
+    expect((await consent.GET(req("/x", "GET"))).status).toBe(401);
+    expect(calls).toHaveLength(0);
+  });
+  it("turns a turn refused for missing go-ahead into the coded CONSENT_REQUIRED", async () => {
+    jsonReply = { status: 403, body: { error: { code: "CONSENT_REQUIRED", message: "backend words" } } };
+    const res = await turns.POST(req("/x", "POST", { json: { message: "hi" } }), P("th-1"));
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("CONSENT_REQUIRED");
+  });
+});
+
+describe("additive backend fields", () => {
+  it("passes model_status and truncated on the answer, and still drops other unknown keys", async () => {
+    sse = [frame("meta", { thread_id: "th-1", intent: "x", retrieval_mode: "keyword" }), frame("answer", { ...ANSWER, model_status: "numbers_unverified", truncated: true, extra: "no" }), frame("done", {})];
+    const text = await (await turns.POST(req("/x", "POST", { json: { message: "hi" } }), P("th-1"))).text();
+    expect(text).toContain('"modelStatus":"numbers_unverified"');
+    expect(text).toContain('"truncated":true');
+    expect(text).not.toContain("extra");
   });
 });
 

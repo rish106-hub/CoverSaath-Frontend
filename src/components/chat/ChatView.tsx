@@ -9,6 +9,7 @@ import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/ch
 import { MicGlyph } from "@/components/agent/VoiceIcons";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
+import { makeRequestKey } from "@/adapters/uploads";
 import { useHoldings } from "@/components/covers/use-holdings";
 import { STATUS_TEXT } from "@/components/covers/format";
 import s from "./chat.module.css";
@@ -54,6 +55,34 @@ function FactChips({ a }: { a: TurnAnswer }) {
   );
 }
 
+const DOC_LABEL: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions", endorsement: "Endorsement" };
+
+/** Document and page for each source the answer rests on, from the answer's own citations and those on its facts. Deduplicated. */
+export function citationLines(a: TurnAnswer): string[] {
+  const all = [...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const c of all) {
+    const doc = c.documentKind ? DOC_LABEL[c.documentKind] ?? "Your document" : "Your document";
+    const line = c.page ? `${doc}, page ${c.page}` : doc;
+    if (!seen.has(line)) { seen.add(line); out.push(line); }
+  }
+  return out;
+}
+
+function Citations({ a }: { a: TurnAnswer }) {
+  const lines = citationLines(a);
+  if (lines.length === 0) return null;
+  return (
+    <div>
+      <p className={s.small}>Sources</p>
+      <ul className={s.facts} aria-label="Sources">
+        {lines.map((l) => <li key={l} className={s.chip}>{l}</li>)}
+      </ul>
+    </div>
+  );
+}
+
 function Checks({ a }: { a: TurnAnswer }) {
   const checks = a.computed?.checks ?? [];
   if (checks.length === 0) return null;
@@ -77,6 +106,31 @@ export function ChatView() {
   const abort = useRef<AbortController | null>(null);
   const seq = useRef(0);
   const holdingId = current?.id;
+  // null while checking. A failed check does not block: the server refuses a turn without the go-ahead and the card then appears.
+  const [consent, setConsent] = useState<boolean | null>(null);
+  const [agreed, setAgreed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
+  const consentKey = useRef(makeRequestKey());
+
+  useEffect(() => {
+    let live = true;
+    adapters.chat.consent().then((c) => { if (live) setConsent(c); }, () => { if (live) setConsent(true); });
+    return () => { live = false; };
+  }, []);
+
+  async function accept() {
+    setSaving(true);
+    setConsentError(null);
+    try {
+      await adapters.chat.grantConsent(consentKey.current);
+      setConsent(true);
+    } catch (e) {
+      setConsentError(codeOf(e));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   useEffect(() => () => { abort.current?.abort(); }, []);
   // A different cover is a different conversation.
@@ -111,6 +165,7 @@ export function ChatView() {
     } catch (e) {
       const code = codeOf(e);
       if (code === "NOT_FOUND") thread.current = null; // the thread is gone: the next question opens a new one
+      if (code === "CONSENT_REQUIRED") { setConsent(false); consentKey.current = makeRequestKey(); } // withdrawn or expired: ask again
       patch(aid, (m) => ({ ...m, busy: false, error: code }));
     } finally {
       setBusy(false);
@@ -145,10 +200,30 @@ export function ChatView() {
       ) : null}
       {listError ? <p className={s.alert} role="alert">{errorText(listError)}</p> : null}
 
+      {consent === false ? (
+        // FOR LEGAL REVIEW: this wording, the purpose and the two providers named are not final.
+        <SectionHeading title="Before we answer">
+          <div className={s.card}>
+            <p className={s.lead}>To answer a question about your cover we send the question, and short passages from your own cover details that relate to it, to two services.</p>
+            <ul className={s.list}>
+              <li>A language service (Anthropic) writes the answer in plain words.</li>
+              <li>A search service (Voyage) finds the passages that relate to your question.</li>
+            </ul>
+            <p className={s.lead}>Your policy file itself is not sent. You can withdraw this at any time.</p>
+            <label className={s.check}>
+              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+              <span>Yes, you can use these services to answer my questions.</span>
+            </label>
+            {consentError ? <p className={s.alert} role="alert">{errorText(consentError)}</p> : null}
+            <button type="button" className="k-btn k-btn--primary" disabled={!agreed || saving} onClick={accept}>{saving ? "Saving..." : "Continue"}</button>
+          </div>
+        </SectionHeading>
+      ) : null}
+
       <SectionHeading title="Conversation" description="Answers come from your own documents and the insurer's wording, with the facts shown.">
         {first ? (
           <div className={s.prompts} role="group" aria-label="Suggested questions">
-            {PROMPTS.map((p) => <button key={p} type="button" className="k-btn k-btn--secondary" disabled={busy || holdings === null} onClick={() => void ask(p)}>{p}</button>)}
+            {PROMPTS.map((p) => <button key={p} type="button" className="k-btn k-btn--secondary" disabled={busy || holdings === null || consent === false} onClick={() => void ask(p)}>{p}</button>)}
           </div>
         ) : (
           <ol className={s.log} role="log" aria-live="polite" aria-label="Conversation">
@@ -156,7 +231,9 @@ export function ChatView() {
               <li key={m.id} className={s.msg} data-role={m.role} data-busy={m.busy === true}>
                 <span className={s.who}>{m.role === "user" ? (m.voice ? "You said" : "You") : "Knowvia"}</span>
                 {m.text ? <p>{m.text}</p> : m.busy ? <p className={s.quiet}>Looking in your cover…</p> : null}
+                {m.answer?.modelStatus === "numbers_unverified" ? <p className={s.quiet} data-role="numbers-unverified">The figures in this answer are not matched to a fact in your cover.</p> : null}
                 {m.answer ? <FactChips a={m.answer} /> : null}
+                {m.answer ? <Citations a={m.answer} /> : null}
                 {m.answer ? <Checks a={m.answer} /> : null}
                 {m.answer && m.answer.openConflicts.length > 0 ? <p className={s.quiet}>Some details in your cover are not settled. <Link href="/covers/review">Review them</Link>.</p> : null}
                 {m.answer?.intent === "network_hospitals" ? <p className={s.quiet}><Link href="/hospitals">Open network hospitals</Link></p> : null}
@@ -172,7 +249,7 @@ export function ChatView() {
           <textarea value={draft} maxLength={CHAT_MESSAGE_MAX} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void ask(draft); } }} />
         </label>
         <div className={s.row}>
-          <button type="submit" className="k-btn" disabled={busy || draft.trim() === "" || holdings === null}>Ask</button>
+          <button type="submit" className="k-btn" disabled={busy || draft.trim() === "" || holdings === null || consent === false}>Ask</button>
           {canSpeak ? (
             <button type="button" className={`k-btn k-btn--secondary ${s.mic}`} data-on={listening} aria-pressed={listening} disabled={busy && !listening} onClick={speak}>
               <MicGlyph size={16} />{listening ? "Stop listening" : "Ask by voice"}

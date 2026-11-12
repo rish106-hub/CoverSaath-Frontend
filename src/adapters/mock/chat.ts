@@ -14,10 +14,20 @@ const FACTS: Record<string, FactUsed> = {
   si: { factId: "f-si", factKey: "sum_insured", label: "Sum insured", status: "extracted_unverified", sourceTier: "own_pdf", valueText: "Rs 5,00,000", checkWithInsurer: false },
 };
 
-type Script = Pick<TurnAnswer, "status" | "intent" | "answer" | "factsUsed" | "computed" | "openConflicts"> & { retrieval: "vector" | "keyword" | "facts_only" };
+type Script = Pick<TurnAnswer, "status" | "intent" | "answer" | "factsUsed" | "computed" | "openConflicts"> & { citations?: TurnAnswer["citations"] } & { retrieval: "vector" | "keyword" | "facts_only" };
 
 function scriptFor(message: string): Script {
   const m = message.toLowerCase();
+  if (/clause|co-?pay|terms|sub-?limit|exclusion/.test(m)) {
+    const copay: FactUsed = { factId: "f-copay", factKey: "copay_percent", label: "Co-payment", status: "extracted_unverified", sourceTier: "own_pdf", valueText: "10% on claims after age 60", checkWithInsurer: false, citation: { documentKind: "policy_wording", page: 7 } };
+    const si: FactUsed = { ...FACTS.si!, citation: { documentKind: "policy_schedule", page: 1 } };
+    return {
+      status: "evidence_found", intent: "clause_lookup", retrieval: "vector",
+      answer: "Your policy terms apply a 10% co-payment on claims after age 60. The sum insured on your schedule is Rs 5,00,000.",
+      factsUsed: [copay, si], computed: null, openConflicts: [],
+      citations: [{ documentKind: "policy_wording", page: 7, quote: "A co-payment of 10% applies to claims after age 60." }, { documentKind: "policy_schedule", page: 1 }],
+    };
+  }
   if (/knee|surgery|operation|procedure/.test(m)) {
     return {
       status: "evidence_found", intent: "procedure_planning", retrieval: "facts_only",
@@ -40,7 +50,12 @@ const threads = new Set<string>();
 let n = 0;
 const tick = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve) => { const t = setTimeout(resolve, process.env.NODE_ENV === "test" ? 0 : ms); signal?.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true }); });
 
+let consented = false;
+
 export const mockChat: ChatAdapter = {
+  async consent() { return consented; },
+  async grantConsent() { consented = true; },
+  async revokeConsent() { consented = false; },
   async startThread(holdingId) {
     n += 1;
     const id = `thread-mock-${n}`;
@@ -50,6 +65,7 @@ export const mockChat: ChatAdapter = {
   async turn(threadId, input: TurnInput, onEvent, signal) {
     const p = turnIn.safeParse(input);
     if (!p.success) throw new AdapterError("INVALID_INPUT");
+    if (!consented) throw new AdapterError("CONSENT_REQUIRED");
     if (!threads.has(threadId)) throw new AdapterError("NOT_FOUND");
     const sc = scriptFor(p.data.message);
     if (containsUin(sc)) throw new AdapterError("BACKEND_BAD_RESPONSE");
@@ -62,7 +78,7 @@ export const mockChat: ChatAdapter = {
     }
     await tick(60, signal);
     if (signal?.aborted) return;
-    onEvent({ type: "answer", data: { turnId: `turn-mock-${n}-${Date.now()}`, status: sc.status, intent: sc.intent, answer: sc.answer, answerSource: "deterministic", factsUsed: sc.factsUsed, computed: sc.computed, openConflicts: sc.openConflicts } });
+    onEvent({ type: "answer", data: { turnId: `turn-mock-${n}-${Date.now()}`, status: sc.status, intent: sc.intent, answer: sc.answer, answerSource: "deterministic", factsUsed: sc.factsUsed, computed: sc.computed, openConflicts: sc.openConflicts, ...(sc.citations ? { citations: sc.citations } : {}) } });
     onEvent({ type: "done", data: {} });
   },
 };

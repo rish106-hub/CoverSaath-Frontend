@@ -11,6 +11,9 @@ test("ask a seeded question and see a streamed answer with facts chips", async (
 
   await page.goto("/chat");
   await expect(page.getByRole("heading", { name: "Ask about your cover", level: 1 })).toBeVisible();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByText("Before we answer")).toBeHidden();
   await page.getByRole("button", { name: /Planned knee surgery in Jan/ }).click();
 
   const log = page.getByRole("log", { name: "Conversation" });

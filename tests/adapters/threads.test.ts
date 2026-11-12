@@ -44,3 +44,24 @@ describe("browser chat client", () => {
     await expect(backendChat.turn("th-1", { message: "hi" }, () => undefined, ac.signal)).resolves.toBeUndefined();
   });
 });
+
+describe("browser chat go-ahead client", () => {
+  it("reads, grants with a request id, and withdraws, all on its own origin", async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ ok: true, consent: true }), { status: 200 }));
+    vi.stubGlobal("fetch", f);
+    expect(await backendChat.consent()).toBe(true);
+    await backendChat.grantConsent("req-12345678");
+    await backendChat.revokeConsent();
+    const calls = f.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual(["GET /api/app/chat/consent", "POST /api/app/chat/consent", "DELETE /api/app/chat/consent"]);
+    expect(JSON.parse(calls[1]![1].body as string)).toEqual({ accept: true, requestId: "req-12345678" });
+  });
+  it("codes a refusal", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ ok: false, code: "UNAUTHENTICATED" }), { status: 401 })));
+    await expect(backendChat.consent()).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
+  });
+  it("accepts additive answer fields", async () => {
+    const seen = await run(stream([frame("answer", { ...ANSWER, modelStatus: "numbers_unverified", truncated: false }), frame("done", {})]));
+    expect(seen[0]).toMatchObject({ type: "answer", data: { modelStatus: "numbers_unverified", truncated: false } });
+  });
+});

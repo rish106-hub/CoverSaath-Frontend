@@ -111,3 +111,9 @@ export const backendUploads: UploadAdapter = {
     parse(deleteOut, await call(`/api/app/documents/${id(docId)}`, { method: "DELETE" }));
   },
 };
+
+/** The in-memory set under NEXT_PUBLIC_ADAPTERS=mock (the journey tests); the BFF client everywhere else. The mock module is only pulled in for that mode. */
+export const uploads: UploadAdapter =
+  process.env.NEXT_PUBLIC_ADAPTERS === "mock"
+    ? (new Proxy({} as UploadAdapter, { get: (_t, prop: string) => (...a: unknown[]) => import("./mock/uploads").then((m) => (m.mockUploads as unknown as Record<string, (...x: unknown[]) => unknown>)[prop]!(...a)) }))
+    : backendUploads;
