@@ -94,16 +94,11 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("Why do you need my location?", ["Question · location", "Finds hospitals near you", "Kept 24 hours at about 1 km"]),
     ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
   ] },
-  "/upload": { route: "/upload", page: "Add a policy", reads: "the policy PDFs you add and how far each one has got", examples: [
-    ex("Add my health policy", ["Add a policy", "Pick a PDF up to 4 MB", "Checked, read, then the cover details"]),
-    ex("Why do you need my go-ahead?", ["Question · permission", "We keep, check and read the file", "You can withdraw it any time"]),
-    ex("Take me home", ["Navigate", "Opening Home", "Done"], "/home", "Go to Home"),
-  ] },
   // Cover screens (S-B2).
-  "/covers/add": { route: "/covers/add", page: "Add a cover", reads: "the policy PDF you add and the plan guesses", examples: [
-    ex("Add my health policy", ["Add a cover", "Choose the PDF", "We read it and guess the plan"]),
+  "/covers/add": { route: "/covers/add", page: "Add a cover", reads: "the policy schedule and terms and conditions you add, and the plan guesses", examples: [
+    ex("Add my health policy", ["Add a cover", "Choose the type, then the schedule and the terms and conditions", "We read them and guess the plan"]),
     ex("It picked the wrong plan", ["Plan choice", "Choose Something else", "Search by insurer or plan name"]),
-    ex("How big can the file be?", ["Add a cover", "Up to 4 MB, PDF only", "Larger files go through Add a policy"], "/upload", "Open Add a policy"),
+    ex("How big can the file be?", ["Add a cover", "Up to 4 MB, PDF only", "Larger files are not taken here yet"]),
   ] },
   "/covers/declarations": { route: "/covers/declarations", page: "Declarations and money", reads: "what you declared and the premium you paid", examples: [
     ex("Add Papa’s diabetes", ["Declaration", "Choose Papa and the kind", "Saved, sealed"]),

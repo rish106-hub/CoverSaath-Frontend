@@ -31,6 +31,18 @@ export type CandidateView = z.infer<typeof candidateView>;
 export const candidatesIn = z.object({ holdingId: id, profileVersion: z.number().int().min(0), candidates: z.array(candidateView).max(10) });
 export type Candidates = z.infer<typeof candidatesIn>;
 
+// ---- Documents of a holding (two-document holding: schedule makes the holding, the terms and conditions link to it) ---------
+
+export const HOLDING_DOCUMENT_KINDS = ["wording", "endorsement", "other"] as const;
+export type HoldingDocumentKind = (typeof HOLDING_DOCUMENT_KINDS)[number];
+/** Body of POST /api/app/covers/holdings/{id}/documents. Strict: a stray key is a 400. */
+export const linkDocumentIn = z.object({ documentId: id, kind: z.enum(HOLDING_DOCUMENT_KINDS).default("wording") }).strict();
+export type LinkDocumentInput = z.input<typeof linkDocumentIn>;
+export const holdingDocumentsIn = z.object({ holdingId: id, documents: z.array(z.object({ documentId: id, kind: z.string().max(40) })).max(50) });
+export type HoldingDocuments = z.infer<typeof holdingDocumentsIn>;
+export const linkedIn = z.object({ holdingId: id, documentId: id, kind: z.string().max(40), linked: z.boolean() });
+export type Linked = z.infer<typeof linkedIn>;
+
 export const confirmProductIn = z.object({ candidateId: id, expectedVersion: z.number().int().min(0).max(1_000_000) }).strict();
 export type ConfirmProduct = z.infer<typeof confirmProductIn>;
 export const confirmedIn = z.object({ holdingId: id, status: z.enum(HOLDING_STATUSES), profileVersion: z.number().int().min(0), replay: z.boolean() });

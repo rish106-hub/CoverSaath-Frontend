@@ -86,9 +86,7 @@ export function AccessCard() {
         return;
       }
       setState({ kind: "done", name: first });
-      nav.current = setTimeout(() => {
-        window.location.href = "https://knowviafrontend.vercel.app/";
-      }, 700);
+      nav.current = setTimeout(() => router.push("/welcome"), 700);
     } catch (err) {
       flying.current = false;
       setAuto(false);

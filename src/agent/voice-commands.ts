@@ -18,7 +18,7 @@ export const VOICE_COMMANDS: Record<string, [string, string, string]> = {
   "/shortcuts": ["How do I talk to you?", "Open settings", "Open home"],
   "/settings": ["What have I connected?", "Open profile", "Open home"],
   "/profile": ["Why do you need my location?", "Open settings", "Open home"],
-  "/upload": ["Add my health policy", "Open my policies", "Open home"],
+  "/covers/add": ["Add my health policy", "Open my policies", "Open home"],
   "/welcome": ["I can’t find my policy", "My employer gives me insurance", "Open home"],
 };
 const FALLBACK: [string, string, string] = ["Open my family", "Open money desk", "What can you do for me?"];

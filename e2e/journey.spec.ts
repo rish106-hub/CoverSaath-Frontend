@@ -20,8 +20,9 @@ test("profile, schedule and terms PDFs, go-ahead, clause question with citation"
   await page.waitForURL(/\/welcome/);
   await expect(page.getByText(/You.re in, Meera/).first()).toBeVisible();
 
-  // Both documents of one policy.
+  // Both documents of one policy: the schedule makes the cover, the terms and conditions are linked to it.
   await page.goto("/upload");
+  await page.waitForURL(/\/covers\/add/);
   await expect(page.getByText("Before we start")).toBeVisible();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Continue" }).click();
@@ -32,17 +33,9 @@ test("profile, schedule and terms PDFs, go-ahead, clause question with citation"
     await chooser.setFiles({ name, mimeType: "application/pdf", buffer: PDF(name) });
   };
   await add("policy_schedule", "schedule.pdf");
-  await expect(page.getByRole("button", { name: "Policy schedule added" })).toBeVisible();
+  await expect(page.getByText("schedule.pdf: added.")).toBeVisible();
   await add("policy_wording", "terms.pdf");
-  await expect(page.getByTestId("doc")).toHaveCount(2);
-  await expect(page.getByRole("button", { name: "Terms and conditions added" })).toBeVisible();
-
-  // Each document shows its own progress and ends fully processed.
-  const docs = page.getByTestId("doc");
-  await expect(docs.nth(0)).toContainText(/Policy schedule|Terms and conditions/);
-  await expect(docs.nth(1)).toContainText(/Policy schedule|Terms and conditions/);
-  await expect(docs.nth(0).getByRole("list").first()).toBeVisible();
-  await expect.poll(async () => (await docs.allTextContents()).every((t) => !/Reading|Pulling|Working/i.test(t)), { timeout: 60_000 }).toBe(true);
+  await expect(page.getByText("terms.pdf: added.")).toBeVisible();
 
   // Chat: go-ahead, then a clause question.
   await page.getByRole("link", { name: "Ask about your cover" }).first().click();

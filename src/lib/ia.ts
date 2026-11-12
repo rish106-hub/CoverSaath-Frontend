@@ -49,14 +49,9 @@ export const PAGES: readonly PageDef[] = [
     sections: [{ heading: "Your policies" }],
   },
   {
-    route: "/upload", href: "/upload", tab: "Add a policy", group: "cover",
-    title: "Add a policy", kicker: "Your family’s cover",
-    sections: [{ heading: "Your policy PDF" }, { heading: "Your documents" }],
-  },
-  {
     route: "/covers/add", href: "/covers/add", tab: "Add a cover", group: "cover",
     title: "Add a cover", kicker: "Your family’s cover",
-    sections: [{ heading: "Your policy PDF" }, { heading: "Which plan is this?" }],
+    sections: [{ heading: "Policy schedule" }, { heading: "Policy terms and conditions" }, { heading: "Which plan is this?" }],
   },
   {
     route: "/covers/declarations", href: "/covers/declarations", tab: "Declarations and money", group: "cover",
