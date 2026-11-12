@@ -137,7 +137,7 @@ export const ERROR_TEXT: Record<string, string> = {
   DUPLICATE_DOCUMENT: "This document is already added.",
   PDF_PROTECTED: "This PDF is password protected. Remove the password and try again.",
   PDF_UNREADABLE: "We could not open this PDF. Try another copy.",
-  PDF_ACTIVE_CONTENT: "This PDF has a fillable form or scripts inside, which we cannot accept. Open it, choose Print, then Save as PDF (in Preview on Mac or in Chrome), and add that new copy.",
+  PDF_ACTIVE_CONTENT: "This PDF carries embedded scripts or attachments we could not remove, so it cannot be read.",
   PDF_TOO_LONG: "This PDF has more pages than we can read at once. Add the pages that hold the cover details as a smaller PDF.",
   PDF_TOO_COMPLEX: "This PDF is built in a way we cannot read safely. Open it, choose Print, then Save as PDF, and add that new copy.",
   BLOB_MISSING: "The file did not arrive. Try adding it again.",
