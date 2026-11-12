@@ -19,7 +19,7 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   await expect(page.locator("body")).not.toContainText(/SYNTH|\bUIN\b/);
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
-  await expect(page.getByText(/Saved\. We are reading the plan/)).toBeVisible();
+  await expect(page.getByText(/Saved\. Add the terms and conditions above to finish this cover/)).toBeVisible();
 
   await page.getByRole("link", { name: "See what we found" }).click();
   await expect(page).toHaveURL(/\/covers\/review\?holding=/);
