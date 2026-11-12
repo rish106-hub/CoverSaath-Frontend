@@ -93,13 +93,7 @@ export function AccessCard() {
       }
       setState({ kind: "done", name: first });
       const back = target();
-      if (back) {
-        nav.current = setTimeout(() => router.replace(back), 700);
-        return;
-      }
-      nav.current = setTimeout(() => {
-        window.location.href = "https://knowviafrontend.vercel.app/";
-      }, 700);
+      nav.current = setTimeout(() => (back ? router.replace(back) : router.push("/welcome")), 700);
     } catch (err) {
       flying.current = false;
       setAuto(false);
