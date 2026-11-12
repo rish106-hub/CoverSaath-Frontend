@@ -46,6 +46,20 @@ Screens import from `src/adapters` only (never `src/adapters/mock/*`). `types.ts
 | access, household | BFF to the backend (mock when `NEXT_PUBLIC_ADAPTERS=mock` or under test) |
 | auth, document, reading, policy, assistant, voice, email, reconcile, desk, hospital, blood, learn, invite, wallet, notify | mock, marked `// backend gap` where the backend has no tables yet |
 
+### Real mode (signed-in accounts other than the demo login)
+
+| Screen | Real data | Source |
+| --- | --- | --- |
+| `/home` | Stored holdings and their key facts, pending conflicts, empty state to `/covers/add` | `GET /api/app/covers/holdings`, `.../facts`, `.../conflicts` via `src/adapters/real-policy.ts` |
+| `/policies` | Holdings with key facts and stage (reading, choose plan, ready, needs review) | same |
+| `/policies/[id]` | Facts by group: value, status as the backend gave it, citation (source tier and page) where returned | same |
+| `/covers/add`, `/covers/review`, `/covers/declarations` | Real | covers adapter |
+| `/chat`, `/hospitals` | Real | chat and covers adapters |
+| `/family`, `/settings`, onboarding | Real | household, members, user-data adapters |
+| `/stress-test`, `/compare`, `/money`, `/tools`, `/desk`, `/emergency`, `/cards`, learn | Empty collections (`// backend gap` in `src/adapters/real.ts`) | none |
+
+Not returned by the holdings routes, so not shown in real mode: sum insured, premium and renewal date as typed fields, the confirmed insurer or product name (shown only if a confirmed `product_name` or `insurer_name` fact exists), the document kind of a citation, and a document-level "processing failed" status.
+
 ### Swap a mock for a real API
 
 1. Add the BFF route under `src/app/api/app/<name>/route.ts` using `src/server/backend/*` (server-only, 5 s timeout, coded errors, no token to the browser).
