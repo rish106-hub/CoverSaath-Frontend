@@ -59,7 +59,8 @@ const DOC_LABEL: Record<string, string> = { policy_schedule: "Policy schedule", 
 
 /** Document and page for each source the answer rests on, from the answer's own citations and those on its facts. Deduplicated. */
 export function citationLines(a: TurnAnswer): string[] {
-  const all = [...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
+  const fromSources = (a.sources ?? []).map((x) => ({ documentKind: x.kind === "wording" ? "policy_wording" : x.kind, page: x.page }));
+  const all = [...fromSources, ...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
   const seen = new Set<string>();
   const out: string[] = [];
   for (const c of all) {

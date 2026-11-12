@@ -16,7 +16,9 @@ test("profile, schedule and terms PDFs, go-ahead, clause question with citation"
   await page.getByLabel(/name/i).first().fill("Meera Rao");
   await page.getByLabel(/email/i).first().fill("meera.rao@company.com");
   await page.getByRole("button", { name: /get access/i }).click();
-  await expect(page.getByText(/You.re in, Meera/)).toBeVisible();
+  // The card moves on to /welcome by itself; going elsewhere before that lands aborts the navigation.
+  await page.waitForURL(/\/welcome/);
+  await expect(page.getByText(/You.re in, Meera/).first()).toBeVisible();
 
   // Both documents of one policy.
   await page.goto("/upload");

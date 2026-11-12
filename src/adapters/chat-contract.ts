@@ -40,6 +40,15 @@ export const citationView = z.object({
 });
 export type Citation = z.infer<typeof citationView>;
 
+/** Backend answer sources: the insurer's wording the answer rests on. `ref` is the clause reference; the page is 1-based. */
+export const sourceView = z.object({
+  kind: z.string().max(40),
+  document_id: z.string().max(128).nullish(),
+  page: z.number().int().min(1).max(10_000).nullish(),
+  ref: z.string().max(200).nullish(),
+});
+export type AnswerSource = z.infer<typeof sourceView>;
+
 export const factUsed = z.object({
   factId: z.string().max(128),
   factKey: z.string().max(80),
@@ -75,6 +84,7 @@ export const answerEvent = z.object({
   openConflicts: z.array(z.object({ conflictId: z.string().max(128), factKey: z.string().max(80) })).max(50).default([]),
   /** Additive backend field: "numbers_unverified" when the model wrote figures that were not checked against a fact. Unknown values are kept as text, never shown raw. */
   citations: z.array(citationView).max(20).optional(),
+  sources: z.array(sourceView).max(20).optional(),
   modelStatus: z.string().max(60).optional(),
   truncated: z.boolean().optional(),
 });

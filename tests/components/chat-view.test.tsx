@@ -133,3 +133,11 @@ describe("HospitalsView", () => {
     expect((go as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+describe("citationLines", () => {
+  it("maps backend sources (kind wording, snake_case document_id) to document and page", async () => {
+    const { citationLines } = await import("@/components/chat/ChatView");
+    const a = { sources: [{ kind: "wording", document_id: "d-1", page: 7, ref: "4.2" }, { kind: "wording", document_id: "d-1", page: 7, ref: "4.3" }], factsUsed: [] } as unknown as import("@/adapters/chat-contract").TurnAnswer;
+    expect(citationLines(a)).toEqual(["Policy terms and conditions, page 7"]);
+  });
+});

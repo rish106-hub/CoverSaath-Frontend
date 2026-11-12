@@ -14,7 +14,7 @@ const FACTS: Record<string, FactUsed> = {
   si: { factId: "f-si", factKey: "sum_insured", label: "Sum insured", status: "extracted_unverified", sourceTier: "own_pdf", valueText: "Rs 5,00,000", checkWithInsurer: false },
 };
 
-type Script = Pick<TurnAnswer, "status" | "intent" | "answer" | "factsUsed" | "computed" | "openConflicts"> & { citations?: TurnAnswer["citations"] } & { retrieval: "vector" | "keyword" | "facts_only" };
+type Script = Pick<TurnAnswer, "status" | "intent" | "answer" | "factsUsed" | "computed" | "openConflicts"> & { sources?: TurnAnswer["sources"] } & { retrieval: "vector" | "keyword" | "facts_only" };
 
 function scriptFor(message: string): Script {
   const m = message.toLowerCase();
@@ -25,7 +25,7 @@ function scriptFor(message: string): Script {
       status: "evidence_found", intent: "clause_lookup", retrieval: "vector",
       answer: "Your policy terms apply a 10% co-payment on claims after age 60. The sum insured on your schedule is Rs 5,00,000.",
       factsUsed: [copay, si], computed: null, openConflicts: [],
-      citations: [{ documentKind: "policy_wording", page: 7, quote: "A co-payment of 10% applies to claims after age 60." }, { documentKind: "policy_schedule", page: 1 }],
+      sources: [{ kind: "wording", document_id: "doc-mock-wording", page: 7, ref: "4.2" }],
     };
   }
   if (/knee|surgery|operation|procedure/.test(m)) {
@@ -78,7 +78,7 @@ export const mockChat: ChatAdapter = {
     }
     await tick(60, signal);
     if (signal?.aborted) return;
-    onEvent({ type: "answer", data: { turnId: `turn-mock-${n}-${Date.now()}`, status: sc.status, intent: sc.intent, answer: sc.answer, answerSource: "deterministic", factsUsed: sc.factsUsed, computed: sc.computed, openConflicts: sc.openConflicts, ...(sc.citations ? { citations: sc.citations } : {}) } });
+    onEvent({ type: "answer", data: { turnId: `turn-mock-${n}-${Date.now()}`, status: sc.status, intent: sc.intent, answer: sc.answer, answerSource: "deterministic", factsUsed: sc.factsUsed, computed: sc.computed, openConflicts: sc.openConflicts, ...(sc.sources ? { sources: sc.sources } : {}) } });
     onEvent({ type: "done", data: {} });
   },
 };
