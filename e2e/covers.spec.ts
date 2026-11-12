@@ -19,10 +19,10 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   await expect(page.locator("body")).not.toContainText(/SYNTH|\bUIN\b/);
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
-  await expect(page.getByText(/Saved\. Add the terms and conditions above to finish this cover/)).toBeVisible();
+  await expect(page.getByText("Your cover is saved.")).toBeVisible();
+  await expect(page.getByTestId("terms-input")).toHaveCount(0);
 
-  // Keyboard, because the assistant dock floats over the bottom of a 1280x800 viewport and covers this link.
-  await page.getByRole("link", { name: "See what we found" }).press("Enter");
+  await page.getByRole("link", { name: "See what we found" }).click();
   await expect(page).toHaveURL(/\/covers\/review\?holding=/);
   await expect(page.getByRole("heading", { name: "Needs your decision" })).toBeVisible();
   for (const g of ["Limits", "Waiting", "Exclusions", "Cashless", "Money"]) await expect(page.getByRole("heading", { name: g, exact: true })).toBeVisible();
@@ -46,8 +46,7 @@ test("declarations and money saves a premium", async ({ page }) => {
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
   // A link, not a reload: the mock keeps its holdings in memory for the page's lifetime.
-  // Keyboard, because the assistant dock floats over the bottom of a 1280x800 viewport.
-  await page.getByRole("link", { name: "Add declarations and premium" }).press("Enter");
+  await page.getByRole("link", { name: "Add declarations and premium" }).click();
   await expect(page.getByRole("heading", { name: "Declarations and money" })).toBeVisible();
   await page.getByLabel("Amount in rupees").fill("18,500");
   await page.getByRole("button", { name: "Save premium" }).click();

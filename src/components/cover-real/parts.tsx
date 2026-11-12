@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { errorText } from "@/adapters/documents-contract";
+import { backendCovers } from "@/adapters/covers";
+import { backendUploads } from "@/adapters/uploads";
+import { pickFile, runTerms } from "@/components/covers/add-cover-flow";
 import type { CreationIssue } from "@/adapters/covers-contract";
 import type { FactLine, HeadlineLine, PolicyView, Stage } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
@@ -53,6 +56,7 @@ export function FactItem({ f }: { f: FactLine }) {
       <span className={s.factName}>{f.label}</span>
       <span className={s.factValue}>{f.value}</span>
       <span className={s.status}>{f.statusText}</span>
+      <span className={s.tag} data-testid="fact-source">{f.sourceText}</span>
       {f.quote ? <p className={s.src}>&ldquo;{f.quote}&rdquo;{f.citation ? ` · ${f.citation}` : ""}</p> : f.citation ? <p className={s.src}>{f.citation}</p> : null}
     </li>
   );
@@ -109,5 +113,51 @@ export function CreationIssues({ issues, onRetry }: { issues: CreationIssue[]; o
         </div>
       ) : null}
     </>
+  );
+}
+
+export const TERMS_TEXT: Record<PolicyView["wordingState"], string> = {
+  fss: "Insurer terms attached (verified)",
+  manual: "Insurer terms added by you",
+  missing: "Insurer terms not attached yet",
+};
+
+/**
+ * Where the insurer's terms stand. When they are not attached, "Add the terms yourself" takes the person's own PDF through the
+ * existing wording flow: upload as the terms, then link to this holding (the same documents route as before). The backend then
+ * reports `manual`, so the page asks again once the link is made.
+ */
+export function TermsStatus({ p, onAdded }: { p: PolicyView; onAdded?: () => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [code, setCode] = useState<string | null>(null);
+  async function take(file: File | undefined) {
+    if (!file || busy) return;
+    setBusy(true);
+    setCode(null);
+    try {
+      const type = (await backendUploads.list()).policyType;
+      if (!type) { setCode("POLICY_TYPE_INVALID"); return; }
+      const slot = await runTerms(backendCovers, pickFile(file), type, p.id);
+      if (slot.status === "done") onAdded?.();
+      else setCode(slot.code ?? "BACKEND_UNREACHABLE");
+    } catch (e) {
+      setCode(e && typeof e === "object" && "code" in e && typeof e.code === "string" ? e.code : "BACKEND_UNREACHABLE");
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  }
+  return (
+    <div className={s.row} data-testid="terms-status" data-state={p.wordingState}>
+      <span className={s.lead} role="status">{busy ? "Adding your terms\u2026" : TERMS_TEXT[p.wordingState]}</span>
+      {p.wordingState === "missing" ? (
+        <>
+          <button type="button" className="k-btn k-btn--secondary k-btn--sm" disabled={busy} onClick={() => input.current?.click()}>Add the terms yourself</button>
+          <input ref={input} type="file" accept="application/pdf,.pdf" hidden aria-label="Policy terms PDF" data-testid="terms-input" onChange={(e) => void take(e.target.files?.[0])} />
+        </>
+      ) : null}
+      {code ? <p className={s.alert} role="alert">{errorText(code)}</p> : null}
+    </div>
   );
 }

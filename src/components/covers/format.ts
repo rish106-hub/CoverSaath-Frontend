@@ -63,6 +63,14 @@ export const isOpen = (s: ResolvedStatus): boolean => s === "conflicting" || s =
 export const TIER_TEXT: Record<string, string> = { own_pdf: "Your document", ida_wording: "The insurer's wording", user_declaration: "What you told us" };
 export const tierText = (tier: string | null | undefined): string => TIER_TEXT[tier ?? ""] ?? "Another source";
 
+/** Where a fact came from, in one label. A conflict and the person's own choice come before the tier; a verified reference is the insurer's terms. */
+export function sourceLabel(status: ResolvedStatus, tier: string | null | undefined): string {
+  if (status === "conflicting") return "Conflicting";
+  if (status === "user_confirmed" || tier === "user_declaration") return "Confirmed by you";
+  if (status === "reviewed_reference" || tier === "ida_wording") return "Insurer terms (verified)";
+  return "Your schedule";
+}
+
 /** "Page 2" from the backend's page id ("page-2"); the id itself when it has no number. */
 export const DOCUMENT_KIND_TEXT: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions" };
 /** "Policy schedule" for a backend document kind; null when the kind is absent or not one of the two shown. */

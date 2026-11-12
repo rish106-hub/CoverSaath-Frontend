@@ -29,6 +29,16 @@ export const HEADLINE_KEYS = ["sum_insured", "policy_period", "premium_total"] a
 export type HeadlineKey = (typeof HEADLINE_KEYS)[number];
 export const headlineView = z.object({ factKey: z.enum(HEADLINE_KEYS), value: z.unknown().optional(), status: z.enum(RESOLVED_STATUSES) });
 export type Headline = z.infer<typeof headlineView>;
+/**
+ * Where the insurer's terms stand for a holding. `fss`: attached from the insurer-terms reference. `manual`: the person linked their
+ * own wording. `missing`: neither. The reason is only a code for support; the page never prints it. An older backend sends neither
+ * field, and a value this app does not know is read as `missing`.
+ */
+export const WORDING_STATES = ["fss", "manual", "missing"] as const;
+export type WordingState = (typeof WORDING_STATES)[number];
+export const WORDING_REASONS = ["unavailable", "rate_limited", "unauthorized", "no_match", "version_unresolved", "synthetic_only", "invalid_response", "disabled", "no_usable_facts", "attached"] as const;
+export type WordingReason = (typeof WORDING_REASONS)[number];
+
 /** Insurer and product name are null until the owner confirmed the product. Older backends send no summary at all. */
 export const summaryView = z.object({
   insurerName: z.string().max(200).nullish(),
@@ -36,6 +46,8 @@ export const summaryView = z.object({
   sumInsured: headlineView.nullish(),
   policyPeriod: headlineView.nullish(),
   premium: headlineView.nullish(),
+  wordingState: z.enum(WORDING_STATES).optional().catch(undefined),
+  wordingReason: z.enum(WORDING_REASONS).nullish().catch(null),
 });
 export type HoldingSummary = z.infer<typeof summaryView>;
 

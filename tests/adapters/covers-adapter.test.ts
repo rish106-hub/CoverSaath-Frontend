@@ -178,4 +178,27 @@ describe("documents of a holding", () => {
     await expect(mockCovers.linkDocument("nope", { documentId: terms.documentId })).rejects.toMatchObject({ code: "NOT_FOUND" });
     await expect(mockCovers.linkDocument(holdingId, { documentId: "nope" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
+  it("mock: one plan per insurer-terms state, and a linked wording turns missing into manual", async () => {
+    const stateFor = async (candidateId: string, link = false) => {
+      const doc = await mockCovers.uploadDocument(pdf(), `k-${candidateId}`, "policy_schedule", "personal_health");
+      const id = (await mockCovers.holdingFor(doc.documentId))!;
+      const c = await mockCovers.candidates(id);
+      expect((await mockCovers.holdings()).find((h) => h.id === id)?.summary?.wordingState).toBe("missing");
+      await mockCovers.confirmProduct(id, { candidateId, expectedVersion: c.profileVersion }, `ck-${candidateId}`);
+      if (link) {
+        const terms = await mockCovers.uploadDocument(pdf(), `kt-${candidateId}`, "policy_wording", "personal_health");
+        await mockCovers.linkDocument(id, { documentId: terms.documentId, kind: "wording" });
+      }
+      const h = (await mockCovers.holdings()).find((x) => x.id === id)!;
+      return { state: h.summary?.wordingState, facts: (await mockCovers.facts(id)).facts };
+    };
+    const fss = await stateFor("product-example-01");
+    expect(fss.state).toBe("fss");
+    expect(fss.facts.find((f) => f.factKey === "initial_waiting_days")).toMatchObject({ status: "reviewed_reference", sourceTier: "ida_wording" });
+    const missing = await stateFor("product-example-02");
+    expect(missing.state).toBe("missing");
+    expect(missing.facts.find((f) => f.factKey === "initial_waiting_days")?.sourceTier).toBe("own_pdf");
+    expect((await stateFor("product-example-03")).state).toBe("manual");
+    expect((await stateFor("product-example-02", true)).state).toBe("manual");
+  });
 });
