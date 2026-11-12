@@ -2,7 +2,8 @@ import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 import type { HospitalView, ThreadView, TurnEvent, TurnInput } from "./chat-contract";
-import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingView, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
+import type { Candidates, Confirmed, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingDocuments, HoldingView, LinkDocumentInput, Linked, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
+import type { DocumentKind, PolicyType } from "./documents-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
 
 export class AdapterError extends Error {
@@ -159,8 +160,16 @@ export interface EvidenceAdapter {
 
 /** The cover screens: add a cover, say which product it is, read the facts, settle conflicts, declarations and premiums. */
 export interface CoversAdapter {
-  /** Adds one PDF (up to 4 MB). `key` is reused on a retry. Resolves with the holding once the backend has made it (null while it has not). */
-  upload(file: File, key: string): Promise<{ documentId: string; holdingId: string | null }>;
+  /** Sends one PDF (up to 4 MB) as `kind` of a `policyType` policy and waits for it to be scanned and read. `key` is reused on a retry. */
+  uploadDocument(file: File, key: string, kind: DocumentKind, policyType: PolicyType): Promise<{ documentId: string }>;
+  /** The holding the backend made from a document, once it exists (null while it has not). Waits a little for it. */
+  holdingFor(documentId: string): Promise<string | null>;
+  /** `uploadDocument` then `holdingFor`: the one-PDF path. */
+  upload(file: File, key: string, opts: { kind: DocumentKind; policyType: PolicyType }): Promise<{ documentId: string; holdingId: string | null }>;
+  /** Documents linked to a holding. */
+  holdingDocuments(holdingId: string): Promise<HoldingDocuments>;
+  /** Links an uploaded document to a holding (the terms and conditions of the policy the schedule made). Safe to repeat. */
+  linkDocument(holdingId: string, input: LinkDocumentInput): Promise<Linked>;
   holdings(): Promise<HoldingView[]>;
   candidates(holdingId: string): Promise<Candidates>;
   confirmProduct(holdingId: string, statement: ConfirmProduct, key: string): Promise<Confirmed>;

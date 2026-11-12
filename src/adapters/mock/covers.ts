@@ -1,5 +1,5 @@
 import { AdapterError, type CoversAdapter } from "../types";
-import { MAX_UPLOAD_BYTES } from "../documents-contract";
+import { MAX_UPLOAD_BYTES, POLICY_TYPES } from "../documents-contract";
 import { precheck } from "../uploads";
 import { containsUin, type Conflicts, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
 import { PINCODE, type HospitalView } from "../chat-contract";
@@ -27,7 +27,8 @@ const conflictsSeed = (): Conflicts["conflicts"] => [
 ];
 
 type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null };
-const holdings = new Map<string, { documentId: string; state: State }>();
+const holdings = new Map<string, { documentId: string; state: State; linked: { documentId: string; kind: string }[] }>();
+const docs = new Map<string, string>();
 let n = 0;
 let seq = 0;
 const declarations: DeclarationView[] = [];
@@ -60,17 +61,36 @@ const guard = <T>(v: T): T => {
 };
 
 export const mockCovers: CoversAdapter = {
-  upload: async (file, key) => {
+  uploadDocument: async (file, key, kind, policyType) => {
     const pre = precheck(file, MAX_UPLOAD_BYTES);
     if (pre) throw new AdapterError(pre);
+    if (!POLICY_TYPES.includes(policyType)) throw new AdapterError("POLICY_TYPE_INVALID");
     n += 1;
     const documentId = `doc-mock-${n}`;
-    const holdingId = `holding-mock-${n}`;
-    holdings.set(holdingId, { documentId, state: { facts: [], conflicts: [], status: "uploaded", version: 0, confirmed: null, key: null } });
+    docs.set(documentId, kind);
+    // As on the backend, every uploaded document gets a holding of its own; the schedule's is the one the person works with.
+    holdings.set(`holding-mock-${n}`, { documentId, state: { facts: [], conflicts: [], status: "uploaded", version: 0, confirmed: null, key: null }, linked: [{ documentId, kind: "schedule" }] });
     void key;
-    return delay({ documentId, holdingId });
+    return delay({ documentId });
   },
-  holdings: () => delay([...holdings].map(([id, h]) => ({ id, documentId: h.documentId, kind: "policy_wording", status: h.state.status }))),
+  holdingFor: async (documentId) => delay([...holdings].find(([, h]) => h.documentId === documentId)?.[0] ?? null),
+  upload: async (file, key, opts) => {
+    const { documentId } = await mockCovers.uploadDocument(file, key, opts.kind, opts.policyType);
+    return { documentId, holdingId: await mockCovers.holdingFor(documentId) };
+  },
+  holdingDocuments: async (holdingId) => {
+    const h = get(holdingId);
+    return delay({ holdingId, documents: structuredClone(h.linked) });
+  },
+  linkDocument: async (holdingId, input) => {
+    const h = get(holdingId);
+    if (!docs.has(input.documentId)) throw new AdapterError("NOT_FOUND");
+    const kind = input.kind ?? "wording";
+    const linked = !h.linked.some((d) => d.documentId === input.documentId);
+    if (linked) h.linked.push({ documentId: input.documentId, kind });
+    return delay({ holdingId, documentId: input.documentId, kind, linked });
+  },
+  holdings: () => delay([...holdings].map(([id, h]) => ({ id, documentId: h.documentId, kind: docs.get(h.documentId) ?? "policy_wording", status: h.state.status }))),
   candidates: async (holdingId) => {
     const h = get(holdingId);
     if (h.state.status === "uploaded") h.state.status = "insurer_pending";

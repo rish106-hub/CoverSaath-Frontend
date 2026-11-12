@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { AppError } from "./errors";
 import { need, withDocuments, withReadGrant, type Ctx } from "./documents";
-import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
+import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
 
 // BFF for the cover screens: holdings, product candidates, confirm product, facts, conflicts and their resolution, declarations,
 // premiums and dues and dues (CoverSaath /api/v1/holdings and /api/v1/households/{id}/...). Server only. The backend token stays in the sealed
@@ -49,6 +49,20 @@ export async function getFacts(ctx: Ctx, holdingId: string): Promise<{ data: unk
   need(ctx.session);
   const r = await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/facts`, ctx.session.t);
   return out(shape(factsIn, r.body));
+}
+
+/** Documents linked to one holding: the schedule that made it and any terms and conditions added after. */
+export async function listHoldingDocuments(ctx: Ctx, holdingId: string): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/documents`, ctx.session.t);
+  return out(shape(holdingDocumentsIn, r.body));
+}
+
+/** Links an uploaded document to a holding. Repeats safely: the backend answers linked false for a document already linked. */
+export async function linkHoldingDocument(ctx: Ctx, holdingId: string, body: unknown): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("POST", `/api/v1/holdings/${enc(holdingId)}/documents`, ctx.session.t, { json: input(linkDocumentIn, body) });
+  return out(shape(linkedIn, r.body));
 }
 
 export async function getConflicts(ctx: Ctx, holdingId: string): Promise<{ data: unknown }> {

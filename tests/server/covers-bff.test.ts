@@ -18,6 +18,7 @@ import * as holdingsRoute from "@/app/api/app/covers/holdings/route";
 import * as candidates from "@/app/api/app/covers/holdings/[id]/candidates/route";
 import * as confirm from "@/app/api/app/covers/holdings/[id]/confirm/route";
 import * as facts from "@/app/api/app/covers/holdings/[id]/facts/route";
+import * as holdingDocs from "@/app/api/app/covers/holdings/[id]/documents/route";
 import * as conflicts from "@/app/api/app/covers/holdings/[id]/conflicts/route";
 import * as resolve from "@/app/api/app/covers/holdings/[id]/conflicts/[cid]/resolve/route";
 import * as declarations from "@/app/api/app/covers/declarations/route";
@@ -58,6 +59,8 @@ beforeEach(() => {
     "GET /api/v1/holdings/holding-1/product-candidates": { status: 200, body: { holdingId: "holding-1", profileVersion: 0, candidates: [{ candidateId: "product-1", insurerName: "Example Insurer", productName: "Example Health Plan 01", rank: 1, uin: FAKE_UIN }] } },
     "POST /api/v1/holdings/holding-1/confirm-product": { status: 200, body: { holdingId: "holding-1", status: "product_reported", profileVersion: 1, replay: false } },
     "GET /api/v1/holdings/holding-1/facts": { status: 200, body: { holdingId: "holding-1", status: "conflicts", facts: [{ factKey: "sum_insured", factClass: "personal_value", valueType: "money", unit: "paise", group: "limits", status: "extracted_unverified", value: 50000000, sourceIds: ["x"], alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s1", tier: "own_pdf", status: "extracted_unverified", value: 50000000, page: { pageId: "page-1", blockIndex: 0 }, quote: "Sum insured Rs 5,00,000", current: true }] }], unknownKeys: ["copay_percent"] } },
+    "GET /api/v1/holdings/holding-1/documents": { status: 200, body: { holdingId: "holding-1", documents: [{ documentId: "doc-1", kind: "schedule", extra: "dropped" }] } },
+    "POST /api/v1/holdings/holding-1/documents": { status: 200, body: { holdingId: "holding-1", documentId: "doc-2", kind: "wording", linked: true } },
     "GET /api/v1/holdings/holding-1/conflicts": { status: 200, body: { holdingId: "holding-1", status: "conflicts", conflicts: [{ id: "c-1", factKey: "room_rent_limit", factClass: "product_term", valueType: "text", reason: "own_vs_insurer", resolution: "pending", resolvedAt: null, resolvingFactId: null, checkWithInsurer: true, candidates: [{ id: "f1", tier: "own_pdf", value: "1%", quote: "1% per day" }, { id: "f2", tier: "ida_wording", value: "2%", quote: "2% per day" }] }] } },
     "POST /api/v1/holdings/holding-1/conflicts/c-1/resolve": { status: 200, body: { conflictId: "c-1", resolvingFactId: "d-1", status: "user_confirmed", holdingStatus: "ready", replay: false } },
   };
@@ -102,6 +105,56 @@ describe("holdings and candidates", () => {
   it("refuses a bad holding id before any backend call", async () => {
     expect((await candidates.GET(req("/x"), p({ id: "../etc" }))).status).toBe(400);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("holding documents", () => {
+  it("lists the linked documents with the bearer token and keeps only contract fields", async () => {
+    const res = await holdingDocs.GET(req("/x"), H);
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toEqual({ holdingId: "holding-1", documents: [{ documentId: "doc-1", kind: "schedule" }] });
+    expect(calls[0]).toMatchObject({ method: "GET", url: "/api/v1/holdings/holding-1/documents" });
+    expect(calls[0]?.headers.authorization).toBe("Bearer tok-secret");
+  });
+  it("links a document: sends only documentId and kind, kind defaults to wording", async () => {
+    const res = await holdingDocs.POST(req("/x", "POST", { json: { documentId: "doc-2" } }), H);
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toEqual({ holdingId: "holding-1", documentId: "doc-2", kind: "wording", linked: true });
+    expect(calls.at(-1)).toMatchObject({ method: "POST", url: "/api/v1/holdings/holding-1/documents", body: { documentId: "doc-2", kind: "wording" } });
+  });
+  it("refuses a bad body, an unknown field, an unknown kind and a bad holding id before the backend", async () => {
+    for (const json of [null, {}, { documentId: "../x" }, { documentId: "doc-2", kind: "schedule" }, { documentId: "doc-2", uin: FAKE_UIN }]) {
+      const res = await holdingDocs.POST(req("/x", "POST", json === null ? {} : { json }), H);
+      expect(res.status, JSON.stringify(json)).toBe(400);
+    }
+    expect((await holdingDocs.POST(req("/x", "POST", { json: { documentId: "doc-2" } }), p({ id: "../etc" }))).status).toBe(400);
+    expect(calls).toHaveLength(0);
+  });
+  it("needs a session and the app marker", async () => {
+    expect((await holdingDocs.POST(req("/x", "POST", { json: { documentId: "doc-2" }, marker: false }), H)).status).toBe(403);
+    jar.delete("kv_session");
+    expect((await holdingDocs.GET(req("/x"), H)).status).toBe(401);
+    expect((await holdingDocs.POST(req("/x", "POST", { json: { documentId: "doc-2" } }), H)).status).toBe(401);
+    expect(calls).toHaveLength(0);
+  });
+  it("maps backend codes to coded errors without backend text", async () => {
+    const cases: [number, string, number, string][] = [
+      [503, "HOLDINGS_DISABLED", 503, "HOLDINGS_DISABLED"],
+      [404, "HOLDING_NOT_FOUND", 404, "NOT_FOUND"],
+      [404, "DOCUMENT_NOT_FOUND", 404, "NOT_FOUND"],
+    ];
+    for (const [status, code, outStatus, outCode] of cases) {
+      routes["POST /api/v1/holdings/holding-1/documents"] = { status, body: bk(code) };
+      const res = await holdingDocs.POST(req("/x", "POST", { json: { documentId: "doc-2" } }), H);
+      const text = await res.text();
+      expect(res.status, code).toBe(outStatus);
+      expect(JSON.parse(text).code, code).toBe(outCode);
+      expect(text).not.toContain("must not leak");
+    }
+  });
+  it("refuses a backend body outside the contract", async () => {
+    routes["POST /api/v1/holdings/holding-1/documents"] = { status: 200, body: { holdingId: "holding-1", linked: "yes" } };
+    expect((await holdingDocs.POST(req("/x", "POST", { json: { documentId: "doc-2" } }), H)).status).toBe(502);
   });
 });
 

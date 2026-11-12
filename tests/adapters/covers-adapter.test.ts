@@ -7,6 +7,7 @@ import { containsUin } from "@/adapters/covers-contract";
 
 afterEach(() => vi.unstubAllGlobals());
 
+const OPTS = { kind: "policy_schedule", policyType: "personal_health" } as const;
 const pdf = (size = 64, name = "policy.pdf") => new File([new Uint8Array(size)], name, { type: "application/pdf" });
 
 describe("real covers adapter", () => {
@@ -33,7 +34,7 @@ describe("real covers adapter", () => {
   it("refuses a file over 4 MB before any call", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
-    await expect(backendCovers.upload(pdf(4 * 1024 * 1024 + 1), "k")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
+    await expect(backendCovers.upload(pdf(4 * 1024 * 1024 + 1), "k", OPTS)).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
@@ -44,12 +45,12 @@ describe("mock covers adapter", () => {
     expect(realAdapters.covers).toBe(backendCovers);
   });
   it("refuses a non-PDF, an empty file and one over 4 MB with coded errors", async () => {
-    await expect(mockCovers.upload(new File(["x"], "a.txt", { type: "text/plain" }), "k")).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
-    await expect(mockCovers.upload(pdf(0), "k")).rejects.toMatchObject({ code: "FILE_EMPTY" });
-    await expect(mockCovers.upload(pdf(4 * 1024 * 1024 + 1), "k")).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
+    await expect(mockCovers.upload(new File(["x"], "a.txt", { type: "text/plain" }), "k", OPTS)).rejects.toMatchObject({ code: "FILE_TYPE_INVALID" });
+    await expect(mockCovers.upload(pdf(0), "k", OPTS)).rejects.toMatchObject({ code: "FILE_EMPTY" });
+    await expect(mockCovers.upload(pdf(4 * 1024 * 1024 + 1), "k", OPTS)).rejects.toMatchObject({ code: "FILE_TOO_LARGE" });
   });
   it("runs upload, candidates, confirm, facts, conflict resolve, and no body holds a UIN", async () => {
-    const { holdingId } = await mockCovers.upload(pdf(), "k");
+    const { holdingId } = await mockCovers.upload(pdf(), "k", OPTS);
     const c = await mockCovers.candidates(holdingId as string);
     expect(c.candidates.length).toBeLessThanOrEqual(3);
     expect(Object.keys(c.candidates[0] ?? {}).sort()).toEqual(["candidateId", "insurerName", "productName", "rank"]);
@@ -108,5 +109,51 @@ describe("mock covers adapter", () => {
     const p = await mockCovers.addPremium({ holdingId: "h1", amountPaise: 100, paidOn: "2026-10-01" });
     expect(p.channel).toBe("unknown");
     expect((await mockCovers.premiums()).some((x) => x.id === p.id)).toBe(true);
+  });
+});
+
+describe("documents of a holding", () => {
+  it("real adapter reads and links through the same-origin route with the body the backend takes", async () => {
+    const seen: { url: string; method?: string; body?: unknown; headers: Record<string, string> }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      seen.push({ url, method: init.method, body: typeof init.body === "string" ? JSON.parse(init.body) : undefined, headers: init.headers as Record<string, string> });
+      const data = init.method === "POST" ? { holdingId: "h-1", documentId: "d2", kind: "wording", linked: true } : { holdingId: "h-1", documents: [{ documentId: "d1", kind: "schedule" }] };
+      return new Response(JSON.stringify({ ok: true, data }), { status: 200 });
+    });
+    expect((await backendCovers.holdingDocuments("h-1")).documents).toEqual([{ documentId: "d1", kind: "schedule" }]);
+    expect((await backendCovers.linkDocument("h-1", { documentId: "d2", kind: "wording" })).linked).toBe(true);
+    expect(seen.map((x) => [x.method ?? "GET", x.url])).toEqual([["GET", "/api/app/covers/holdings/h-1/documents"], ["POST", "/api/app/covers/holdings/h-1/documents"]]);
+    expect(seen[1]!.body).toEqual({ documentId: "d2", kind: "wording" });
+    expect(seen[1]!.headers["x-knowvia-app"]).toBe("1");
+  });
+  it("turns a backend refusal into a coded error and a malformed body into BACKEND_BAD_RESPONSE", async () => {
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: false, code: "NOT_FOUND", retryable: false }), { status: 404 }));
+    await expect(backendCovers.linkDocument("h1", { documentId: "d2" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: true, data: { documents: "nope" } }), { status: 200 }));
+    await expect(backendCovers.holdingDocuments("h1")).rejects.toMatchObject({ code: "BACKEND_BAD_RESPONSE" });
+  });
+  it("real upload takes kind and policy type from the caller", async () => {
+    const seen: Record<string, string>[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      if (url === "/api/app/documents") {
+        seen.push(init.headers as Record<string, string>);
+        const doc = { id: "doc-9", kind: "policy_wording", sizeBytes: 64, steps: { uploaded: "done", scanned: "done", reading: "done", structured: "done" }, note: null, busy: false };
+        return new Response(JSON.stringify({ ok: true, document: doc }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ok: true, data: { holdings: [{ id: "h9", documentId: "doc-9", status: "uploaded" }] } }), { status: 200 });
+    });
+    const r = await backendCovers.upload(pdf(), "key-1234567890", { kind: "policy_wording", policyType: "group_health" });
+    expect(r).toEqual({ documentId: "doc-9", holdingId: "h9" });
+    expect(seen[0]).toMatchObject({ "x-document-kind": "policy_wording", "x-policy-type": "group_health" });
+  });
+  it("mock links a second document once and refuses an unknown holding or document", async () => {
+    const sched = await mockCovers.uploadDocument(pdf(), "k1", "policy_schedule", "personal_health");
+    const holdingId = (await mockCovers.holdingFor(sched.documentId))!;
+    const terms = await mockCovers.uploadDocument(pdf(), "k2", "policy_wording", "personal_health");
+    expect((await mockCovers.linkDocument(holdingId, { documentId: terms.documentId })).linked).toBe(true);
+    expect((await mockCovers.linkDocument(holdingId, { documentId: terms.documentId, kind: "wording" })).linked).toBe(false);
+    expect((await mockCovers.holdingDocuments(holdingId)).documents.map((d) => d.documentId)).toEqual([sched.documentId, terms.documentId]);
+    await expect(mockCovers.linkDocument("nope", { documentId: terms.documentId })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(mockCovers.linkDocument(holdingId, { documentId: "nope" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });

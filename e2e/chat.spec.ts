@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { addSchedule } from "./add-cover";
 
 // Smoke for chat and hospitals against the mock adapter (no backend): ask a seeded question, see the streamed answer with facts chips, then
 // list hospitals for a seeded pincode. No browser call may go to /api/v1. The dev server runs with NEXT_PUBLIC_ADAPTERS=mock.
@@ -39,8 +40,7 @@ test("hospital list renders for a seeded pincode", async ({ page }) => {
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
 
   // Hospitals belong to a cover: add one first, then follow the link from the review page. The mock keeps holdings for the page's lifetime.
-  await page.goto("/covers/add");
-  await page.locator("input[type=file]").setInputFiles({ name: "policy.pdf", mimeType: "application/pdf", buffer: SYNTHETIC_PDF });
+  await addSchedule(page, { name: "policy.pdf", buffer: SYNTHETIC_PDF });
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
