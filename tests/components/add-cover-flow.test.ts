@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { errorText } from "@/adapters/documents-contract";
 import { AdapterError } from "@/adapters/types";
 import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, runTerms } from "@/components/covers/add-cover-flow";
 
@@ -54,6 +55,14 @@ describe("add cover flow", () => {
     expect(ok.status).toBe("done");
     expect(d.uploadDocument).toHaveBeenCalledTimes(1);
     expect(d.linkDocument).toHaveBeenCalledTimes(2);
+  });
+  it("a wording whose own holding the owner worked on is a final HOLDING_DOCUMENT_HAS_HOLDING with a plain message", async () => {
+    const d = deps();
+    d.linkDocument.mockRejectedValueOnce(new AdapterError("HOLDING_DOCUMENT_HAS_HOLDING"));
+    const slot = await runTerms(d, pickFile(pdf("t.pdf")), "personal_health", "holding-1");
+    expect(slot).toMatchObject({ status: "failed", code: "HOLDING_DOCUMENT_HAS_HOLDING" });
+    expect(canRetry(slot)).toBe(false);
+    expect(errorText("HOLDING_DOCUMENT_HAS_HOLDING")).toMatch(/already has its own policy/);
   });
   it("does not offer a retry for a file the backend refused for good", async () => {
     const d = deps();

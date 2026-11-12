@@ -1,16 +1,13 @@
-import type { ConflictView, FactView, HoldingStatus, HoldingView, ResolvedStatus } from "./covers-contract";
+import type { ConflictView, FactView, Headline, HoldingStatus, HoldingSummary, HoldingView, ResolvedStatus } from "./covers-contract";
 import type { Finding, Policy } from "./schemas";
 import { AdapterError, type PolicyAdapter, type ReadingAdapter } from "./types";
 import { backendCovers } from "./covers";
-import { STATUS_TEXT, formatValue, isOpen, labelOf, pageText, tierText } from "@/components/covers/format";
+import { STATUS_TEXT, documentKindText, formatValue, isOpen, labelOf, pageText, rupees, tierText } from "@/components/covers/format";
 
 // Real-mode policy view: the household's stored holdings and their facts, mapped for /home, /policies and /policies/[id].
 // Nothing here decides anything. A status is shown as the backend gave it; a model-read value is never presented as verified.
 
 export const MAX_HOLDINGS = 5;
-/** Facts that name the product when the owner confirmed it. Read only; absent means the page says nothing about it. */
-const INSURER_KEYS = ["insurer_name", "insurer"];
-const PRODUCT_KEYS = ["product_name", "plan_name"];
 const CONFIRMED: ResolvedStatus[] = ["user_confirmed", "reviewed_reference"];
 
 /** Where a holding is in its life, in words the page can act on. */
@@ -30,10 +27,24 @@ export type FactLine = {
   group: string | null;
   conflictId: string | null;
 };
+/** One of the three headline values of a holding, in words the page can show. `tone` drives the wording and the link to review. */
+export type HeadlineLine = {
+  key: "sum_insured" | "policy_period" | "premium_total";
+  label: string;
+  /** The value, or "Not found yet" when the backend has none. */
+  value: string;
+  status: ResolvedStatus | null;
+  statusText: string;
+  tone: "read" | "confirmed" | "review" | "missing";
+};
 export type PolicyView = {
   id: string;
   title: string;
+  /** From the backend summary only; null until the owner confirmed the product. */
   insurer: string | null;
+  productName: string | null;
+  /** Empty before the product is confirmed and when the backend sent no summary. */
+  headlines: HeadlineLine[];
   stage: Stage;
   facts: FactLine[];
   pending: { id: string; label: string }[];
@@ -54,29 +65,62 @@ export function factLine(f: FactView): FactLine {
     status: f.status,
     statusText: STATUS_TEXT[f.status],
     open: isOpen(f.status),
-    citation: src ? [tierText(src.tier), page].filter(Boolean).join(", ") : null,
+    citation: src ? [tierText(src.tier), documentKindText(src.page?.documentKind), page].filter(Boolean).join(", ") : null,
     quote: src?.quote ?? null,
     group: f.group ?? null,
     conflictId: f.openConflictId ?? null,
   };
 }
 
-const named = (facts: FactView[], keys: string[]): string | null => {
-  const f = facts.find((x) => keys.includes(x.factKey) && CONFIRMED.includes(x.status) && typeof x.value === "string" && x.value);
-  return f ? (f.value as string) : null;
-};
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
+const isoDay = (v: unknown): string | null => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
+
+/** Money `{ amountMinor, currency }` (INR minor units) as rupees, through the shared formatter. Null when the value is not money. */
+export const moneyText = (v: unknown): string | null => (isRecord(v) && Number.isSafeInteger(v.amountMinor) && (v.currency === undefined || v.currency === "INR") ? rupees(v.amountMinor as number) : null);
+/** A policy period `{ startIso, endIso, days }` as "1 Apr 2026 to 31 Mar 2027". Null when either end is missing. */
+export function periodText(v: unknown): string | null {
+  if (!isRecord(v)) return null;
+  const s = isoDay(v.startIso);
+  const e = isoDay(v.endIso);
+  return s && e ? `${formatValue(s, "iso_date")} to ${formatValue(e, "iso_date")}` : null;
+}
+
+const HEADLINES = [
+  { field: "sumInsured", key: "sum_insured", label: "Sum insured", text: moneyText },
+  { field: "policyPeriod", key: "policy_period", label: "Policy period", text: periodText },
+  { field: "premium", key: "premium_total", label: "Premium", text: moneyText },
+] as const;
+
+export const MISSING_TEXT = "Not found yet";
+const toneOf = (s: ResolvedStatus): HeadlineLine["tone"] => (s === "conflicting" ? "review" : CONFIRMED.includes(s) ? "confirmed" : "read");
+
+/** One headline. A null headline, an unknown status or a value that does not fit its type is "not found yet", never a guess. */
+export function headlineLine(spec: (typeof HEADLINES)[number], h: Headline | null | undefined): HeadlineLine {
+  const missing: HeadlineLine = { key: spec.key, label: spec.label, value: MISSING_TEXT, status: h?.status === "unknown" ? "unknown" : null, statusText: MISSING_TEXT, tone: "missing" };
+  if (!h) return missing;
+  if (h.status === "conflicting") return { key: spec.key, label: spec.label, value: "Two readings", status: h.status, statusText: STATUS_TEXT.conflicting, tone: "review" };
+  if (h.status === "unknown") return missing;
+  const value = spec.text(h.value);
+  return value ? { key: spec.key, label: spec.label, value, status: h.status, statusText: STATUS_TEXT[h.status], tone: toneOf(h.status) } : missing;
+}
+
+/** The three headlines of a summary; empty when the backend sent none (older backend). */
+export const headlinesOf = (s: HoldingSummary | null | undefined): HeadlineLine[] => (s ? HEADLINES.map((spec) => headlineLine(spec, s[spec.field])) : []);
 
 /** One holding and what was read from it. `facts` and `conflicts` are null when the stage has none yet or the load failed. */
 export function toPolicyView(h: HoldingView, loaded: { facts: FactView[]; unknownKeys: string[]; conflicts: ConflictView[] } | null, error: string | null = null): PolicyView {
   const facts = loaded?.facts ?? [];
-  const insurer = named(facts, INSURER_KEYS);
-  const product = named(facts, PRODUCT_KEYS);
+  const insurer = h.summary?.insurerName || null;
+  const product = h.summary?.productName || null;
+  const stage = stageOf(h.status);
   return {
     id: h.id,
     title: product ?? "Health policy",
     insurer,
-    stage: stageOf(h.status),
-    facts: facts.filter((f) => !INSURER_KEYS.includes(f.factKey) && !PRODUCT_KEYS.includes(f.factKey)).map(factLine),
+    productName: product,
+    headlines: stage === "reading" || stage === "choose_plan" ? [] : headlinesOf(h.summary),
+    stage,
+    facts: facts.map(factLine),
     pending: (loaded?.conflicts ?? []).filter((c) => c.resolution === "pending").map((c) => ({ id: c.id, label: labelOf(c.factKey) })),
     notFound: loaded?.unknownKeys.length ?? 0,
     error,
@@ -110,20 +154,38 @@ export const stateOf = (policies: PolicyView[] | null, errorCode: string | null)
 
 /** Up to `n` facts worth showing first: ones that were read, limits before the rest. */
 export const keyFacts = (p: PolicyView, n = 4): FactLine[] => {
-  const read = p.facts.filter((f) => f.status !== "unknown");
+  const read = p.facts.filter((f) => f.status !== "unknown" && !HEADLINES.some((h) => h.key === f.key));
   return [...read.filter((f) => f.group === "limits"), ...read.filter((f) => f.group !== "limits")].slice(0, n);
 };
 
 // ---- PolicyAdapter / ReadingAdapter shapes (kept for callers of adapters.policy and adapters.reading) -------------------------
-// Only what the backend returned is filled. Money and renewal are not on the holdings routes, so they stay 0 and "" (backend gap).
+// Only what the backend returned is filled. A Policy carries no status, so a typed field is filled only from a headline the owner
+// confirmed (or the insurer's wording matched); a value only read from the document stays 0 or "" here, and the screens show it
+// with its status instead. Renewal is the end of the policy period. Co-pay is not a headline, so it stays 0.
 
-const toPolicy = (p: PolicyView): Policy => ({ id: p.id, name: p.title, insurer: p.insurer ?? "", kind: "individual", sumInsuredRs: 0, premiumRs: 0, coPayPct: 0, renewsOn: "", memberIds: [] });
+const confirmedValue = (h: Headline | null | undefined): unknown => (h && CONFIRMED.includes(h.status) ? h.value : undefined);
+const rupeesOf = (h: Headline | null | undefined): number => {
+  const v = confirmedValue(h);
+  return isRecord(v) && Number.isSafeInteger(v.amountMinor) && (v.amountMinor as number) >= 0 ? (v.amountMinor as number) / 100 : 0;
+};
+const renewalOf = (h: Headline | null | undefined): string => {
+  const v = confirmedValue(h);
+  return (isRecord(v) && isoDay(v.endIso)) || "";
+};
+
+export const toPolicy = (p: PolicyView, summary?: HoldingSummary | null): Policy => ({
+  id: p.id, name: p.title, insurer: p.insurer ?? "", kind: "individual",
+  sumInsuredRs: rupeesOf(summary?.sumInsured), premiumRs: rupeesOf(summary?.premium), coPayPct: 0, renewsOn: renewalOf(summary?.policyPeriod), memberIds: [],
+});
 
 export const realPolicy: PolicyAdapter = {
-  list: async () => (await loadPolicies()).map(toPolicy),
+  list: async () => {
+    const holdings = (await backendCovers.holdings()).slice(0, MAX_HOLDINGS);
+    return Promise.all(holdings.map(async (h) => toPolicy(await loadPolicy(h), h.summary)));
+  },
   get: async (id) => {
     const h = (await backendCovers.holdings()).find((x) => x.id === id);
-    return h ? toPolicy(await loadPolicy(h)) : null;
+    return h ? toPolicy(await loadPolicy(h), h.summary) : null;
   },
 };
 

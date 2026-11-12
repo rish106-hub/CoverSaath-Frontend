@@ -20,7 +20,7 @@ export function labelOf(factKey: string): string {
   return words ? words.charAt(0).toUpperCase() + words.slice(1) : factKey;
 }
 
-const rupees = (paise: number): string => `Rs ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(paise / 100)}`;
+export const rupees = (paise: number): string => `Rs ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(paise / 100)}`;
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v.trim()) ? Number(v) : null);
 const plural = (n: number, one: string): string => `${n} ${n === 1 ? one : `${one}s`}`;
 
@@ -64,6 +64,10 @@ export const TIER_TEXT: Record<string, string> = { own_pdf: "Your document", ida
 export const tierText = (tier: string | null | undefined): string => TIER_TEXT[tier ?? ""] ?? "Another source";
 
 /** "Page 2" from the backend's page id ("page-2"); the id itself when it has no number. */
+export const DOCUMENT_KIND_TEXT: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions" };
+/** "Policy schedule" for a backend document kind; null when the kind is absent or not one of the two shown. */
+export const documentKindText = (kind: string | null | undefined): string | null => DOCUMENT_KIND_TEXT[kind ?? ""] ?? null;
+
 export function pageText(page: SourceView["page"]): string | null {
   if (!page) return null;
   const m = /(\d+)\s*$/.exec(page.pageId);

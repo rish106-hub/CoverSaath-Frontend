@@ -50,15 +50,15 @@ Screens import from `src/adapters` only (never `src/adapters/mock/*`). `types.ts
 
 | Screen | Real data | Source |
 | --- | --- | --- |
-| `/home` | Stored holdings and their key facts, pending conflicts, empty state to `/covers/add` | `GET /api/app/covers/holdings`, `.../facts`, `.../conflicts` via `src/adapters/real-policy.ts` |
-| `/policies` | Holdings with key facts and stage (reading, choose plan, ready, needs review) | same |
-| `/policies/[id]` | Facts by group: value, status as the backend gave it, citation (source tier and page) where returned | same |
+| `/home` | Stored holdings: insurer, product and the three headlines (sum insured, policy period, premium) from the backend `summary`, key facts, pending conflicts, empty state to `/covers/add` | `GET /api/app/covers/holdings`, `.../facts`, `.../conflicts` via `src/adapters/real-policy.ts` |
+| `/policies` | Holdings with insurer, product, headlines, key facts and stage (reading, choose plan, ready, needs review) | same |
+| `/policies/[id]` | Facts by group: value, status as the backend gave it, citation (source tier, document kind and page) where returned; headlines under "At a glance" | same |
 | `/covers/add`, `/covers/review`, `/covers/declarations` | Real | covers adapter |
 | `/chat`, `/hospitals` | Real | chat and covers adapters |
 | `/family`, `/settings`, onboarding | Real | household, members, user-data adapters |
 | `/stress-test`, `/compare`, `/money`, `/tools`, `/desk`, `/emergency`, `/cards`, learn | Empty collections (`// backend gap` in `src/adapters/real.ts`) | none |
 
-Not returned by the holdings routes, so not shown in real mode: sum insured, premium and renewal date as typed fields, the confirmed insurer or product name (shown only if a confirmed `product_name` or `insurer_name` fact exists), the document kind of a citation, and a document-level "processing failed" status.
+Insurer and product name are shown only from the holdings `summary`, which the backend fills once the owner confirmed the product (before that the choose-plan note shows). A headline read from the document is labelled as read, never confirmed; a conflicting one links to review; a missing one reads "Not found yet". The `Policy` adapter fields (`sumInsuredRs`, `premiumRs`, `renewsOn`) are filled only from confirmed headlines. Not returned by the backend, so not shown: co-pay as a typed field and a document-level "processing failed" status.
 
 ### Swap a mock for a real API
 

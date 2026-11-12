@@ -5,7 +5,7 @@ import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { keyFacts } from "@/adapters/real-policy";
 import { EmptyState } from "@/components/shell/EmptyState";
 import s from "@/components/covers/covers.module.css";
-import { CreationIssues, ErrorBox, FactItem, Loading, StageBox } from "./parts";
+import { CreationIssues, ErrorBox, FactItem, Headlines, Loading, StageBox } from "./parts";
 import { usePolicies } from "./use-policies";
 
 /** /policies for a real account: the stored holdings. */
@@ -28,6 +28,7 @@ export function RealPolicies() {
             {state.policies.map((p) => (
               <article key={p.id} className={s.card} aria-label={p.title}>
                 <p className={s.lead}><b>{p.title}</b>{p.insurer ? ` · ${p.insurer}` : ""}</p>
+                <Headlines p={p} />
                 {p.error ? <ErrorBox code={p.error} onRetry={reload} /> : <StageBox p={p} onRetry={reload} />}
                 {keyFacts(p).length > 0 ? <ul className={s.facts}>{keyFacts(p).map((f) => <FactItem key={f.key} f={f} />)}</ul> : null}
                 <div className={s.row}><Link className="k-btn k-btn--secondary" href={`/policies/${encodeURIComponent(p.id)}`}>Open policy</Link></div>

@@ -1,7 +1,7 @@
 import { AdapterError, type CoversAdapter } from "../types";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES } from "../documents-contract";
 import { precheck } from "../uploads";
-import { containsUin, type Conflicts, type CreationIssue, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
+import { containsUin, type Conflicts, type HoldingSummary, type CreationIssue, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
 import { PINCODE, type HospitalView } from "../chat-contract";
 import { delay } from "./delay";
 
@@ -11,7 +11,7 @@ import { delay } from "./delay";
 
 const quote = (page: number, text: string) => ({ pageId: `page-${page}`, blockIndex: 0, quote: text });
 const factsSeed = (): Facts["facts"] => [
-  { factKey: "sum_insured", factClass: "personal_value", valueType: "money", unit: "paise", group: "limits", status: "extracted_unverified", value: 50_000_000, alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-si-own", tier: "own_pdf", status: "extracted_unverified", value: 50_000_000, page: { pageId: "page-1", blockIndex: 0 }, quote: "Sum insured Rs 5,00,000", current: true }] },
+  { factKey: "sum_insured", factClass: "personal_value", valueType: "money", unit: "paise", group: "limits", status: "extracted_unverified", value: 50_000_000, alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-si-own", tier: "own_pdf", status: "extracted_unverified", value: 50_000_000, page: { pageId: "page-1", blockIndex: 0, documentKind: "policy_schedule" }, quote: "Sum insured Rs 5,00,000", current: true }] },
   { factKey: "room_rent_limit", factClass: "product_term", valueType: "text", unit: "none", group: "limits", status: "conflicting", value: null, alternatives: [], checkWithInsurer: true, openConflictId: "c-room", sources: [] },
   { factKey: "initial_waiting_days", factClass: "product_term", valueType: "number", unit: "days", group: "waiting", status: "reviewed_reference", value: 30, alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-iw-own", tier: "own_pdf", status: "extracted_unverified", value: 30, page: { pageId: "page-2", blockIndex: 1 }, quote: "30 days from the start date", current: true }, { id: "s-iw-ida", tier: "ida_wording", status: "reviewed_reference", value: 30, page: null, quote: "A waiting period of 30 days applies.", current: true }] },
   { factKey: "ped_waiting_months", factClass: "product_term", valueType: "number", unit: "months", group: "waiting", status: "extracted_unverified", value: 36, alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ped-own", tier: "own_pdf", status: "extracted_unverified", value: 36, page: { pageId: "page-2", blockIndex: 4 }, quote: "36 months for pre-existing diseases", current: true }] },
@@ -56,6 +56,23 @@ const CANDIDATES = [
   { candidateId: "product-example-02", insurerName: "Example Insurer", productName: "Example Health Plus 02", rank: 2 },
   { candidateId: "product-example-03", insurerName: "Northwind Health", productName: "Northwind Family Cover 03", rank: 3 },
 ];
+const SEED_PERIOD = { startIso: "2026-04-01", endIso: "2027-03-31", days: 365 };
+/** Names only once the product is confirmed, as on the backend. Headlines come from the seeded facts; the period is read, not confirmed. */
+const summaryOf = (s: State): HoldingSummary => {
+  const cand = CANDIDATES.find((c) => c.candidateId === s.confirmed);
+  const money = (key: "sum_insured" | "premium_total") => {
+    const f = s.facts.find((x) => x.factKey === key);
+    return f ? { factKey: key, value: typeof f.value === "number" ? { amountMinor: f.value, currency: "INR" } : null, status: f.status } : null;
+  };
+  const read = s.facts.length > 0;
+  return {
+    insurerName: cand?.insurerName ?? null,
+    productName: cand?.productName ?? null,
+    sumInsured: money("sum_insured"),
+    policyPeriod: read ? { factKey: "policy_period", value: SEED_PERIOD, status: "extracted_unverified" } : null,
+    premium: money("premium_total"),
+  };
+};
 const get = (id: string) => {
   const h = holdings.get(id);
   if (!h) throw new AdapterError("NOT_FOUND");
@@ -100,7 +117,7 @@ export const mockCovers: CoversAdapter = {
     return delay({ holdingId, documentId: input.documentId, kind, linked });
   },
   holdingsView: async () => ({ holdings: await mockCovers.holdings(), creationIssues: [...issues.values()] }),
-  holdings: () => delay([...holdings].map(([id, h]) => ({ id, documentId: h.documentId, kind: docs.get(h.documentId) ?? "policy_wording", status: h.state.status }))),
+  holdings: () => delay([...holdings].map(([id, h]) => ({ id, documentId: h.documentId, kind: docs.get(h.documentId) ?? "policy_wording", status: h.state.status, summary: summaryOf(h.state) }))),
   candidates: async (holdingId) => {
     const h = get(holdingId);
     if (h.state.status === "uploaded") h.state.status = "insurer_pending";
