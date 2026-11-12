@@ -252,6 +252,7 @@ export function AddCoverView() {
                   {terms.status === "failed" ? "Choose another PDF" : "Choose the terms and conditions PDF"}
                 </button>
               ) : null}
+              {terms.status === "failed" && terms.code === "HOLDING_DOCUMENT_HAS_HOLDING" ? <Link className="k-btn k-btn--secondary" href="/policies">Open your policies</Link> : null}
               {canRetry(terms) ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void takeTerms(undefined, true)}>Try again</button> : null}
             </div>
           </div>

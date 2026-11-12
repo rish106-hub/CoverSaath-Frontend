@@ -152,6 +152,7 @@ export const ERROR_TEXT: Record<string, string> = {
   HOLDING_REGISTRY_UNAVAILABLE: "The list of insurers is not ready yet. Try again in a moment.",
   HOLDING_CREATE_FAILED: "We could not read this document. Add it again, or try another copy.",
   HOLDING_PRODUCT_UNSUPPORTED: "That plan cannot be chosen here. Pick another or choose Something else.",
+  HOLDING_DOCUMENT_HAS_HOLDING: "This document already has its own policy that you have worked on, so it cannot be added to another. Use a different copy of the terms and conditions, or open that policy.",
   NOT_READY: "Still being read. Check again in a moment.",
   CONFLICT_ALREADY_RESOLVED: "This one is already settled.",
   CONFLICT_STALE: "Things changed while you were looking. Refresh and choose again.",

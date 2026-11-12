@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shell/EmptyState";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
 import { stateOf } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
-import { ErrorBox, FactItem, Loading, Pending, StageBox } from "./parts";
+import { ErrorBox, FactItem, Headlines, Loading, Pending, StageBox } from "./parts";
 import { usePolicies } from "./use-policies";
 
 /** /policies/[id] for a real account: the holding's facts, each with its status and where it was read. */
@@ -26,6 +26,7 @@ export function RealPolicyDetail({ id }: { id: string }) {
       </div>
       {p.error ? <ErrorBox code={p.error} onRetry={reload} /> : <StageBox p={p} onRetry={reload} />}
       <Pending p={p} />
+      {p.headlines.length > 0 ? <SectionHeading title="At a glance"><Headlines p={p} /></SectionHeading> : null}
       {p.stage !== "reading" && p.stage !== "choose_plan" && !p.error && p.facts.length === 0 ? <p className={s.quiet}>Nothing has been read from this policy yet.</p> : null}
       {groups.map((g) => (
         <SectionHeading key={g.label} title={g.label}>

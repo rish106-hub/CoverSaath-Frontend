@@ -5,7 +5,7 @@ import { backendCovers } from "@/adapters/covers";
 import { AdapterError } from "@/adapters/types";
 import { realAdapters } from "@/adapters/real";
 import { containsUin, type ConflictView, type CreationIssue, type FactView, type HoldingView } from "@/adapters/covers-contract";
-import { keyFacts, loadPolicies, stageOf, stateOf, toPolicyView } from "@/adapters/real-policy";
+import { factLine, keyFacts, loadPolicies, realPolicy, stageOf, stateOf, toPolicyView } from "@/adapters/real-policy";
 import { RealHome } from "@/components/cover-real/RealHome";
 import { RealPolicies } from "@/components/cover-real/RealPolicies";
 import { RealPolicyDetail } from "@/components/cover-real/RealPolicyDetail";
@@ -49,11 +49,62 @@ describe("toPolicyView", () => {
     const v = toPolicyView(holding(), { facts: [fact({ factKey: "co_pay", value: 10, unit: "percent" })], unknownKeys: [], conflicts: [] });
     expect(v.facts[0]).toMatchObject({ citation: null, quote: null, value: "10%" });
   });
-  it("names the policy only from a confirmed product fact", () => {
-    const named = [fact({ factKey: "product_name", status: "user_confirmed", value: "Care Plan" }), fact({ factKey: "insurer_name", status: "extracted_unverified", value: "Guess Ltd" })];
-    const v = toPolicyView(holding(), { facts: named, unknownKeys: [], conflicts: [] });
-    expect(v.title).toBe("Care Plan");
+  it("ignores guessed product and insurer facts; names come only from the summary", () => {
+    const guessed = [fact({ factKey: "product_name", status: "user_confirmed", value: "Care Plan" }), fact({ factKey: "insurer_name", status: "user_confirmed", value: "Guess Ltd" })];
+    const v = toPolicyView(holding(), { facts: guessed, unknownKeys: [], conflicts: [] });
+    expect(v).toMatchObject({ title: "Health policy", insurer: null, productName: null });
+  });
+  it("takes insurer and product from the summary", () => {
+    const v = toPolicyView({ ...holding(), summary: { insurerName: "Example Insurer", productName: "Example Health Plan 01" } }, { facts: [], unknownKeys: [], conflicts: [] });
+    expect(v).toMatchObject({ title: "Example Health Plan 01", insurer: "Example Insurer", productName: "Example Health Plan 01" });
+  });
+  it("insurer and product stay null before confirmation", () => {
+    const v = toPolicyView({ ...holding("insurer_pending"), summary: { insurerName: null, productName: null, sumInsured: null, policyPeriod: null, premium: null } }, null);
+    expect(v).toMatchObject({ title: "Health policy", insurer: null, productName: null, stage: "choose_plan", headlines: [] });
+  });
+  it("tolerates a missing summary (older backend)", () => {
+    const v = toPolicyView(holding(), { facts: [], unknownKeys: [], conflicts: [] });
+    expect(v.headlines).toEqual([]);
     expect(v.insurer).toBeNull();
+  });
+  it("shows a partial summary: present headlines and not-found for the rest", () => {
+    const v = toPolicyView({ ...holding(), summary: { sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" } } }, { facts: [], unknownKeys: [], conflicts: [] });
+    expect(v.headlines.map((h) => [h.key, h.tone, h.value])).toEqual([["sum_insured", "read", "Rs 5,00,000"], ["policy_period", "missing", "Not found yet"], ["premium_total", "missing", "Not found yet"]]);
+  });
+  it("shows each headline status honestly and formats money from minor units", () => {
+    const summary = {
+      sumInsured: { factKey: "sum_insured" as const, value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" as const },
+      policyPeriod: { factKey: "policy_period" as const, value: { startIso: "2026-04-01", endIso: "2027-03-31", days: 365 }, status: "user_confirmed" as const },
+      premium: { factKey: "premium_total" as const, value: null, status: "conflicting" as const },
+    };
+    const [si, pp, pr] = toPolicyView({ ...holding(), summary }, { facts: [], unknownKeys: [], conflicts: [] }).headlines;
+    expect(si).toMatchObject({ value: "Rs 5,00,000", tone: "read", statusText: "Read from your document" });
+    expect(pp).toMatchObject({ value: "1 Apr 2026 to 31 Mar 2027", tone: "confirmed" });
+    expect(pr).toMatchObject({ value: "Two readings", tone: "review", status: "conflicting" });
+    const rr = toPolicyView({ ...holding(), summary: { premium: { factKey: "premium_total", value: { amountMinor: 1850000, currency: "INR" }, status: "reviewed_reference" } } }, null).headlines[2];
+    expect(rr).toMatchObject({ value: "Rs 18,500", tone: "confirmed" });
+    const un = toPolicyView({ ...holding(), summary: { premium: { factKey: "premium_total", value: null, status: "unknown" } } }, null).headlines[2];
+    expect(un).toMatchObject({ value: "Not found yet", tone: "missing", status: "unknown" });
+    expect(containsUin(si)).toBe(false);
+  });
+  it("labels a citation with its document kind and page", () => {
+    const src = (documentKind: string | null) => ({ id: "s", tier: "own_pdf" as const, page: { pageId: "page-4", documentKind }, quote: "q" });
+    expect(factLine(fact({ factKey: "a", sourceTier: "own_pdf", sources: [src("policy_schedule")] })).citation).toBe("Your document, Policy schedule, Page 4");
+    expect(factLine(fact({ factKey: "a", sourceTier: "own_pdf", sources: [src("policy_wording")] })).citation).toBe("Your document, Policy terms and conditions, Page 4");
+    expect(factLine(fact({ factKey: "a", sourceTier: "own_pdf", sources: [src(null)] })).citation).toBe("Your document, Page 4");
+  });
+  it("fills the Policy typed fields only from confirmed headlines", async () => {
+    const summary = {
+      insurerName: "Example Insurer", productName: "Example Health Plan 01",
+      sumInsured: { factKey: "sum_insured" as const, value: { amountMinor: 50000000, currency: "INR" }, status: "user_confirmed" as const },
+      policyPeriod: { factKey: "policy_period" as const, value: { startIso: "2026-04-01", endIso: "2027-03-31", days: 365 }, status: "reviewed_reference" as const },
+      premium: { factKey: "premium_total" as const, value: { amountMinor: 1850000, currency: "INR" }, status: "extracted_unverified" as const },
+    };
+    vi.spyOn(backendCovers, "holdings").mockResolvedValue([{ ...holding(), summary }]);
+    vi.spyOn(backendCovers, "facts").mockResolvedValue({ holdingId: "h1", status: "ready", facts: [], unknownKeys: [] });
+    vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "ready", conflicts: [] });
+    const p = await realPolicy.get("h1");
+    expect(p).toMatchObject({ name: "Example Health Plan 01", insurer: "Example Insurer", sumInsuredRs: 500000, premiumRs: 0, renewsOn: "2027-03-31" });
   });
   it("orders key facts with limits first and skips unknown ones", () => {
     const v = toPolicyView(holding(), { facts: FACTS, unknownKeys: [], conflicts: [] });
@@ -107,7 +158,34 @@ function stub(list: HoldingView[] | AdapterError, creationIssues: CreationIssue[
   vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "conflicts", conflicts: [CONFLICT] });
 }
 
+const SUMMARY: HoldingView["summary"] = {
+  insurerName: "Example Insurer", productName: "Example Health Plan 01",
+  sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" },
+  policyPeriod: { factKey: "policy_period", value: null, status: "conflicting" },
+  premium: { factKey: "premium_total", value: null, status: "unknown" },
+};
+
 describe("screens", () => {
+  it("home and detail show insurer, product and honest headlines", async () => {
+    stub([{ ...holding("ready"), summary: SUMMARY }]);
+    const home = render(<RealHome />);
+    expect(await screen.findByText("Example Health Plan 01")).toBeInTheDocument();
+    expect(screen.getByText(/Example Insurer/)).toBeInTheDocument();
+    expect(screen.getByTestId("headline-sum_insured")).toHaveTextContent("Rs 5,00,000");
+    expect(screen.getByTestId("headline-sum_insured")).toHaveTextContent("Read from your document");
+    expect(screen.getByTestId("headline-policy_period")).toHaveTextContent("Two readings");
+    expect(screen.getByTestId("headline-premium_total")).toHaveTextContent("Not found yet");
+    home.unmount();
+    render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByTestId("headline-sum_insured")).toHaveTextContent("Rs 5,00,000");
+    expect(screen.getAllByRole("link", { name: "Review and decide" }).some((a) => a.getAttribute("href") === "/covers/review?holding=h1")).toBe(true);
+  });
+  it("before confirmation the choose-plan note shows and no headlines", async () => {
+    stub([{ ...holding("insurer_pending"), summary: { insurerName: null, productName: null, sumInsured: null, policyPeriod: null, premium: null } }]);
+    render(<RealPolicies />);
+    expect(await screen.findByTestId("stage-note")).toHaveTextContent(/Tell us which plan this is/);
+    expect(screen.queryByTestId("headlines")).toBeNull();
+  });
   it("home shows facts, status, citation and a link to the review screen", async () => {
     stub([holding("conflicts")]);
     render(<RealHome />);

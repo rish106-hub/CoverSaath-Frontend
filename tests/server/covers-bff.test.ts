@@ -83,6 +83,16 @@ describe("holdings and candidates", () => {
     expect(calls[0]).toMatchObject({ url: "/api/v1/households/h1/holdings" });
     expect(calls[0]?.headers.authorization).toBe("Bearer tok-secret");
   });
+  it("carries the summary (names, three headlines) and drops other keys", async () => {
+    const summary = { insurerName: "Example Insurer", productName: "Example Health Plan 01", sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified", extra: "x" }, policyPeriod: { factKey: "policy_period", value: { startIso: "2026-04-01", endIso: "2027-03-31", days: 365 }, status: "user_confirmed" }, premium: null, other: 1 };
+    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [{ id: "holding-1", documentId: "doc-1", kind: "policy_wording", status: "ready", summary }] } };
+    const h = (await (await holdingsRoute.GET(req("/api/app/covers/holdings"))).json()).data.holdings[0];
+    expect(h.summary).toEqual({ insurerName: "Example Insurer", productName: "Example Health Plan 01", sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" }, policyPeriod: summary.policyPeriod, premium: null });
+  });
+  it("refuses a summary that holds a UIN", async () => {
+    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [{ id: "holding-1", status: "ready", summary: { productName: FAKE_UIN } }] } };
+    expect((await holdingsRoute.GET(req("/api/app/covers/holdings"))).status).toBe(502);
+  });
   it("passes creation_issues through (retrying and failed), in either key style", async () => {
     routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [], creation_issues: [{ document_id: "doc-2", state: "retrying", code: null, extra: "dropped" }, { document_id: "doc-3", state: "failed", code: "HOLDING_CREATE_FAILED" }] } };
     const body = await (await holdingsRoute.GET(req("/api/app/covers/holdings"))).json();
@@ -154,6 +164,7 @@ describe("holding documents", () => {
       [503, "HOLDINGS_DISABLED", 503, "HOLDINGS_DISABLED"],
       [404, "HOLDING_NOT_FOUND", 404, "NOT_FOUND"],
       [404, "DOCUMENT_NOT_FOUND", 404, "NOT_FOUND"],
+      [409, "HOLDING_DOCUMENT_HAS_HOLDING", 409, "HOLDING_DOCUMENT_HAS_HOLDING"],
     ];
     for (const [status, code, outStatus, outCode] of cases) {
       routes["POST /api/v1/holdings/holding-1/documents"] = { status, body: bk(code) };

@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { errorText } from "@/adapters/documents-contract";
 import type { CreationIssue } from "@/adapters/covers-contract";
-import type { FactLine, PolicyView, Stage } from "@/adapters/real-policy";
+import type { FactLine, HeadlineLine, PolicyView, Stage } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
 
 /** What a person can do next, per stage of a holding that has no facts yet. */
@@ -54,6 +54,27 @@ export function FactItem({ f }: { f: FactLine }) {
       <span className={s.factValue}>{f.value}</span>
       <span className={s.status}>{f.statusText}</span>
       {f.quote ? <p className={s.src}>&ldquo;{f.quote}&rdquo;{f.citation ? ` · ${f.citation}` : ""}</p> : f.citation ? <p className={s.src}>{f.citation}</p> : null}
+    </li>
+  );
+}
+
+/** Insurer and product, then the three headline values with their honest status. Nothing before the product is confirmed: the choose-plan note stands in. */
+export function Headlines({ p }: { p: PolicyView }) {
+  if (p.headlines.length === 0) return null;
+  return (
+    <ul className={s.facts} data-testid="headlines">
+      {p.headlines.map((h) => <HeadlineItem key={h.key} h={h} holdingId={p.id} />)}
+    </ul>
+  );
+}
+
+function HeadlineItem({ h, holdingId }: { h: HeadlineLine; holdingId: string }) {
+  return (
+    <li className={s.fact} data-open={h.tone === "review" || h.tone === "missing"} data-tone={h.tone} data-testid={`headline-${h.key}`}>
+      <span className={s.factName}>{h.label}</span>
+      <span className={s.factValue}>{h.value}</span>
+      <span className={s.status}>{h.statusText}</span>
+      {h.tone === "review" ? <Link className="k-btn k-btn--secondary k-btn--sm" href={`/covers/review?holding=${encodeURIComponent(holdingId)}`}>Review and decide</Link> : null}
     </li>
   );
 }

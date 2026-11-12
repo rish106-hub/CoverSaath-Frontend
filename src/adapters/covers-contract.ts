@@ -21,7 +21,25 @@ export const containsUin = (body: unknown): boolean => UIN_SHAPE.test(JSON.strin
 
 // ---- Holdings ------------------------------------------------------------------------------------------------------------
 
-export const holdingView = z.object({ id, documentId: id.nullish(), kind: z.string().max(60).nullish(), status: z.enum(HOLDING_STATUSES) });
+/**
+ * One headline of a holding: sum insured, policy period or premium. `value` is the fact registry's typed value: money is
+ * `{ amountMinor, currency }`, a period is `{ startIso, endIso, days }`; null when conflicting or unknown. Never a UIN.
+ */
+export const HEADLINE_KEYS = ["sum_insured", "policy_period", "premium_total"] as const;
+export type HeadlineKey = (typeof HEADLINE_KEYS)[number];
+export const headlineView = z.object({ factKey: z.enum(HEADLINE_KEYS), value: z.unknown().optional(), status: z.enum(RESOLVED_STATUSES) });
+export type Headline = z.infer<typeof headlineView>;
+/** Insurer and product name are null until the owner confirmed the product. Older backends send no summary at all. */
+export const summaryView = z.object({
+  insurerName: z.string().max(200).nullish(),
+  productName: z.string().max(200).nullish(),
+  sumInsured: headlineView.nullish(),
+  policyPeriod: headlineView.nullish(),
+  premium: headlineView.nullish(),
+});
+export type HoldingSummary = z.infer<typeof summaryView>;
+
+export const holdingView = z.object({ id, documentId: id.nullish(), kind: z.string().max(60).nullish(), status: z.enum(HOLDING_STATUSES), summary: summaryView.nullish() });
 export type HoldingView = z.infer<typeof holdingView>;
 /**
  * A document the backend could not (yet) make a holding from. `retrying`: still being worked on. `failed`: gave up (code HOLDING_CREATE_FAILED).
@@ -66,7 +84,8 @@ export type Confirmed = z.infer<typeof confirmedIn>;
 // ---- Facts and conflicts -------------------------------------------------------------------------------------------------
 
 const status = z.enum(RESOLVED_STATUSES);
-const page = z.object({ pageId: z.string().max(128), blockIndex: z.number().int().nullish() }).nullish();
+/** `documentKind` is the document_kind of the page's document (policy_schedule, policy_wording, ...), or null. */
+const page = z.object({ pageId: z.string().max(128), blockIndex: z.number().int().nullish(), documentKind: z.string().max(60).nullish() }).nullish();
 /** One reading of a fact in one tier (own PDF, insurer wording, your declaration). `value` is whatever the backend typed it as. */
 export const sourceView = z.object({
   id: z.string().max(128),
