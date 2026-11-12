@@ -17,6 +17,7 @@ function stubSession(source: "backend" | "demo" | null) {
     if (u.includes("/api/app/me")) {
       return source ? Response.json(ME(source)) : Response.json({ ok: false, code: "UNAUTHENTICATED" }, { status: 401 });
     }
+    if (u.includes("/api/app/covers/holdings")) return Response.json({ ok: true, data: { holdings: [] } });
     return Response.json({ ok: false }, { status: 404 });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -76,7 +77,8 @@ describe("per-session adapters", () => {
     expect(await a.policy.list()).toEqual([]);
     resetSessionMode();
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
-    expect(await a.policy.list()).toEqual([]);
+    // Real policies come from the backend: when it cannot be reached the call fails with a code, it never falls back to mock policies.
+    await expect(a.policy.list()).rejects.toMatchObject({ code: "BACKEND_UNREACHABLE" });
     expect(await a.desk.board()).toEqual([]);
   });
 
