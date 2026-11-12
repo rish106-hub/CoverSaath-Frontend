@@ -1,4 +1,4 @@
-import type { Adapters, AssistantAdapter, BloodAdapter, DeskAdapter, DocumentAdapter, EmailAdapter, HospitalAdapter, InviteAdapter, LearnAdapter, PolicyAdapter, ReadingAdapter, WalletAdapter } from "./types";
+import type { Adapters, AssistantAdapter, BloodAdapter, DeskAdapter, DocumentAdapter, EmailAdapter, HospitalAdapter, InviteAdapter, LearnAdapter, WalletAdapter } from "./types";
 import { AdapterError } from "./types";
 import { backendAccess, backendHousehold } from "./backend";
 import { backendOnboarding, backendPreferences, backendProfile } from "./user-data";
@@ -7,6 +7,7 @@ import { mockAdapters } from "./mock";
 import { backendReference } from "./reference";
 import { backendEvidence } from "./evidence";
 import { backendCovers } from "./covers";
+import { realPolicy, realReading } from "./real-policy";
 import { backendChat } from "./threads";
 import { backendAssistant } from "./chat";
 import { createGnaniVoice } from "@/agent/voice-gnani";
@@ -21,8 +22,6 @@ const notYet = (): never => {
 };
 
 export const emptyDocument: DocumentAdapter = { list: () => none([]), add: async () => notYet() }; // backend gap: the upload work replaces this
-export const emptyReading: ReadingAdapter = { findings: () => none([]) }; // backend gap
-export const emptyPolicy: PolicyAdapter = { list: () => none([]), get: () => none(null) }; // backend gap
 export const emptyAssistant: AssistantAdapter = {
   ask: () =>
     none({
@@ -48,8 +47,8 @@ export const realAdapters: Adapters = {
   access: backendAccess,
   household: backendHousehold,
   document: emptyDocument,
-  reading: emptyReading,
-  policy: emptyPolicy,
+  reading: realReading, // facts of one holding
+  policy: realPolicy, // the household's stored holdings
   assistant: backendAssistant, // answers from stored evidence, cited; with none it says so
   voice: createGnaniVoice({ getLanguage: () => backendPreferences.get().then((p) => p?.voice) }), // Gnani via the BFF, browser speech as the fallback
   email: emptyEmail,
