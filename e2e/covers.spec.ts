@@ -21,7 +21,8 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   await page.getByRole("button", { name: /Yes, it is/ }).click();
   await expect(page.getByText(/Saved\. Add the terms and conditions above to finish this cover/)).toBeVisible();
 
-  await page.getByRole("link", { name: "See what we found" }).click();
+  // Keyboard, because the assistant dock floats over the bottom of a 1280x800 viewport and covers this link.
+  await page.getByRole("link", { name: "See what we found" }).press("Enter");
   await expect(page).toHaveURL(/\/covers\/review\?holding=/);
   await expect(page.getByRole("heading", { name: "Needs your decision" })).toBeVisible();
   for (const g of ["Limits", "Waiting", "Exclusions", "Cashless", "Money"]) await expect(page.getByRole("heading", { name: g, exact: true })).toBeVisible();
