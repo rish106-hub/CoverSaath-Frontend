@@ -58,6 +58,16 @@ describe("waitlist link", () => {
     expect(replace).toHaveBeenCalledWith("/welcome");
     expect(window.location.search).toBe("");
   });
+  it("AccessCard: form submit shows the done card, then moves on to /welcome in the same app", async () => {
+    vi.spyOn(adapters.access, "submit").mockResolvedValue({ ok: true, name: "Meera" } as never);
+    render(<AccessCard />);
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Meera Rao" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "meera.rao@company.com" } });
+    await act(async () => { fireEvent.submit(screen.getByRole("form", { name: "Get access" })); });
+    expect(screen.getByText(/You.re in, Meera/)).toBeTruthy();
+    await act(async () => { await new Promise((r) => setTimeout(r, 800)); });
+    expect(push).toHaveBeenCalledWith("/welcome");
+  });
   it("AccessCard: bad ?email= shows the normal form, no request", async () => {
     window.history.replaceState(null, "", "/?email=nope");
     const spy = vi.spyOn(adapters.access, "submit");
