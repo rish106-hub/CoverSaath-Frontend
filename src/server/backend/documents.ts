@@ -282,8 +282,8 @@ export type DocumentsClient = ReturnType<typeof createDocumentsClient>;
 // ---- Sealed state (kv_docs) --------------------------------------------------------------------------------------------------
 
 type DocState = { s?: string; m?: string; cg?: string; w?: string; r?: ProgressCode; t?: ProgressCode; f?: StructuringWhy; fa?: number };
-/** c case, pt the policy type the case was started with, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, x grants whose revoke has not gone through yet, q grants for questions about documents (revoked with the rest). */
-export type DocsState = { h: string; exp: number; c?: string; pt?: PolicyType; cs?: string; rv?: string; g?: string; v?: string; x?: string[]; q?: string[]; d: Record<string, DocState> };
+/** c case, pt the policy type the case was started with, cs/rv case status and revision as last seen (revision guards the next transition), g reading grant, v case read grant (lets the owner read the case's source list), d per-document ids and progress, ch grant for chat and search providers, x grants whose revoke has not gone through yet, q grants for questions about documents (revoked with the rest). */
+export type DocsState = { h: string; exp: number; c?: string; pt?: PolicyType; cs?: string; rv?: string; g?: string; v?: string; ch?: string; x?: string[]; q?: string[]; d: Record<string, DocState> };
 
 export async function readDocsState(secret: string, session: SessionPayload): Promise<DocsState> {
   const v = openValue<DocsState>((await cookies()).get(DOCS_COOKIE)?.value, secret);
@@ -327,11 +327,45 @@ export async function grantReadingConsent(ctx: Ctx, requestId: string): Promise<
   return { consent: true };
 }
 
+/** FOR LEGAL REVIEW: wording, purpose and recipients of the chat go-ahead are not final. */
+export const chatConsentState = (ctx: Ctx): { consent: boolean } => ({ consent: Boolean(ctx.state.ch) });
+
+/**
+ * One grant for the household, purpose coverage_reconstruction, naming the two providers a chat turn calls: the language model (anthropic)
+ * and the embedding service (voyage). The backend resolves it itself on each turn; the page never names a grant. Replay-safe by key.
+ */
+export async function grantChatConsent(ctx: Ctx, requestId: string): Promise<{ consent: boolean }> {
+  const adultId = need(ctx.session);
+  const scope = (recipient: string): GrantScope => ({ resourceType: "household", resourceId: null, action: "derive", dataCategory: "insurance_question", recipient });
+  ctx.state.ch = await ctx.client.grant(ctx.session.t, {
+    householdId: ctx.session.h, adultId, key: `chat-${requestId}`, purpose: "coverage_reconstruction",
+    scope: scope("anthropic"), scopes: [scope("anthropic"), scope("voyage")],
+  });
+  await writeDocsState(ctx.state, ctx.secret);
+  return { consent: true };
+}
+
+export async function revokeChatConsent(ctx: Ctx): Promise<{ consent: boolean }> {
+  need(ctx.session);
+  const id = ctx.state.ch;
+  if (id) {
+    try {
+      await ctx.client.revokeGrant(ctx.session.t, id);
+    } catch (e) {
+      if (!(e instanceof AppError && e.code === "NOT_FOUND")) throw e;
+    }
+  }
+  ctx.state.ch = undefined;
+  await writeDocsState(ctx.state, ctx.secret);
+  return { consent: false };
+}
+
 export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean }> {
   need(ctx.session);
   const ids = [...(ctx.state.x ?? [])];
   if (ctx.state.g) ids.push(ctx.state.g);
   if (ctx.state.v) ids.push(ctx.state.v);
+  if (ctx.state.ch) ids.push(ctx.state.ch);
   ids.push(...(ctx.state.q ?? []));
   for (const e of Object.values(ctx.state.d)) ids.push(...[e.s, e.m, e.cg].filter((x): x is string => Boolean(x)));
   const left: string[] = [];
@@ -345,6 +379,7 @@ export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean
   }
   ctx.state.g = undefined;
   ctx.state.v = undefined;
+  ctx.state.ch = undefined;
   ctx.state.q = undefined;
   ctx.state.d = {};
   ctx.state.x = left.length > 0 ? left : undefined;

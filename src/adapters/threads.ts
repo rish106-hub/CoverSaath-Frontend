@@ -1,6 +1,7 @@
 import { AdapterError, type ChatAdapter } from "./types";
 import { answerEvent, deltaEvent, errorEvent, metaEvent, threadIn, type TurnEvent } from "./chat-contract";
 import { coverOut } from "./covers-contract";
+import { consentOut } from "./documents-contract";
 import type { z } from "zod";
 
 // Browser client for the same-origin chat BFF (/api/app/chat/threads). It reads the streamed turn (text/event-stream) and hands each
@@ -34,7 +35,23 @@ function parseFrame(raw: string): TurnEvent | null {
   return { type: name, data: r.data } as TurnEvent;
 }
 
+async function consentCall(method: "GET" | "POST" | "DELETE", body?: unknown): Promise<boolean> {
+  let res: Response;
+  try {
+    res = await fetch("/api/app/chat/consent", { method, cache: "no-store", headers: { ...HEADERS, ...(body ? { "content-type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  } catch {
+    throw new AdapterError("BACKEND_UNREACHABLE", true);
+  }
+  if (!res.ok) throw await failedWith(res);
+  const r = consentOut.safeParse(await res.json().catch(() => null));
+  if (!r.success) throw new AdapterError("BACKEND_BAD_RESPONSE");
+  return r.data.consent;
+}
+
 export const backendChat: ChatAdapter = {
+  consent: () => consentCall("GET"),
+  async grantConsent(requestId) { await consentCall("POST", { accept: true, requestId }); },
+  async revokeConsent() { await consentCall("DELETE"); },
   async startThread(holdingId) {
     let res: Response;
     try {

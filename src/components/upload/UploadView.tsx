@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AdapterError } from "@/adapters/types";
-import { backendUploads, makeRequestKey, precheck } from "@/adapters/uploads";
-import { DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, NOTE_TEXT, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type DocView, type DocumentKind, type PolicyType, type StepState } from "@/adapters/documents-contract";
+import { uploads as backendUploads, makeRequestKey, precheck } from "@/adapters/uploads";
+import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, NOTE_TEXT, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type DocView, type DocumentKind, type PolicyType, type StepState } from "@/adapters/documents-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import styles from "./UploadView.module.css";
 
-const KIND_LABEL: Record<DocumentKind, string> = { policy_wording: "Policy wording", policy_schedule: "Policy schedule", endorsement: "Endorsement" };
+const KIND_LABEL: Record<DocumentKind, string> = { policy_wording: "Terms and conditions", policy_schedule: "Policy schedule", endorsement: "Endorsement" };
 const STEPS = [
   ["uploaded", "Uploaded"],
   ["scanned", "Checked"],
@@ -18,6 +18,9 @@ const STEPS = [
 const STATE_WORD: Record<StepState, string> = { pending: "waiting", active: "in progress", done: "done", failed: "stopped", unavailable: "not available" };
 const RETRY_NOTES = new Set(["READING_FAILED", "READING_UNAVAILABLE", "STRUCTURING_FAILED", "STRUCTURING_UNAVAILABLE"]);
 const POLL_MS = 3000;
+/** The two PDFs of one policy: the schedule (who, what sum, which dates) and the terms and conditions (the wording). */
+const SLOTS = ["policy_schedule", "policy_wording"] as const;
+const SLOT_LABEL: Record<(typeof SLOTS)[number], string> = { policy_schedule: "Policy schedule", policy_wording: "Terms and conditions" };
 const SLOW_POLL_MS = 15_000;
 
 type Queued = { id: string; file: File; kind: DocumentKind; policyType: PolicyType; key: string; state: "uploading" | "failed"; code?: string };
@@ -139,6 +142,11 @@ export function UploadView() {
     }
   }
 
+  function pick(k: DocumentKind) {
+    setKind(k);
+    input.current?.click();
+  }
+
   function add(files: FileList | File[]) {
     setError(null);
     if (policyType === "") {
@@ -223,7 +231,7 @@ export function UploadView() {
       ) : null}
 
       {consent ? (
-        <SectionHeading title="Your policy PDF" description={`PDF only, up to ${large ? 15 : 4} MB.`}>
+        <SectionHeading title="Your policy PDFs" description={`PDF only, up to ${large ? 15 : 4} MB.`}>
           <div
             className={styles.drop}
             data-over={over}
@@ -231,7 +239,7 @@ export function UploadView() {
             onDragLeave={() => setOver(false)}
             onDrop={(e) => { e.preventDefault(); setOver(false); add(e.dataTransfer.files); }}
           >
-            <p className={styles.lead}>Drop your policy here</p>
+            <p className={styles.lead}>Add both PDFs of your policy: the schedule and the terms and conditions.</p>
             <div className={styles.row}>
               <label className={styles.kind}>
                 <span>Type of policy</span>
@@ -240,13 +248,14 @@ export function UploadView() {
                   {POLICY_TYPES.map((t) => <option key={t} value={t}>{POLICY_TYPE_LABEL[t]}</option>)}
                 </select>
               </label>
-              <label className={styles.kind}>
-                <span>This is a</span>
-                <select value={kind} onChange={(e) => setKind(e.target.value as DocumentKind)}>
-                  {DOCUMENT_KINDS.map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
-                </select>
-              </label>
-              <button type="button" className="k-btn k-btn--primary" disabled={policyType === ""} onClick={() => input.current?.click()}>Choose a PDF</button>
+              {SLOTS.map((k) => {
+                const have = docs.some((d) => d.kind === k);
+                return (
+                  <button key={k} type="button" className={`k-btn ${have ? "k-btn--secondary" : "k-btn--primary"}`} disabled={policyType === "" || have} data-slot={k} onClick={() => pick(k)}>
+                    {have ? `${SLOT_LABEL[k]} added` : `Add ${SLOT_LABEL[k].toLowerCase()}`}
+                  </button>
+                );
+              })}
             </div>
             <input
               ref={input}

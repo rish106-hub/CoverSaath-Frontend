@@ -9,10 +9,12 @@ const turn = vi.fn();
 const startThread = vi.fn();
 const listen = vi.fn();
 const hospitals = vi.fn();
+const consentGet = vi.fn();
+const consentGrant = vi.fn();
 vi.mock("@/adapters", () => ({
   adapters: {
     covers: { holdings: async () => [{ id: "hold-1", status: "ready" }], hospitals: (...a: unknown[]) => hospitals(...a) },
-    chat: { startThread: (...a: unknown[]) => startThread(...a), turn: (...a: unknown[]) => turn(...a) },
+    chat: { startThread: (...a: unknown[]) => startThread(...a), turn: (...a: unknown[]) => turn(...a), consent: () => consentGet(), grantConsent: (...a: unknown[]) => consentGrant(...a), revokeConsent: vi.fn() },
     voice: { supported: () => true, listen: () => listen(), stop: vi.fn(), notice: "Audio is sent to a speech service to turn it into text." },
   },
 }));
@@ -33,6 +35,8 @@ beforeEach(() => {
   });
   listen.mockReset();
   hospitals.mockReset();
+  consentGet.mockReset().mockResolvedValue(true);
+  consentGrant.mockReset().mockResolvedValue(undefined);
 });
 afterEach(cleanup);
 
@@ -80,6 +84,37 @@ describe("ChatView", () => {
   });
 });
 
+describe("ChatView go-ahead", () => {
+  it("asks for the go-ahead first, names both providers, and keeps Ask off until it is given", async () => {
+    consentGet.mockResolvedValue(false);
+    render(<ChatView />);
+    expect(await screen.findByText("Before we answer")).toBeDefined();
+    expect(screen.getByText(/Anthropic/)).toBeDefined();
+    expect(screen.getByText(/Voyage/)).toBeDefined();
+    expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Waiting periods?" } });
+    expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => expect(consentGrant).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByText("Before we answer")).toBeNull());
+    await waitFor(() => expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(false));
+  });
+  it("shows the card again when a turn is refused for missing go-ahead", async () => {
+    const { AdapterError } = await import("@/adapters/types");
+    turn.mockRejectedValue(new AdapterError("CONSENT_REQUIRED"));
+    render(<ChatView />);
+    fireEvent.click(await screen.findByRole("button", { name: /What are my waiting periods/ }));
+    expect(await screen.findByText("Before we answer")).toBeDefined();
+  });
+  it("notes figures the backend did not match to a fact", async () => {
+    turn.mockImplementation(async (_i: string, _x: unknown, on: (e: TurnEvent) => void) => { on(answer({ modelStatus: "numbers_unverified", truncated: false })); on({ type: "done", data: {} }); });
+    render(<ChatView />);
+    fireEvent.click(await screen.findByRole("button", { name: /What are my waiting periods/ }));
+    expect(await screen.findByText(/figures in this answer are not matched/)).toBeDefined();
+  });
+});
+
 describe("HospitalsView", () => {
   it("lists hospitals for a pincode", async () => {
     hospitals.mockResolvedValue([{ id: "a", name: "Example City Hospital", address: "1 Road", city: "Mumbai", pincode: "400053", cashless: true }, { id: "b", name: "Lakeside Care Centre", cashless: false }]);
@@ -96,5 +131,13 @@ describe("HospitalsView", () => {
     render(<HospitalsView pincode="40" />);
     const go = await screen.findByRole("button", { name: "Find hospitals" });
     expect((go as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe("citationLines", () => {
+  it("maps backend sources (kind wording, snake_case document_id) to document and page", async () => {
+    const { citationLines } = await import("@/components/chat/ChatView");
+    const a = { sources: [{ kind: "wording", document_id: "d-1", page: 7, ref: "4.2" }, { kind: "wording", document_id: "d-1", page: 7, ref: "4.3" }], factsUsed: [] } as unknown as import("@/adapters/chat-contract").TurnAnswer;
+    expect(citationLines(a)).toEqual(["Policy terms and conditions, page 7"]);
   });
 });

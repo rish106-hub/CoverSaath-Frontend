@@ -23,7 +23,7 @@ export const containsUin = (body: unknown): boolean => UIN_SHAPE.test(JSON.strin
 
 export const holdingView = z.object({ id, documentId: id.nullish(), kind: z.string().max(60).nullish(), status: z.enum(HOLDING_STATUSES) });
 export type HoldingView = z.infer<typeof holdingView>;
-export const holdingsIn = z.object({ holdings: z.array(holdingView).max(200) });
+export const holdingsIn = z.object({ holdings: z.array(holdingView).max(200), truncated: z.boolean().optional() });
 
 /** Insurer and product name only. Never a UIN. */
 export const candidateView = z.object({ candidateId: id, insurerName: z.string().max(200), productName: z.string().max(200), rank: z.number().int().min(0).max(100) });

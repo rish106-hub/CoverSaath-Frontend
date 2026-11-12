@@ -37,3 +37,10 @@
 .hospital span { font: 400 14px/1.4 var(--font-sans); color: var(--graphite); overflow-wrap: anywhere; }
 .hospital [data-cashless="true"] { color: var(--ink); font-weight: 600; }
 .search { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; max-width: 720px; }
+
+/* Go-ahead card */
+.lead { margin: 0; font: 400 16px/1.5 var(--font-sans); color: var(--ink); }
+.card { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); max-width: 640px; }
+.list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font: 400 15px/1.5 var(--font-sans); color: var(--graphite); }
+.check { display: flex; gap: 10px; align-items: flex-start; font: 500 15px/1.4 var(--font-sans); cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 0; accent-color: var(--btn-accent); flex: none; }

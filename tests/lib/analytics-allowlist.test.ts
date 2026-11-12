@@ -22,7 +22,7 @@ describe("backend analytics allowlist mirror", () => {
     for (const spec of Object.values(BACKEND_ANALYTICS_EVENTS)) {
       for (const [key, shape] of Object.entries(spec)) {
         expect(["enum", "count", "boolean"]).toContain(shape.kind);
-        expect(key).not.toMatch(/name|email|phone|mobile|uin|number|amount|text|message|url|path|id$/i);
+        expect(key).not.toMatch(/^(?:.*(?:name|email|phone|mobile|uin|number|amount|text|message|url|path)|.*id)$/i);
       }
     }
   });

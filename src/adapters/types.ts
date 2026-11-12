@@ -188,6 +188,11 @@ export interface ChatAdapter {
   startThread(holdingId?: string): Promise<ThreadView>;
   /** Sends one turn and calls `onEvent` for each streamed event (meta, delta, answer, then done). Resolves after `done`; rejects with AdapterError if the turn fails or the stream stops early. Aborting `signal` ends it quietly. */
   turn(threadId: string, input: TurnInput, onEvent: (e: TurnEvent) => void, signal?: AbortSignal): Promise<void>;
+  /** Whether the person has given the go-ahead for questions to be answered with the language and search providers. */
+  consent(): Promise<boolean>;
+  /** `requestId` is reused when the call is repeated, so a retry cannot create a second grant. */
+  grantConsent(requestId: string): Promise<void>;
+  revokeConsent(): Promise<void>;
 }
 
 export type Adapters = {

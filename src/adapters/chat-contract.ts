@@ -31,6 +31,24 @@ export const turnIn = z.object({
 export type TurnInput = z.input<typeof turnIn>;
 
 export const FACT_STATUSES = ["extracted_unverified", "conflicting", "unknown", "reviewed_reference", "user_confirmed"] as const;
+/** Where an answer or fact came from, when the backend names it: which of the policy's documents and which page. Additive and optional; the page is 1-based. */
+export const citationView = z.object({
+  documentKind: z.string().max(40).nullish(),
+  documentId: z.string().max(128).nullish(),
+  page: z.number().int().min(1).max(10_000).nullish(),
+  quote: z.string().max(400).nullish(),
+});
+export type Citation = z.infer<typeof citationView>;
+
+/** Backend answer sources: the insurer's wording the answer rests on. `ref` is the clause reference; the page is 1-based. */
+export const sourceView = z.object({
+  kind: z.string().max(40),
+  document_id: z.string().max(128).nullish(),
+  page: z.number().int().min(1).max(10_000).nullish(),
+  ref: z.string().max(200).nullish(),
+});
+export type AnswerSource = z.infer<typeof sourceView>;
+
 export const factUsed = z.object({
   factId: z.string().max(128),
   factKey: z.string().max(80),
@@ -40,6 +58,7 @@ export const factUsed = z.object({
   valueText: z.string().max(400).nullish(),
   /** Backend marks a product term where the insurer's own wording governs. */
   checkWithInsurer: z.boolean().default(false),
+  citation: citationView.nullish(),
 });
 export type FactUsed = z.infer<typeof factUsed>;
 
@@ -63,6 +82,11 @@ export const answerEvent = z.object({
   factsUsed: z.array(factUsed).max(50),
   computed: computedView.nullish(),
   openConflicts: z.array(z.object({ conflictId: z.string().max(128), factKey: z.string().max(80) })).max(50).default([]),
+  /** Additive backend field: "numbers_unverified" when the model wrote figures that were not checked against a fact. Unknown values are kept as text, never shown raw. */
+  citations: z.array(citationView).max(20).optional(),
+  sources: z.array(sourceView).max(20).optional(),
+  modelStatus: z.string().max(60).optional(),
+  truncated: z.boolean().optional(),
 });
 export const errorEvent = z.object({ code: z.string().max(60) });
 export type TurnMeta = z.infer<typeof metaEvent>;
@@ -87,5 +111,5 @@ export const hospitalView = z.object({
   cashless: z.boolean(),
 });
 export type HospitalView = z.infer<typeof hospitalView>;
-export const hospitalsIn = z.object({ hospitals: z.array(hospitalView).max(200) });
+export const hospitalsIn = z.object({ hospitals: z.array(hospitalView).max(200), truncated: z.boolean().optional() });
 export type Hospitals = z.infer<typeof hospitalsIn>;

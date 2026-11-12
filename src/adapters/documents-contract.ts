@@ -129,7 +129,7 @@ export const NOTE_TEXT: Record<DocNote, string> = {
 };
 
 export const ERROR_TEXT: Record<string, string> = {
-  CONSENT_REQUIRED: "We need your go-ahead before we read a document.",
+  CONSENT_REQUIRED: "We need your go-ahead first.",
   POLICY_TYPE_REQUIRED: "Choose the type of policy first.",
   FILE_TYPE_INVALID: "Only PDF files can be added.",
   FILE_TOO_LARGE: "That file is too big. Check the size limit shown above and try again.",
