@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Free tools</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+a{color:#0E4F4A}a:hover{color:#16130F}
+.tab{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:20px 24px 20px 0;border:0;border-top:2px solid transparent;background:transparent;color:#5F5A52;font:400 14px Geist,system-ui,sans-serif;cursor:pointer;text-align:left}
+.tab:hover{color:#16130F}
+.tabon{border-top-color:#16130F;color:#16130F}
+.f{display:flex;flex-direction:column;gap:6px;font:500 13px Geist,system-ui,sans-serif;color:#5F5A52}
+.f input{min-height:48px;padding:0 14px;border:1px solid #D8D2C6;border-radius:4px;background:#FFFFFF;font:400 18px 'Geist Mono',monospace;color:#16130F}
+.f input:focus{outline:2px solid #0E4F4A;outline-offset:1px}
+.seg{min-height:44px;padding:0 16px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 14px Geist,system-ui,sans-serif;cursor:pointer}
+.segon{background:#16130F;color:#F7F5F0;border-color:#16130F}
+.cta{display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:#16130F;color:#F7F5F0;font:500 15px Geist,system-ui,sans-serif;text-decoration:none}
+.cta:hover{background:#0E4F4A;color:#F7F5F0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+
+.vdock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:25;display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:6px 8px 6px 6px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 20px 40px -22px rgba(22,19,15,.55);text-align:left}
+.vdock b{display:block;font-weight:600;font-size:14px}.vdock .vsub{display:block;font-size:12px;color:#5F5A52}
+.vdock kbd,.vcard kbd,.vstrip kbd{font:500 11px 'Geist Mono',monospace;padding:2px 7px;border-radius:6px;background:#EFEBE3;color:#16130F}
+.vorb{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#BFD8D3,#6FA79E 40%,#0E4F4A 78%);box-shadow:0 0 0 5px rgba(111,167,158,.22)}
+.vcard{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:40;width:460px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:24px;border:1px solid #E5E0D6;background:#FFFFFF;color:#16130F;box-shadow:0 40px 90px -30px rgba(22,19,15,.45);font:400 14px Geist,system-ui,sans-serif}
+.vcard.vtop{top:250px;bottom:auto}
+.vcard .vread{font-size:12px;padding:4px 10px;border-radius:999px;background:#E3EFEC;color:#0E4F4A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.vcard .vx{min-height:30px;padding:0 10px;border-radius:999px;border:1px solid #E5E0D6;background:transparent;color:#16130F;font:500 12px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vlbl{font-size:11px;font-weight:600;letter-spacing:.06em;color:#0E4F4A}
+.vcard .vsay{font-size:24px;line-height:1.2}
+.vcard .vstep{display:flex;gap:10px;align-items:center;font-size:13px}
+.vcard .vstep i{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.vcard .vgo{display:flex;justify-content:space-between;align-items:center;min-height:42px;padding:0 14px;border-radius:12px;background:#0E4F4A;color:#F7F5F0;font-weight:600}
+.vcard .vex{text-align:left;min-height:36px;padding:0 12px;border-radius:10px;border:1px solid #E5E0D6;background:#F7F5F0;color:#16130F;font:400 13px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vfoot{display:flex;gap:14px;font-size:12px;color:#5F5A52;padding-top:12px;border-top:1px solid #EFEBE3}
+
+/* section headings: solid, sized, ruled */
+.eyebrow{display:block!important;width:auto!important;padding:0!important;border-radius:0!important;background:none!important;font:600 17px/1.3 Geist,system-ui,sans-serif!important;letter-spacing:-.01em!important;color:inherit}
+.eyebrow::before{display:none!important;content:none!important}
+.eyebrow[data-g]{font-size:20px!important}
+.secline{padding-bottom:12px;border-bottom:1px solid #E6E1D7}
+.secdesc{margin-top:4px;font:400 14px/1.45 Geist,system-ui,sans-serif;color:#5F5A52}
+.kicker{font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+/* page header: breadcrumb + group switch, then sibling tabs */
+.phead{display:flex;flex-direction:column;gap:14px;grid-column:1/-1;flex:0 0 100%;box-sizing:border-box}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.crumbs{display:flex;align-items:center;gap:8px;font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+.crumbs a{color:#5F5A52}.crumbs b{color:#16130F;font-weight:600}
+.crumbs .dot{width:10px;height:10px;border-radius:50%}
+.gsw{display:inline-flex;padding:3px;border-radius:12px;background:#EFEBE3;gap:2px}
+.gsw a{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 14px;border-radius:9px;font:500 13px Geist,system-ui,sans-serif;color:#5F5A52}
+.gsw a i{width:8px;height:8px;border-radius:50%}
+.gsw a.on{background:#FFFFFF;color:#16130F;font-weight:600;box-shadow:0 1px 3px rgba(22,19,15,.12)}
+.ptabs{display:flex;align-items:flex-end;gap:28px;border-bottom:1px solid #E6E1D7}
+.ptabs a{display:inline-flex;align-items:center;min-height:40px;margin-bottom:-1px;border-bottom:2px solid transparent;font:500 15px Geist,system-ui,sans-serif;color:#5F5A52}
+.ptabs a:hover{color:#16130F}
+.ptabs a.on{color:#16130F;font-weight:600}
+.ptabs .keys{margin-left:auto;align-self:center;font:400 12px 'Geist Mono',monospace;color:#8C867C}
+/* reminders */
+.remind{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.remind>span{font:500 13px Geist,system-ui,sans-serif;color:#5F5A52;margin-right:2px}
+.rbtn{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:0 12px 0 6px;border-radius:999px;border:1px solid #E6E1D7;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer}
+.rbtn .logo{width:22px!important;height:22px!important;border-radius:6px!important;border:0}
+.rbtn.on{border-color:#0E4F4A;background:#E3EFEC}
+.logo.lg-GCAL{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Calendar%3C/title%3E%3Cpath d='M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zm-7.207 6.25v-.065c.272-.144.5-.349.687-.617s.279-.595.279-.982c0-.379-.099-.72-.3-1.025a2.05 2.05 0 0 0-.832-.714 2.703 2.703 0 0 0-1.197-.257c-.6 0-1.094.156-1.481.467-.386.311-.65.671-.793 1.078l1.085.452c.086-.249.224-.461.413-.633.189-.172.445-.257.767-.257.33 0 .602.088.816.264a.86.86 0 0 1 .322.703c0 .33-.12.589-.36.778-.24.19-.535.284-.886.284h-.567v1.085h.633c.407 0 .748.109 1.02.327.272.218.407.499.407.843 0 .336-.129.614-.387.832s-.565.327-.924.327c-.351 0-.651-.103-.897-.311-.248-.208-.422-.502-.521-.881l-1.096.452c.178.616.505 1.082.977 1.401.472.319.984.478 1.538.477a2.84 2.84 0 0 0 1.293-.291c.382-.193.684-.458.902-.794.218-.336.327-.72.327-1.149 0-.429-.115-.797-.344-1.105a2.067 2.067 0 0 0-.881-.689zm2.093-1.931l.602.913L15 10.045v5.744h1.187V8.446h-.827l-2.158 1.557zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="background: #F7F5F0; color: #16130F; font-family: Geist, system-ui, sans-serif; min-height: 2900px">
+<header class="phead" style="padding: 28px 48px 0">
+<div class="prow"><div class="crumbs"><a href="Home.dc.html">Knowvia</a><span>/</span><span class="dot" style="background: #8A5A0B"></span><a href="Money.dc.html">My money</a><span>/</span><b>Calculators and top-ups</b></div><nav class="gsw" aria-label="Knowvia groups"><a class="" href="Home.dc.html"><i style="background: #0E4F4A"></i>My cover</a><a class="" href="Family.dc.html"><i style="background: #B4553D"></i>My family</a><a class="on" href="Money.dc.html"><i style="background: #8A5A0B"></i>My money</a><a class="" href="Desk.dc.html"><i style="background: #5A4A8C"></i>Help</a></nav></div>
+<nav class="ptabs" aria-label="My money"><a class="" href="Money.dc.html">Money desk</a><a class="on" href="Tools.dc.html" style="border-color: #8A5A0B">Calculators and top-ups</a></nav>
+</header>
+<div style="max-width: 1344px; margin: 0 auto; padding: 40px 0 80px; display: flex; flex-direction: column; gap: 40px">
+
+<header style="display: flex; flex-direction: column; gap: 14px">
+<a href="Landing.dc.html" style="font-size: 14px">← Knowvia</a>
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 64px; letter-spacing: -0.02em; line-height: 1">Free tools. No sign-up.</h1>
+<p style="margin: 0; font-size: 18px; color: #5F5A52; max-width: 680px">Answers for the moments that matter. Add your policy and every tool uses your exact wording.</p>
+</header>
+
+<nav aria-label="Tools" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; border-bottom: 1px solid #E6E1D7">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button class="{{t.cls}}" onClick="{{t.pick}}" aria-pressed="{{t.on}}">
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #0E4F4A">{{t.when}}</span>
+<span style="font-family: Newsreader, Georgia, serif; font-size: 26px; color: #16130F">{{t.t}}</span>
+</button>
+</sc-for>
+</nav>
+
+<sc-if value="{{isTax}}" hint-placeholder-val="{{ true }}">
+<section style="display: flex; flex-wrap: wrap; gap: 48px">
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font: 500 13px Geist, sans-serif; color: #5F5A52">Your tax regime</span>
+<div style="display: flex"><button class="{{oldCls}}" onClick="{{setOld}}" style="border-radius: 4px 0 0 4px">Old regime</button><button class="{{newCls}}" onClick="{{setNew}}" style="border-radius: 0 4px 4px 0; border-left: 0">New regime</button></div>
+</div>
+<label class="f">Premium you paid for yourself, spouse and children (Rs)<input type="number" min="0" value="{{self}}" onChange="{{setSelf}}"></label>
+<label class="f">Premium you paid for your parents (Rs)<input type="number" min="0" value="{{par}}" onChange="{{setPar}}"></label>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font: 500 13px Geist, sans-serif; color: #5F5A52">Is either parent 60 or older?</span>
+<div style="display: flex"><button class="{{snYes}}" onClick="{{setSnYes}}" style="border-radius: 4px 0 0 4px">Yes</button><button class="{{snNo}}" onClick="{{setSnNo}}" style="border-radius: 0 4px 4px 0; border-left: 0">No</button></div>
+</div>
+<div style="font-size: 13px; color: #5F5A52">Your company group cover does not count if your employer paid the premium.</div>
+</div>
+<div style="flex: 1 1 380px; min-width: 0; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 36px; display: flex; flex-direction: column; gap: 18px; align-self: flex-start; box-sizing: border-box">
+<div class="eyebrow secline" data-g="1">You can declare under 80D</div>
+<div style="font-family: Newsreader, Georgia, serif; font-size: 64px; line-height: 1; letter-spacing: -0.02em"><span style="background: linear-gradient(transparent 60%, #F4DC8A 60%)">Rs {{taxTotal}}</span></div>
+<sc-for list="{{taxRows}}" as="r" hint-placeholder-count="2">
+<div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEAE2; font-size: 14px"><span>{{r.t}}</span><span style="font-family: 'Geist Mono', monospace">Rs {{r.v}}</span></div>
+</sc-for>
+<div style="font-size: 13px; color: #8A2E1D">{{taxNote}}</div>
+<div style="font-size: 12px; color: #5F5A52">Limits: Rs 25,000 for self and family; Rs 25,000 for parents, or Rs 50,000 if a parent is a senior citizen.</div>
+<a class="cta" href="Landing.dc.html">Add receipts to fill this in</a>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isRoom}}" hint-placeholder-val="{{ false }}">
+<section style="display: flex; flex-wrap: wrap; gap: 48px">
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<label class="f">Cover amount (Rs)<input type="number" min="0" value="{{cover}}" onChange="{{setCover}}"></label>
+<label class="f">Room limit in your policy (% of cover per day)<input type="number" min="0" step="0.5" value="{{pct}}" onChange="{{setPct}}"></label>
+<label class="f">Room the hospital offers (Rs per day)<input type="number" min="0" value="{{room}}" onChange="{{setRoom}}"></label>
+<label class="f">Other charges on the bill, e.g. doctor and nursing (Rs)<input type="number" min="0" value="{{other}}" onChange="{{setOther}}"></label>
+</div>
+<div style="flex: 1 1 380px; min-width: 0; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 36px; display: flex; flex-direction: column; gap: 18px; align-self: flex-start; box-sizing: border-box">
+<div class="eyebrow secline" data-g="1">If your policy uses proportionate deduction</div>
+<div style="font-family: Newsreader, Georgia, serif; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em">{{roomHeadline}}</div>
+<sc-for list="{{roomRows}}" as="r" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 0; border-top: 1px solid #EEEAE2; font-size: 14px"><span>{{r.t}}</span><span style="font-family: 'Geist Mono', monospace">{{r.v}}</span></div>
+</sc-for>
+<div style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.6; background: #F7F5F0; padding: 14px 16px">“<span style="background: linear-gradient(transparent 55%, #F4DC8A 55%)">associated medical expenses shall be payable in the proportion that the eligible room rent bears to the actual room rent</span>”</div>
+<a class="cta" href="Reading.dc.html">Check my policy’s wording</a>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isJob}}" hint-placeholder-val="{{ false }}">
+<section style="display: flex; flex-wrap: wrap; gap: 48px">
+<div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1.1">Your company cover usually ends on your last working day.</h2>
+<div style="font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.7; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 24px 28px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8C867C; margin-bottom: 8px">GROUP POLICY · PAGE 14</div>
+11.2 <span style="background: linear-gradient(transparent 55%, #F4DC8A 55%)">Cover for a member and dependants ceases on the date the member leaves the employment of the policyholder.</span> Claims for hospitalisation commencing before that date remain payable.
+</div>
+<div style="font-size: 14px; color: #5F5A52">Add your policy to see your own wording. Some group policies allow a move to an individual policy; the wording says if yours does.</div>
+</div>
+<div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column">
+<div class="eyebrow secline" data-g="1">Before you sign the exit papers, ask</div>
+<sc-for list="{{asks}}" as="q" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 36px 1fr; gap: 12px; padding: 16px 0; border-top: 1px solid #E6E1D7">
+<span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #8C867C">{{q.n}}</span>
+<span style="font-size: 15px"><strong style="font-weight: 600">{{q.who}}</strong> {{q.t}}</span>
+</div>
+</sc-for></div>
+</section>
+</sc-if>
+
+
+<section style="border-radius: 24px; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 32px; display: grid; grid-template-columns: 360px 1fr; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div><div class="eyebrow secline" data-g="2">Top-up finder · case by case</div><h2 style="margin: 8px 0 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 36px; line-height: 1.05">What you have, and what one top-up would change.</h2></div>
+<div style="display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: #F1F7F5; font-size: 13px"><span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6FA79E, #0E4F4A 70%)"></span>Knowvia filled this from your policy. Change anything.</div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #5F5A52">Who is it for</span><div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{tuWho}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid {{c.line}}; background: {{c.bg}}; color: {{c.ink}}; font: 500 13px Geist, system-ui, sans-serif; cursor: pointer">{{c.t}}</button></sc-for></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #5F5A52">Cover you have today</span><div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{tuBase}}" as="c" hint-placeholder-count="4"><button onClick="{{c.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid {{c.line}}; background: {{c.bg}}; color: {{c.ink}}; font: 500 13px Geist, system-ui, sans-serif; cursor: pointer">{{c.t}}</button></sc-for></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #5F5A52">What worries you most</span><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px"><sc-for list="{{tuRisk}}" as="c" hint-placeholder-count="4"><button onClick="{{c.pick}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid {{c.line}}; background: {{c.bg}}; color: {{c.ink}}; font: 500 13px Geist, system-ui, sans-serif; cursor: pointer; text-align: left">{{c.t}}<span style="font: 400 11px 'Geist Mono', monospace; opacity: .75">{{c.d}}</span></button></sc-for></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 18px; min-width: 0">
+<div style="font-family: Newsreader, Georgia, serif; font-size: 28px; line-height: 1.2">{{tuHead}}</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{tuBars}}" as="b" hint-placeholder-count="2">
+<div style="display: grid; grid-template-columns: 110px 1fr 120px; gap: 12px; align-items: center">
+<span style="font-size: 13px; font-weight: 500">{{b.t}}</span>
+<span style="display: flex; height: 30px; border-radius: 8px; overflow: hidden; background: #EFEBE3"><span style="width: {{b.a}}%; background: #0E4F4A; transition: width .4s"></span><span style="width: {{b.b}}%; background: #6FA79E; transition: width .4s"></span><span style="width: {{b.c}}%; background: #E9785D; transition: width .4s"></span></span>
+<span class="mono" style="font-size: 13px; text-align: right; color: {{b.ink}}">{{b.you}}</span>
+</div>
+</sc-for>
+<div style="display: flex; gap: 16px; font-size: 12px; color: #5F5A52"><span><span style="color: #0E4F4A">■</span> Your cover pays</span><span><span style="color: #6FA79E">■</span> Top-up pays</span><span><span style="color: #E9785D">■</span> You pay</span></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{tuOpts}}" as="o" hint-placeholder-count="3">
+<button onClick="{{o.pick}}" style="display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 16px; border-radius: 16px; border: {{o.border}}; background: {{o.bg}}; cursor: pointer; font-family: Geist, system-ui, sans-serif; color: #16130F">
+<span style="display: flex; justify-content: space-between; align-items: center"><span style="width: 32px; height: 32px; border-radius: 9px; background: #EFEBE3; border: 1px solid #E6E1D7; display: inline-flex; align-items: center; justify-content: center; font: 600 10px Geist, sans-serif; color: #5F5A52">{{o.logo}}</span><span style="font: 500 10px 'Geist Mono', monospace; padding: 3px 7px; border-radius: 6px; background: {{o.badgeBg}}">{{o.badge}}</span></span>
+<span style="font-size: 15px; font-weight: 600">{{o.t}}</span>
+<span style="font-family: Newsreader, Georgia, serif; font-size: 26px">{{o.si}}</span>
+<span style="font-size: 12px; color: #5F5A52">Starts after {{o.ded}} · about {{o.prem}} a year</span>
+<span style="font-size: 12px; color: {{o.fitInk}}">{{o.fit}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"><a href="Compare.dc.html" class="cta">Compare these section by section</a><span style="font-size: 13px; color: #5F5A52">or ask an advisor below. Knowvia sends them this exact case.</span></div>
+</div>
+</section>
+
+<section style="display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: stretch">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #E6E1D7"><div><div class="eyebrow" data-g="2">Registered advisors</div><h2 style="margin: 8px 0 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 36px; line-height: 1.05">Talk to a person who has read your policy before you call.</h2></div></div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{advTags}}" as="t" hint-placeholder-count="5"><button onClick="{{t.pick}}" style="min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid {{t.line}}; background: {{t.bg}}; color: {{t.ink}}; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{t.t}}</button></sc-for></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+<sc-for list="{{advs}}" as="a" hint-placeholder-count="4">
+<button onClick="{{a.pick}}" style="display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 16px; border-radius: 18px; border: {{a.border}}; background: #FFFFFF; cursor: pointer; font-family: Geist, system-ui, sans-serif; color: #16130F; opacity: {{a.op}}">
+<span style="display: flex; gap: 12px; align-items: center"><span style="flex: none; width: 44px; height: 44px; border-radius: 50%; background: {{a.bg}}; display: inline-flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 18px">{{a.ini}}</span><span style="flex: 1"><span style="display: block; font-size: 15px; font-weight: 600">{{a.n}}</span><span style="font-size: 12px; color: #5F5A52">{{a.role}}</span></span><span class="mono" style="font-size: 12px">★ {{a.r}}</span></span>
+<span style="display: flex; gap: 6px; flex-wrap: wrap"><span style="font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #E3EFEC; color: #0E4F4A">✓ Licence checked</span><sc-for list="{{a.langs}}" as="l" hint-placeholder-count="2"><span style="font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #EFEBE3">{{l}}</span></sc-for></span>
+<span style="font-size: 12px; color: #5F5A52">Next free: <strong style="color: #16130F; font-weight: 500">{{a.next}}</strong></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="border-radius: 22px; background: #16130F; color: #F7F5F0; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 12px; align-items: center"><span style="width: 44px; height: 44px; border-radius: 50%; background: {{adv.bg}}; color: #16130F; display: inline-flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 18px">{{adv.ini}}</span><span><span style="display: block; font-weight: 600">{{adv.n}}</span><span style="font-size: 12px; color: #CFC9BE">First 15 minutes free</span></span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; color: #8C867C">Pick a time</span><div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{slots}}" as="t" hint-placeholder-count="3"><button onClick="{{t.pick}}" style="min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid #3A352D; background: {{t.bg}}; color: {{t.ink}}; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{t.t}}</button></sc-for></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; color: #8C867C">How</span><div style="display: flex; gap: 6px"><sc-for list="{{modes}}" as="t" hint-placeholder-count="3"><button onClick="{{t.pick}}" style="flex: 1; min-height: 34px; border-radius: 10px; border: 1px solid #3A352D; background: {{t.bg}}; color: {{t.ink}}; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{t.t}}</button></sc-for></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; color: #8C867C">Knowvia will share, only with your OK</span><sc-for list="{{shares}}" as="x" hint-placeholder-count="3"><button onClick="{{x.pick}}" style="display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 0; background: #24201A; color: #F7F5F0; font: 400 13px Geist, system-ui, sans-serif; cursor: pointer; text-align: left"><span style="flex: none; width: 18px; height: 18px; border-radius: 5px; background: {{x.bg}}; color: #16130F; display: inline-flex; align-items: center; justify-content: center; font-size: 11px">{{x.mark}}</span>{{x.t}}</button></sc-for></div>
+<button onClick="{{book}}" style="min-height: 46px; border-radius: 999px; border: 0; background: {{bookBg}}; color: #16130F; font: 500 14px Geist, system-ui, sans-serif; cursor: pointer">{{bookLabel}}</button>
+</div>
+</section>
+
+<section style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; align-items: stretch">
+<div style="border-radius: 22px; background: #0E4F4A; color: #F7F5F0; padding: 28px; display: flex; flex-direction: column; gap: 16px">
+<div class="eyebrow">What these tools saved families like yours</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{wins}}" as="w" hint-placeholder-count="3"><button onClick="{{w.pick}}" style="text-align: left; border: 0; cursor: pointer; border-radius: 16px; padding: 16px; background: {{w.bg}}; color: {{w.ink}}; font-family: Geist, system-ui, sans-serif; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; opacity: .8">{{w.k}}</span><span style="font-family: Newsreader, Georgia, serif; font-size: 30px">{{w.v}}</span><span style="font-size: 12px; opacity: .85">{{w.d}}</span></button></sc-for>
+</div>
+<div style="display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 14px; background: rgba(247,245,240,.08)"><span style="width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6FA79E, #0E4F4A 70%); box-shadow: 0 0 0 4px rgba(247,245,240,.15); flex: none"></span><span style="flex: 1; font-size: 14px">“{{winSay}}”</span><a href="Assistant.dc.html" style="color: #F4DC8A; font-size: 13px; font-weight: 500">Ask Knowvia →</a></div>
+<a href="Auth.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px; border-radius: 999px; background: #F4DC8A; color: #16130F; font-weight: 500">Use these with your own policy</a>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+<sc-for list="{{more}}" as="m" hint-placeholder-count="6">
+<a href="{{m.href}}" style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E6E1D7; color: #16130F">
+<span style="display: flex; justify-content: space-between; align-items: center"><span style="width: 38px; height: 38px; border-radius: 12px; background: {{m.bg}}; display: inline-flex; align-items: center; justify-content: center; font-size: 17px">{{m.i}}</span><span style="font: 500 10px 'Geist Mono', monospace; color: #8C867C">{{m.time}}</span></span>
+<span style="font-family: Newsreader, Georgia, serif; font-size: 21px; line-height: 1.15">{{m.t}}</span>
+<span style="font-size: 12px; color: #5F5A52">{{m.d}}</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 36px">Read next</h2><a href="#" style="font-size: 14px">All guides →</a></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{reads}}" as="r" hint-placeholder-count="4"><a href="#" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #FFFFFF; border: 1px solid #E6E1D7; color: #16130F"><span style="height: 92px; background: {{r.bg}}; display: flex; align-items: flex-end; padding: 10px"><span style="font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.9)">{{r.k}}</span></span><span style="padding: 14px; font-size: 15px; font-weight: 500; line-height: 1.3">{{r.t}}</span></a></sc-for>
+</div>
+</section>
+
+</div>
+<button class="vdock" onClick="{{vOpen}}" aria-label="Ask Knowvia, hold V"><span class="vorb"></span><span><b>Ask Knowvia</b><span class="vsub">Reads this page · {{vPage}}</span></span><kbd>Hold V</kbd></button>
+<sc-if value="{{vShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{vCls}}" role="dialog" aria-label="Ask Knowvia">
+<div style="display: flex; align-items: center; gap: 12px"><button class="vorb" onClick="{{vTalk}}" aria-label="Hold to talk" style="cursor: pointer; box-shadow: 0 0 0 {{vRa}}px rgba(111,167,158,.25), 0 0 0 {{vRb}}px rgba(111,167,158,.12)"></button><div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0"><span style="font-weight: 600">Ask Knowvia</span><span class="vread">Reading {{vReads}}</span></div><button class="vx" onClick="{{vClose}}">Esc</button></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="vlbl">{{vLbl}}</span><div class="serif vsay">“{{vSay}}”</div></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><sc-for list="{{vSteps}}" as="x" hint-placeholder-count="3"><div class="vstep" style="color: {{x.ink}}"><i style="background: {{x.bg}}; color: {{x.mk}}">{{x.m}}</i>{{x.t}}</div></sc-for></div>
+<sc-for list="{{vGo}}" as="g" hint-placeholder-count="1"><a class="vgo" href="{{g.href}}">{{g.t}}<span>→</span></a></sc-for>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #5F5A52">Try saying, on this page</span><sc-for list="{{vEx}}" as="e" hint-placeholder-count="3"><button class="vex" onClick="{{e.pick}}">“{{e.t}}”</button></sc-for></div>
+<div class="vfoot"><span><kbd>V</kbd> hold to talk</span><span><kbd>Esc</kbd> close</span><span>English, Hindi or both</span></div>
+</div>
+</sc-if>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 2900}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  __voice() {
+    const V = {"page": "Tools", "reads": "calculators, top-ups and advisors", "at": "bottom", "ex": [{"say": "Find a top-up for my parents", "st": ["Top-up · parents", "Checked 6 plans", "Best fit: Rs 10L, deductible Rs 3L"], "href": null, "go": null}, {"say": "Book a registered advisor", "st": ["Advisor", "IRDAI-registered, 3 near you", "Earliest call: today 6 pm"], "href": null, "go": null}, {"say": "Test my cover against a big bill", "st": ["Stress test", "Loading your family", "Opening the stress test"], "href": "Policy.dc.html", "go": "Open stress test"}]}; const s = this.state || {};
+    const e = V.ex[(s.__ve || 0) % V.ex.length]; const t = s.__vt || 0; const hold = !!s.__vh;
+    const done = hold ? 0 : Math.min(3, Math.max(0, t - 1)); const listening = hold || t < 1;
+    return {
+      vPage: V.page, vReads: V.reads, vShow: !!s.__vo, vCls: (s.__vat || V.at) === 'top' ? 'vcard vtop' : 'vcard',
+      vOpen: () => this.setState({ __vo: true, __vt: 0, __vat: V.at }),
+      vClose: () => this.setState({ __vo: false, __vh: false }),
+      vTalk: () => this.setState({ __ve: (s.__ve || 0) + 1, __vt: 0 }),
+      vLbl: listening ? 'LISTENING…' : done < 3 ? 'WORKING ON IT' : 'DONE · SAY THE NEXT THING',
+      vSay: e.say, vRa: listening ? 8 : 4, vRb: listening ? 16 : 8,
+      vSteps: e.st.map((x, k) => ({ t: x, m: k < done ? '✓' : String(k + 1), bg: k < done ? '#0E4F4A' : '#EFEBE3', mk: k < done ? '#F7F5F0' : '#8C867C', ink: k < done ? '#16130F' : '#8C867C' })),
+      vGo: e.href && done >= 3 ? [{ href: e.href, t: e.go }] : [],
+      vEx: V.ex.map((x, k) => ({ t: x.say, pick: () => this.setState({ __ve: k, __vt: 1, __vh: false }) }))
+    };
+  }
+  __vmount() {
+    this.__vi = setInterval(() => { if (this.state && this.state.__vo && !this.state.__vh) this.setState({ __vt: Math.min(4, (this.state.__vt || 0) + 1) }); }, 650);
+    this.__vd = (ev) => { const tg = ev.target && ev.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return; if ((ev.key === 'v' || ev.key === 'V') && !ev.repeat) this.setState({ __vo: true, __vh: true, __vt: 0 }); if (ev.key === 'Escape') this.setState({ __vo: false, __vh: false }); };
+    this.__vu = (ev) => { if ((ev.key === 'v' || ev.key === 'V') && this.state && this.state.__vh) this.setState({ __vh: false, __vt: 1, __ve: (this.state.__ve || 0) + 1 }); };
+    window.addEventListener('keydown', this.__vd); window.addEventListener('keyup', this.__vu);
+  }
+  __vunmount() { clearInterval(this.__vi); window.removeEventListener('keydown', this.__vd); window.removeEventListener('keyup', this.__vu); }
+
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }, this.__voice()); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__vmount(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); this.__vunmount(); window.removeEventListener('keydown', this.__kh); }
+
+  constructor(p) { super(p); this.state = { tuWho: 1, tuBase: 1, tuRisk: 0, tuPick: -1, advTag: 0, adv: 0, slot: 0, mode: 0, share: { 0: true, 1: true, 2: false }, booked: false, win: 0, tab: 'tax', regime: 'old', self: 6200, par: 38400, senior: true, cover: 500000, pct: 1, room: 8000, other: 120000 }; }
+  num(e) { const v = Number(e && e.target ? e.target.value : e); return isFinite(v) && v >= 0 ? v : 0; }
+  inr(n) { return Math.round(n).toLocaleString('en-IN'); }
+  __rv() {
+    const s = this.state;
+    const tabs = [['tax', 'JAN–MAR · TAX PROOFS', '80D in two minutes'], ['room', 'BEFORE AN ADMISSION', 'Room rent check'], ['job', 'LEAVING A JOB', 'When does my cover end?']]
+      .map((t) => ({ when: t[1], t: t[2], on: s.tab === t[0], cls: s.tab === t[0] ? 'tab tabon' : 'tab', pick: () => this.setState({ tab: t[0] }) }));
+    const oldR = s.regime === 'old';
+    const selfD = oldR ? Math.min(s.self, 25000) : 0;
+    const parCap = s.senior ? 50000 : 25000;
+    const parD = oldR ? Math.min(s.par, parCap) : 0;
+    const eligible = s.cover * s.pct / 100;
+    const over = s.room > eligible && s.room > 0;
+    const ratio = over ? eligible / s.room : 1;
+    const paidOther = s.other * ratio;
+
+    const L = (n) => n >= 100 ? 'Rs ' + (n / 100).toFixed(n % 100 ? 1 : 0) + ' Cr' : 'Rs ' + n + 'L';
+    const chip = (on) => ({ bg: on ? '#16130F' : '#FFFFFF', ink: on ? '#F7F5F0' : '#16130F', line: on ? '#16130F' : '#D8D2C6' });
+    const WHO = [['Just me', 180], ['Parents (2)', 950], ['Me + family (3)', 320]];
+    const BASE = [3, 5, 10, 25];
+    const RISK = [['Heart bypass', 12], ['Cancer care', 18], ['Knee replacement', 4.5], ['Long ICU stay', 9]];
+    const base = BASE[s.tuBase], bill = RISK[s.tuRisk][1], rate = WHO[s.tuWho][1];
+    const OPTS = [['KG', 'Kaveri Super Top-up', 10], ['IS', 'Indus Shield Booster', 20], ['NH', 'Northstar Extend', 5]];
+    const gap = Math.max(bill - base, 0);
+    const fitIdx = gap === 0 ? 2 : OPTS.map((o, i) => [o[2], i]).filter((x) => x[0] >= gap).sort((a, b) => a[0] - b[0]).concat([[0, 1]])[0][1];
+    const pick = s.tuPick >= 0 ? s.tuPick : fitIdx;
+    const tsi = OPTS[pick][2];
+    const basePays = Math.min(bill, base), topPays = Math.min(Math.max(bill - base, 0), tsi), youNow = bill - basePays, youAfter = bill - basePays - topPays;
+    const pc = (n) => Math.round(n / bill * 100);
+    const rs = (l) => l === 0 ? 'Rs 0' : 'Rs ' + (l >= 1 ? (Math.round(l * 10) / 10) + 'L' : Math.round(l * 100000).toLocaleString('en-IN'));
+    const prem = (si) => 'Rs ' + Math.round(si * rate * (base >= 10 ? 0.7 : 1) / 10 * 10).toLocaleString('en-IN');
+    const ADV = [['AK', 'Ananya Kulkarni', 'Seniors and porting · 11 yrs', '4.9', ['Marathi', 'Hindi'], 'Today 6:30 pm', '#F4DC8A', [1, 3]], ['RM', 'Rahul Menon', 'Claims and disputes · 9 yrs', '4.8', ['English', 'Malayalam'], 'Tomorrow 11 am', '#BFD8D3', [2]], ['FS', 'Farah Sheikh', 'Top-ups and maternity · 7 yrs', '4.9', ['Hindi', 'Urdu'], 'Today 8 pm', '#F2B9A8', [3]], ['VJ', 'Vikram Joshi', 'Group to individual · 12 yrs', '4.7', ['English', 'Marathi'], 'Tue 4 pm', '#EAE6F2', [3, 1]]];
+    const ATAGS = ['All', 'Parents and seniors', 'Claims and disputes', 'Top-ups and porting'];
+    const av = ADV[s.adv];
+    return {
+      tuWho: WHO.map((w, k) => Object.assign({ t: w[0], pick: () => this.setState({ tuWho: k, tuPick: -1 }) }, chip(s.tuWho === k))),
+      tuBase: BASE.map((b, k) => Object.assign({ t: L(b), pick: () => this.setState({ tuBase: k, tuPick: -1 }) }, chip(s.tuBase === k))),
+      tuRisk: RISK.map((r, k) => Object.assign({ t: r[0], d: 'bill about ' + rs(r[1]), pick: () => this.setState({ tuRisk: k, tuPick: -1 }) }, chip(s.tuRisk === k))),
+      tuHead: youNow === 0 ? 'Your ' + L(base) + ' already covers a ' + RISK[s.tuRisk][0].toLowerCase() + ' bill. A top-up is a spare for a second big bill in the same year.' : 'You have ' + L(base) + '. A ' + RISK[s.tuRisk][0].toLowerCase() + ' bill of about ' + rs(bill) + ' leaves ' + rs(youNow) + ' on you. ' + (youAfter === 0 ? 'This top-up takes it to Rs 0.' : 'This top-up brings it to ' + rs(youAfter) + '.'),
+      tuBars: [{ t: 'Today', a: pc(basePays), b: 0, c: pc(youNow), you: 'you pay ' + rs(youNow), ink: youNow ? '#B8401F' : '#0E4F4A' }, { t: 'With top-up', a: pc(basePays), b: pc(topPays), c: pc(youAfter), you: 'you pay ' + rs(youAfter), ink: youAfter ? '#B8401F' : '#0E4F4A' }],
+      tuOpts: OPTS.map((o, k) => { const covers = o[2] >= gap; return { logo: o[0], t: o[1], si: L(o[2]) + ' extra', ded: L(base), prem: prem(o[2]), badge: k === fitIdx ? 'RECOMMENDED' : covers ? 'ALSO WORKS' : 'TOO SMALL', badgeBg: k === fitIdx ? '#EAE6F2' : '#EFEBE3', fit: covers ? 'Covers this bill fully' : 'Leaves ' + rs(gap - o[2]) + ' on you', fitInk: covers ? '#0E4F4A' : '#B8401F', border: k === pick ? '2px solid #0E4F4A' : '1px solid #E6E1D7', bg: k === pick ? '#F1F7F5' : '#FFFFFF', pick: () => this.setState({ tuPick: k }) }; }),
+      advTags: ATAGS.map((t, k) => Object.assign({ t: t, pick: () => this.setState({ advTag: k }) }, chip(s.advTag === k))),
+      advs: ADV.map((a, k) => ({ ini: a[0], n: a[1], role: a[2], r: a[3], langs: a[4], next: a[5], bg: a[6], op: s.advTag === 0 || a[7].indexOf(s.advTag) >= 0 ? 1 : 0.4, border: k === s.adv ? '2px solid #0E4F4A' : '1px solid #E6E1D7', pick: () => this.setState({ adv: k, booked: false }) })),
+      adv: { ini: av[0], n: av[1], bg: av[6] },
+      slots: [av[5], 'Tomorrow 7 pm', 'Sat 10 am'].map((t, k) => ({ t: t, bg: s.slot === k ? '#F7F5F0' : 'transparent', ink: s.slot === k ? '#16130F' : '#F7F5F0', pick: () => this.setState({ slot: k, booked: false }) })),
+      modes: ['Call', 'Video', 'WhatsApp'].map((t, k) => ({ t: t, bg: s.mode === k ? '#F7F5F0' : 'transparent', ink: s.mode === k ? '#16130F' : '#F7F5F0', pick: () => this.setState({ mode: k }) })),
+      shares: ['Policy summary, one page', 'This top-up case: ' + RISK[s.tuRisk][0].toLowerCase() + ', ' + L(base) + ' cover', 'Claim history'].map((t, k) => ({ t: t, mark: s.share[k] ? '✓' : '', bg: s.share[k] ? '#6FA79E' : '#3A352D', pick: () => this.setState({ share: Object.assign({}, s.share, { [k]: !s.share[k] }) }) })),
+      book: () => this.setState({ booked: true }),
+      bookLabel: s.booked ? 'Booked · Knowvia joins to take notes ✓' : 'Book with ' + av[1].split(' ')[0],
+      bookBg: s.booked ? '#6FA79E' : '#F4DC8A',
+      wins: [['Tax saved', 'Rs 75,000', 'with 80D, old regime'], ['Room charges kept', 'Rs 38,400', 'by picking the right room'], ['Cover kept', '0 gap days', 'when switching jobs']].map((w, k) => ({ k: w[0], v: w[1], d: w[2], bg: s.win === k ? '#F7F5F0' : 'rgba(247,245,240,.08)', ink: s.win === k ? '#16130F' : '#F7F5F0', pick: () => this.setState({ win: k }) })),
+      winSay: ['How much tax can I save on my parents’ premium?', 'Which room should I pick for a Rs 5 lakh cover?', 'When does my cover end if I resign on the 15th?'][s.win],
+      more: [
+        { i: '◐', t: 'Stress test a big claim', d: 'Knee, bypass, childbirth: who pays what', time: '1 MIN', href: 'Policy.dc.html', bg: '#E3EFEC' },
+        { i: '⇄', t: 'Compare top-ups', d: 'Section by section, your cover band', time: '2 MIN', href: 'Compare.dc.html', bg: '#F4E6C4' },
+        { i: '%', t: 'Co-pay on a bill', d: 'Your parents’ share, in rupees', time: '30 SEC', href: '#', bg: '#F1E0DA' },
+        { i: '↗', t: 'Top-up deductible', d: 'When the top-up starts paying', time: '1 MIN', href: '#', bg: '#EAE6F2' },
+        { i: '◔', t: 'Premium receipts check', d: 'Find premiums paid twice', time: '1 MIN', href: 'Money.dc.html', bg: '#E3EFEC' },
+        { i: '●', t: 'Hospital near you', d: 'Cashless or best treatment', time: '20 SEC', href: 'Emergency.dc.html', bg: '#FCE3DA' }
+      ],
+      reads: [['Guide · 4 min', 'Room rent, explained with one bill', '#E3EFEC'], ['Guide · 3 min', '80D for parents over 60', '#F4E6C4'], ['Guide · 5 min', 'Leaving a job without a cover gap', '#F1E0DA'], ['Video · 6:12', 'Cashless at the hospital desk', '#EAE6F2']].map((r) => ({ k: r[0], t: r[1], bg: r[2] })),
+      tabs: tabs, isTax: s.tab === 'tax', isRoom: s.tab === 'room', isJob: s.tab === 'job',
+      oldCls: oldR ? 'seg segon' : 'seg', newCls: oldR ? 'seg' : 'seg segon',
+      setOld: () => this.setState({ regime: 'old' }), setNew: () => this.setState({ regime: 'new' }),
+      snYes: s.senior ? 'seg segon' : 'seg', snNo: s.senior ? 'seg' : 'seg segon',
+      setSnYes: () => this.setState({ senior: true }), setSnNo: () => this.setState({ senior: false }),
+      self: s.self, par: s.par,
+      setSelf: (e) => this.setState({ self: this.num(e) }), setPar: (e) => this.setState({ par: this.num(e) }),
+      taxTotal: this.inr(selfD + parD),
+      taxRows: [{ t: 'Self, spouse, children (limit Rs 25,000)', v: this.inr(selfD) }, { t: 'Parents (limit Rs ' + this.inr(parCap) + ')', v: this.inr(parD) }],
+      taxNote: oldR ? '' : 'Section 80D is not available under the new tax regime.',
+      cover: s.cover, pct: s.pct, room: s.room, other: s.other,
+      setCover: (e) => this.setState({ cover: this.num(e) }), setPct: (e) => this.setState({ pct: this.num(e) }),
+      setRoom: (e) => this.setState({ room: this.num(e) }), setOther: (e) => this.setState({ other: this.num(e) }),
+      roomHeadline: over ? 'This room is above your limit. Other charges may be cut too.' : 'This room is within your limit.',
+      roomRows: [
+        { t: 'Room limit per day', v: 'Rs ' + this.inr(eligible) },
+        { t: 'Room offered per day', v: 'Rs ' + this.inr(s.room) },
+        { t: 'Share of other charges paid', v: Math.round(ratio * 100) + '%' },
+        { t: 'Other charges you may pay yourself', v: 'Rs ' + this.inr(s.other - paidOther) }
+      ],
+      asks: [
+        { n: '01', who: 'HR:', t: 'On what date does my group cover end?' },
+        { n: '02', who: 'HR:', t: 'Does the policy allow moving to an individual policy, and by when?' },
+        { n: '03', who: 'Insurer:', t: 'If I move, are waiting periods already served carried over?' },
+        { n: '04', who: 'Yourself:', t: 'Is a planned treatment due before the last day? Claims that start before it stay payable.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Knowvia v2 direction</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+a{color:#0E4F4A}a:hover{color:#16130F}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="background: #F7F5F0; color: #16130F; font-family: Geist, system-ui, sans-serif; font-size: 16px; line-height: 1.55; padding: 72px 24px 96px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 72px">
+
+<header style="display: flex; flex-direction: column; gap: 20px; border-bottom: 1px solid #E6E1D7; padding-bottom: 48px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12px; letter-spacing: 0.06em; color: #5F5A52">COVERSAATH · DIRECTION V2 · 1 NOV 2026</div>
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 72px; line-height: 1.02; letter-spacing: -0.02em; max-width: 980px">We read the fine print, <span style="font-style: italic; background: linear-gradient(transparent 58%, #F4DC8A 58%)">and show you the page.</span></h1>
+<p style="margin: 0; font-size: 20px; color: #5F5A52; max-width: 760px">V1 was a generic mobile card stack. V2 starts on the laptop, from the website. Its one idea is that the policy document itself is the interface: every answer is a highlighter mark on a real page.</p>
+</header>
+
+<section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #5F5A52">WHAT CHANGED</div>
+<sc-for list="{{changes}}" as="c" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E6E1D7">
+<div style="font-size: 14px; color: #8C867C; text-decoration: line-through">{{c.from}}</div>
+<div style="font-size: 15px">{{c.to}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #5F5A52">WHY IT WILL NOT LOOK AI-MADE</div>
+<sc-for list="{{anti}}" as="a" hint-placeholder-count="6">
+<div style="padding: 14px 0; border-top: 1px solid #E6E1D7; display: flex; flex-direction: column; gap: 2px">
+<div style="font-weight: 600; font-size: 15px">{{a.t}}</div>
+<div style="font-size: 14px; color: #5F5A52">{{a.d}}</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 44px; letter-spacing: -0.01em">The system</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px">
+<sc-for list="{{swatches}}" as="s" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="height: 96px; border-radius: 6px; border: 1px solid #E6E1D7; background: {{s.hex}}"></div>
+<div style="font-size: 14px; font-weight: 600">{{s.name}}</div>
+<div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #5F5A52">{{s.hex}} · {{s.use}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; border-top: 1px solid #E6E1D7; padding-top: 24px">
+<div><div style="font-family: Newsreader, Georgia, serif; font-size: 48px; line-height: 1.05">Newsreader</div><div style="font-size: 14px; color: #5F5A52">Display and every answer. Carries over from the Knowvia landing, so site and app feel like one product.</div></div>
+<div><div style="font-size: 32px; font-weight: 500; letter-spacing: -0.01em">Geist</div><div style="font-size: 14px; color: #5F5A52">UI text. Quiet, engineered, not Inter.</div></div>
+<div><div style="font-family: 'Geist Mono', monospace; font-size: 24px">p.4 · §3.2</div><div style="font-size: 14px; color: #5F5A52">Mono for page refs, clause numbers and amounts, so the source always looks like a citation.</div></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 44px; letter-spacing: -0.01em">Less friction: value before the account</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: #E6E1D7; border: 1px solid #E6E1D7; border-radius: 8px; overflow: hidden">
+<sc-for list="{{flow}}" as="f" hint-placeholder-count="5">
+<div style="background: #FFFFFF; padding: 24px; display: flex; flex-direction: column; gap: 8px; min-height: 160px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #0E4F4A">{{f.n}}</div>
+<div style="font-weight: 600">{{f.t}}</div>
+<div style="font-size: 14px; color: #5F5A52">{{f.d}}</div>
+</div>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 14px; color: #5F5A52">V1 had eight screens before the first answer. V2 has one: drop the PDF on the website and allow reading in one line. Google sign-in comes after the answer, to save it. Backend gap: a guest household must move to the signed-in adult on sign-in. That linking route does not exist yet.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 44px; letter-spacing: -0.01em">Traction beyond the policy</h2>
+<p style="margin: 0; font-size: 17px; color: #5F5A52; max-width: 820px">Nobody opens an insurance app for fun. These three small tools meet people at moments they already care about, and each one ends with "add your policy for the exact answer".</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px">
+<sc-for list="{{wedges}}" as="w" hint-placeholder-count="3">
+<div style="background: #FFFFFF; border: 1px solid #E6E1D7; border-radius: 8px; padding: 28px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #0E4F4A">{{w.when}}</div>
+<div style="font-family: Newsreader, Georgia, serif; font-size: 28px; line-height: 1.15">{{w.t}}</div>
+<div style="font-size: 15px; color: #5F5A52">{{w.d}}</div>
+<div style="font-size: 13px; color: #8A2E1D">{{w.risk}}</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 400; font-size: 44px; letter-spacing: -0.01em">Premium references</h2>
+<div style="border-top: 1px solid #16130F">
+<sc-for list="{{refs}}" as="r" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: minmax(160px, 220px) 1fr 1fr; gap: 24px; padding: 18px 0; border-bottom: 1px solid #E6E1D7; align-items: baseline">
+<a href="{{r.url}}" target="_blank" rel="noopener" style="font-weight: 600; text-decoration: none">{{r.name}} ↗</a>
+<div style="font-size: 15px">{{r.why}}</div>
+<div style="font-size: 15px; color: #5F5A52">{{r.take}}</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+
+</div>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 2900}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); window.removeEventListener('keydown', this.__kh); }
+
+  __rv() {
+    return {
+      changes: [
+        { from: 'Mobile first', to: 'Laptop first, from the website. People read policies at a desk, and HR links open on a laptop. The phone gets the hospital card.' },
+        { from: '8 setup screens', to: 'One drop zone on the landing page. The first answer comes before any account.' },
+        { from: 'Card stack', to: 'A split view: the real page on the left, the plain answer on the right, linked by a highlight.' },
+        { from: 'Pastel chips', to: 'Highlighter marks. Yellow means "read from this line", coral means "two documents disagree".' },
+        { from: 'Insurance only', to: 'Three small tools (tax, job change, room rent) bring people in at moments they already care about.' }
+      ],
+      anti: [
+        { t: 'One idea, repeated', d: 'The highlighter on the page. Nothing else is decorative.' },
+        { t: 'Real artefacts', d: 'Typeset policy pages with clause numbers, not icons of documents.' },
+        { t: 'Hairlines over cards', d: 'Tables and rules like Mercury and Linear. No soft shadows, no gradient blobs, no emoji.' },
+        { t: 'Editorial type scale', d: 'A large serif for answers and small mono for sources. The tension between them is the brand.' },
+        { t: 'Few colours', d: 'Paper, ink, one deep green and two marker colours.' },
+        { t: 'Honest empty states', d: '"Not in the pages read so far" in plain text. No mascots, no confetti.' }
+      ],
+      swatches: [
+        { name: 'Paper', hex: '#F7F5F0', use: 'ground' },
+        { name: 'Sheet', hex: '#FFFFFF', use: 'document pages' },
+        { name: 'Ink', hex: '#16130F', use: 'text' },
+        { name: 'Graphite', hex: '#5F5A52', use: 'secondary' },
+        { name: 'Harbour', hex: '#0E4F4A', use: 'actions' },
+        { name: 'Marker', hex: '#F4DC8A', use: 'read from here' },
+        { name: 'Coral', hex: '#F2B9A8', use: 'documents disagree' }
+      ],
+      flow: [
+        { n: '00:00', t: 'Land on the site', d: 'From an HR email, or from a link a relative sent.' },
+        { n: '00:05', t: 'Drop the PDF', d: 'Anywhere on the hero. Or forward the HR email (later).' },
+        { n: '00:08', t: 'One line of consent', d: '"Read this document to find its limits." Nothing pre-ticked.' },
+        { n: '00:40', t: 'Six answers on the page', d: 'Each one a highlight, a value and a plain sentence.' },
+        { n: '00:50', t: 'Save with Google', d: 'Only now. Keep the PDF, add family, get the hospital card.' }
+      ],
+      wedges: [
+        { when: 'JAN–MAR · TAX PROOFS', t: '80D in two minutes', d: 'Add the premiums you pay for yourself and your parents and get the deduction to declare to HR, with the receipt each figure came from. Every salaried person gets this request each year.', risk: 'Old tax regime only. Tax wording needs review.' },
+        { when: 'RESIGNING OR SWITCHING', t: 'Leaving your job?', d: 'Your group cover usually ends on your last day. We show the line in your policy that says so, and what to ask HR and the insurer before you sign the exit papers.', risk: 'Wording is the policy’s own; we never advise on what to buy.' },
+        { when: 'BEFORE AN ADMISSION', t: 'Room rent check', d: 'Enter the room the hospital offers and see how your policy’s room limit is worded, with example arithmetic. This is the most common surprise at discharge.', risk: 'Example only; the insurer decides. Arithmetic in deterministic code.' }
+      ],
+      refs: [
+        { name: 'Mercury', url: 'https://mobbin.com/screens/d575358b-679b-4d52-aa98-5026970291b3', why: 'The bar for calm, premium finance on the web: hairlines, generous space, numbers that feel engineered.', take: 'Sidebar plus quiet home; amounts in a refined numeric style; one action row.' },
+        { name: 'Linear', url: 'https://mobbin.com/screens/f826bc38-5f5a-4ccb-8075-056c6d915fbf', why: 'Setup that looks like a document, not a wizard. A vertical step list with one live step.', take: 'One centred question per step; "I’ll do this later" always present.' },
+        { name: 'Elicit', url: 'https://mobbin.com/screens/6b7e1d2e-50e7-4414-b2b6-b542449be72f', why: 'A research report with a source marker on every claim, plus a status rail.', take: 'Inline citation markers; the reading-progress rail.' },
+        { name: 'Heidi', url: 'https://mobbin.com/screens/2910fec8-286d-4889-bf99-f3874d7ff6e5', why: 'A medical tool that feels premium: a document in the centre and tasks on the right.', take: 'Document centre stage; "review before use" honesty line.' },
+        { name: 'Perplexity Health', url: 'https://mobbin.com/screens/13623927-1cac-4d4a-be4b-0a694ab21579', why: 'Consumer health insight in a web layout with a detail panel that says "hard to spot a trend yet".', take: 'Detail panel that admits low data; ask-about-this links.' },
+        { name: 'Dropbox Dash', url: 'https://mobbin.com/screens/102188ba-6a74-4b68-b2a2-0bb526422e48', why: 'Source PDF on the left, generated reading on the right.', take: 'The split layout for the reading room.' },
+        { name: 'Alan', url: 'https://mobbin.com/screens/421c6019-fb03-484a-889e-274e60eca205', why: 'European insurance that people like using; hospital stay as a first-class action.', take: 'Hospital mode as a top-level place, not a menu item.' },
+        { name: 'Acko policy analyser', url: 'https://www.acko.com/health-insurance/policy-analyser', why: 'The Indian benchmark for "upload and analyse".', take: 'What to beat: we show the page, handle families and never sell.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

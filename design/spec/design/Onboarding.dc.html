@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Onboarding</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+*{box-sizing:border-box}
+a{color:#0E4F4A;text-decoration:none}
+.serif{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-0.02em}
+.mono{font-family:'Geist Mono',monospace}
+.cta{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 28px;border:0;border-radius:999px;background:#16130F;color:#F7F5F0;font:500 15px Geist,system-ui,sans-serif;cursor:pointer}
+.cta:hover{background:#0E4F4A;color:#F7F5F0}
+.ghost{display:inline-flex;align-items:center;min-height:52px;padding:0 22px;border:1px solid #D8D2C6;border-radius:999px;background:#FFFFFF;color:#16130F;font:500 15px Geist,system-ui,sans-serif;cursor:pointer}
+.opt{display:flex;flex-direction:column;gap:14px;text-align:left;padding:24px;border:1px solid #E6E1D7;border-radius:20px;background:#FFFFFF;cursor:pointer;font-family:Geist,system-ui,sans-serif;color:#16130F}
+.opt:hover{border-color:#16130F}
+.opton{border:2px solid #0E4F4A;padding:23px;box-shadow:0 20px 40px -28px rgba(14,79,74,.6)}
+.logo{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:#EFEBE3;border:1px solid #E6E1D7;color:#5F5A52;font:600 12px Geist,system-ui,sans-serif}
+.person{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid #E6E1D7;border-radius:16px;background:#FFFFFF;cursor:pointer;font-family:Geist,system-ui,sans-serif;color:#16130F;text-align:left}
+.personon{border-color:#0E4F4A;background:#F1F7F5}
+@keyframes sweep{0%{top:0}100%{top:calc(100% - 28px)}}
+@keyframes pop{0%{transform:translateY(10px)}100%{opacity:1;transform:none}}
+.dot{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:600 13px Geist,system-ui,sans-serif}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.logo.lg-G{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle%3C/title%3E%3Cpath d='M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-AP{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23000000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EApple%3C/title%3E%3Cpath d='M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GM{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23EA4335' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGmail%3C/title%3E%3Cpath d='M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-WA{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2325D366' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EWhatsApp%3C/title%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-TG{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2326A5E4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ETelegram%3C/title%3E%3Cpath d='M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GC{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2334A853' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Chat%3C/title%3E%3Cpath d='M1.637 0C.733 0 0 .733 0 1.637v16.5c0 .904.733 1.636 1.637 1.636h3.955v3.323c0 .804.97 1.207 1.539.638l3.963-3.96h11.27c.903 0 1.636-.733 1.636-1.637V5.592L18.408 0Zm3.955 5.592h12.816v8.59H8.455l-2.863 2.863Z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SW{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%231428A0' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ESamsung%3C/title%3E%3Cpath d='M19.8166 10.2808l.0459 2.6934h-.023l-.7793-2.6934h-1.2837v3.3925h.8481l-.0458-2.785h.023l.8366 2.785h1.2264v-3.3925zm-16.149 0l-.6418 3.427h.9284l.4699-3.1175h.0229l.4585 3.1174h.9169l-.6304-3.4269zm5.1805 0l-.424 2.6132h-.023l-.424-2.6132H6.5788l-.0688 3.427h.8596l.023-3.0832h.0114l.573 3.0831h.8711l.5731-3.083h.023l.0228 3.083h.8596l-.0802-3.4269zm-7.2664 2.4527c.0343.0802.0229.1949.0114.2522-.0229.1146-.1031.2292-.3324.2292-.2177 0-.3438-.126-.3438-.3095v-.3323H0v.2636c0 .7679.6074.9971 1.2493.9971.6189 0 1.1346-.2178 1.2149-.7794.0458-.298.0114-.4928 0-.5616-.1605-.722-1.467-.9283-1.5588-1.3295-.0114-.0688-.0114-.1375 0-.1834.023-.1146.1032-.2292.3095-.2292.2063 0 .321.126.321.3095v.2063h.8595v-.2407c0-.745-.6762-.8596-1.1576-.8596-.6074 0-1.1117.2063-1.2034.7564-.023.149-.0344.2866.0114.4585.1376.7106 1.364.9169 1.5358 1.3524m11.152 0c.0343.0803.0228.1834.0114.2522-.023.1146-.1032.2292-.3324.2292-.2178 0-.3438-.126-.3438-.3095v-.3323h-.917v.2636c0 .7564.596.9857 1.2379.9857.6189 0 1.1232-.2063 1.2034-.7794.0459-.298.0115-.4814 0-.5616-.1375-.7106-1.4327-.9284-1.5243-1.318-.0115-.0688-.0115-.1376 0-.1835.0229-.1146.1031-.2292.3094-.2292.1948 0 .321.126.321.3095v.2063h.848v-.2407c0-.745-.6647-.8596-1.146-.8596-.6075 0-1.1004.1948-1.192.7564-.023.149-.023.2866.0114.4585.1376.7106 1.341.9054 1.513 1.3524m2.8882.4585c.2407 0 .3094-.1605.3323-.2522.0115-.0343.0115-.0917.0115-.126v-2.533h.871v2.4642c0 .0688 0 .1948-.0114.2292-.0573.6419-.5616.8482-1.192.8482-.6303 0-1.1346-.2063-1.192-.8482 0-.0344-.0114-.1604-.0114-.2292v-2.4642h.871v2.533c0 .0458 0 .0916.0115.126 0 .0917.0688.2522.3095.2522m7.1518-.0344c.2522 0 .3324-.1605.3553-.2522.0115-.0343.0115-.0917.0115-.126v-.4929h-.3553v-.5043H24v.917c0 .0687 0 .1145-.0115.2292-.0573.6303-.596.8481-1.2034.8481-.6075 0-1.1461-.2178-1.2034-.8481-.0115-.1147-.0115-.1605-.0115-.2293v-1.444c0-.0574.0115-.172.0115-.2293.0802-.6419.596-.8482 1.2034-.8482s1.1347.2063 1.2034.8482c.0115.1031.0115.2292.0115.2292v.1146h-.8596v-.1948s0-.0803-.0115-.1261c-.0114-.0802-.0802-.2521-.3438-.2521-.2521 0-.321.1604-.3438.2521-.0115.0458-.0115.1032-.0115.1605v1.5702c0 .0458 0 .0916.0115.126 0 .0917.0917.2522.3323.2522'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GW{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle%3C/title%3E%3Cpath d='M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-AW{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23000000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EApple%3C/title%3E%3Cpath d='M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SL{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234A154B' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ESlack%3C/title%3E%3Cpath d='M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SG{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%233B45FD' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3ESignal%3C/title%3E%3Cpath d='M12 0q-.934 0-1.83.139l.17 1.111a11 11 0 0 1 3.32 0l.172-1.111A12 12 0 0 0 12 0M9.152.34A12 12 0 0 0 5.77 1.742l.584.961a10.8 10.8 0 0 1 3.066-1.27zm5.696 0-.268 1.094a10.8 10.8 0 0 1 3.066 1.27l.584-.962A12 12 0 0 0 14.848.34M12 2.25a9.75 9.75 0 0 0-8.539 14.459c.074.134.1.292.064.441l-1.013 4.338 4.338-1.013a.62.62 0 0 1 .441.064A9.7 9.7 0 0 0 12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25m-7.092.068a12 12 0 0 0-2.59 2.59l.909.664a11 11 0 0 1 2.345-2.345zm14.184 0-.664.909a11 11 0 0 1 2.345 2.345l.909-.664a12 12 0 0 0-2.59-2.59M1.742 5.77A12 12 0 0 0 .34 9.152l1.094.268a10.8 10.8 0 0 1 1.269-3.066zm20.516 0-.961.584a10.8 10.8 0 0 1 1.27 3.066l1.093-.268a12 12 0 0 0-1.402-3.383M.138 10.168A12 12 0 0 0 0 12q0 .934.139 1.83l1.111-.17A11 11 0 0 1 1.125 12q0-.848.125-1.66zm23.723.002-1.111.17q.125.812.125 1.66c0 .848-.042 1.12-.125 1.66l1.111.172a12.1 12.1 0 0 0 0-3.662M1.434 14.58l-1.094.268a12 12 0 0 0 .96 2.591l-.265 1.14 1.096.255.36-1.539-.188-.365a10.8 10.8 0 0 1-.87-2.35m21.133 0a10.8 10.8 0 0 1-1.27 3.067l.962.584a12 12 0 0 0 1.402-3.383zm-1.793 3.848a11 11 0 0 1-2.345 2.345l.664.909a12 12 0 0 0 2.59-2.59zm-19.959 1.1L.357 21.48a1.8 1.8 0 0 0 2.162 2.161l1.954-.455-.256-1.095-1.953.455a.675.675 0 0 1-.81-.81l.454-1.954zm16.832 1.769a10.8 10.8 0 0 1-3.066 1.27l.268 1.093a12 12 0 0 0 3.382-1.402zm-10.94.213-1.54.36.256 1.095 1.139-.266c.814.415 1.683.74 2.591.961l.268-1.094a10.8 10.8 0 0 1-2.35-.869zm3.634 1.24-.172 1.111a12.1 12.1 0 0 0 3.662 0l-.17-1.111q-.812.125-1.66.125a11 11 0 0 1-1.66-.125'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-MS{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%2334DA50' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EiMessage%3C/title%3E%3Cpath d='M5.285 0A5.273 5.273 0 0 0 0 5.285v13.43A5.273 5.273 0 0 0 5.285 24h13.43A5.273 5.273 0 0 0 24 18.715V5.285A5.273 5.273 0 0 0 18.715 0ZM12 4.154a8.809 7.337 0 0 1 8.809 7.338A8.809 7.337 0 0 1 12 18.828a8.809 7.337 0 0 1-2.492-.303A8.656 7.337 0 0 1 5.93 19.93a9.929 7.337 0 0 0 1.54-2.155 8.809 7.337 0 0 1-4.279-6.283A8.809 7.337 0 0 1 12 4.154'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-YT{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%23FF0000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EYouTube%3C/title%3E%3Cpath d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-GMAP{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%234285F4' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Maps%3C/title%3E%3Cpath d='M19.527 4.799c1.212 2.608.937 5.678-.405 8.173-1.101 2.047-2.744 3.74-4.098 5.614-.619.858-1.244 1.75-1.669 2.727-.141.325-.263.658-.383.992-.121.333-.224.673-.34 1.008-.109.314-.236.684-.627.687h-.007c-.466-.001-.579-.53-.695-.887-.284-.874-.581-1.713-1.019-2.525-.51-.944-1.145-1.817-1.79-2.671L19.527 4.799zM8.545 7.705l-3.959 4.707c.724 1.54 1.821 2.863 2.871 4.18.247.31.494.622.737.936l4.984-5.925-.029.01c-1.741.601-3.691-.291-4.392-1.987a3.377 3.377 0 0 1-.209-.716c-.063-.437-.077-.761-.004-1.198l.001-.007zM5.492 3.149l-.003.004c-1.947 2.466-2.281 5.88-1.117 8.77l4.785-5.689-.058-.05-3.607-3.035zM14.661.436l-3.838 4.563a.295.295 0 0 1 .027-.01c1.6-.551 3.403.15 4.22 1.626.176.319.323.683.377 1.045.068.446.085.773.012 1.22l-.003.016 3.836-4.561A8.382 8.382 0 0 0 14.67.439l-.009-.003zM9.466 5.868L14.162.285l-.047-.012A8.31 8.31 0 0 0 11.986 0a8.439 8.439 0 0 0-6.169 2.766l-.016.018 3.665 3.084z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.logo.lg-SMS{background:#FFFFFF url("data:image/svg+xml,%3Csvg fill='%231A73E8' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3EGoogle Messages%3C/title%3E%3Cpath d='M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zM4.911 7.089h11.456a2.197 2.197 0 0 1 2.165 2.19v5.863a2.213 2.213 0 0 1-2.177 2.178H8.04c-1.174 0-2.04-.99-2.04-2.178v-4.639L4.503 7.905c-.31-.42-.05-.816.408-.816zm3.415 2.19c-.347 0-.68.21-.68.544 0 .334.333.544.68.544h7.905c.346 0 .68-.21.68-.544 0-.334-.334-.545-.68-.545zm0 2.177c-.347 0-.68.21-.68.544 0 .334.333.544.68.544h7.905c.346 0 .68-.21.68-.544 0-.334-.334-.544-.68-.544zm-.013 2.19c-.346 0-.68.21-.68.544 0 .334.334.544.68.544h5.728c.347 0 .68-.21.68-.544 0-.334-.333-.545-.68-.545z'/%3E%3C/svg%3E") center/58% no-repeat;color:transparent;font-size:0;border-color:#E6E1D7}
+.cs.dark .logo[class*='lg-']{filter:invert(1) hue-rotate(180deg)}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+
+.vdock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:25;display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:6px 8px 6px 6px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 20px 40px -22px rgba(22,19,15,.55);text-align:left}
+.vdock b{display:block;font-weight:600;font-size:14px}.vdock .vsub{display:block;font-size:12px;color:#5F5A52}
+.vdock kbd,.vcard kbd,.vstrip kbd{font:500 11px 'Geist Mono',monospace;padding:2px 7px;border-radius:6px;background:#EFEBE3;color:#16130F}
+.vorb{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#BFD8D3,#6FA79E 40%,#0E4F4A 78%);box-shadow:0 0 0 5px rgba(111,167,158,.22)}
+.vcard{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:40;width:460px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:24px;border:1px solid #E5E0D6;background:#FFFFFF;color:#16130F;box-shadow:0 40px 90px -30px rgba(22,19,15,.45);font:400 14px Geist,system-ui,sans-serif}
+.vcard.vtop{top:250px;bottom:auto}
+.vcard .vread{font-size:12px;padding:4px 10px;border-radius:999px;background:#E3EFEC;color:#0E4F4A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.vcard .vx{min-height:30px;padding:0 10px;border-radius:999px;border:1px solid #E5E0D6;background:transparent;color:#16130F;font:500 12px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vlbl{font-size:11px;font-weight:600;letter-spacing:.06em;color:#0E4F4A}
+.vcard .vsay{font-size:24px;line-height:1.2}
+.vcard .vstep{display:flex;gap:10px;align-items:center;font-size:13px}
+.vcard .vstep i{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.vcard .vgo{display:flex;justify-content:space-between;align-items:center;min-height:42px;padding:0 14px;border-radius:12px;background:#0E4F4A;color:#F7F5F0;font-weight:600}
+.vcard .vex{text-align:left;min-height:36px;padding:0 12px;border-radius:10px;border:1px solid #E5E0D6;background:#F7F5F0;color:#16130F;font:400 13px Geist,system-ui,sans-serif;cursor:pointer}
+.vcard .vfoot{display:flex;gap:14px;font-size:12px;color:#5F5A52;padding-top:12px;border-top:1px solid #EFEBE3}
+
+/* section headings: solid, sized, ruled */
+.eyebrow{display:block!important;width:auto!important;padding:0!important;border-radius:0!important;background:none!important;font:600 17px/1.3 Geist,system-ui,sans-serif!important;letter-spacing:-.01em!important;color:inherit}
+.eyebrow::before{display:none!important;content:none!important}
+.eyebrow[data-g]{font-size:20px!important}
+.secline{padding-bottom:12px;border-bottom:1px solid #E6E1D7}
+.secdesc{margin-top:4px;font:400 14px/1.45 Geist,system-ui,sans-serif;color:#5F5A52}
+.kicker{font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="min-height: 960px; background: #F7F5F0; color: #16130F; font-family: Geist, system-ui, sans-serif; display: flex; flex-direction: column">
+
+<header style="display: flex; align-items: center; justify-content: space-between; padding: 24px 48px">
+<div class="serif" style="font-size: 24px">Knowvia</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<sc-for list="{{stepper}}" as="st" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px"><span class="dot" style="background: {{st.bg}}; color: {{st.ink}}">{{st.n}}</span><span style="font-size: 14px; color: {{st.lab}}">{{st.t}}</span><span style="width: 40px; height: 1px; background: #D8D2C6; display: {{st.line}}"></span></div>
+</sc-for>
+</div>
+<a href="Home.dc.html" style="font-size: 14px; color: #5F5A52">Skip to home</a>
+</header>
+<div style="height: 3px; background: #E6E1D7"><div style="height: 3px; width: {{pct}}%; background: #0E4F4A"></div></div>
+
+<main style="flex: 1; max-width: 1080px; width: 100%; margin: 0 auto; padding: 56px 48px; display: flex; flex-direction: column; gap: 36px">
+
+<sc-if value="{{s1}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 32px">
+<div><div class="kicker">Step 1 of 4 · about 30 seconds</div><h1 class="serif" style="margin: 14px 0 0; font-size: 56px; line-height: 1">How would you like to add your policy?</h1></div>
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px">
+<sc-for list="{{ways}}" as="w" hint-placeholder-count="4">
+<button class="{{w.cls}}" onClick="{{w.pick}}">
+<span class="logo lg-{{w.logo}}">{{w.logo}}</span>
+<span class="serif" style="font-size: 24px; line-height: 1.1">{{w.t}}</span>
+<span style="font-size: 14px; color: #5F5A52; line-height: 1.45">{{w.d}}</span>
+<span style="font-size: 12px; color: #0E4F4A; font-weight: 500">{{w.time}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 16px; background: #FFFFFF; border: 1px dashed #CFC9BE">
+<span style="font-size: 22px">⇪</span><span style="flex: 1; color: #5F5A52">Or drop the policy PDF, schedule or e-card anywhere on this page</span><span class="mono" style="font-size: 12px; color: #8C867C">PDF · JPG · PNG</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div class="eyebrow">Can’t find your policy? What most people do</div>
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px">
+<sc-for list="{{tips}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 18px; background: {{t.bg}}">
+<span style="width: 40px; height: 40px; border-radius: 50%; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 6px 14px -8px rgba(22,19,15,.4)">{{t.i}}</span>
+<span style="font-size: 16px; font-weight: 600; line-height: 1.25">{{t.t}}</span>
+<span style="font-size: 13px; color: #3F3A33; line-height: 1.45">{{t.d}}</span>
+<span style="margin-top: auto; font-size: 12px; color: #0E4F4A; font-weight: 500">{{t.k}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+
+<sc-if value="{{sRead}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div><div class="kicker">Step 2 of 4 · reading your policy</div><h1 class="serif" style="margin: 14px 0 0; font-size: 52px; line-height: 1">{{readHead}}</h1></div>
+<div style="display: grid; grid-template-columns: 260px 1fr 300px; gap: 20px; align-items: stretch">
+<div style="position: relative; height: 340px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 20px; overflow: hidden; display: flex; flex-direction: column; gap: 9px">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="12"><span style="height: 7px; width: {{l}}%; border-radius: 3px; background: #EFEBE3"></span></sc-for>
+<span style="position: absolute; left: 0; right: 0; height: 28px; background: linear-gradient(transparent, rgba(244,220,138,.85), transparent); animation: sweep 2.4s ease-in-out infinite alternate"></span>
+<span class="mono" style="position: absolute; left: 20px; bottom: 14px; font-size: 11px; color: #5F5A52">Page {{page}} of 42</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span class="eyebrow" style="font: 500 11px 'Geist Mono',monospace; color: #5F5A52">FOUND SO FAR · {{foundCount}} OF 6</span><button class="ghost" style="min-height: 34px; padding: 0 14px; font-size: 13px" onClick="{{findNext}}">Next finding</button></div>
+<sc-for list="{{found}}" as="f" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D7; animation: pop .42s cubic-bezier(.2,.7,.2,1) both">
+<span style="width: 44px; height: 44px; border-radius: 12px; background: {{f.bg}}; display: inline-flex; align-items: center; justify-content: center; font-size: 18px">{{f.icon}}</span>
+<div><div style="font-size: 13px; color: #5F5A52">{{f.k}}</div><div class="serif" style="font-size: 24px">{{f.v}}</div></div>
+<span class="mono" style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #F4DC8A">{{f.ref}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="border-radius: 18px; background: #16130F; color: #F7F5F0; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6FA79E, #0E4F4A 70%)"></span><span style="font-weight: 600">Knowvia</span><span style="margin-left: auto; font-size: 11px; color: #B7B0A4">listening</span></div>
+<div style="font-size: 13px; color: #CFC9BE">Say anything about this policy. I’ll file it.</div>
+<div style="font-size: 14px; padding: 10px 12px; border-radius: 10px; background: #24201A">“{{said}}”</div>
+<div style="font-size: 13px; padding: 10px 12px; border-radius: 10px; background: #0E4F4A">{{filed}}</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{sayChips}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" style="min-height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid #3A352D; background: transparent; color: #F7F5F0; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{c.t}}</button></sc-for></div>
+</div>
+<div style="border-radius: 18px; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 18px; display: flex; flex-direction: column; gap: 6px">
+<div class="eyebrow">Did you know</div>
+<div style="font-size: 14px; line-height: 1.5">{{tip}}</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 28px">
+<div><div class="kicker">Step 3 of 4 · we found these on the schedule</div><h1 class="serif" style="margin: 14px 0 0; font-size: 56px; line-height: 1">Who is on this policy?</h1></div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E6E1D7">
+<span class="logo lg-NH">NH</span><div style="flex: 1"><div style="font-weight: 500">Northstar Health · Group Mediclaim</div><div style="font-size: 13px; color: #5F5A52">Family floater · Rs 5,00,000 · valid to 31 Mar 2027</div></div><span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #E3EFEC; color: #0E4F4A">Read in 14 s</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px">
+<sc-for list="{{people}}" as="p" hint-placeholder-count="4">
+<button class="{{p.cls}}" onClick="{{p.toggle}}">
+<span class="dot" style="width: 40px; height: 40px; background: #16130F; color: #F7F5F0">{{p.ini}}</span>
+<span style="flex: 1"><span style="display: block; font-weight: 500">{{p.n}}</span><span style="font-size: 13px; color: #5F5A52">{{p.rel}}</span></span>
+<span style="font-size: 18px; color: #0E4F4A">{{p.mark}}</span>
+</button>
+</sc-for>
+<button class="person" style="border-style: dashed; color: #5F5A52"><span class="dot" style="width: 40px; height: 40px; background: #EFEBE3; color: #5F5A52">+</span>Add parents or someone else</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 28px">
+<div><div class="kicker">Step 4 of 4 · done</div><h1 class="serif" style="margin: 14px 0 0; font-size: 56px; line-height: 1">Here’s what your cover does.</h1></div>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px">
+<sc-for list="{{wins}}" as="w" hint-placeholder-count="3">
+<div style="background: {{w.bg}}; border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 12px; min-height: 220px">
+<span style="font-size: 13px; color: #5F5A52">{{w.k}}</span>
+<span class="serif" style="font-size: 38px; line-height: 1">{{w.v}}</span>
+<span style="font-size: 14px; color: #3F3A33; line-height: 1.45; flex: 1">{{w.d}}</span>
+<span style="font-size: 13px; color: #5F5A52">{{w.ref}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 12px; align-items: center; padding: 18px 22px; border-radius: 16px; background: #16130F; color: #F7F5F0">
+<span style="font-size: 20px">📱</span><span style="flex: 1">Save your e-card to your phone so it’s ready at any hospital desk.</span><button class="cta" style="background: #F7F5F0; color: #16130F; min-height: 40px" onClick="{{openWallet}}">Add to Wallet</button>
+</div>
+</div>
+</sc-if>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto">
+<button class="ghost" onClick="{{back}}" style="visibility: {{backVis}}">Back</button>
+<sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}"><button class="cta" onClick="{{next}}">{{nextLabel}}</button></sc-if>
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}"><a class="cta" href="Home.dc.html">Go to my home</a></sc-if>
+</div>
+
+<sc-if value="{{walletOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; background: rgba(22,19,15,.55); display: flex; align-items: center; justify-content: center; z-index: 30">
+<div style="width: 920px; max-width: calc(100% - 32px); background: #F7F5F0; border-radius: 26px; padding: 28px; display: grid; grid-template-columns: 300px 1fr; gap: 26px; box-shadow: 0 60px 120px -40px rgba(0,0,0,.6)">
+<div style="border-radius: 20px; background: #0E4F4A; color: #F7F5F0; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-weight: 600">Knowvia</span><span class="mono" style="font-size: 10px; opacity: .8">NORTHSTAR HEALTH</span></div>
+<div><div style="font-size: 10px; letter-spacing: .08em; opacity: .7">MEMBER</div><div class="serif" style="font-size: 28px">Meera Rao</div></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px"><div><div style="opacity: .7; font-size: 9px">POLICY NO.</div><div class="mono">NHG/2026/771204</div></div><div><div style="opacity: .7; font-size: 9px">VALID TO</div><div class="mono">31 Mar 2027</div></div><div><div style="opacity: .7; font-size: 9px">MEMBER ID</div><div class="mono">NH-771204-01</div></div><div><div style="opacity: .7; font-size: 9px">COVER</div><div class="mono">Rs 5,00,000</div></div></div>
+<div style="display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 12px; background: #FFFFFF; color: #16130F"><div style="width: 64px; height: 64px; border-radius: 6px; background: repeating-conic-gradient(#16130F 0 25%, #FFFFFF 0 50%) 0 0 / 12px 12px"></div><div style="font-size: 11px">Scan at the desk<br><span style="color: #5F5A52">refreshes every 30 s</span></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center"><div class="serif" style="font-size: 32px">Save your e-card</div><button class="ghost" style="min-height: 36px; padding: 0 14px" onClick="{{closeWallet}}">Close</button></div>
+<div style="display: flex; gap: 8px; align-items: center; font-size: 13px; color: #5F5A52">Detected <sc-for list="{{devs}}" as="d" hint-placeholder-count="4"><button onClick="{{d.pick}}" style="min-height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid {{d.line}}; background: {{d.bg}}; color: {{d.ink}}; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{d.t}}</button></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{wallets}}" as="w" hint-placeholder-count="3">
+<button onClick="{{w.pick}}" style="display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 14px; border-radius: 16px; border: {{w.border}}; background: #FFFFFF; cursor: pointer; font-family: Geist, system-ui, sans-serif; color: #16130F">
+<span style="display: flex; justify-content: space-between; align-items: center"><span class="logo lg-{{w.logo}}" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #E6E1D7">{{w.logo}}</span><span style="font-size: 11px; padding: 2px 8px; border-radius: 999px; background: {{w.tagBg}}; visibility: {{w.tagVis}}">Recommended</span></span>
+<span style="font-weight: 600">{{w.t}}</span><span style="font-size: 12px; color: #5F5A52">{{w.d}}</span>
+<span style="font-size: 12px; font-weight: 500; color: #0E4F4A">{{w.state}}</span>
+</button>
+</sc-for>
+</div>
+<div style="border-radius: 16px; background: #FFFFFF; border: 1px solid #E6E1D7; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-weight: 600">Share with loved ones</span><span style="font-size: 12px; color: #5F5A52">they get the card, not your documents</span></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><sc-for list="{{loved}}" as="l" hint-placeholder-count="4"><button onClick="{{l.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px 0 6px; border-radius: 999px; border: 1px solid {{l.line}}; background: {{l.bg}}; color: {{l.ink}}; font: 500 13px Geist, system-ui, sans-serif; cursor: pointer"><span style="width: 28px; height: 28px; border-radius: 50%; background: #16130F; color: #F7F5F0; display: inline-flex; align-items: center; justify-content: center; font-size: 11px">{{l.i}}</span>{{l.n}}</button></sc-for></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><sc-for list="{{chans}}" as="c" hint-placeholder-count="6"><button onClick="{{c.pick}}" style="min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.line}}; background: #FFFFFF; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{c.t}}</button></sc-for></div>
+<div style="font-size: 13px; padding: 10px 12px; border-radius: 10px; background: #F1F7F5">{{shareMsg}}</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+</main>
+<button class="vdock" onClick="{{vOpen}}" aria-label="Ask Knowvia, hold V"><span class="vorb"></span><span><b>Ask Knowvia</b><span class="vsub">Reads this page · {{vPage}}</span></span><kbd>Hold V</kbd></button>
+<sc-if value="{{vShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{vCls}}" role="dialog" aria-label="Ask Knowvia">
+<div style="display: flex; align-items: center; gap: 12px"><button class="vorb" onClick="{{vTalk}}" aria-label="Hold to talk" style="cursor: pointer; box-shadow: 0 0 0 {{vRa}}px rgba(111,167,158,.25), 0 0 0 {{vRb}}px rgba(111,167,158,.12)"></button><div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0"><span style="font-weight: 600">Ask Knowvia</span><span class="vread">Reading {{vReads}}</span></div><button class="vx" onClick="{{vClose}}">Esc</button></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="vlbl">{{vLbl}}</span><div class="serif vsay">“{{vSay}}”</div></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><sc-for list="{{vSteps}}" as="x" hint-placeholder-count="3"><div class="vstep" style="color: {{x.ink}}"><i style="background: {{x.bg}}; color: {{x.mk}}">{{x.m}}</i>{{x.t}}</div></sc-for></div>
+<sc-for list="{{vGo}}" as="g" hint-placeholder-count="1"><a class="vgo" href="{{g.href}}">{{g.t}}<span>→</span></a></sc-for>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #5F5A52">Try saying, on this page</span><sc-for list="{{vEx}}" as="e" hint-placeholder-count="3"><button class="vex" onClick="{{e.pick}}">“{{e.t}}”</button></sc-for></div>
+<div class="vfoot"><span><kbd>V</kbd> hold to talk</span><span><kbd>Esc</kbd> close</span><span>English, Hindi or both</span></div>
+</div>
+</sc-if>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 960}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  __voice() {
+    const V = {"page": "Getting started", "reads": "what you have added so far", "at": "bottom", "ex": [{"say": "I can’t find my policy", "st": ["Find policy", "Can check Gmail or DigiLocker", "Pick one to start"], "href": null, "go": null}, {"say": "My employer gives me insurance", "st": ["Group cover", "Ask HR for the e-card", "Or forward the HR email"], "href": null, "go": null}, {"say": "Skip this for now", "st": ["Navigate", "Saved your progress", "Opening Home"], "href": "Home.dc.html", "go": "Go to Home"}]}; const s = this.state || {};
+    const e = V.ex[(s.__ve || 0) % V.ex.length]; const t = s.__vt || 0; const hold = !!s.__vh;
+    const done = hold ? 0 : Math.min(3, Math.max(0, t - 1)); const listening = hold || t < 1;
+    return {
+      vPage: V.page, vReads: V.reads, vShow: !!s.__vo, vCls: (s.__vat || V.at) === 'top' ? 'vcard vtop' : 'vcard',
+      vOpen: () => this.setState({ __vo: true, __vt: 0, __vat: V.at }),
+      vClose: () => this.setState({ __vo: false, __vh: false }),
+      vTalk: () => this.setState({ __ve: (s.__ve || 0) + 1, __vt: 0 }),
+      vLbl: listening ? 'LISTENING…' : done < 3 ? 'WORKING ON IT' : 'DONE · SAY THE NEXT THING',
+      vSay: e.say, vRa: listening ? 8 : 4, vRb: listening ? 16 : 8,
+      vSteps: e.st.map((x, k) => ({ t: x, m: k < done ? '✓' : String(k + 1), bg: k < done ? '#0E4F4A' : '#EFEBE3', mk: k < done ? '#F7F5F0' : '#8C867C', ink: k < done ? '#16130F' : '#8C867C' })),
+      vGo: e.href && done >= 3 ? [{ href: e.href, t: e.go }] : [],
+      vEx: V.ex.map((x, k) => ({ t: x.say, pick: () => this.setState({ __ve: k, __vt: 1, __vh: false }) }))
+    };
+  }
+  __vmount() {
+    this.__vi = setInterval(() => { if (this.state && this.state.__vo && !this.state.__vh) this.setState({ __vt: Math.min(4, (this.state.__vt || 0) + 1) }); }, 650);
+    this.__vd = (ev) => { const tg = ev.target && ev.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return; if ((ev.key === 'v' || ev.key === 'V') && !ev.repeat) this.setState({ __vo: true, __vh: true, __vt: 0 }); if (ev.key === 'Escape') this.setState({ __vo: false, __vh: false }); };
+    this.__vu = (ev) => { if ((ev.key === 'v' || ev.key === 'V') && this.state && this.state.__vh) this.setState({ __vh: false, __vt: 1, __ve: (this.state.__ve || 0) + 1 }); };
+    window.addEventListener('keydown', this.__vd); window.addEventListener('keyup', this.__vu);
+  }
+  __vunmount() { clearInterval(this.__vi); window.removeEventListener('keydown', this.__vd); window.removeEventListener('keyup', this.__vu); }
+
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }, this.__voice()); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__vmount(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); this.__vunmount(); window.removeEventListener('keydown', this.__kh); }
+
+  constructor(p) { super(p); this.state = { wOpen: false, dev: 'iphone', wsel: null, to: { R: true }, ch: 'WhatsApp', step: 1, n: 2, say: 0, way: 'dl', on: { M: true, R: true, K: true, A: false } }; }
+  __rv() {
+    const s = this.state;
+    const names = ['Add', 'Reading', 'People', 'Ready'];
+    const ways = [
+      ['dl', 'DL', 'DigiLocker', 'Pull every policy issued to your mobile number.', 'Fastest · 20 s'],
+      ['up', '⇪', 'Upload a PDF', 'Policy wording, schedule or e-card.', '30 s'],
+      ['hr', '✉', 'Forward the HR mail', 'Send it to policies@knowvia.in and we read it.', 'Hands-free'],
+      ['no', '#', 'Policy number', 'Pick your insurer and enter the number.', '1 min']
+    ];
+    const ppl = [['M', 'Meera', 'You · 41'], ['R', 'Rohan', 'Spouse · 43'], ['K', 'Kabir', 'Son · 8'], ['A', 'Parents', 'Not on this schedule']];
+    const F = [
+      { icon: '◎', k: 'Family cover', v: 'Rs 5,00,000', ref: 'Schedule p.1', bg: '#E3EFEC' },
+      { icon: '▣', k: 'Room limit', v: 'Rs 5,000 a day', ref: 'p.12 §4.1', bg: '#F4E6C4' },
+      { icon: '%', k: 'Co-pay', v: 'None', ref: 'p.2', bg: '#E3EFEC' },
+      { icon: '◷', k: 'Waiting period', v: 'Waived (group plan)', ref: 'p.8 §3', bg: '#EAE6F2' },
+      { icon: '◉', k: 'Members', v: 'Meera, Rohan, Kabir', ref: 'Schedule p.1', bg: '#F1E0DA' },
+      { icon: '↻', k: 'Restore benefit', v: 'Once a year', ref: 'p.18', bg: '#E3EFEC' }
+    ];
+    const SAY = [
+      ['My father’s card shows another number', 'Noted under Father · e-card. I’ll check it against his schedule when you add it.'],
+      ['I think HR changed the plan in April', 'Filed as a question for HR. I’ll compare this policy with the April version if you forward it.'],
+      ['I paid my parents’ premium twice', 'Opened a case on the Desk: duplicate premium. I’ll look for both receipts in Gmail.']
+    ];
+    const TIPS = ['Rs 5,000 a day is about a private single room in most Pune hospitals.', 'Group plans usually waive waiting periods, so old conditions are covered from day one.', 'Restore refills your cover once if a claim uses it up in the year.'];
+    const n = Math.min(6, s.n);
+    const FIND = [
+      ['✉', 'Search your email', 'Type “policy schedule” or your insurer’s name. The PDF is usually attached to the welcome mail.', 'Most people find it here'],
+      ['◫', 'Company cover? Ask HR', 'HR or the benefits portal has the e-card and the group policy. One message is enough.', 'Knowvia can draft the message'],
+      ['▣', 'Look in DigiLocker', 'Many insurers push policies to DigiLocker under “Issued documents”.', 'Sign in once, we fetch it'],
+      ['🔑', 'PDF asks for a password?', 'It is often your date of birth (DDMMYYYY) or the first four letters of your name plus birth year.', 'Say it; we never store it']
+    ];
+    return {
+      tips: FIND.map((t, k) => ({ i: t[0], t: t[1], d: t[2], k: t[3], bg: ['#E3EFEC', '#F4E6C4', '#EAE6F2', '#F1E0DA'][k] })),
+      walletOpen: s.wOpen, openWallet: () => this.setState({ wOpen: true }), closeWallet: () => this.setState({ wOpen: false }),
+      devs: [['iphone', 'iPhone'], ['android', 'Android'], ['galaxy', 'Galaxy'], ['windows', 'Windows']].map((d) => ({ t: d[1], bg: s.dev === d[0] ? '#16130F' : '#FFFFFF', ink: s.dev === d[0] ? '#F7F5F0' : '#16130F', line: s.dev === d[0] ? '#16130F' : '#D8D2C6', pick: () => this.setState({ dev: d[0], wsel: null }) })),
+      wallets: [['apple', 'AW', 'Apple Wallet', 'iPhone, Apple Watch, Mac'], ['google', 'GW', 'Google Wallet', 'Android phones'], ['samsung', 'SW', 'Samsung Wallet', 'Galaxy phones']].map((w) => { const rec = (s.dev === 'iphone' && w[0] === 'apple') || (s.dev === 'android' && w[0] === 'google') || (s.dev === 'galaxy' && w[0] === 'samsung'); const on = s.wsel === w[0]; return { t: w[2], logo: w[1], d: w[3], tagVis: rec ? 'visible' : 'hidden', tagBg: '#F4DC8A', border: on ? '2px solid #0E4F4A' : rec ? '1px solid #0E4F4A' : '1px solid #E6E1D7', state: on ? (s.dev === 'windows' ? 'Sent to your phone ✓' : 'Added ✓') : (s.dev === 'windows' ? 'Send to phone →' : 'Add →'), pick: () => this.setState({ wsel: w[0] }) }; }),
+      loved: [['R', 'Rohan'], ['L', 'Mother'], ['S', 'Father'], ['+', 'Someone else']].map((l) => ({ i: l[0], n: l[1], bg: s.to[l[0]] ? '#E3EFEC' : '#FFFFFF', ink: '#16130F', line: s.to[l[0]] ? '#0E4F4A' : '#D8D2C6', pick: () => this.setState({ to: Object.assign({}, s.to, { [l[0]]: !s.to[l[0]] }) }) })),
+      chans: ['WhatsApp', 'Telegram', 'SMS', 'Email', 'Google Chat', 'Copy link'].map((c) => ({ t: c, line: s.ch === c ? '#0E4F4A' : '#D8D2C6', pick: () => this.setState({ ch: c }) })),
+      shareMsg: (function () { const n = Object.keys(s.to).filter((k) => s.to[k]).length; return n ? 'Ready to send on ' + s.ch + ' to ' + n + (n === 1 ? ' person' : ' people') + '. They can add it to their own wallet.' : 'Pick who should have your e-card.'; })(),
+      sRead: s.step === 2, found: F.slice(0, n).reverse(), foundCount: n, page: 3 + n * 6,
+      readHead: n < 6 ? 'Reading. Here’s what we’ve found.' : 'Done. 6 things your policy decides.',
+      findNext: () => this.setState({ n: n >= 6 ? 1 : n + 1 }),
+      lines: [92, 80, 96, 60, 88, 74, 94, 52, 86, 90, 70, 82],
+      said: SAY[s.say % 3][0], filed: SAY[s.say % 3][1], tip: TIPS[n % 3],
+      sayChips: SAY.map((x, k) => ({ t: x[0].split(' ').slice(0, 4).join(' ') + '…', pick: () => this.setState({ say: k }) })),
+      s1: s.step === 1, s2: s.step === 3, s3: s.step === 4, notLast: s.step < 4, pct: Math.round(s.step / 4 * 100),
+      backVis: s.step > 1 ? 'visible' : 'hidden',
+      nextLabel: s.step === 1 ? 'Read it' : s.step === 2 ? 'Continue' : 'Looks right',
+      next: () => this.setState({ step: Math.min(4, s.step + 1) }), back: () => this.setState({ step: Math.max(1, s.step - 1) }),
+      stepper: names.map((t, i) => ({ n: i + 1 <= s.step - 1 ? '✓' : String(i + 1), t: t, bg: i + 1 <= s.step ? '#0E4F4A' : '#E6E1D7', ink: i + 1 <= s.step ? '#F7F5F0' : '#5F5A52', lab: i + 1 === s.step ? '#16130F' : '#8C867C', line: i < 3 ? 'inline-block' : 'none' })),
+      ways: ways.map((w) => ({ logo: w[1], t: w[2], d: w[3], time: w[4], cls: s.way === w[0] ? 'opt opton' : 'opt', pick: () => this.setState({ way: w[0] }) })),
+      people: ppl.map((p) => ({ ini: p[0], n: p[1], rel: p[2], cls: s.on[p[0]] ? 'person personon' : 'person', mark: s.on[p[0]] ? '✓' : '+', toggle: () => this.setState({ on: Object.assign({}, s.on, { [p[0]]: !s.on[p[0]] }) }) })),
+      wins: [
+        { k: 'Family cover', v: 'Rs 5 lakh', d: 'Shared by you, Rohan and Kabir. Refills once a year if used up.', ref: 'Schedule p.1 · Wording p.18', bg: '#E3EFEC' },
+        { k: 'Room limit', v: 'Rs 5,000/day', d: 'Pick a room within it and other charges are paid in full.', ref: 'Wording p.12 §4.1', bg: '#F4E6C4' },
+        { k: 'Childbirth', v: 'Rs 50,000', d: 'Covered from day one on this group plan, plus the newborn from birth.', ref: 'Wording p.21 §6.3', bg: '#F1E0DA' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shortcuts and input modes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F5F0}
+*{box-sizing:border-box}
+.serif{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-0.02em}
+.mono{font-family:'Geist Mono',monospace}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;width:fit-content;max-width:100%;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(111,167,158,.18);font:600 14px Geist,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#0E4F4A;line-height:1.2}
+.eyebrow::before{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;box-shadow:inset 0 0 0 6px rgba(255,255,255,.6)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:7px;background:#FFFFFF;border:1px solid #D8D2C6;box-shadow:0 2px 0 #D8D2C6;font:500 12px 'Geist Mono',monospace;color:#16130F}
+.mode{display:flex;flex-direction:column;gap:10px;text-align:left;padding:18px;border-radius:18px;border:1px solid #E6E1D7;background:#FFFFFF;cursor:pointer;font-family:Geist,system-ui,sans-serif;color:#16130F}
+.modeon{border:2px solid #0E4F4A;padding:17px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-size:14px}
+.cs{transition:filter .24s}
+.cs.dark{filter:invert(1) hue-rotate(180deg)}
+.cs.dark img,.cs.dark video{filter:invert(1) hue-rotate(180deg)}
+.themebtn{position:fixed;left:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D8D2C6;background:#FFFFFF;color:#16130F;font:500 13px Geist,system-ui,sans-serif;cursor:pointer;box-shadow:0 12px 30px -18px rgba(22,19,15,.5)}
+.themebtn kbd{font:500 11px 'Geist Mono',monospace;padding:1px 6px;border-radius:5px;background:#EFEBE3}
+
+/* section headings: solid, sized, ruled */
+.eyebrow{display:block!important;width:auto!important;padding:0!important;border-radius:0!important;background:none!important;font:600 17px/1.3 Geist,system-ui,sans-serif!important;letter-spacing:-.01em!important;color:inherit}
+.eyebrow::before{display:none!important;content:none!important}
+.eyebrow[data-g]{font-size:20px!important}
+.secline{padding-bottom:12px;border-bottom:1px solid #E6E1D7}
+.secdesc{margin-top:4px;font:400 14px/1.45 Geist,system-ui,sans-serif;color:#5F5A52}
+.kicker{font:500 14px Geist,system-ui,sans-serif;color:#5F5A52}
+</style>
+</helmet>
+<div class="{{themeCls}}" style="min-height: 1000px; background: #F7F5F0; color: #16130F; font-family: Geist, system-ui, sans-serif; padding: 40px 48px 72px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px">
+
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div><div class="kicker">One input, start to finish</div><h1 class="serif" style="margin: 14px 0 0; font-size: 46px; line-height: 1">Pick how you move. Never switch.</h1></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px"><sc-for list="{{modes}}" as="m" hint-placeholder-count="3"><button class="{{m.cls}}" onClick="{{m.pick}}"><span style="font-size: 22px">{{m.i}}</span><span style="font-weight: 600">{{m.t}}</span><span style="font-size: 12px; color: #5F5A52">{{m.d}}</span></button></sc-for></div>
+<div style="border-radius: 18px; background: #FFFFFF; padding: 18px; display: flex; flex-direction: column; gap: 6px">
+<div class="eyebrow">{{path.t}}: sign-up to emergency</div>
+<sc-for list="{{path.steps}}" as="s" hint-placeholder-count="6"><div class="row" style="background: #FAF8F4"><span class="mono" style="font-size: 11px; color: #8C867C; width: 18px">{{$index}}</span><span style="flex: 1">{{s.t}}</span><span class="mono" style="font-size: 12px; color: #0E4F4A">{{s.how}}</span></div></sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: 0 50px 90px -50px rgba(22,19,15,.5); overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid #EEEAE2"><span style="color: #8C867C">⌕</span><span style="flex: 1; font-size: 16px">{{q}}<span style="display: inline-block; width: 2px; height: 18px; background: #0E4F4A; vertical-align: middle"></span></span><span class="key">⌘K</span></div>
+<div style="padding: 8px">
+<sc-for list="{{results}}" as="r" hint-placeholder-count="6">
+<div class="row" style="background: {{r.bg}}"><span style="width: 28px; height: 28px; border-radius: 8px; background: #EFEBE3; display: inline-flex; align-items: center; justify-content: center; font-size: 13px">{{r.i}}</span><span style="flex: 1">{{r.t}}</span><span class="mono" style="font-size: 11px; color: #8C867C">{{r.g}}</span><span class="key" style="visibility: {{r.kv}}">{{r.k}}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid #EEEAE2; flex-wrap: wrap"><sc-for list="{{qs}}" as="x" hint-placeholder-count="3"><button onClick="{{x.pick}}" style="min-height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #D8D2C6; background: #FFFFFF; font: 500 12px Geist, system-ui, sans-serif; cursor: pointer">{{x.t}}</button></sc-for></div>
+</div>
+<div style="border-radius: 20px; background: #16130F; color: #F7F5F0; padding: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px">
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="14"><div style="display: flex; align-items: center; gap: 10px; font-size: 13px"><span class="key" style="background: #24201A; color: #F7F5F0; border-color: #3A352D; box-shadow: 0 2px 0 #3A352D">{{k.k}}</span>{{k.t}}</div></sc-for>
+</div>
+</div>
+<button class="themebtn" onClick="{{toggleTheme}}" aria-label="Switch light or dark">◐ {{themeLabel}} <kbd>T</kbd></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 1000}, "theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}}'>
+class Component extends DCLogic {
+  renderVals() { const v = this.__rv(); const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); return Object.assign({}, v, { themeCls: d ? 'cs dark' : 'cs', themeLabel: d ? 'Light' : 'Dark', toggleTheme: () => this.setState({ __dark: !d }) }); }
+  componentDidMount() { if (this.__cdm) this.__cdm(); this.__kh = (e) => { const t = e.target && e.target.tagName; if ((e.key === 't' || e.key === 'T') && t !== 'INPUT' && t !== 'TEXTAREA') { const d = (this.state && this.state.__dark !== undefined) ? this.state.__dark : (this.props.theme === 'dark'); this.setState({ __dark: !d }); } }; window.addEventListener('keydown', this.__kh); }
+  componentWillUnmount() { if (this.__cwu) this.__cwu(); window.removeEventListener('keydown', this.__kh); }
+
+  constructor(p) { super(p); this.state = { mode: 'key', q: 0 }; }
+  __rv() {
+    const s = this.state;
+    const P = {
+      key: { t: 'Keyboard only', steps: [['Get beta access', 'Tab · Enter'], ['Pick who you look after', '← → · Space'], ['Sign in with code', 'type 6 digits'], ['Add policy', 'N · Enter'], ['Move between cards', 'J · K'], ['Emergency for Father', 'E · 5']] },
+      mouse: { t: 'Mouse only', steps: [['Get beta access', 'click'], ['Pick who you look after', 'click chips'], ['Sign in', 'Continue with Google'], ['Add policy', 'drag the PDF in'], ['Answer questions', 'click suggestions'], ['Emergency', 'red pill, always visible']] },
+      voice: { t: 'Voice only', steps: [['“Get me access”', 'opens beta'], ['“Me and my parents”', 'fills the chips'], ['“Sign me in with Google”', 'starts sign-in'], ['“Read my DigiLocker policy”', 'adds it'], ['“What do I pay for a knee surgery?”', 'stress test'], ['“Papa ko chest pain”', 'emergency, instantly']] }
+    };
+    const Q = ['room', 'father', 'tax'];
+    const R = {
+      room: [['▣', 'Room rent check', 'Calculators', 'G C'], ['▤', 'Room limit · group plan p.12', 'Policies', ''], ['?', 'Ask Knowvia: “What room can I take?”', 'Ask', '/'], ['≡', 'Guide: Room rent, explained with one bill', 'Learn', '']],
+      father: [['●', 'Emergency for Father', 'Actions', 'E'], ['◐', 'Stress test: Father', 'Stress test', 'G S'], ['▣', 'Father’s e-card', 'Wallet', ''], ['⇆', 'Father’s short-settled claim', 'Desk', 'G D']],
+      tax: [['%', '80D calculator', 'Calculators', ''], ['◔', 'Download tax proof pack', 'Money', 'G M'], ['?', 'Ask Knowvia: “How much tax can I save?”', 'Ask', '/'], ['≡', 'Guide: 80D in two minutes', 'Learn', '']]
+    };
+    const q = Q[s.q];
+    return {
+      modes: [['key', '⌨', 'Keyboard', 'Every action has a key'], ['mouse', '◉', 'Mouse', 'Big targets, no typing needed'], ['voice', '◍', 'Voice', 'Hold V or tap the orb']].map((m) => ({ i: m[1], t: m[2], d: m[3], cls: s.mode === m[0] ? 'mode modeon' : 'mode', pick: () => this.setState({ mode: m[0] }) })),
+      path: { t: P[s.mode].t, steps: P[s.mode].steps.map((x) => ({ t: x[0], how: x[1] })) },
+      q: q,
+      qs: Q.map((x, k) => ({ t: 'Try “' + x + '”', pick: () => this.setState({ q: k }) })),
+      results: R[q].map((r, k) => ({ i: r[0], t: r[1], g: r[2], k: r[3], kv: r[3] ? 'visible' : 'hidden', bg: k === 0 ? '#F1F7F5' : 'transparent' })),
+      keys: [['⌘K', 'Search and actions'], ['/', 'Ask Knowvia'], ['V', 'Hold to speak'], ['E', 'Emergency'], ['G H', 'Home'], ['G P', 'Policies'], ['G S', 'Stress test'], ['G M', 'Money'], ['G D', 'Desk'], ['N', 'Add a document'], ['J K', 'Next / previous card'], ['1–5', 'Switch person'], ['?', 'All shortcuts'], ['Esc', 'Close']].map((k) => ({ k: k[0], t: k[1] }))
+    };
+  }
+}
+</script>
+</body>
+</html>
