@@ -33,6 +33,9 @@ describe("security headers", () => {
     // The one wildcard is the Blob store host, for the large-PDF client upload.
     expect(csp.replace("https://*.blob.vercel-storage.com", "")).not.toMatch(/https?:\/\/\*/);
     expect(csp).toContain("connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com");
+    // Razorpay Standard Checkout: its script and payment frame only, named hosts, no wildcard.
+    expect(csp).toMatch(/script-src [^;]*https:\/\/checkout\.razorpay\.com/);
+    expect(csp).toContain("frame-src https://api.razorpay.com https://checkout.razorpay.com");
   });
 
   it("never caches API responses", async () => {

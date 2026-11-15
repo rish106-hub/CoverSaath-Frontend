@@ -9,6 +9,8 @@ import type { CandidateView, Candidates } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf } from "./use-holdings";
 import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, type Slot } from "./add-cover-flow";
+import { payments, type PolicySlots } from "@/adapters/payments";
+import { payWithRazorpay } from "@/lib/razorpay";
 import s from "./covers.module.css";
 
 const MB = MAX_UPLOAD_BYTES / 1024 / 1024;
@@ -42,11 +44,39 @@ export function AddCoverView() {
   const [done, setDone] = useState(false);
   const [over, setOver] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [slots, setSlots] = useState<PolicySlots | null>(null);
   const scheduleInput = useRef<HTMLInputElement>(null);
   const consentKey = useRef(makeRequestKey());
   const confirmKey = useRef(makeRequestKey());
 
   const fail = (e: unknown) => setError(codeOf(e));
+
+  // Paid policy slots: the first policy is free; another needs one payment before its schedule can go up (the backend enforces it).
+  useEffect(() => {
+    let live = true;
+    payments.slots().then((r) => { if (live) setSlots(r); }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+  const mustPay = (slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED";
+
+  async function pay() {
+    setBusy(true);
+    setError(null);
+    try {
+      const order = await payments.order();
+      const proof = await payWithRazorpay(order);
+      setSlots(await payments.verify(proof));
+      // The file the person already chose goes up now, with the same request key (the refused try stored nothing).
+      if (schedule.file && schedule.code === "PAYMENT_REQUIRED" && policyType !== "") {
+        setSchedule({ ...schedule, status: "working", code: null });
+        await afterSchedule(await runSchedule(adapters.covers, schedule, policyType));
+      } else if (schedule.code === "PAYMENT_REQUIRED") setSchedule(emptySlot());
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     let live = true;
@@ -213,7 +243,19 @@ export function AddCoverView() {
         </SectionHeading>
       ) : null}
 
-      {consent ? (
+      {consent && mustPay && slots ? (
+        // FOR LEGAL REVIEW: price and payment wording.
+        <SectionHeading title="Add another policy">
+          <div className={s.card} data-testid="pay-card">
+            <p className={s.lead}>Your first policy is free. Adding another policy costs <b>Rs {(slots.pricePaise / 100).toLocaleString("en-IN")}</b>, paid once through Razorpay.</p>
+            <div className={s.row}>
+              <button type="button" className="k-btn" disabled={busy} onClick={() => void pay()}>{busy ? "Opening payment..." : `Pay Rs ${(slots.pricePaise / 100).toLocaleString("en-IN")}`}</button>
+            </div>
+          </div>
+        </SectionHeading>
+      ) : null}
+
+      {consent && !mustPay ? (
         <SectionHeading title="Your policy schedule" description={`PDF only, up to ${MB} MB. The schedule lists who is covered, the sum insured and the dates.`}>
           <div className={s.drop} data-over={over} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); void takeSchedule(e.dataTransfer.files[0]); }}>
             <SlotStatus slot={schedule} name="Your policy schedule" />
