@@ -123,11 +123,12 @@ function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl"
         ))}
       </div>
       <SaveState status={status} onRetry={onRetry} />
-      <div className={styles.drop}>
+      {/* The real upload lives on Add a cover (consent, type, schedule, plan). */}
+      <Link href="/covers/add" className={styles.drop} data-testid="welcome-upload">
         <span aria-hidden style={{ fontSize: 22 }}>⇪</span>
-        <span>Or drop a PDF, schedule or e-card here</span>
-        <span className={styles.dropFmt}>PDF · JPG · PNG</span>
-      </div>
+        <span>Upload your policy PDF</span>
+        <span className={styles.dropFmt}>PDF, up to 15 MB</span>
+      </Link>
       <section aria-label="Can’t find your policy?">
         <h2 style={{ font: "600 20px/1.25 var(--font-sans)", margin: 0, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>Can’t find your policy?</h2>
         <div className={styles.tips} style={{ marginTop: 16 }}>

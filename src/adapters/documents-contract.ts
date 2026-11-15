@@ -162,5 +162,14 @@ export const ERROR_TEXT: Record<string, string> = {
   DEMO_READ_ONLY: "Sign in with your own account to ask about your cover.",
   INVALID_INPUT: "Check what you entered and try again.",
   POLICY_PROFILE_VERSION_CONFLICT: "Things changed while you were looking. Refresh and try again.",
+  PAYMENT_REQUIRED: "Your first policy is free. Pay once to add another one.",
+  PAYMENTS_DISABLED: "Adding another policy is not switched on yet.",
+  PAYMENTS_NOT_CONFIGURED: "Payments are not set up yet. Try again later.",
+  POLICY_SLOT_AVAILABLE: "You can add this policy without paying.",
+  PAYMENT_SIGNATURE_INVALID: "We could not confirm that payment. If money left your account, it will be refunded by Razorpay.",
+  PAYMENT_ORDER_NOT_FOUND: "That payment was not found. Start again.",
+  PAYMENT_PROVIDER_UNAVAILABLE: "The payment service did not answer. Try again.",
+  PAYMENT_CANCELLED: "Payment cancelled. Nothing was charged.",
+  PAYMENT_FAILED: "The payment did not go through. Try again.",
 };
 export const errorText = (code: string) => ERROR_TEXT[code] ?? "Something went wrong. Try again.";
