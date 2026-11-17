@@ -15,7 +15,7 @@ describe("add cover flow", () => {
     const d = deps();
     const slot = pickFile(pdf("schedule.pdf"));
     const r = await runSchedule(d, slot, "group_health");
-    expect(d.uploadDocument).toHaveBeenCalledWith(slot.file, slot.key, "policy_schedule", "group_health");
+    expect(d.uploadDocument).toHaveBeenCalledWith(slot.file, slot.key, "policy_schedule", "group_health", undefined);
     expect(r.holdingId).toBe("holding-1");
     expect(r.slot).toMatchObject({ status: "done", documentId: "doc-s" });
   });

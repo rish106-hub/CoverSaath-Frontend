@@ -95,7 +95,8 @@ const guard = <T>(v: T): T => {
 };
 
 export const mockCovers: CoversAdapter = {
-  uploadDocument: async (file, key, kind, policyType) => {
+  uploadDocument: async (file, key, kind, policyType, onStage) => {
+    onStage?.("sending");
     const pre = precheck(file, MAX_UPLOAD_BYTES);
     if (pre) throw new AdapterError(pre);
     if (!POLICY_TYPES.includes(policyType)) throw new AdapterError("POLICY_TYPE_INVALID");

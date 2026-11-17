@@ -18,6 +18,8 @@ const ONE_LINE = (n: number) => `Rs ${n.toLocaleString("en-IN")}`;
 
 export function MoneyDesk() {
   const [scan, setScan] = useState(0);
+  // How many receipts the inbox scan really returned; the list fills only up to this.
+  const [target, setTarget] = useState<number | null>(null);
   const [sel, setSel] = useState(1);
   const [manual, setManual] = useState<string[]>([]);
   const [mon, setMon] = useState(2);
@@ -32,12 +34,16 @@ export function MoneyDesk() {
     asking.current = true;
     adapters.email
       .scan()
-      .then(() => {
+      .then((r) => {
         if (mine !== gen.current) return;
         asking.current = false;
+        const found = Math.min(Math.max(r?.found ?? 0, r?.items?.length ?? 0), TOTAL);
+        setTarget(found);
+        setScan((s) => Math.min(s, found));
+        if (found === 0) return;
         timer.current = setInterval(() => {
           setScan((s) => {
-            if (s >= TOTAL) {
+            if (s >= found) {
               if (timer.current) clearInterval(timer.current);
               return s;
             }
@@ -51,6 +57,7 @@ export function MoneyDesk() {
     if (asking.current) return;
     setErr(false);
     setScan(from);
+    setTarget(null);
     startTicker();
   }
   useEffect(() => {
@@ -65,7 +72,8 @@ export function MoneyDesk() {
   }, []);
 
   const shown = inbox.slice(0, scan);
-  const done = scan >= TOTAL;
+  const done = target !== null && scan >= target;
+  const pct = target ? Math.round((scan / target) * 100) : done ? 100 : 0;
   const report = useMemo(
     () =>
       reconcileReceipts(
@@ -93,7 +101,7 @@ export function MoneyDesk() {
         <div className={styles.tools}>
           <span className={styles.connected}><BrandLogo id="gmail" size={22} />Gmail connected</span>
           <button type="button" className="k-btn">Add Outlook</button>
-          <button type="button" className="k-btn k-btn--primary" onClick={() => runScan(done ? 3 : scan)} disabled={!done}>{done ? "Scan again" : "Scanning…"}</button>
+          <button type="button" className="k-btn k-btn--primary" onClick={() => runScan(0)} disabled={!done}>{done ? "Scan again" : "Scanning…"}</button>
         </div>
       </div>
 
@@ -103,8 +111,8 @@ export function MoneyDesk() {
           <div><div className={styles.statLabel}>Receipts found</div><div className={styles.stat}>{scan}</div></div>
           <div><div className={styles.statLabel}>Premiums this year</div><div className={styles.stat}>Rs 63,700</div></div>
           <div><div className={styles.statLabel}>Eligible for 80D</div><div className={`${styles.stat} ${styles.statGood}`}>Rs 63,700</div></div>
-          <div className={styles.bar} role="progressbar" aria-label="Inbox scan" aria-valuenow={Math.round((scan / TOTAL) * 100)} aria-valuemin={0} aria-valuemax={100}>
-            <div className={styles.barFill} style={{ width: `${Math.round((scan / TOTAL) * 100)}%` }} />
+          <div className={styles.bar} role="progressbar" aria-label="Inbox scan" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+            <div className={styles.barFill} style={{ width: `${pct}%` }} />
           </div>
         </div>
         {err ? <span role="alert" className={styles.statLabel}>Could not read the inbox. Try again.</span> : null}

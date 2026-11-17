@@ -143,13 +143,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       setReply(r);
       setThinking(false);
       if (fromVoice) speak(r.reply);
-      if (reduced() || viewRef.current === "chat") { setDone(3); dispatch({ type: "finish" }); return; }
-      let n = 0;
-      timer.current = setInterval(() => {
-        n += 1;
-        setDone(n);
-        if (n >= 3) { clearTimer(); dispatch({ type: "finish" }); }
-      }, 650);
+      // The answer is already back, so its steps are all done: no timed replay of work that has finished.
+      setDone(3);
+      dispatch({ type: "finish" });
     }).catch((e: unknown) => {
       if (id !== run.current || !alive.current) return;
       setThinking(false);

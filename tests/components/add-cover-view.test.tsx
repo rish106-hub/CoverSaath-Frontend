@@ -37,7 +37,7 @@ describe("add a cover page", () => {
     await screen.findByText("schedule.pdf: added.");
     await screen.findByRole("heading", { name: "Which plan is this?" });
     expect(up).toHaveBeenCalledTimes(1);
-    expect(up).toHaveBeenCalledWith(expect.anything(), expect.any(String), "policy_schedule", "personal_health");
+    expect(up).toHaveBeenCalledWith(expect.anything(), expect.any(String), "policy_schedule", "personal_health", expect.any(Function));
     expect(link).not.toHaveBeenCalled();
   });
   it("says it is reading the schedule while it works", async () => {
@@ -47,7 +47,7 @@ describe("add a cover page", () => {
     await screen.findByTestId("policy-type");
     fireEvent.change(screen.getByTestId("policy-type"), { target: { value: "personal_health" } });
     fireEvent.change(screen.getByTestId("schedule-input"), { target: { files: [pdf("schedule.pdf")] } });
-    expect(await screen.findByText(/Reading your schedule/)).toBeInTheDocument();
+    expect(await screen.findByText(/Reading the pages/)).toBeInTheDocument();
     release({ documentId: "doc-never" });
   });
   it("a failed holding shows a clear failed state with no retry of the same file", async () => {
