@@ -20,7 +20,8 @@ export function EmergencyView() {
   const [who, setWho] = useState(4);
   const [done, setDone] = useState<Record<number, boolean>>({ 0: true });
   const [issue, setIssue] = useState("chest");
-  const [loc, setLoc] = useState(0);
+  const [started, setStarted] = useState(false); // the person allowed the location search
+  const [rankedFor, setRankedFor] = useState<string | null>(null);
   const [mode, setMode] = useState<"cashless" | "best">("cashless");
   const [list, setList] = useState<RankedHospital[]>([]);
   const [grp, setGrp] = useState("B+");
@@ -67,7 +68,11 @@ export function EmergencyView() {
   }, [grp]);
   useEffect(() => {
     let live = true;
-    adapters.hospital.ranked(issue, mode).then((h) => live && setList(h));
+    adapters.hospital.ranked(issue, mode).then((h) => {
+      if (!live) return;
+      setList(h);
+      setRankedFor(`${issue}|${mode}`);
+    });
     return () => {
       live = false;
     };
@@ -108,14 +113,13 @@ export function EmergencyView() {
       );
     });
   function allow() {
-    setLoc(1);
+    setStarted(true);
     void where.save(shareLocation);
   }
-  useEffect(() => {
-    if (loc < 1 || loc >= 5) return;
-    const id = setTimeout(() => setLoc((l) => l + 1), 700);
-    return () => clearTimeout(id);
-  }, [loc]);
+  // The search steps tick as the real calls finish: the location save first, then the ranked hospital list for this issue.
+  const located = where.status === "saved";
+  const ranked = rankedFor === `${issue}|${mode}`;
+  const loc = !started ? 0 : !located ? 1 : ranked ? 5 : 2;
 
   return (
     <div className={ui.stack}>
@@ -193,7 +197,7 @@ export function EmergencyView() {
             <div className={s.panel}>
               <div className={ui.row + " " + ui.wrap}>
                 {Object.entries(emergencyIssues).map(([key, v]) => (
-                  <button key={key} type="button" className={cx(ui.chip, key === issue && ui.chipOn)} aria-pressed={key === issue} onClick={() => { setIssue(key); if (loc >= 1) setLoc(1); }}>
+                  <button key={key} type="button" className={cx(ui.chip, key === issue && ui.chipOn)} aria-pressed={key === issue} onClick={() => { setIssue(key); }}>
                     {v.label}
                   </button>
                 ))}

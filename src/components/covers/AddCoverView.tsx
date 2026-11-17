@@ -16,12 +16,35 @@ import s from "./covers.module.css";
 const MB = MAX_UPLOAD_BYTES / 1024 / 1024;
 type Pick = { candidateId: string; label: string } | null;
 
+const UPLOAD_STEPS = [
+  { key: "sending", label: "Sending your PDF" },
+  { key: "checking", label: "Safety check" },
+  { key: "reading", label: "Reading the pages" },
+  { key: "details", label: "Pulling out cover details" },
+  { key: "matching", label: "Finding your plan" },
+] as const;
+
+/** The real upload steps from the backend: done ones ticked, only the current one moves. */
+function UploadSteps({ stage }: { stage: NonNullable<Slot["stage"]> }) {
+  const at = UPLOAD_STEPS.findIndex((x) => x.key === stage);
+  return (
+    <ol className={s.steps} role="status" aria-live="polite" data-state="working" data-stage={stage}>
+      {UPLOAD_STEPS.map((x, i) => (
+        <li key={x.key} className={s.step} data-step={i < at ? "done" : i === at ? "active" : "todo"}>
+          <span className={s.stepDot} aria-hidden>{i < at ? "✓" : ""}</span>
+          {x.label}
+          {i === at ? <span className={s.srOnly}> (in progress)</span> : null}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 /** One slot's progress line: what it is doing, or why it stopped. */
 function SlotStatus({ slot, name }: { slot: Slot; name: string }) {
   if (slot.status === "empty") return <p className={s.quiet}>Drop the PDF here, or choose it from your device.</p>;
   const file = slot.file?.name ?? name;
-  if (slot.status === "working") return <p className={s.quiet} role="status" data-state="working">Reading your schedule&hellip;</p>;
-  if (slot.status === "waiting") return <p className={s.quiet} role="status" data-state="waiting">Reading your schedule&hellip;</p>;
+  if (slot.status === "working" || slot.status === "waiting") return <UploadSteps stage={slot.status === "waiting" ? "matching" : (slot.stage ?? "sending")} />;
   if (slot.status === "done") return <p className={s.lead} role="status" data-state="done">{file}: added.</p>;
   return <p className={s.alert} role="alert" data-state="failed">{file}: {errorText(slot.code ?? "")}</p>;
 }
@@ -57,7 +80,24 @@ export function AddCoverView() {
     payments.slots().then((r) => { if (live) setSlots(r); }).catch(() => undefined);
     return () => { live = false; };
   }, []);
-  const mustPay = (slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED";
+  // A schedule already uploaded whose plan was never chosen (the person left mid-way, or came back from "Choose your plan") is picked
+  // up here: its candidates show and no payment is asked, because that policy already holds its slot.
+  const [resumed, setResumed] = useState(false);
+  useEffect(() => {
+    let live = true;
+    // Only when sent here to finish one ("Choose your plan" links with ?resume=1); a fresh visit uploads a new schedule.
+    if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("resume") !== "1") return () => { live = false; };
+    adapters.covers.holdingsView().then(async (view) => {
+      const open = view.holdings.find((h) => (h.status === "uploaded" || h.status === "insurer_pending") && !h.summary?.productName);
+      if (!live || !open) return;
+      setResumed(true);
+      setHoldingId(open.id);
+      setSchedule((cur) => (cur.status === "empty" ? { ...cur, status: "done", code: null } : cur));
+      try { const c = await adapters.covers.candidates(open.id); if (live) setCands(c); } catch { /* the plan search below still works */ }
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+  const mustPay = !resumed && ((slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED");
 
   async function pay() {
     setBusy(true);
@@ -69,7 +109,7 @@ export function AddCoverView() {
       // The file the person already chose goes up now, with the same request key (the refused try stored nothing).
       if (schedule.file && schedule.code === "PAYMENT_REQUIRED" && policyType !== "") {
         setSchedule({ ...schedule, status: "working", code: null });
-        await afterSchedule(await runSchedule(adapters.covers, schedule, policyType));
+        await afterSchedule(await runSchedule(adapters.covers, schedule, policyType, (stage) => setSchedule((cur) => (cur.status === "working" ? { ...cur, stage } : cur))));
       } else if (schedule.code === "PAYMENT_REQUIRED") setSchedule(emptySlot());
     } catch (e) {
       fail(e);
@@ -130,7 +170,7 @@ export function AddCoverView() {
     try {
       const picked = pickFile(file);
       setSchedule(picked);
-      await afterSchedule(await runSchedule(adapters.covers, picked, policyType));
+      await afterSchedule(await runSchedule(adapters.covers, picked, policyType, (stage) => setSchedule((cur) => (cur.status === "working" ? { ...cur, stage } : cur))));
     } finally {
       setBusy(false);
       if (scheduleInput.current) scheduleInput.current.value = "";
@@ -142,7 +182,7 @@ export function AddCoverView() {
     setBusy(true);
     try {
       setSchedule({ ...schedule, status: "working", code: null });
-      await afterSchedule(await runSchedule(adapters.covers, schedule, policyType));
+      await afterSchedule(await runSchedule(adapters.covers, schedule, policyType, (stage) => setSchedule((cur) => (cur.status === "working" ? { ...cur, stage } : cur))));
     } finally {
       setBusy(false);
     }

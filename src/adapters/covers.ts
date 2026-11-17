@@ -1,5 +1,6 @@
 import type { z } from "zod";
-import { AdapterError, type CoversAdapter } from "./types";
+import { AdapterError, type CoversAdapter, type UploadStage } from "./types";
+import type { DocView } from "./documents-contract";
 import { MAX_UPLOAD_BYTES } from "./documents-contract";
 import { backendUploads, precheck } from "./uploads";
 import { candidatesIn, confirmedIn, conflictsIn, coverOut, declarationView, deletedOut, declarationsIn, dueView, duesIn, factsIn, holdingDocumentsIn, holdingsIn, linkedIn, premiumsIn, premiumView, resolvedIn } from "./covers-contract";
@@ -38,15 +39,21 @@ function parse<T>(schema: z.ZodType<T>, v: unknown): T {
   return r.data;
 }
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** The step the backend is on, from the polled document view. */
+export const stageOf = (doc: Pick<DocView, "steps">): UploadStage =>
+  doc.steps.scanned !== "done" ? "checking" : doc.steps.reading !== "done" ? "reading" : "details";
 
 export const backendCovers: CoversAdapter = {
-  async uploadDocument(file, key, kind, policyType) {
+  async uploadDocument(file, key, kind, policyType, onStage) {
     const pre = precheck(file, MAX_UPLOAD_BYTES);
     if (pre) throw new AdapterError(pre);
+    onStage?.("sending");
     let doc = await backendUploads.upload(file, kind, key, policyType);
+    onStage?.(stageOf(doc));
     for (let i = 0; i < POLL_TRIES && doc.busy; i += 1) {
       await wait(POLL_MS);
       doc = await backendUploads.advance(doc.id);
+      onStage?.(stageOf(doc));
     }
     return { documentId: doc.id };
   },
