@@ -5,6 +5,7 @@ import Link from "next/link";
 import { features } from "@/adapters";
 import { SectionHeading } from "@/components/type";
 import { SaveState } from "@/components/ui/SaveState";
+import { DemoGate } from "@/components/shell/EmptyState";
 import { useScenario } from "@/lib/use-scenario";
 import { roomCodec, taxCodec, type RoomState, type TaxState } from "@/lib/scenario-codecs";
 import { section80D, roomRent, topUpFinder, formatLakhShort, TOPUP_WHO, TOPUP_BASE_LAKH, TOPUP_RISKS, type Regime, type TopUpFit } from "@/lib/calculators";
@@ -309,7 +310,8 @@ export function ToolsPage() {
       </SectionHeading>
       <SectionHeading title="Top-up finder"><TopUp /></SectionHeading>
       {features.advisorBooking ? <SectionHeading title="Advisors"><Advisors /></SectionHeading> : null}
-      <SectionHeading title="What these tools save"><Wins /></SectionHeading>
+      {/* Savings figures are sample data: demo sessions only, never shown to a signed-in person. */}
+      <DemoGate empty={null}><SectionHeading title="What these tools save"><Wins /></SectionHeading></DemoGate>
       <SectionHeading title="Read next">
         <div className={styles.reads}>
           {readNext.map((r) => <div key={r.title} className={styles.read}><span className={styles.readK}>{r.kind}</span><span className={styles.readT}>{r.title}</span></div>)}
