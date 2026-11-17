@@ -9,7 +9,9 @@ const BANNED = /sample|demo|preview|draft|placeholder|lorem|not advice|not an in
 describe("money and tools render", () => {
   it("tools page has every board section and no banned words", () => {
     const html = renderToStaticMarkup(<ToolsPage />);
-    for (const h of ["Section 80D", "Top-up finder", "Advisors", "What these tools save"]) expect(html).toContain(h);
+    for (const h of ["Section 80D", "Top-up finder", "Advisors"]) expect(html).toContain(h);
+    // Sample savings figures render only in a demo session, never for a signed-in person.
+    expect(html).not.toContain("What these tools save");
     expect(html).toContain("Rs 44,600");
     expect(html.replace(/<[^>]+>/g, " ")).not.toMatch(BANNED);
   });
