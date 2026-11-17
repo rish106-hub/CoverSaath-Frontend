@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTicker } from "@/lib/use-ticker";
-import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adapters, type UiOnboarding } from "@/adapters";
@@ -147,49 +145,43 @@ function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl"
 }
 
 /** Findings from the ReadingAdapter first, then the schedule facts, so the list is never empty. */
-function useFindings(): Row[] {
+function useFindings(): { rows: Row[]; loading: boolean } {
   const [rows, setRows] = useState<Row[]>(READING_FINDINGS.map((f) => ({ ...f })));
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     let live = true;
     adapters.reading.findings("northstar-floater").then((fs) => {
+      if (live) setLoading(false);
       if (!live || fs.length === 0) return;
       const fromAdapter: Row[] = fs.map((f) => ({ icon: "◎", k: f.label, v: f.answer, ref: f.pageRef, disagrees: f.disagrees }));
       const seen = new Set(fromAdapter.map((r) => r.k));
       setRows([...fromAdapter, ...READING_FINDINGS.filter((f) => !seen.has(f.k)).map((f) => ({ ...f }))].slice(0, 6));
-    }).catch(() => undefined);
+    }).catch(() => { if (live) setLoading(false); });
     return () => { live = false; };
   }, []);
-  return rows;
-}
-
-function useRevealCount(total: number) {
-  const reduce = useReducedMotion();
-  const [count, setN] = useState(1);
-  useTicker(() => setN((x) => (x >= total ? total : x + 1)), 1400, !reduce);
-  return [reduce ? total : Math.min(count, total), setN] as const;
+  return { rows, loading };
 }
 
 function ReadingStep() {
-  const rows = useFindings();
-  const [n, setN] = useRevealCount(rows.length);
+  // The sweep runs only while the findings request is in flight; findings show when they arrive, not on a timer.
+  const { rows, loading } = useFindings();
+  const n = loading ? 0 : rows.length;
   const [say, setSay] = useState(0);
   const shown = rows.slice(0, n).reverse();
   return (
     <>
     <div>
       <Kicker>{WELCOME_STEPS[1].kicker}</Kicker>
-      <h1 className={styles.h1}>{n < rows.length ? "Reading your policy" : `${rows.length} key terms found`}</h1>
+      <h1 className={styles.h1}>{loading ? "Reading your policy" : `${rows.length} key terms found`}</h1>
     </div>
     <div className={styles.read}>
       <div className={styles.doc} aria-hidden>
         {[92, 80, 96, 60, 88, 74, 94, 52, 86, 90, 70, 82].map((w, i) => <span key={i} style={{ height: 7, width: `${w}%`, borderRadius: 3, background: "var(--sunken)", display: "block" }} />)}
-        <span className={styles.sweep} />
-        <span className={styles.pageNo}>Page {3 + n * 6} of 42</span>
+        {loading ? <span className={styles.sweep} /> : null}
       </div>
       <div className={styles.found}>
         <div className={styles.foundHead}>
-          <span className={styles.foundLab}>Found so far · {n} of {rows.length}</span>
-          <button type="button" className="k-btn k-btn--sm" onClick={() => setN(n >= rows.length ? 1 : n + 1)}>Next finding</button>
+          <span className={styles.foundLab}>{loading ? "Reading…" : `Found · ${n}`}</span>
         </div>
         <div aria-live="polite" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {shown.map((f) => (

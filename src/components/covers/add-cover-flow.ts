@@ -1,4 +1,4 @@
-import type { CoversAdapter } from "@/adapters/types";
+import type { CoversAdapter, UploadStage } from "@/adapters/types";
 import type { PolicyType } from "@/adapters/documents-contract";
 import { AdapterError } from "@/adapters/types";
 import { makeRequestKey } from "@/adapters/uploads";
@@ -15,6 +15,8 @@ export type Slot = {
   key: string;
   documentId: string | null;
   code: string | null;
+  /** The backend step this upload is on while working; "matching" once the file is in and its plan is being found. */
+  stage?: UploadStage | "matching";
 };
 export const emptySlot = (): Slot => ({ status: "empty", file: null, key: makeRequestKey(), documentId: null, code: null });
 export const pickFile = (file: File): Slot => ({ ...emptySlot(), status: "working", file });
@@ -28,11 +30,12 @@ export const canRetry = (slot: Slot): boolean => slot.status === "failed" && !(s
 const fail = (slot: Slot, e: unknown): Slot => ({ ...slot, status: "failed", code: codeOf(e) });
 
 /** Schedule: upload, then find the holding the backend made from it. `holdingId` is null while the backend has not made it yet. */
-export async function runSchedule(deps: Deps, slot: Slot, policyType: PolicyType): Promise<{ slot: Slot; holdingId: string | null }> {
+export async function runSchedule(deps: Deps, slot: Slot, policyType: PolicyType, onStage?: (stage: NonNullable<Slot["stage"]>) => void): Promise<{ slot: Slot; holdingId: string | null }> {
   if (!slot.file) return { slot, holdingId: null };
   let cur: Slot = { ...slot, status: "working", code: null };
   try {
-    if (!cur.documentId) cur = { ...cur, documentId: (await deps.uploadDocument(cur.file!, cur.key, "policy_schedule", policyType)).documentId };
+    if (!cur.documentId) cur = { ...cur, documentId: (await deps.uploadDocument(cur.file!, cur.key, "policy_schedule", policyType, onStage)).documentId };
+    onStage?.("matching");
     const holdingId = await deps.holdingFor(cur.documentId!);
     return holdingId ? { slot: { ...cur, status: "done" }, holdingId } : { slot: { ...cur, status: "waiting" }, holdingId: null };
   } catch (e) {
