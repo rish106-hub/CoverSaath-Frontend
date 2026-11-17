@@ -57,7 +57,24 @@ export function AddCoverView() {
     payments.slots().then((r) => { if (live) setSlots(r); }).catch(() => undefined);
     return () => { live = false; };
   }, []);
-  const mustPay = (slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED";
+  // A schedule already uploaded whose plan was never chosen (the person left mid-way, or came back from "Choose your plan") is picked
+  // up here: its candidates show and no payment is asked, because that policy already holds its slot.
+  const [resumed, setResumed] = useState(false);
+  useEffect(() => {
+    let live = true;
+    // Only when sent here to finish one ("Choose your plan" links with ?resume=1); a fresh visit uploads a new schedule.
+    if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("resume") !== "1") return () => { live = false; };
+    adapters.covers.holdingsView().then(async (view) => {
+      const open = view.holdings.find((h) => (h.status === "uploaded" || h.status === "insurer_pending") && !h.summary?.productName);
+      if (!live || !open) return;
+      setResumed(true);
+      setHoldingId(open.id);
+      setSchedule((cur) => (cur.status === "empty" ? { ...cur, status: "done", code: null } : cur));
+      try { const c = await adapters.covers.candidates(open.id); if (live) setCands(c); } catch { /* the plan search below still works */ }
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+  const mustPay = !resumed && ((slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED");
 
   async function pay() {
     setBusy(true);
