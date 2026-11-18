@@ -14,6 +14,8 @@ import { containsUin } from "@/adapters/covers-contract";
 
 const enc = encodeURIComponent;
 export const TURN_TIMEOUT_MS = 55_000;
+/** No bytes from the backend for this long: the stream ends with one coded BACKEND_TIMEOUT error, so the page never hangs. */
+export const TURN_IDLE_MS = 25_000;
 /** Largest single SSE frame (or unfinished tail) read from the backend. Larger means a broken or hostile upstream. */
 const MAX_FRAME = 64 * 1024;
 const out = (data: unknown): { data: unknown } => ({ data });
@@ -135,10 +137,22 @@ export async function streamTurn(ctx: Ctx, threadId: string, turn: TurnInput & {
   const reader = stream.getReader();
   const body2 = new ReadableStream<Uint8Array>({
     async pull(c) {
+      let idle: ReturnType<typeof setTimeout> | undefined;
       try {
-        const { done, value } = await reader.read();
-        if (done) { clearTimeout(timer); c.close(); } else c.enqueue(value);
+        const quiet = new Promise<"idle">((resolve) => { idle = setTimeout(() => resolve("idle"), TURN_IDLE_MS); });
+        const got = await Promise.race([reader.read(), quiet]);
+        clearTimeout(idle);
+        if (got === "idle") {
+          clearTimeout(timer);
+          controller.abort();
+          c.enqueue(new TextEncoder().encode(frame("error", { code: "BACKEND_TIMEOUT" })));
+          c.close();
+          void reader.cancel().catch(() => undefined);
+          return;
+        }
+        if (got.done) { clearTimeout(timer); c.close(); } else c.enqueue(got.value);
       } catch {
+        clearTimeout(idle);
         clearTimeout(timer);
         c.close();
       }

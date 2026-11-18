@@ -217,3 +217,30 @@ describe("hospitals", () => {
     expect((await res.json()).code).toBe("NOT_FOUND");
   });
 });
+
+describe("a stalled backend stream", () => {
+  it("ends with one coded BACKEND_TIMEOUT error instead of hanging", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+        // Sends the meta event, then goes quiet until the request is aborted.
+        const body = new ReadableStream<Uint8Array>({
+          start(c) {
+            c.enqueue(new TextEncoder().encode(frame("meta", { thread_id: "th-1", intent: "x", retrieval_mode: "keyword", facts_available: 0, open_conflicts: 0 })));
+            init.signal?.addEventListener("abort", () => { try { c.error(new Error("aborted")); } catch { /* already closed */ } });
+          },
+        });
+        return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+      });
+      const res = await turns.POST(req("/x", "POST", { json: { message: "What is the room rent limit?" } }), { params: Promise.resolve({ id: "th-1" }) });
+      const reading = res.text();
+      await vi.advanceTimersByTimeAsync(26_000);
+      const text = await reading;
+      expect(text).toContain("event: meta");
+      expect(text).toContain('event: error\ndata: {"code":"BACKEND_TIMEOUT"}');
+      expect(text).not.toContain("event: done");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
