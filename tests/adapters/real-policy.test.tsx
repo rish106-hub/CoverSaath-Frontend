@@ -18,7 +18,7 @@ afterEach(() => {
 
 const holding = (status: HoldingView["status"] = "ready", id = "h1"): HoldingView => ({ id, documentId: "d1", kind: "policy_wording", status });
 const fact = (o: Partial<FactView> & { factKey: string }): FactView => ({ status: "extracted_unverified", alternatives: [], checkWithInsurer: false, sources: [], ...o });
-const own = (pageId = "page-2", quote = "Room rent up to 5000") => ({ id: "s1", tier: "own_pdf" as const, page: { pageId }, quote });
+const own = (pageId = "page-2", quote = "Room rent up to 5000") => ({ id: "s1", tier: "own_pdf" as const, page: { pageId, pageNumber: Number(pageId.replace(/\D/g, "")) }, quote });
 const FACTS: FactView[] = [
   fact({ factKey: "room_rent_limit", group: "limits", unit: "paise", valueType: "number", value: 500000, sourceTier: "own_pdf", sources: [own()] }),
   fact({ factKey: "initial_waiting", group: "waiting", unit: "days", value: 30, status: "user_confirmed", sourceTier: "own_pdf", sources: [{ id: "s2", tier: "own_pdf" }] }),
@@ -89,7 +89,7 @@ describe("toPolicyView", () => {
     expect(containsUin(si)).toBe(false);
   });
   it("labels a citation with its document kind and page", () => {
-    const src = (documentKind: string | null) => ({ id: "s", tier: "own_pdf" as const, page: { pageId: "page-4", documentKind }, quote: "q" });
+    const src = (documentKind: string | null) => ({ id: "s", tier: "own_pdf" as const, page: { pageId: "chunk-75", pageNumber: 4, documentKind }, quote: "q" });
     expect(factLine(fact({ factKey: "a", sourceTier: "own_pdf", sources: [src("policy_schedule")] })).citation).toBe("Your document, Policy schedule, Page 4");
     expect(factLine(fact({ factKey: "a", sourceTier: "own_pdf", sources: [src("policy_wording")] })).citation).toBe("Your document, Policy terms and conditions, Page 4");
     expect(factLine(fact({ factKey: "a", sourceTier: "own_pdf", sources: [src(null)] })).citation).toBe("Your document, Page 4");
@@ -263,7 +263,7 @@ describe("screens", () => {
   });
   it("reads wordingState from the summary; a missing or unknown value is missing", () => {
     const parse = (summary: unknown) => holdingsIn.parse({ holdings: [{ id: "h1", status: "ready", summary }] }).holdings[0]!;
-    expect(toPolicyView(parse({ wordingState: "fss", wordingReason: "attached" }), null)).toMatchObject({ wordingState: "fss", wordingReason: "attached" });
+    expect(toPolicyView(parse({ wordingState: "fss", wordingReason: "not_checked" }), null)).toMatchObject({ wordingState: "fss", wordingReason: "not_checked" });
     expect(toPolicyView(parse({ wordingState: "manual" }), null)).toMatchObject({ wordingState: "manual", wordingReason: null });
     expect(toPolicyView(parse({}), null)).toMatchObject({ wordingState: "missing", wordingReason: null });
     expect(toPolicyView(parse({ wordingState: "later", wordingReason: "other" }), null)).toMatchObject({ wordingState: "missing", wordingReason: null });
