@@ -343,7 +343,7 @@ export async function grantReadingConsent(ctx: Ctx, requestId: string): Promise<
 export const chatConsentState = (ctx: Ctx): { consent: boolean } => ({ consent: Boolean(ctx.state.ch) });
 
 /**
- * One grant for the household, purpose coverage_reconstruction, naming the two providers a chat turn calls: the language model (anthropic)
+ * One grant for the household, purpose coverage_reconstruction, naming the two providers a chat turn calls: the language model (gemini, the first chat provider; MODEL_PROVIDERS on the backend decides who answers)
  * and the embedding service (voyage). The backend resolves it itself on each turn; the page never names a grant. Replay-safe by key.
  */
 export async function grantChatConsent(ctx: Ctx, requestId: string): Promise<{ consent: boolean }> {
@@ -351,7 +351,7 @@ export async function grantChatConsent(ctx: Ctx, requestId: string): Promise<{ c
   const scope = (recipient: string): GrantScope => ({ resourceType: "household", resourceId: null, action: "derive", dataCategory: "insurance_question", recipient });
   ctx.state.ch = await ctx.client.grant(ctx.session.t, {
     householdId: ctx.session.h, adultId, key: `chat-${requestId}`, purpose: "coverage_reconstruction",
-    scope: scope("anthropic"), scopes: [scope("anthropic"), scope("voyage")],
+    scope: scope("gemini"), scopes: [scope("gemini"), scope("voyage")],
   });
   await writeDocsState(ctx.state, ctx.secret);
   return { consent: true };

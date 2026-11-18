@@ -79,7 +79,7 @@ describe("chat threads", () => {
 });
 
 describe("chat go-ahead", () => {
-  it("grants one household grant naming anthropic and voyage, with a replay-safe key, and remembers it", async () => {
+  it("grants one household grant naming gemini and voyage, with a replay-safe key, and remembers it", async () => {
     jsonReply = { status: 201, body: { id: "grant-chat-1" } };
     const res = await consent.POST(req("/x", "POST", { json: { accept: true, requestId: "req-12345678" } }));
     expect(res.status).toBe(200);
@@ -87,7 +87,7 @@ describe("chat go-ahead", () => {
     expect(calls[0]).toMatchObject({ method: "POST", url: "/api/v1/consents", body: { householdId: "h1", subjectAdultId: "adult1", purpose: "coverage_reconstruction" } });
     expect(calls[0]?.headers["idempotency-key"]).toBe("chat-req-12345678");
     const scopes = (calls[0]?.body as { scopes: { recipient: string; resourceType: string; action: string; dataCategory: string }[] }).scopes;
-    expect(scopes.map((s) => s.recipient).sort()).toEqual(["anthropic", "voyage"]);
+    expect(scopes.map((s) => s.recipient).sort()).toEqual(["gemini", "voyage"]);
     for (const s of scopes) expect(s).toMatchObject({ resourceType: "household", action: "derive", dataCategory: "insurance_question" });
     const cookie = jar.get("kv_docs");
     expect(cookie).toBeTruthy();
