@@ -164,7 +164,9 @@ export type UploadStage = "sending" | "checking" | "reading" | "details";
 /** The cover screens: add a cover, say which product it is, read the facts, settle conflicts, declarations and premiums. */
 export interface CoversAdapter {
   /** Sends one PDF (up to 4 MB) as `kind` of a `policyType` policy and waits for it to be scanned and read. `key` is reused on a retry. */
-  uploadDocument(file: File, key: string, kind: DocumentKind, policyType: PolicyType, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string }>;
+  uploadDocument(file: File, key: string, kind: DocumentKind, policyType: PolicyType, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string; busy?: boolean }>;
+  /** Moves an uploaded document on again (the page's "Check again"): the same follow-up as `uploadDocument`, without sending the file. */
+  resumeDocument(documentId: string, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string; busy?: boolean }>;
   /** The holding the backend made from a document, once it exists (null while it has not). Waits a little for it. */
   holdingFor(documentId: string): Promise<string | null>;
   /** `uploadDocument` then `holdingFor`: the one-PDF path. */

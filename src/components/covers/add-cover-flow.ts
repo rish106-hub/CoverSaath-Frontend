@@ -21,34 +21,46 @@ export type Slot = {
 export const emptySlot = (): Slot => ({ status: "empty", file: null, key: makeRequestKey(), documentId: null, code: null });
 export const pickFile = (file: File): Slot => ({ ...emptySlot(), status: "working", file });
 
-type Deps = Pick<CoversAdapter, "uploadDocument" | "holdingFor" | "linkDocument">;
+type Deps = Pick<CoversAdapter, "uploadDocument" | "resumeDocument" | "holdingFor" | "linkDocument">;
 const codeOf = (e: unknown): string => (e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE");
 /** Refusals a second try with the same file cannot fix. */
-const FINAL = new Set(["FILE_TYPE_INVALID", "FILE_TOO_LARGE", "FILE_EMPTY", "PDF_PROTECTED", "PDF_UNREADABLE", "PDF_ACTIVE_CONTENT", "PDF_TOO_LONG", "PDF_TOO_COMPLEX", "DUPLICATE_DOCUMENT", "POLICY_TYPE_INVALID", "HOLDING_CREATE_FAILED", "HOLDING_DOCUMENT_HAS_HOLDING"]);
+const FINAL = new Set(["FILE_TYPE_INVALID", "FILE_TOO_LARGE", "FILE_EMPTY", "PDF_PROTECTED", "PDF_UNREADABLE", "PDF_ACTIVE_CONTENT", "PDF_TOO_LONG", "PDF_TOO_COMPLEX", "DOCUMENT_REJECTED", "READING_UNAVAILABLE", "DUPLICATE_DOCUMENT", "POLICY_TYPE_INVALID", "HOLDING_CREATE_FAILED", "HOLDING_DOCUMENT_HAS_HOLDING"]);
 export const canRetry = (slot: Slot): boolean => slot.status === "failed" && !(slot.code && FINAL.has(slot.code));
 
 const fail = (slot: Slot, e: unknown): Slot => ({ ...slot, status: "failed", code: codeOf(e) });
 
-/** Schedule: upload, then find the holding the backend made from it. `holdingId` is null while the backend has not made it yet. */
+/**
+ * Schedule: upload and follow the backend steps, then find the holding the backend made from it. `holdingId` is null while the backend has
+ * not made it yet. A document still being read goes to "waiting" on the step it is on: "matching" shows only once reading is finished.
+ */
 export async function runSchedule(deps: Deps, slot: Slot, policyType: PolicyType, onStage?: (stage: NonNullable<Slot["stage"]>) => void): Promise<{ slot: Slot; holdingId: string | null }> {
   if (!slot.file) return { slot, holdingId: null };
   let cur: Slot = { ...slot, status: "working", code: null };
   try {
-    if (!cur.documentId) cur = { ...cur, documentId: (await deps.uploadDocument(cur.file!, cur.key, "policy_schedule", policyType, onStage)).documentId };
+    let reading = false;
+    if (!cur.documentId) {
+      const up = await deps.uploadDocument(cur.file!, cur.key, "policy_schedule", policyType, onStage);
+      cur = { ...cur, documentId: up.documentId };
+      reading = up.busy === true;
+    }
+    if (reading) return { slot: { ...cur, status: "waiting" }, holdingId: null };
     onStage?.("matching");
     const holdingId = await deps.holdingFor(cur.documentId!);
-    return holdingId ? { slot: { ...cur, status: "done" }, holdingId } : { slot: { ...cur, status: "waiting" }, holdingId: null };
+    return holdingId ? { slot: { ...cur, status: "done" }, holdingId } : { slot: { ...cur, status: "waiting", stage: "matching" }, holdingId: null };
   } catch (e) {
     return { slot: fail(cur, e), holdingId: null };
   }
 }
 
-/** One more look for the holding after the schedule is in. */
-export async function checkSchedule(deps: Deps, slot: Slot): Promise<{ slot: Slot; holdingId: string | null }> {
+/** One more look: keeps the document moving through its steps, then looks for the holding. */
+export async function checkSchedule(deps: Deps, slot: Slot, onStage?: (stage: NonNullable<Slot["stage"]>) => void): Promise<{ slot: Slot; holdingId: string | null }> {
   if (!slot.documentId) return { slot, holdingId: null };
   try {
+    const more = await deps.resumeDocument(slot.documentId, onStage);
+    if (more.busy) return { slot, holdingId: null };
+    onStage?.("matching");
     const holdingId = await deps.holdingFor(slot.documentId);
-    return holdingId ? { slot: { ...slot, status: "done", code: null }, holdingId } : { slot, holdingId: null };
+    return holdingId ? { slot: { ...slot, status: "done", code: null }, holdingId } : { slot: { ...slot, stage: "matching" }, holdingId: null };
   } catch (e) {
     return { slot: fail(slot, e), holdingId: null };
   }

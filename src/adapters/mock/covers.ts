@@ -11,15 +11,15 @@ import { delay } from "./delay";
 
 const quote = (page: number, text: string) => ({ pageId: `page-${page}`, blockIndex: 0, quote: text });
 const factsSeed = (wording: WordingState): Facts["facts"] => [
-  { factKey: "sum_insured", factClass: "personal_value", valueType: "money", unit: "paise", group: "limits", status: "extracted_unverified", value: 50_000_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-si-own", tier: "own_pdf", status: "extracted_unverified", value: 50_000_000, page: { pageId: "page-1", blockIndex: 0, documentKind: "policy_schedule" }, quote: "Sum insured Rs 5,00,000", current: true }] },
+  { factKey: "sum_insured", factClass: "personal_value", valueType: "money", unit: "paise", group: "limits", status: "extracted_unverified", value: 50_000_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-si-own", tier: "own_pdf", status: "extracted_unverified", value: 50_000_000, page: { pageId: "page-1", pageNumber: 1, blockIndex: 0, documentKind: "policy_schedule" }, quote: "Sum insured Rs 5,00,000", current: true }] },
   { factKey: "room_rent_limit", factClass: "product_term", valueType: "text", unit: "none", group: "limits", status: "conflicting", value: null, alternatives: [], checkWithInsurer: true, openConflictId: "c-room", sources: [] },
   wording === "fss"
-    ? { factKey: "initial_waiting_days", factClass: "product_term", valueType: "number", unit: "days", group: "waiting", status: "reviewed_reference", value: 30, sourceTier: "ida_wording", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-iw-own", tier: "own_pdf", status: "extracted_unverified", value: 30, page: { pageId: "page-2", blockIndex: 1 }, quote: "30 days from the start date", current: true }, { id: "s-iw-ida", tier: "ida_wording", status: "reviewed_reference", value: 30, page: null, quote: "A waiting period of 30 days applies.", current: true }] }
-    : { factKey: "initial_waiting_days", factClass: "product_term", valueType: "number", unit: "days", group: "waiting", status: "extracted_unverified", value: 30, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-iw-own", tier: "own_pdf", status: "extracted_unverified", value: 30, page: { pageId: "page-2", blockIndex: 1 }, quote: "30 days from the start date", current: true }] },
-  { factKey: "ped_waiting_months", factClass: "product_term", valueType: "number", unit: "months", group: "waiting", status: "extracted_unverified", value: 36, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ped-own", tier: "own_pdf", status: "extracted_unverified", value: 36, page: { pageId: "page-2", blockIndex: 4 }, quote: "36 months for pre-existing diseases", current: true }] },
-  { factKey: "exclusion_cosmetic", factClass: "product_term", valueType: "bool", unit: "none", group: "exclusions", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ex-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-3", blockIndex: 2 }, quote: "Cosmetic treatment is not covered", current: true }] },
-  { factKey: "cashless_network", factClass: "product_term", valueType: "bool", unit: "none", group: "cashless", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-cl-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-1", blockIndex: 6 }, quote: "Cashless at network hospitals", current: true }] },
-  { factKey: "premium_total", factClass: "personal_value", valueType: "money", unit: "paise", group: "money", status: "extracted_unverified", value: 1_850_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-pr-own", tier: "own_pdf", status: "extracted_unverified", value: 1_850_000, page: { pageId: "page-1", blockIndex: 9 }, quote: "Total premium Rs 18,500", current: true }] },
+    ? { factKey: "initial_waiting_days", factClass: "product_term", valueType: "number", unit: "days", group: "waiting", status: "reviewed_reference", value: 30, sourceTier: "ida_wording", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-iw-own", tier: "own_pdf", status: "extracted_unverified", value: 30, page: { pageId: "page-2", pageNumber: 2, blockIndex: 1 }, quote: "30 days from the start date", current: true }, { id: "s-iw-ida", tier: "ida_wording", status: "reviewed_reference", value: 30, page: null, quote: "A waiting period of 30 days applies.", current: true }] }
+    : { factKey: "initial_waiting_days", factClass: "product_term", valueType: "number", unit: "days", group: "waiting", status: "extracted_unverified", value: 30, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-iw-own", tier: "own_pdf", status: "extracted_unverified", value: 30, page: { pageId: "page-2", pageNumber: 2, blockIndex: 1 }, quote: "30 days from the start date", current: true }] },
+  { factKey: "ped_waiting_months", factClass: "product_term", valueType: "number", unit: "months", group: "waiting", status: "extracted_unverified", value: 36, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ped-own", tier: "own_pdf", status: "extracted_unverified", value: 36, page: { pageId: "page-2", pageNumber: 2, blockIndex: 4 }, quote: "36 months for pre-existing diseases", current: true }] },
+  { factKey: "exclusion_cosmetic", factClass: "product_term", valueType: "bool", unit: "none", group: "exclusions", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ex-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-3", pageNumber: 3, blockIndex: 2 }, quote: "Cosmetic treatment is not covered", current: true }] },
+  { factKey: "cashless_network", factClass: "product_term", valueType: "bool", unit: "none", group: "cashless", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-cl-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-1", pageNumber: 1, blockIndex: 6 }, quote: "Cashless at network hospitals", current: true }] },
+  { factKey: "premium_total", factClass: "personal_value", valueType: "money", unit: "paise", group: "money", status: "extracted_unverified", value: 1_850_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-pr-own", tier: "own_pdf", status: "extracted_unverified", value: 1_850_000, page: { pageId: "page-1", pageNumber: 1, blockIndex: 9 }, quote: "Total premium Rs 18,500", current: true }] },
 ];
 const conflictsSeed = (wording: WordingState): Conflicts["conflicts"] => [
   wording === "fss"
@@ -81,7 +81,7 @@ const summaryOf = (s: State): HoldingSummary => {
     policyPeriod: read ? { factKey: "policy_period", value: SEED_PERIOD, status: "extracted_unverified" } : null,
     premium: money("premium_total"),
     wordingState: s.wording,
-    wordingReason: s.wording === "fss" ? "attached" : s.wording === "missing" ? "no_match" : null,
+    wordingReason: s.wording === "fss" ? null : s.wording === "missing" ? "no_match" : null,
   };
 };
 const get = (id: string) => {
@@ -107,6 +107,10 @@ export const mockCovers: CoversAdapter = {
     holdings.set(`holding-mock-${n}`, { documentId, state: { facts: [], conflicts: [], status: "uploaded", version: 0, confirmed: null, key: null, wording: "missing" }, linked: [{ documentId, kind: "schedule" }] });
     void key;
     return delay({ documentId });
+  },
+  resumeDocument: async (documentId, onStage) => {
+    onStage?.("details");
+    return delay({ documentId, busy: false });
   },
   holdingFor: async (documentId) => {
     if (issues.get(documentId)?.state === "failed") throw new AdapterError("HOLDING_CREATE_FAILED");

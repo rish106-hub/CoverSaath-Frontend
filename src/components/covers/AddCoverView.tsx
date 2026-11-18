@@ -44,7 +44,8 @@ function UploadSteps({ stage }: { stage: NonNullable<Slot["stage"]> }) {
 function SlotStatus({ slot, name }: { slot: Slot; name: string }) {
   if (slot.status === "empty") return <p className={s.quiet}>Drop the PDF here, or choose it from your device.</p>;
   const file = slot.file?.name ?? name;
-  if (slot.status === "working" || slot.status === "waiting") return <UploadSteps stage={slot.status === "waiting" ? "matching" : (slot.stage ?? "sending")} />;
+  if (slot.status === "working") return <UploadSteps stage={slot.stage ?? "sending"} />;
+  if (slot.status === "waiting") return <><UploadSteps stage={slot.stage ?? "sending"} /><p className={s.quiet}>Still working on it. A long policy can take a minute or two.</p></>;
   if (slot.status === "done") return <p className={s.lead} role="status" data-state="done">{file}: added.</p>;
   return <p className={s.alert} role="alert" data-state="failed">{file}: {errorText(slot.code ?? "")}</p>;
 }
@@ -55,7 +56,7 @@ export function AddCoverView() {
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState<boolean | null>(null);
   const [agreed, setAgreed] = useState(false);
-  const [policyType, setPolicyType] = useState<PolicyType | "">("");
+  const [policyType, setPolicyType] = useState<PolicyType | "">("personal_health");
   const [typeLocked, setTypeLocked] = useState(false);
   const [schedule, setSchedule] = useState<Slot>(emptySlot);
   const [holdingId, setHoldingId] = useState<string | null>(null);
@@ -190,8 +191,9 @@ export function AddCoverView() {
 
   async function checkAgain() {
     setBusy(true);
+    const onStage = (stage: NonNullable<Slot["stage"]>) => setSchedule((cur) => ({ ...cur, stage }));
     try {
-      await afterSchedule(await checkSchedule(adapters.covers, schedule));
+      await afterSchedule(await checkSchedule(adapters.covers, schedule, onStage));
     } finally {
       setBusy(false);
     }
