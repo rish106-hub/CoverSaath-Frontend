@@ -202,7 +202,7 @@ export function AccessCard() {
       ) : null}
       <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Getting you in…" : "Get access"}</button>
       {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : urlMessage ? <p className={styles.err} role="alert">{urlMessage}</p> : null}
-      <div className={styles.note}><span>No card needed. Leave any time.</span><a href="#">Privacy</a></div>
+      <div className={styles.note}><span>No card needed. Leave any time.</span><Link href="/privacy">Privacy</Link></div>
     </form>
   );
 }

@@ -2,7 +2,7 @@
 .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .out { background: none; border: 0; padding: 0; font: inherit; color: var(--harbour); text-decoration: underline; cursor: pointer; }
 .out:disabled { opacity: 0.6; cursor: progress; }
-@media (min-width: 960px) and (max-width: 1199px) {
+@media (min-width: 960px) and (max-width: 1023px) {
   .label { display: none; }
   .badge { justify-content: center; margin: 8px 0 0; padding: 4px; }
 }

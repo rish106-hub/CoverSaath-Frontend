@@ -36,8 +36,8 @@
 .menu:hover, .close:hover { background: var(--sunken); border-color: var(--graphite); }
 .aside > :last-child { margin-top: auto; }
 
-/* Icon rail: 960 to 1199px. Labels become tooltips; every link keeps its accessible name. */
-@media (min-width: 960px) and (max-width: 1199px) {
+/* Icon rail: 960 to 1023px (a one-letter rail was unreadable on a 1024px laptop). Labels become tooltips; every link keeps its accessible name. */
+@media (min-width: 960px) and (max-width: 1023px) {
   .aside { --pad: 10px; align-items: stretch; }
   .brand { padding: 0; justify-content: center; }
   .brand a > span { display: none; }

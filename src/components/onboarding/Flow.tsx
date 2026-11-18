@@ -230,7 +230,7 @@ function PeopleStep({ people, onToggle, status, onRetry }: { people?: Record<str
             <span className={styles.pm} aria-hidden>{on[p.id] ? "✓" : "+"}</span>
           </button>
         ))}
-        <button type="button" className={`${styles.person} ${styles.personAdd}`}><span className={`${styles.ava} ${styles.avaAdd}`} aria-hidden>+</span>Add parents or someone else</button>
+        <Link href="/covers/add" className={`${styles.person} ${styles.personAdd}`}><span className={`${styles.ava} ${styles.avaAdd}`} aria-hidden>+</span>Add parents or someone else</Link>
       </div>
       <SaveState status={status} onRetry={onRetry} />
     </div>

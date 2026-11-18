@@ -86,7 +86,7 @@ export function Landing() {
       <footer className={styles.foot}>
         <div className={`${styles.wrap} ${styles.footRow}`}>
           <span>© 2026 Knowvia</span>
-          <span className={styles.footLinks}><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></span>
+          <span className={styles.footLinks}><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></span>
         </div>
       </footer>
       <div className={styles.themeSlot}><ThemeToggle /></div>

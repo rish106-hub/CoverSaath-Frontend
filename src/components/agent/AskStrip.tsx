@@ -6,6 +6,7 @@ import { adapters } from "@/adapters";
 import { usePageContext } from "@/agent/page-context";
 import { useAgent } from "./AgentProvider";
 import styles from "./agent.module.css";
+import { voiceOnHold } from "./voice-hold";
 
 /** Home row: orb, invitation, 3 example chips, and what Knowvia is doing for you. Exported for other branches. */
 export function AskStrip() {
@@ -31,9 +32,9 @@ export function AskStrip() {
           <span>It reads your policies and whatever page you are on.</span>
         </span>
       </button>
-      <button type="button" className={styles.stripMic} aria-label="Talk to Knowvia" onClick={() => open(ref.current, { anchor: "strip" })}>
+      {voiceOnHold() ? null : <button type="button" className={styles.stripMic} aria-label="Talk to Knowvia" onClick={() => open(ref.current, { anchor: "strip" })}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" /></svg>
-      </button>
+      </button>}
       <div className={styles.chips}>
         {ctx.examples.map((e) => (
           <button key={e.say} type="button" className={styles.chip} onClick={() => { open(ref.current, { anchor: "strip", mode: "text" }); submit(e.say); }}>“{e.say}”</button>

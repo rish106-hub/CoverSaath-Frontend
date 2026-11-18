@@ -77,7 +77,7 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
   "/policies": { route: "/policies", page: "My policies", reads: "your 3 policies and who they cover", examples: [
     ex("Which policy covers Mumma?", ["Mother · policy", "Checked 3 policies", "Meridian Care senior plan, Rs 3L"], "/policies/meridian-senior", "Open the policy"),
     ex("When does each policy renew?", ["Renewals", "Read 3 policy dates", "Meridian 13 Mar, Northstar 31 Mar, Kaveri 14 Jun"], "/money", "See what is coming up"),
-    ex("Add another policy", ["Add policy", "Can read a PDF or Gmail", "Opening the add step"], "/welcome/add", "Add a policy"),
+    ex("Add another policy", ["Add policy", "Can read a PDF or Gmail", "Opening the add step"], "/covers/add", "Add a policy"),
   ] },
   "/shortcuts": { route: "/shortcuts", page: "Shortcuts", reads: "the keys, mouse and voice ways to move", examples: [
     ex("What does G then H do?", ["Shortcut · G H", "Go to Home", "Works when no field is open"]),
