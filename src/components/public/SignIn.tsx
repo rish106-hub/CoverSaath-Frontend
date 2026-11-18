@@ -138,7 +138,7 @@ export function SignIn() {
             <div className={styles.tickBig} aria-hidden>✓</div>
             <h1 className={styles.h1}>You’re in.</h1>
             <p className={styles.sub}>{returnTo ? "Taking you back." : "Next, add your policy."}</p>
-            <Link href={returnTo ?? "/welcome/add"} className={styles.cta}>{returnTo ? "Continue" : "Add my policy"}</Link>
+            <Link href={returnTo ?? "/covers/add"} className={styles.cta}>{returnTo ? "Continue" : "Add my policy"}</Link>
           </div>
         ) : null}
 
@@ -147,7 +147,7 @@ export function SignIn() {
             <div key={w.t} className={styles.why}><span className={styles.whyI} aria-hidden>{w.i}</span><span className={styles.whyT}>{w.t}</span><span className={styles.whyD}>{w.d}</span></div>
           ))}
         </div>
-        <div className={styles.terms}>By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
+        <div className={styles.terms}>By continuing you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.</div>
       </div>
       <ShowcasePanel />
       <div className={styles.themeSlot}><ThemeToggle /></div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { voiceOnHold } from "./voice-hold";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -95,10 +96,12 @@ export function AskPanel() {
         ) : null}
 
         <div className={styles.controls}>
+          {voiceOnHold() ? null : (
           <button ref={mic} type="button" className={styles.mic} aria-label="Talk to Knowvia" aria-pressed={listening} onClick={toggleMic}>
-            <span className={styles.micRing} aria-hidden />
-            <MicIcon />
-          </button>
+              <span className={styles.micRing} aria-hidden />
+              <MicIcon />
+            </button>
+          )}
           <button
             ref={arrow}
             type="button"

@@ -77,7 +77,7 @@ export function FamilyView() {
     <>
       <div className={styles.toolbar}>
         <button type="button" className="k-btn k-btn--primary" onClick={() => setAdding(true)}>Add family member</button>
-        <Link className="k-btn" href="/welcome/add">Add a document</Link>
+        <Link className="k-btn" href="/covers/add">Add a document</Link>
       </div>
 
       <SectionHeading title="People">
