@@ -209,7 +209,7 @@ export function ChatView() {
           <div className={s.card}>
             <p className={s.lead}>To answer a question about your cover we send the question, and short passages from your own cover details that relate to it, to two services.</p>
             <ul className={s.list}>
-              <li>A language service (Anthropic) writes the answer in plain words.</li>
+              <li>A language service (Google Gemini) writes the answer in plain words.</li>
               <li>A search service (Voyage) finds the passages that relate to your question.</li>
             </ul>
             <p className={s.lead}>Your policy file itself is not sent. You can withdraw this at any time.</p>

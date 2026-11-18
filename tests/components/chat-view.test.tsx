@@ -89,7 +89,7 @@ describe("ChatView go-ahead", () => {
     consentGet.mockResolvedValue(false);
     render(<ChatView />);
     expect(await screen.findByText("Before we answer")).toBeDefined();
-    expect(screen.getByText(/Anthropic/)).toBeDefined();
+    expect(screen.getByText(/Gemini/)).toBeDefined();
     expect(screen.getByText(/Voyage/)).toBeDefined();
     expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Waiting periods?" } });
