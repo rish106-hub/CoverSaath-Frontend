@@ -36,7 +36,7 @@ export type Headline = z.infer<typeof headlineView>;
  */
 export const WORDING_STATES = ["fss", "manual", "missing"] as const;
 export type WordingState = (typeof WORDING_STATES)[number];
-export const WORDING_REASONS = ["unavailable", "rate_limited", "unauthorized", "no_match", "version_unresolved", "synthetic_only", "invalid_response", "disabled", "no_usable_facts", "attached"] as const;
+export const WORDING_REASONS = ["unavailable", "rate_limited", "unauthorized", "no_match", "version_unresolved", "synthetic_only", "invalid_response", "disabled", "no_usable_facts", "not_checked"] as const;
 export type WordingReason = (typeof WORDING_REASONS)[number];
 
 /** Insurer and product name are null until the owner confirmed the product. Older backends send no summary at all. */
@@ -83,7 +83,10 @@ export type HoldingDocumentKind = (typeof HOLDING_DOCUMENT_KINDS)[number];
 /** Body of POST /api/app/covers/holdings/{id}/documents. Strict: a stray key is a 400. */
 export const linkDocumentIn = z.object({ documentId: id, kind: z.enum(HOLDING_DOCUMENT_KINDS).default("wording") }).strict();
 export type LinkDocumentInput = z.input<typeof linkDocumentIn>;
-export const holdingDocumentsIn = z.object({ holdingId: id, documents: z.array(z.object({ documentId: id, kind: z.string().max(40) })).max(50) });
+/** `factsState`: included (its facts are part of the holding), none (nothing read or found), off (fact reading is switched off). A missing or new value reads as unknown. */
+export const FACTS_STATES = ["included", "none", "off"] as const;
+export type FactsState = (typeof FACTS_STATES)[number];
+export const holdingDocumentsIn = z.object({ holdingId: id, documents: z.array(z.object({ documentId: id, kind: z.string().max(40), factsState: z.enum(FACTS_STATES).nullish().catch(null) })).max(50) });
 export type HoldingDocuments = z.infer<typeof holdingDocumentsIn>;
 export const linkedIn = z.object({ holdingId: id, documentId: id, kind: z.string().max(40), linked: z.boolean() });
 export type Linked = z.infer<typeof linkedIn>;
@@ -97,7 +100,7 @@ export type Confirmed = z.infer<typeof confirmedIn>;
 
 const status = z.enum(RESOLVED_STATUSES);
 /** `documentKind` is the document_kind of the page's document (policy_schedule, policy_wording, ...), or null. */
-const page = z.object({ pageId: z.string().max(128), blockIndex: z.number().int().nullish(), documentKind: z.string().max(60).nullish() }).nullish();
+const page = z.object({ pageId: z.string().max(128), blockIndex: z.number().int().nullish(), documentKind: z.string().max(60).nullish(), /** The 1-based page of the document, from the backend. The digits at the end of `pageId` are not a page. */ pageNumber: z.number().int().min(1).max(10000).nullish() }).nullish();
 /** One reading of a fact in one tier (own PDF, insurer wording, your declaration). `value` is whatever the backend typed it as. */
 export const sourceView = z.object({
   id: z.string().max(128),

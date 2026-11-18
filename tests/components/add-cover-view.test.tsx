@@ -28,8 +28,8 @@ describe("add a cover page", () => {
     render(<AddCoverView />);
     await pastConsent();
     expect(screen.getByRole("heading", { name: "Your policy schedule" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Choose the type of cover first" })).toBeDisabled();
-    fireEvent.change(screen.getByTestId("policy-type"), { target: { value: "personal_health" } });
+    expect((screen.getByTestId("policy-type") as HTMLSelectElement).value).toBe("personal_health");
+    expect(screen.getByRole("button", { name: "Choose the schedule PDF" })).toBeEnabled();
     expect(screen.queryByTestId("terms-input")).toBeNull();
     expect(screen.queryByText(/Add this after your schedule is in/)).toBeNull();
     expect(screen.queryByText(/terms and conditions/i)).toBeNull();

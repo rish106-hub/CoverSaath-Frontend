@@ -83,15 +83,13 @@ export function sideLabel(src: SourceView): string {
   const ref = isReferenceSide(src);
   const name = src.documentName?.trim() || (ref ? "Insurer terms" : isOwnSide(src) ? "Your schedule" : tierText(src.tier));
   const verified = ref && src.verificationStatus !== "unverified" ? " (verified)" : "";
-  const m = src.page ? /(\d+)\s*$/.exec(src.page.pageId) : null;
-  const n = src.pageNumber ?? (m ? Number(m[1]) : null);
+  const n = src.pageNumber ?? src.page?.pageNumber ?? null;
   return `${name}${verified}${n ? `, page ${n}` : ""}`;
 }
 
 export function pageText(page: SourceView["page"]): string | null {
   if (!page) return null;
-  const m = /(\d+)\s*$/.exec(page.pageId);
-  return m ? `Page ${m[1]}` : "In the document";
+  return page.pageNumber ? `Page ${page.pageNumber}` : "In the document";
 }
 
 export function groupFacts(facts: FactView[]): { label: GroupLabel; facts: FactView[] }[] {

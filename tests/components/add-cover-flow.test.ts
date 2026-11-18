@@ -6,6 +6,7 @@ import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, runTerms } f
 const pdf = (name: string) => new File([new Uint8Array(8)], name, { type: "application/pdf" });
 const deps = () => ({
   uploadDocument: vi.fn(async (_f: File, _k: string, kind: string) => ({ documentId: kind === "policy_schedule" ? "doc-s" : "doc-t" })),
+  resumeDocument: vi.fn(async (id: string) => ({ documentId: id, busy: false })),
   holdingFor: vi.fn(async (): Promise<string | null> => "holding-1"),
   linkDocument: vi.fn(async (holdingId: string, i: { documentId: string }) => ({ holdingId, documentId: i.documentId, kind: "wording", linked: true })),
 });
@@ -75,5 +76,29 @@ describe("add cover flow", () => {
     const d = deps();
     expect(await runTerms(d, emptySlot(), "personal_health", "holding-1")).toMatchObject({ status: "empty" });
     expect(d.uploadDocument).not.toHaveBeenCalled();
+  });
+  it("a document still being read goes to waiting on its real step, without asking for a holding", async () => {
+    const d = deps();
+    d.uploadDocument.mockResolvedValueOnce({ documentId: "doc-s", busy: true } as { documentId: string });
+    const r = await runSchedule(d, pickFile(pdf("s.pdf")), "personal_health");
+    expect(r).toMatchObject({ holdingId: null, slot: { status: "waiting", documentId: "doc-s" } });
+    expect(r.slot.stage).not.toBe("matching");
+    expect(d.holdingFor).not.toHaveBeenCalled();
+  });
+  it("Check again keeps the document moving, and looks for the holding only once reading is done", async () => {
+    const d = deps();
+    d.resumeDocument.mockResolvedValueOnce({ documentId: "doc-s", busy: true } as { documentId: string; busy: boolean });
+    const waiting = { ...pickFile(pdf("s.pdf")), status: "waiting" as const, documentId: "doc-s" };
+    expect(await checkSchedule(d, waiting)).toMatchObject({ holdingId: null });
+    expect(d.holdingFor).not.toHaveBeenCalled();
+    expect(await checkSchedule(d, waiting)).toMatchObject({ holdingId: "holding-1", slot: { status: "done" } });
+  });
+  it("a refused file or a reading that cannot run has no retry of the same file; a failed reading has", async () => {
+    for (const [code, retry] of [["DOCUMENT_REJECTED", false], ["READING_UNAVAILABLE", false], ["READING_FAILED", true]] as const) {
+      const d = deps();
+      d.uploadDocument.mockRejectedValueOnce(new AdapterError(code));
+      const r = await runSchedule(d, pickFile(pdf("s.pdf")), "personal_health");
+      expect(canRetry(r.slot)).toBe(retry);
+    }
   });
 });
