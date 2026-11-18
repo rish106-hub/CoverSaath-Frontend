@@ -55,6 +55,16 @@ describe("ChatView", () => {
     expect(turn.mock.calls[0]?.[1]).toEqual({ message: "Is knee surgery covered?", inputKind: "text" });
   });
 
+  it("shows no voice button or microphone note while voice is on hold", async () => {
+    process.env.NEXT_PUBLIC_VOICE_ON_HOLD = "true";
+    try {
+      render(<ChatView />);
+      await waitFor(() => expect(screen.getByRole("button", { name: "Ask" })).toBeDefined());
+      expect(screen.queryByRole("button", { name: /Ask by voice/ })).toBeNull();
+      expect(screen.queryByText(/words you speak/)).toBeNull();
+    } finally { process.env.NEXT_PUBLIC_VOICE_ON_HOLD = "false"; }
+  });
+
   it("sends a spoken question as a voice turn and keeps no audio", async () => {
     listen.mockResolvedValue("Is cataract covered");
     render(<ChatView />);

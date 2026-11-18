@@ -7,6 +7,7 @@ import { AdapterError } from "@/adapters/types";
 import { errorText } from "@/adapters/documents-contract";
 import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/chat-contract";
 import { MicGlyph } from "@/components/agent/VoiceIcons";
+import { voiceOnHold } from "@/components/agent/voice-hold";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
 import { makeRequestKey } from "@/adapters/uploads";
@@ -103,7 +104,7 @@ export function ChatView() {
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   // False on the server and first paint, then what the browser can do: no hydration mismatch.
-  const canSpeak = useSyncExternalStore(() => () => undefined, () => adapters.voice.supported(), () => false);
+  const canSpeak = useSyncExternalStore(() => () => undefined, () => !voiceOnHold() && adapters.voice.supported(), () => false);
   const [note, setNote] = useState<string | null>(null);
   const thread = useRef<{ id: string; holdingId: string | null } | null>(null);
   const abort = useRef<AbortController | null>(null);
