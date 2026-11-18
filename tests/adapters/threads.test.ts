@@ -64,4 +64,36 @@ describe("browser chat go-ahead client", () => {
     const seen = await run(stream([frame("answer", { ...ANSWER, modelStatus: "numbers_unverified", truncated: false }), frame("done", {})]));
     expect(seen[0]).toMatchObject({ type: "answer", data: { modelStatus: "numbers_unverified", truncated: false } });
   });
+  it("gives up on a stream that goes quiet and says it took too long", async () => {
+    vi.useFakeTimers();
+    try {
+      // A real fetch errors the body when its signal aborts; the stub does the same.
+      vi.stubGlobal("fetch", vi.fn(async (_u: string, init: RequestInit) => new Response(new ReadableStream<Uint8Array>({
+        start(c) {
+          c.enqueue(new TextEncoder().encode(frame("meta", { threadId: "th-1", intent: "x", retrievalMode: "keyword" })));
+          init.signal?.addEventListener("abort", () => c.error(new DOMException("aborted", "AbortError")));
+        },
+      }), { status: 200, headers: { "content-type": "text/event-stream" } })));
+      const seen: TurnEvent[] = [];
+      const done = backendChat.turn("th-1", { message: "hi" }, (e) => seen.push(e));
+      const outcome = expect(done).rejects.toMatchObject({ code: "BACKEND_TIMEOUT" });
+      await vi.advanceTimersByTimeAsync(26_000);
+      await outcome;
+      expect(seen.map((e) => e.type)).toEqual(["meta"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("gives up when the request never answers at all", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", vi.fn((_u: string, init: RequestInit) => new Promise((_r, reject) => { init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))); })));
+      const done = backendChat.turn("th-1", { message: "hi" }, () => undefined);
+      const outcome = expect(done).rejects.toMatchObject({ code: "BACKEND_TIMEOUT" });
+      await vi.advanceTimersByTimeAsync(26_000);
+      await outcome;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

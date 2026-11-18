@@ -10,6 +10,10 @@ import type { z } from "zod";
 
 const HEADERS = { "x-knowvia-app": "1" };
 
+/** A turn never waits longer than this in total, or this long for the next bytes. Past either the page shows "That took too long" and offers a retry. */
+export const TURN_WATCHDOG_MS = 50_000;
+export const TURN_IDLE_MS = 25_000;
+
 async function failedWith(res: Response): Promise<AdapterError> {
   const b = ((await res.json().catch(() => null)) ?? {}) as { code?: unknown; retryable?: unknown };
   return new AdapterError(typeof b.code === "string" ? b.code : res.status === 401 ? "UNAUTHENTICATED" : "BACKEND_UNREACHABLE", b.retryable === true || res.status >= 500);
@@ -67,16 +71,29 @@ export const backendChat: ChatAdapter = {
   },
 
   async turn(threadId, input, onEvent, signal) {
+    // The caller's signal and our own watchdog share one controller, so either can end the request and the read.
+    const ctl = new AbortController();
+    let timedOut = false;
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    const trip = () => { timedOut = true; ctl.abort(); };
+    const total = setTimeout(trip, TURN_WATCHDOG_MS);
+    const armIdle = () => { clearTimeout(idle); idle = setTimeout(trip, TURN_IDLE_MS); };
+    const onCaller = () => ctl.abort();
+    if (signal?.aborted) return;
+    signal?.addEventListener("abort", onCaller, { once: true });
+    armIdle();
+    const stop = () => { clearTimeout(total); clearTimeout(idle); signal?.removeEventListener("abort", onCaller); };
     let res: Response;
     try {
-      res = await fetch(`/api/app/chat/threads/${encodeURIComponent(threadId)}/turns`, { method: "POST", cache: "no-store", headers: { ...HEADERS, "content-type": "application/json", accept: "text/event-stream" }, body: JSON.stringify(input), signal });
+      res = await fetch(`/api/app/chat/threads/${encodeURIComponent(threadId)}/turns`, { method: "POST", cache: "no-store", headers: { ...HEADERS, "content-type": "application/json", accept: "text/event-stream" }, body: JSON.stringify(input), signal: ctl.signal });
     } catch (e) {
+      stop();
       if (signal?.aborted) return;
       void e;
-      throw new AdapterError("BACKEND_UNREACHABLE", true);
+      throw new AdapterError(timedOut ? "BACKEND_TIMEOUT" : "BACKEND_UNREACHABLE", true);
     }
-    if (!res.ok) throw await failedWith(res);
-    if (!(res.headers.get("content-type") ?? "").toLowerCase().startsWith("text/event-stream") || !res.body) throw new AdapterError("BACKEND_BAD_RESPONSE");
+    if (!res.ok) { stop(); throw await failedWith(res); }
+    if (!(res.headers.get("content-type") ?? "").toLowerCase().startsWith("text/event-stream") || !res.body) { stop(); throw new AdapterError("BACKEND_BAD_RESPONSE"); }
     const reader = res.body.getReader();
     const text = new TextDecoder();
     let buf = "";
@@ -85,6 +102,7 @@ export const backendChat: ChatAdapter = {
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
+        armIdle();
         buf += text.decode(value, { stream: true }).replace(/\r\n/g, "\n");
         let at = buf.indexOf("\n\n");
         while (at >= 0) {
@@ -99,10 +117,11 @@ export const backendChat: ChatAdapter = {
     } catch (e) {
       if (signal?.aborted) return;
       if (e instanceof AdapterError) throw e;
-      throw new AdapterError("CHAT_STREAM_FAILED", true);
+      throw new AdapterError(timedOut ? "BACKEND_TIMEOUT" : "CHAT_STREAM_FAILED", true);
     } finally {
+      stop();
       reader.cancel().catch(() => undefined);
     }
-    if (!finished && !signal?.aborted) throw new AdapterError("CHAT_STREAM_FAILED", true);
+    if (!finished && !signal?.aborted) throw new AdapterError(timedOut ? "BACKEND_TIMEOUT" : "CHAT_STREAM_FAILED", true);
   },
 };
