@@ -1,0 +1,13 @@
+.table { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--sheet); overflow-x: auto; }
+.trow { display: grid; grid-template-columns: minmax(150px, 1.1fr) repeat(var(--cols, 2), minmax(150px, 1fr)); gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); align-items: start; min-width: min-content; }
+.trow:last-child { border-bottom: 0; }
+.head { font: 600 14px var(--font-sans); color: var(--ink); }
+.rowName { font: 500 13px var(--font-sans); color: var(--graphite); }
+.cell { font: 400 15px/1.35 var(--font-sans); color: var(--ink); overflow-wrap: anywhere; }
+.cellOpen { color: var(--g-money); }
+.bill { display: flex; flex-direction: column; gap: 6px; max-width: 320px; font: 500 14px var(--font-sans); color: var(--graphite); }
+.bill input, .bill select { min-height: var(--btn-h); padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 400 15px var(--font-sans); }
+.pays { display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: var(--r-xl); background: var(--ink); color: var(--paper); max-width: 420px; }
+.big { font: 400 34px/1.1 var(--font-serif); }
+.step { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font: 400 15px var(--font-sans); }
+.step:last-child { border-bottom: 0; }
