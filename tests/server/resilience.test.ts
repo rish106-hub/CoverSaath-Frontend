@@ -80,6 +80,15 @@ describe("backend guard", () => {
     expect(guard.state().open).toBe(true);
   });
 
+  it("coded NOT_CONFIGURED and BUSY 503s (reference data, chat, evidence) never open it", async () => {
+    const guard = createGuard({ failureThreshold: 2 });
+    for (const code of ["REFERENCE_DATA_NOT_CONFIGURED", "CHAT_NOT_CONFIGURED", "EVIDENCE_BUSY"]) {
+      const f = guard.wrap(async () => new Response(JSON.stringify({ error: { code } }), { status: 503 }));
+      for (let i = 0; i < 5; i += 1) await f("u");
+      expect(guard.state(), code).toMatchObject({ consecutiveFailures: 0, open: false });
+    }
+  });
+
   it("repeated 500s from the identity sign-in POST cannot open the shared breaker", async () => {
     const guard = createGuard({ failureThreshold: 3 });
     const client = createBackendClient({ baseUrl: "http://api.test", bootstrapToken: "b", identityToken: "i".repeat(40), fetch: guard.wrap(async () => new Response("{}", { status: 500 })) });

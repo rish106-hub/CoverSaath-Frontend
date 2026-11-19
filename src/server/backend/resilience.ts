@@ -7,7 +7,7 @@ import type { FetchLike } from "./client";
  * Two guards around every backend fetch:
  *  - bulkhead: at most `maxInflight` backend calls at once per serverless instance. Extra calls fail fast
  *    instead of queueing until the platform timeout.
- *  - circuit breaker: after `failureThreshold` failures in a row (network error, timeout, 502, 503 or 504; a plain 500, any 4xx or a coded *_DISABLED 503 is the
+ *  - circuit breaker: after `failureThreshold` failures in a row (network error, timeout, 502, 503 or 504; a plain 500, any 4xx or a coded *_DISABLED, *_NOT_CONFIGURED or *_BUSY 503 is the
  *    backend answering, not being down, so it does not count) calls fail fast
  *    for `cooldownMs`, then one probe call decides whether to close again.
  * Fast failures are a coded 503 BACKEND_BUSY with Retry-After, which the app shows as a retry state, never a crash.
@@ -26,12 +26,15 @@ export type GuardState = { inflight: number; consecutiveFailures: number; open: 
 /** Only "the backend is not there" statuses trip the breaker. A 500 from one route (for example a bad identity sign-in) must not take every route down. */
 export const isUnavailable = (status: number): boolean => status === 502 || status === 503 || status === 504;
 
-/** A 503 that carries a coded `*_DISABLED` is a feature flag that is off (for example HOLDINGS_DISABLED): the backend answered, it is not down. */
+/**
+ * A 503 that carries a coded `*_DISABLED`, `*_NOT_CONFIGURED` or `*_BUSY` is a feature that is off, not set up or briefly full
+ * (HOLDINGS_DISABLED, REFERENCE_DATA_NOT_CONFIGURED, CHAT_NOT_CONFIGURED, EVIDENCE_BUSY): the backend answered, it is not down.
+ */
 async function isFlagOff(res: Response): Promise<boolean> {
   if (res.status !== 503) return false;
   try {
     const code = ((await res.clone().json()) as { error?: { code?: unknown } } | null)?.error?.code;
-    return typeof code === "string" && /^[A-Z][A-Z0-9_]*_DISABLED$/.test(code);
+    return typeof code === "string" && /^[A-Z][A-Z0-9_]*_(DISABLED|NOT_CONFIGURED|BUSY)$/.test(code);
   } catch {
     return false;
   }

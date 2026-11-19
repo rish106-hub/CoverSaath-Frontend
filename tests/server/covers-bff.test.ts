@@ -89,8 +89,17 @@ describe("holdings and candidates", () => {
     const h = (await (await holdingsRoute.GET(req("/api/app/covers/holdings"))).json()).data.holdings[0];
     expect(h.summary).toEqual({ insurerName: "Example Insurer", productName: "Example Health Plan 01", sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" }, policyPeriod: summary.policyPeriod, premium: null });
   });
-  it("refuses a summary that holds a UIN", async () => {
-    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [{ id: "holding-1", status: "ready", summary: { productName: FAKE_UIN } }] } };
+  it("drops only the holding whose summary holds a UIN and keeps the rest", async () => {
+    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [{ id: "holding-1", status: "ready", summary: { productName: FAKE_UIN } }, { id: "holding-2", status: "ready", summary: { productName: "Example Health Plan 01" } }] } };
+    const res = await holdingsRoute.GET(req("/api/app/covers/holdings"));
+    expect(res.status).toBe(200);
+    const text = JSON.stringify(await res.json());
+    expect(text).not.toContain(FAKE_UIN);
+    expect(text).toContain("holding-2");
+    expect(text).not.toContain("holding-1");
+  });
+  it("still refuses the whole list when a UIN sits outside the holdings", async () => {
+    routes["GET /api/v1/households/h1/holdings"] = { status: 200, body: { holdings: [], creationIssues: [{ documentId: "doc-4", state: "failed", code: FAKE_UIN }] } };
     expect((await holdingsRoute.GET(req("/api/app/covers/holdings"))).status).toBe(502);
   });
   it("passes creation_issues through (retrying and failed), in either key style", async () => {

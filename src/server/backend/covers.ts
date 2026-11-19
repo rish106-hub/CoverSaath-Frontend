@@ -29,7 +29,12 @@ export async function listHoldings(ctx: Ctx): Promise<{ data: unknown }> {
   const r = await ctx.client.send("GET", `/api/v1/households/${enc(ctx.session.h)}/holdings`, ctx.session.t);
   // The backend's `creation_issues` (snake_case) is the same list as `creationIssues`; older backends send neither.
   const body = r.body && typeof r.body === "object" && "creation_issues" in r.body && !("creationIssues" in r.body) ? { ...(r.body as object), creationIssues: (r.body as { creation_issues: unknown }).creation_issues } : r.body;
-  return out(shape(holdingsIn, body));
+  // One holding that looks like it holds a UIN is dropped on its own; the rest of the list still goes out.
+  const parsed = holdingsIn.safeParse(body);
+  if (!parsed.success) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  const kept = { ...parsed.data, holdings: parsed.data.holdings.filter((h) => !containsUin(h)) };
+  if (containsUin({ ...kept, holdings: [] })) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  return out(kept);
 }
 
 /** Up to three candidates: insurer and product name, nothing else. The page confirms one by `candidateId`. */

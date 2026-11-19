@@ -48,6 +48,10 @@ describe("backend client", () => {
     // A Google-style session (no trial marker) never reports a trial.
     expect((await readMe(c, { ...session, trial: undefined })).trial).toBeUndefined();
   });
+  it("a trial sign-in at the session cap is a retryable RATE_LIMITED, not a generic rejection", async () => {
+    const c = fake({ "/api/v1/households": { status: 429, body: { error: { code: "SESSION_CAPACITY_REACHED" } } } });
+    await expect(grantAccess(c, { name: "Meera Rao", email: "meera.rao@company.com" })).rejects.toMatchObject({ code: "RATE_LIMITED", status: 429, retryable: true });
+  });
   it("rejects bad input before calling the backend", async () => {
     await expect(grantAccess(fake({}), { name: "", email: "nope" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });

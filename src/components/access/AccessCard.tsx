@@ -15,11 +15,12 @@ type State = { kind: "idle" } | { kind: "busy" } | { kind: "done"; name: string 
 
 /** The default demo address; the field also appears whenever the server asks for a password. */
 const DEMO_HINT = "demo@demo.com";
+const BUSY = "Too many sign-ins right now. Try again in a minute.";
 const GOOGLE_ERRORS: Record<string, string> = {
   google_denied: "Google sign-in was cancelled.",
   google_failed: "Google sign-in didn’t complete. Try again.",
   google_unavailable: "Google sign-in isn’t available right now.",
-  google_busy: "Too many sign-ins right now. Try again in a minute.",
+  google_busy: BUSY,
 };
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
 
@@ -82,7 +83,7 @@ export function AccessCard() {
         flying.current = false;
         setAuto(false);
         if (res.code === "INVALID_CREDENTIALS") setAskPassword(true);
-        setState({ kind: "error", message: res.code === "INVALID_CREDENTIALS" ? "That email and password do not match." : res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : DOWN });
+        setState({ kind: "error", message: res.code === "INVALID_CREDENTIALS" ? "That email and password do not match." : res.code === "INVALID_INPUT" ? "Check your name and email, then try again." : res.code === "RATE_LIMITED" ? BUSY : DOWN });
         return;
       }
       const first = res.name ?? name.trim().split(" ")[0];

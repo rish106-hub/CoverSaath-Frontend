@@ -13,8 +13,9 @@ import { guardedFetch } from "./resilience";
 import { BLOB_NAME, BLOB_TOKEN_TTL_MS, DOCUMENT_KINDS, MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, deriveView, policyType, whyFromBackendCode, type DocView, type PolicyType, type ProgressCode, type StructuringWhy } from "@/adapters/documents-contract";
 
 // BFF for the evidence pipeline: case, reading consent, upload, scan, OCR, structuring, delete, revoke (CoverSaath /api/v1).
-// Server only. The backend token stays in the sealed session cookie. The backend has no route that lists cases or consent grants,
-// so the ids this flow needs live in a second sealed cookie (kv_docs). Legal review: consent purposes and recipients are not final.
+// Server only. The backend token stays in the sealed session cookie. The ids this flow needs (case, grants, per-document progress)
+// are cached in a second sealed cookie (kv_docs). When that cookie is empty (expired, new device) the case and grant ids are rebuilt
+// from the backend's own lists: GET /households/{id}/cases and /consents. Legal review: consent purposes and recipients are not final.
 
 export const DOCS_COOKIE = "kv_docs";
 const MAX_TRACKED = 6;
@@ -173,6 +174,15 @@ const docDto = z.object({
 }).loose();
 type BackendDocDto = z.infer<typeof docDto>;
 
+const caseListDto = z.object({ cases: z.array(z.object({ id: z.string().min(1), policyType: z.string().nullish(), status: z.string().nullish() }).loose()) }).loose();
+const consentListDto = z.object({
+  consents: z.array(z.object({
+    id: z.string().min(1), purpose: z.string(), status: z.string(),
+    scopes: z.array(z.object({ resourceType: z.string(), resourceId: z.string().nullish(), action: z.string(), dataCategory: z.string(), recipient: z.string().nullish() }).loose()),
+  }).loose()),
+}).loose();
+type BackendConsent = z.infer<typeof consentListDto>["consents"][number];
+
 type GrantScope = { resourceType: string; resourceId: string | null; action: string; dataCategory: string; recipient?: string };
 
 export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike; strict401?: boolean }) {
@@ -231,6 +241,16 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
       const r = await send("POST", `/api/v1/cases/${encodeURIComponent(caseId)}/transitions`, token, { json: { toStatus, expectedRevision } });
       const c = parse(caseDto, r.body);
       return { status: c.status ?? null, revision: c.revision ?? null };
+    },
+    /** The caller's own cases in the household, newest first. */
+    async listCases(token: string, householdId: string): Promise<{ id: string; policyType: string | null; status: string | null }[]> {
+      const r = await send("GET", `/api/v1/households/${encodeURIComponent(householdId)}/cases?limit=20`, token);
+      return parse(caseListDto, r.body).cases.map((c) => ({ id: c.id, policyType: c.policyType ?? null, status: c.status ?? null }));
+    },
+    /** The caller's own consent grants in the household, newest first, each with its status and scopes. */
+    async listConsents(token: string, householdId: string): Promise<BackendConsent[]> {
+      const r = await send("GET", `/api/v1/households/${encodeURIComponent(householdId)}/consents?limit=100`, token);
+      return parse(consentListDto, r.body).consents;
     },
     /** Only for a case this app made before it kept the revision. Needs the backend's case-summary read consent. */
     async readCase(token: string, caseId: string): Promise<{ status: string | null; revision: string | null }> {
@@ -304,6 +324,63 @@ export async function readDocsState(secret: string, session: SessionPayload): Pr
   return { ...v, exp: session.exp };
 }
 
+const isActive = (c: BackendConsent) => c.status === "active";
+const hasScope = (c: BackendConsent, f: (sc: BackendConsent["scopes"][number]) => boolean) => c.scopes.some(f);
+
+/** The newest active grant that covers storing the file here (the collect grant of grantReadingConsent). */
+export const findCollectGrant = (list: BackendConsent[]) =>
+  list.find((c) => isActive(c) && c.purpose === "document_processing" && hasScope(c, (s) => s.resourceType === "document" && !s.resourceId && s.action === "collect" && s.dataCategory === "insurance_document"));
+/** The newest active case read grant for this case (ensureReadGrant). */
+export const findReadGrant = (list: BackendConsent[], caseId: string) =>
+  list.find((c) => isActive(c) && c.purpose === "document_processing" && hasScope(c, (s) => s.resourceType === "case" && s.resourceId === caseId && s.action === "read" && s.dataCategory === "source_pack_metadata"));
+/** The newest active chat go-ahead (grantChatConsent). */
+export const findChatGrant = (list: BackendConsent[]) =>
+  list.find((c) => isActive(c) && c.purpose === "coverage_reconstruction" && hasScope(c, (s) => s.action === "derive" && s.dataCategory === "insurance_question" && s.recipient === "gemini"));
+
+const isBlank = (s: DocsState) => !s.c && !s.g && !s.v && !s.ch && !s.x?.length && !s.q?.length && Object.keys(s.d).length === 0;
+
+/**
+ * When the kv_docs cookie is empty (expired, new device or browser) the backend still holds the case and the grants. Rebuilds the ids
+ * from GET /households/{id}/cases and /consents: the newest case that is not closed, and the active grants that match what this app makes.
+ * Per-document progress is not rebuilt; the next poll re-derives it. Best effort: any failure leaves the state empty, as before.
+ */
+async function rehydrateDocsState(client: DocumentsClient, session: SessionPayload, state: DocsState): Promise<DocsState> {
+  try {
+    const [cases, consents] = await Promise.all([client.listCases(session.t, session.h), client.listConsents(session.t, session.h)]);
+    const open = cases.find((c) => c.status !== "closed");
+    const g = findCollectGrant(consents);
+    const ch = findChatGrant(consents);
+    if (!g && !ch) return state;
+    const next: DocsState = { ...state };
+    if (g) next.g = g.id;
+    if (ch) next.ch = ch.id;
+    if (open && g) {
+      next.c = open.id;
+      const pt = policyType.safeParse(open.policyType);
+      if (pt.success) next.pt = pt.data;
+      next.cs = open.status ?? undefined;
+      const v = findReadGrant(consents, open.id);
+      if (v) next.v = v.id;
+    }
+    return next;
+  } catch {
+    return state;
+  }
+}
+
+/**
+ * Called by the operations that need the case or the grants (the document list, withdrawing consent), not by every route, so a
+ * request that fails validation, or one that never touches documents (chat, covers), makes no extra backend call.
+ * Does nothing when the cookie already holds state. Saves what it finds, so later calls in the flow read it from the cookie.
+ */
+export async function hydrateDocsState(ctx: Ctx): Promise<void> {
+  if (!ctx.session.a || !isBlank(ctx.state)) return;
+  const next = await rehydrateDocsState(ctx.client, ctx.session, ctx.state);
+  if (next === ctx.state) return;
+  Object.assign(ctx.state, next);
+  await writeDocsState(ctx.state, ctx.secret);
+}
+
 export async function writeDocsState(state: DocsState, secret: string): Promise<void> {
   const ids = Object.keys(state.d);
   const d = Object.fromEntries(ids.slice(-MAX_TRACKED).map((id) => [id, state.d[id]]));
@@ -340,7 +417,23 @@ export async function grantReadingConsent(ctx: Ctx, requestId: string): Promise<
 }
 
 /** FOR LEGAL REVIEW: wording, purpose and recipients of the chat go-ahead are not final. */
-export const chatConsentState = (ctx: Ctx): { consent: boolean } => ({ consent: Boolean(ctx.state.ch) });
+export async function chatConsentState(ctx: Ctx): Promise<{ consent: boolean }> {
+  if (ctx.state.ch) return { consent: true };
+  // The cookie may not know a grant the backend still holds (another device, an expired cookie): look before asking again.
+  need(ctx.session);
+  try {
+    const found = findChatGrant(await ctx.client.listConsents(ctx.session.t, ctx.session.h));
+    if (found) {
+      ctx.state.ch = found.id;
+      await writeDocsState(ctx.state, ctx.secret);
+      return { consent: true };
+    }
+  } catch (e) {
+    // A dead session must surface; any other lookup failure falls back to "not granted" so the person can still consent.
+    if (e instanceof AppError && e.code === "UNAUTHENTICATED") throw e;
+  }
+  return { consent: false };
+}
 
 /**
  * One grant for the household, purpose coverage_reconstruction, naming the two providers a chat turn calls: the language model (gemini, the first chat provider; MODEL_PROVIDERS on the backend decides who answers)
@@ -374,6 +467,7 @@ export async function revokeChatConsent(ctx: Ctx): Promise<{ consent: boolean }>
 
 export async function revokeReadingConsent(ctx: Ctx): Promise<{ consent: boolean }> {
   need(ctx.session);
+  await hydrateDocsState(ctx);
   const ids = [...(ctx.state.x ?? [])];
   if (ctx.state.g) ids.push(ctx.state.g);
   if (ctx.state.v) ids.push(ctx.state.v);
@@ -430,6 +524,7 @@ export async function withReadGrant<T>(ctx: Ctx, run: () => Promise<T>): Promise
 }
 
 export async function listDocuments(ctx: Ctx): Promise<{ consent: boolean; documents: DocView[]; largeUpload: boolean; policyType: PolicyType | null }> {
+  await hydrateDocsState(ctx);
   const consent = Boolean(ctx.state.g);
   const largeUpload = largeUploadEnabled();
   const kept = ctx.state.c ? ctx.state.pt ?? null : null;
