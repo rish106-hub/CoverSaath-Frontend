@@ -1,5 +1,6 @@
 import { DemoGate } from "@/components/shell/EmptyState";
-import { PageTitle, Kicker } from "@/components/type";
+import { Kicker } from "@/components/type";
+import { FamilyTitle } from "@/components/family/FamilyTitle";
 import { FamilyView } from "@/components/family";
 import { RealFamily } from "@/components/family/RealFamily";
 import { pageFor } from "@/lib/ia";
@@ -13,7 +14,7 @@ export default function Page() {
     <>
       <div>
         {page.kicker ? <Kicker>{page.kicker}</Kicker> : null}
-        <PageTitle>{page.title}</PageTitle>
+        <FamilyTitle demo={page.title} />
       </div>
       <DemoGate empty={<RealFamily />}><FamilyView /></DemoGate>
     </>

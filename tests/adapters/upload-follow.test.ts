@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { backendCovers, stopCode } from "@/adapters/covers";
 import { backendUploads } from "@/adapters/uploads";
+import { AdapterError } from "@/adapters/types";
 import { holdingDocumentsIn, sourceView, WORDING_REASONS } from "@/adapters/covers-contract";
 import { errorText, type DocView } from "@/adapters/documents-contract";
 import { pageText, sideLabel } from "@/components/covers/format";
@@ -90,5 +91,39 @@ describe("page numbers and wording from the backend", () => {
   it("reads the per-document factsState and tolerates an older or newer backend", () => {
     const r = holdingDocumentsIn.parse({ holdingId: "h", documents: [{ documentId: "a", kind: "wording", factsState: "off" }, { documentId: "b", kind: "x" }, { documentId: "c", kind: "x", factsState: "new_value" }] });
     expect(r.documents.map((d) => d.factsState ?? null)).toEqual(["off", null, null]);
+  });
+  it("one timed-out step does not end the follow-up: it asks again", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(backendUploads, "upload").mockResolvedValue(doc({ reading: "active" }, { busy: true }));
+    let calls = 0;
+    vi.spyOn(backendUploads, "advance").mockImplementation(async () => {
+      calls += 1;
+      if (calls === 1) throw new AdapterError("BACKEND_UNREACHABLE", true);
+      return doc({}, { busy: false });
+    });
+    const p = backendCovers.uploadDocument(pdf(), "k", "policy_schedule", "personal_health");
+    await vi.runAllTimersAsync();
+    await expect(p).resolves.toEqual({ documentId: "d1", busy: false });
+    expect(calls).toBe(2);
+  });
+  it("three timed-out steps in a row are a real stop", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(backendUploads, "upload").mockResolvedValue(doc({ reading: "active" }, { busy: true }));
+    const adv = vi.spyOn(backendUploads, "advance").mockRejectedValue(new AdapterError("BACKEND_UNREACHABLE", true));
+    const p = backendCovers.uploadDocument(pdf(), "k", "policy_schedule", "personal_health");
+    const seen = p.then(() => null, (e: unknown) => e);
+    await vi.runAllTimersAsync();
+    expect(await seen).toMatchObject({ code: "BACKEND_UNREACHABLE" });
+    expect(adv).toHaveBeenCalledTimes(3);
+  });
+  it("a refusal (not retryable) stops at once", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(backendUploads, "upload").mockResolvedValue(doc({ reading: "active" }, { busy: true }));
+    const adv = vi.spyOn(backendUploads, "advance").mockRejectedValue(new AdapterError("CONSENT_REQUIRED"));
+    const p = backendCovers.uploadDocument(pdf(), "k", "policy_schedule", "personal_health");
+    const seen = p.then(() => null, (e: unknown) => e);
+    await vi.runAllTimersAsync();
+    expect(await seen).toMatchObject({ code: "CONSENT_REQUIRED" });
+    expect(adv).toHaveBeenCalledTimes(1);
   });
 });
