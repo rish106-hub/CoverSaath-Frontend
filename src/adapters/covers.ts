@@ -14,6 +14,8 @@ const POLL_MS = 2000;
 const POLL_TRIES = 8;
 /** A 20-page PDF takes longer than the holding wait: reading is followed for about 90 s before the page says it is still reading. */
 const READ_TRIES = 45;
+/** Steps in a row that may time out or fail (retryable) before the follow-up gives up. */
+const MAX_MISSES = 3;
 
 async function call(path: string, init: { method?: "GET" | "POST" | "PUT" | "DELETE"; json?: unknown; key?: string } = {}): Promise<unknown> {
   const headers: Record<string, string> = { "x-knowvia-app": "1" };
@@ -56,9 +58,17 @@ export const stopCode = (doc: Pick<DocView, "steps" | "note">): string | null =>
 async function follow(first: DocView, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string; busy: boolean }> {
   let doc = first;
   onStage?.(stageOf(doc));
+  let misses = 0;
   for (let i = 0; i < READ_TRIES && doc.busy && !stopCode(doc); i += 1) {
     await wait(POLL_MS);
-    doc = await backendUploads.advance(doc.id);
+    try {
+      doc = await backendUploads.advance(doc.id);
+      misses = 0;
+    } catch (e) {
+      // One timed-out or failed step must not end the follow-up: ask again. Three in a row, or a refusal, is a real stop.
+      if (!(e instanceof AdapterError && e.retryable) || (misses += 1) >= MAX_MISSES) throw e;
+      continue;
+    }
     onStage?.(stageOf(doc));
   }
   const stop = stopCode(doc);

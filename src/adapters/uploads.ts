@@ -29,13 +29,28 @@ export function precheck(file: { name: string; type: string; size: number }, max
 const newKey = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g, "-");
 export const makeRequestKey = (): string => `k-${newKey()}`.slice(0, 100);
 
-async function call(path: string, init: RequestInit = {}): Promise<unknown> {
+/** One progress step may take a while (the server allows 60 s); past this the browser gives up on that call so a hung one cannot stall the follow-up. */
+export const ADVANCE_TIMEOUT_MS = 45_000;
+
+async function call(path: string, init: RequestInit = {}, timeoutMs?: number): Promise<unknown> {
   let res: Response;
+  const ctl = timeoutMs ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
   try {
-    res = await fetchWithRetry(path, { ...init, cache: "no-store", headers: { "x-knowvia-app": "1", ...init.headers } });
-  } catch {
-    throw new AdapterError("BACKEND_UNREACHABLE", true);
+    try {
+      res = await fetchWithRetry(path, { ...init, ...(ctl ? { signal: ctl.signal } : {}), cache: "no-store", headers: { "x-knowvia-app": "1", ...init.headers } });
+    } catch {
+      throw new AdapterError("BACKEND_UNREACHABLE", true);
+    }
+    const out = await readBody(res);
+    if (ctl?.signal.aborted) throw new AdapterError("BACKEND_UNREACHABLE", true); // timed out while the body was still coming
+    return out;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
+}
+
+async function readBody(res: Response): Promise<unknown> {
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const b = (body ?? {}) as { code?: unknown; retryable?: unknown };
@@ -104,7 +119,7 @@ export const backendUploads: UploadAdapter = {
     return parse(oneOut, r).document;
   },
   async advance(docId, retry = false) {
-    const r = await call(`/api/app/documents/${id(docId)}/advance`, { method: "POST", headers: json, body: JSON.stringify(retry ? { retry: true } : {}) });
+    const r = await call(`/api/app/documents/${id(docId)}/advance`, { method: "POST", headers: json, body: JSON.stringify(retry ? { retry: true } : {}) }, ADVANCE_TIMEOUT_MS);
     return parse(oneOut, r).document;
   },
   async remove(docId) {

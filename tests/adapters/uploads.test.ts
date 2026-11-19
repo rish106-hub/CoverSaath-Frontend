@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { backendUploads, precheck } from "@/adapters/uploads";
 import { AdapterError } from "@/adapters/types";
+import { ADVANCE_TIMEOUT_MS } from "@/adapters/uploads";
 import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, PROVIDER_RECHECK_AFTER_MS, QUARANTINE_AFTER_MS, ERROR_TEXT, deriveView } from "@/adapters/documents-contract";
 
 const blobClient = vi.hoisted(() => ({ upload: vi.fn() }));
@@ -188,5 +189,30 @@ describe("PDF_ACTIVE_CONTENT copy", () => {
   it("states what happened without a print-and-save step", () => {
     expect(ERROR_TEXT.PDF_ACTIVE_CONTENT).toBe("This PDF carries embedded scripts or attachments we could not remove, so it cannot be read.");
     expect(ERROR_TEXT.PDF_ACTIVE_CONTENT).not.toMatch(/print|save as/i);
+  });
+});
+
+describe("advance timeout", () => {
+  afterEach(() => { vi.useRealTimers(); });
+  it("a hung advance call is given up on, as a retryable error, so later polls can go", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn((_p: string, init?: RequestInit) => new Promise<Response>((_res, rej) => {
+      init?.signal?.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError")));
+    })));
+    const p = backendUploads.advance("d1");
+    const seen = p.then(() => null, (e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(ADVANCE_TIMEOUT_MS + 1);
+    expect(await seen).toMatchObject({ code: "BACKEND_UNREACHABLE", retryable: true });
+  });
+  it("a normal advance still works and clears its timer", async () => {
+    stub(200, { ok: true, document: view });
+    await expect(backendUploads.advance("d1")).resolves.toMatchObject({ id: "d1" });
+  });
+});
+
+describe("structuring unavailable is a finished state", () => {
+  it("is not busy and has its own note", () => {
+    const d = deriveView({ id: "d1", documentKind: "policy_schedule", byteSize: 1, status: "accepted", uploadedAt: null }, "done", "unavailable");
+    expect(d).toMatchObject({ busy: false, note: "STRUCTURING_UNAVAILABLE", steps: { structured: "unavailable" } });
   });
 });

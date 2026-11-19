@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { adapters } from "@/adapters";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type PolicyType } from "@/adapters/documents-contract";
 import { makeRequestKey, uploads } from "@/adapters/uploads";
+import { stageOf } from "@/adapters/covers";
 import type { CandidateView, Candidates } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf } from "./use-holdings";
@@ -125,12 +126,32 @@ export function AddCoverView() {
       if (!live) return;
       setConsent(r.consent);
       if (r.policyType) { setPolicyType(r.policyType); setTypeLocked(true); }
+      // A schedule still being checked or read when the page was left or reloaded comes back here, ahead of the payment card:
+      // it already holds its slot. "?resume=1" has its own path above.
+      if (!r.consent || new URLSearchParams(window.location.search).get("resume") === "1") return;
+      const open = r.documents.find((d) => d.busy && d.kind === "policy_schedule" && d.note !== "DELETING" && d.note !== "QUARANTINED");
+      if (!open) return;
+      return adapters.covers.holdingsView().then(async (view) => {
+        if (!live || view.holdings.some((h) => h.documentId === open.id)) return;
+        const slot: Slot = { ...emptySlot(), status: "waiting", documentId: open.id, stage: stageOf(open) };
+        setResumed(true);
+        setSchedule(slot);
+        setBusy(true);
+        try {
+          const next = await checkSchedule(adapters.covers, slot, (stage) => { if (live) setSchedule((cur) => ({ ...cur, stage })); });
+          if (live) await afterSchedule(next);
+        } finally {
+          if (live) setBusy(false);
+        }
+      }).catch(() => undefined);
     }).catch((e) => {
       if (!live) return;
       setError(codeOf(e));
       setConsent(false);
     });
     return () => { live = false; };
+    // afterSchedule only calls setters and the candidates fetch; the first render copy is enough for this once-on-load effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function accept() {
