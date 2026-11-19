@@ -18,10 +18,10 @@ export async function grantAccess(client: BackendClient, raw: unknown): Promise<
   }
   const created = await client.createHousehold({ name: parsed.data.name, email: parsed.data.email });
   const exp = Math.min(Date.parse(created.expiresAt) || Date.now() + 86_400_000, Date.now() + 7 * 86_400_000);
-  return { session: { t: created.token, h: created.householdId, m: created.ownerMemberId, a: created.adultUserId, exp }, firstName: parsed.data.name.split(" ")[0] };
+  return { session: { t: created.token, h: created.householdId, m: created.ownerMemberId, a: created.adultUserId, exp, trial: true }, firstName: parsed.data.name.split(" ")[0] };
 }
 
-export type MeView = { householdId: string; householdName: string; owner: { id: string; displayName: string; email?: string }; source: "backend" | "mock" };
+export type MeView = { householdId: string; householdName: string; owner: { id: string; displayName: string; email?: string }; source: "backend" | "mock"; /** True for a name+email trial session (nothing is kept after sign-out). Absent for Google and demo. */ trial?: true };
 
 /** Who is signed in, read back from the backend (not from what the form sent). */
 export async function readMe(client: BackendClient, session: SessionPayload): Promise<MeView> {
@@ -29,7 +29,7 @@ export async function readMe(client: BackendClient, session: SessionPayload): Pr
   const v = await client.household(session.t, session.h);
   const owner = v.members.find((m) => m.id === session.m) ?? v.members[0];
   if (!owner) throw new AppError(502, "BACKEND_BAD_RESPONSE");
-  return { householdId: v.household.id, householdName: v.household.display_name ?? "Your household", owner: { id: owner.id, displayName: owner.displayName }, source: "backend" };
+  return { householdId: v.household.id, householdName: v.household.display_name ?? "Your household", owner: { id: owner.id, displayName: owner.displayName }, source: "backend", ...(session.trial ? { trial: true as const } : {}) };
 }
 
 export async function readStatus(client: BackendClient): Promise<{ health: boolean; ready: boolean }> {

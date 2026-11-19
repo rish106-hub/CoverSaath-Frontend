@@ -2,8 +2,8 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { MAX_SESSION_MS, SESSION_COOKIE } from "./cookie-policy";
 
-/** `demo: true` marks the public synthetic demo session: it carries no backend token and is refused by every backend route. `a` is the owner's adult id (needed to grant consent; absent on older and identity-provider sessions). */
-export type SessionPayload = { t: string; h: string; m: string; a?: string; exp: number; demo?: true };
+/** `trial: true` marks the name+email "Get access" trial (a fresh household each sign-in, nothing kept to return to). Only that path sets it; Google and older sessions omit it, so a missing field means "no trial notice", never a wrong one. `demo: true` marks the public synthetic demo session: it carries no backend token and is refused by every backend route. `a` is the owner's adult id (needed to grant consent; absent on older and identity-provider sessions). */
+export type SessionPayload = { t: string; h: string; m: string; a?: string; exp: number; demo?: true; trial?: true };
 export const COOKIE_NAME = SESSION_COOKIE;
 
 const key = (secret: string) => createHash("sha256").update(secret).digest();
@@ -75,6 +75,7 @@ export function unseal(sealed: string | undefined, secret: string, opts: OpenOpt
   }
   if (!payload) return null;
   if (payload.demo !== undefined && payload.demo !== true) return null;
+  if (payload.trial !== undefined && payload.trial !== true) return null;
   if (payload.a !== undefined && typeof payload.a !== "string") return null;
   if (typeof payload.t !== "string" || typeof payload.h !== "string" || typeof payload.m !== "string" || typeof payload.exp !== "number") return null;
   if (!Number.isFinite(payload.exp) || payload.exp < now || payload.exp > now + MAX_SESSION_MS + 60_000) return null;

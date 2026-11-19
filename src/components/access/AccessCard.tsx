@@ -202,6 +202,10 @@ export function AccessCard() {
       ) : null}
       <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Getting you in…" : "Get access"}</button>
       {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : urlMessage ? <p className={styles.err} role="alert">{urlMessage}</p> : null}
+      {usingBackend ? (
+        // DRAFT - FOR LEGAL REVIEW: trial and data-keeping wording.
+        <p className={styles.trialNote}>Trial: starts fresh each visit.{googleSignIn ? " Use Google to keep your data." : ""}</p>
+      ) : null}
       <div className={styles.note}><span>No card needed. Leave any time.</span><Link href="/privacy">Privacy</Link></div>
     </form>
   );

@@ -43,6 +43,10 @@ describe("backend client", () => {
     const me = await readMe(c, session);
     expect(me.owner.displayName).toBe("Meera Rao");
     expect(me.householdName).toBe("Rao family");
+    expect(session.trial).toBe(true);
+    expect(me.trial).toBe(true);
+    // A Google-style session (no trial marker) never reports a trial.
+    expect((await readMe(c, { ...session, trial: undefined })).trial).toBeUndefined();
   });
   it("rejects bad input before calling the backend", async () => {
     await expect(grantAccess(fake({}), { name: "", email: "nope" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
