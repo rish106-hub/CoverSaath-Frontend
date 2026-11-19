@@ -20,6 +20,7 @@ export const meSchema = z.object({
   householdName: z.string(),
   owner: z.object({ id: z.string(), displayName: z.string(), email: z.string().optional() }),
   source: z.enum(["backend", "mock", "demo"]),
+  trial: z.boolean().optional(),
 });
 export type Me = z.infer<typeof meSchema>;
 

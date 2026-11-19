@@ -8,6 +8,7 @@ import { groupOf, pageFor } from "@/lib/ia";
 import { PageHeader } from "./PageHeader";
 import { AppSidebar } from "./AppSidebar";
 import { useMe } from "./useMe";
+import { TrialNotice } from "./TrialNotice";
 import styles from "./AppShell.module.css";
 
 /**
@@ -32,6 +33,7 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
       <AppSidebar pathname={pathname} />
       <div className={styles.main}>
         <div className={styles.bar}><HeaderMic /><ThemeButton /></div>
+        <TrialNotice />
         {home ? null : <PageHeader pathname={pathname} />}
         <main key={pathname} id="main-content" tabIndex={-1} className={`${styles.content} k-stagger`}>{children}</main>
       </div>
