@@ -4,6 +4,7 @@ import { backendAccess, backendHousehold } from "./backend";
 import { backendOnboarding, backendPreferences, backendProfile } from "./user-data";
 import { backendMembers, backendScenarios } from "./scenarios";
 import { mockAdapters } from "./mock";
+import { realDocuments } from "./real-documents";
 import { backendReference } from "./reference";
 import { backendEvidence } from "./evidence";
 import { backendCovers } from "./covers";
@@ -46,7 +47,7 @@ export const realAdapters: Adapters = {
   auth: mockAdapters.auth, // sign-in providers are not wired; the beta access card is the real way in
   access: backendAccess,
   household: backendHousehold,
-  document: emptyDocument,
+  document: realDocuments,
   reading: realReading, // facts of one holding
   policy: realPolicy, // the household's stored holdings
   assistant: backendAssistant, // answers from stored evidence, cited; with none it says so

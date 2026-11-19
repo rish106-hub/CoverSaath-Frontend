@@ -18,6 +18,7 @@ function stubSession(source: "backend" | "demo" | null) {
       return source ? Response.json(ME(source)) : Response.json({ ok: false, code: "UNAUTHENTICATED" }, { status: 401 });
     }
     if (u.includes("/api/app/covers/holdings")) return Response.json({ ok: true, data: { holdings: [] } });
+    if (u.includes("/api/app/documents")) return Response.json({ ok: true, consent: true, documents: [] });
     return Response.json({ ok: false }, { status: 404 });
   });
   vi.stubGlobal("fetch", fetchMock);
