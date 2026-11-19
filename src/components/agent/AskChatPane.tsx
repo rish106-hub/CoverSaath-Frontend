@@ -5,6 +5,9 @@ import Link from "next/link";
 import { adapters } from "@/adapters";
 import { SourceLine } from "./SourceLine";
 import { usePageContext } from "@/agent/page-context";
+import { useBackend } from "@/adapters/mode";
+import { isDemoSession } from "@/adapters/demo";
+import { ChatConsentCard, useChatConsent } from "@/components/chat/ChatConsent";
 import { useAgent } from "./AgentProvider";
 import styles from "./AskChat.module.css";
 
@@ -15,6 +18,9 @@ export function AskChatPane() {
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
+  // Real sessions need the question go-ahead before the first question (without it answers are rules-only). Demo and the in-memory mock set are unchanged.
+  const cc = useChatConsent(!useBackend || isDemoSession(), chatOpen);
+  const needConsent = cc.consent !== true;
   const canSpeak = typeof window !== "undefined" && adapters.voice.supported();
 
   useEffect(() => { if (chatOpen) input.current?.focus(); }, [chatOpen]);
@@ -22,10 +28,18 @@ export function AskChatPane() {
 
   const send = () => {
     const said = text.trim();
-    if (!said) return;
+    if (!said || needConsent) return;
     submit(said);
     setText("");
   };
+
+  if (cc.consent === false) {
+    return (
+      <div className={styles.thread}>
+        <ChatConsentCard c={cc} />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -35,7 +49,7 @@ export function AskChatPane() {
             <p>Ask about your cover, claims or the page you are on.</p>
             <div className={styles.starters}>
               {ctx.examples.slice(0, 3).map((e) => (
-                <button key={e.say} type="button" className={styles.starter} onClick={() => submit(e.say)}>{e.say}</button>
+                <button key={e.say} type="button" className={styles.starter} disabled={needConsent} onClick={() => submit(e.say)}>{e.say}</button>
               ))}
             </div>
           </div>
@@ -60,7 +74,7 @@ export function AskChatPane() {
             {hold.state === "listening" ? "Stop" : "Speak"}
           </button>
         ) : null}
-        <button type="submit" className="k-btn k-btn--primary" disabled={!text.trim()}>Send</button>
+        <button type="submit" className="k-btn k-btn--primary" disabled={needConsent || !text.trim()}>Send</button>
       </form>
       {/* FOR LEGAL REVIEW: names where the audio goes. The region stays mounted so a change of recipient is announced. */}
       <p className={styles.source} role="status" aria-live="polite">{canSpeak ? adapters.voice.notice ?? "" : ""}</p>

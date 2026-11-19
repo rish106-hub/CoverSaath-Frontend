@@ -10,7 +10,7 @@ import { MicGlyph } from "@/components/agent/VoiceIcons";
 import { voiceOnHold } from "@/components/agent/voice-hold";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
-import { makeRequestKey } from "@/adapters/uploads";
+import { ChatConsentCard, WithdrawConsent, useChatConsent } from "./ChatConsent";
 import { useHoldings } from "@/components/covers/use-holdings";
 import { STATUS_TEXT } from "@/components/covers/format";
 import s from "./chat.module.css";
@@ -110,31 +110,9 @@ export function ChatView() {
   const abort = useRef<AbortController | null>(null);
   const seq = useRef(0);
   const holdingId = current?.id;
-  // null while checking. A failed check does not block: the server refuses a turn without the go-ahead and the card then appears.
-  const [consent, setConsent] = useState<boolean | null>(null);
-  const [agreed, setAgreed] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [consentError, setConsentError] = useState<string | null>(null);
-  const consentKey = useRef(makeRequestKey());
-
-  useEffect(() => {
-    let live = true;
-    adapters.chat.consent().then((c) => { if (live) setConsent(c); }, () => { if (live) setConsent(true); });
-    return () => { live = false; };
-  }, []);
-
-  async function accept() {
-    setSaving(true);
-    setConsentError(null);
-    try {
-      await adapters.chat.grantConsent(consentKey.current);
-      setConsent(true);
-    } catch (e) {
-      setConsentError(codeOf(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+  // null while checking. A failed check counts as not given: the card shows (fail closed).
+  const cc = useChatConsent();
+  const { consent, required } = cc;
 
   useEffect(() => () => { abort.current?.abort(); }, []);
   // A different cover is a different conversation.
@@ -169,12 +147,12 @@ export function ChatView() {
     } catch (e) {
       const code = codeOf(e);
       if (code === "NOT_FOUND") thread.current = null; // the thread is gone: the next question opens a new one
-      if (code === "CONSENT_REQUIRED") { setConsent(false); consentKey.current = makeRequestKey(); } // withdrawn or expired: ask again
+      if (code === "CONSENT_REQUIRED") required(); // withdrawn or expired: ask again
       patch(aid, (m) => ({ ...m, busy: false, error: code }));
     } finally {
       setBusy(false);
     }
-  }, [busy, holdingId, patch]);
+  }, [busy, holdingId, patch, required]);
 
   function speak() {
     if (listening) { adapters.voice.stop?.(); return; }
@@ -205,23 +183,7 @@ export function ChatView() {
       {listError ? <p className={s.alert} role="alert">{errorText(listError)}</p> : null}
 
       {consent === false ? (
-        // FOR LEGAL REVIEW: this wording, the purpose and the two providers named are not final.
-        <SectionHeading title="Before we answer">
-          <div className={s.card}>
-            <p className={s.lead}>To answer a question about your cover we send the question, and short passages from your own cover details that relate to it, to two services.</p>
-            <ul className={s.list}>
-              <li>A language service (Google Gemini) writes the answer in plain words.</li>
-              <li>A search service (Voyage) finds the passages that relate to your question.</li>
-            </ul>
-            <p className={s.lead}>Your policy file itself is not sent. You can withdraw this at any time.</p>
-            <label className={s.check}>
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-              <span>Yes, you can use these services to answer my questions.</span>
-            </label>
-            {consentError ? <p className={s.alert} role="alert">{errorText(consentError)}</p> : null}
-            <button type="button" className="k-btn k-btn--primary" disabled={!agreed || saving} onClick={accept}>{saving ? "Saving..." : "Continue"}</button>
-          </div>
-        </SectionHeading>
+        <SectionHeading title="Before we answer"><ChatConsentCard c={cc} /></SectionHeading>
       ) : null}
 
       <SectionHeading title="Conversation" description="Answers come from your own documents and the insurer's wording, with the facts shown.">
@@ -264,6 +226,8 @@ export function ChatView() {
         {canSpeak ? <p className={s.quiet}>{adapters.voice.notice ?? ""} The words you speak are saved with this conversation.</p> : null}
         {note ? <p className={s.note} role="status">{note}</p> : null}
       </form>
+
+      {consent === true ? <WithdrawConsent c={cc} /> : null}
 
       <div className={s.row}>
         <Link className="k-btn k-btn--secondary" href="/hospitals">Network hospitals</Link>
