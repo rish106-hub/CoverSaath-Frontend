@@ -114,10 +114,12 @@ function Exit() {
     <div className={styles.two}>
       <div className={styles.card}>
         <h3 className={styles.head}>Group cover usually ends on your last day.</h3>
+        <DemoGate empty={null}>
         <div className={styles.quote}>
           <div className={styles.note}>GROUP POLICY · PAGE 14</div>
           11.2 <strong>Cover for a member and dependants ceases on the date the member leaves the employment of the policyholder.</strong> Claims for hospitalisation commencing before that date remain payable.
         </div>
+        </DemoGate>
       </div>
       <div className={styles.card}>
         <div className={styles.note}>Ask before you sign the exit papers</div>
@@ -312,11 +314,14 @@ export function ToolsPage() {
       {features.advisorBooking ? <SectionHeading title="Advisors"><Advisors /></SectionHeading> : null}
       {/* Savings figures are sample data: demo sessions only, never shown to a signed-in person. */}
       <DemoGate empty={null}><SectionHeading title="What these tools save"><Wins /></SectionHeading></DemoGate>
-      <SectionHeading title="Read next">
-        <div className={styles.reads}>
-          {readNext.map((r) => <div key={r.title} className={styles.read}><span className={styles.readK}>{r.kind}</span><span className={styles.readT}>{r.title}</span></div>)}
-        </div>
-      </SectionHeading>
+      {/* Static sample reading list: demo sessions only. */}
+      <DemoGate empty={null}>
+        <SectionHeading title="Read next">
+          <div className={styles.reads}>
+            {readNext.map((r) => <div key={r.title} className={styles.read}><span className={styles.readK}>{r.kind}</span><span className={styles.readT}>{r.title}</span></div>)}
+          </div>
+        </SectionHeading>
+      </DemoGate>
     </>
   );
 }
