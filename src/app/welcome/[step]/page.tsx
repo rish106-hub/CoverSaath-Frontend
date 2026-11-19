@@ -11,11 +11,12 @@ export function generateStaticParams() {
 export default async function Step({ params }: { params: Promise<{ step: string }> }) {
   const { step } = await params;
   if (!WELCOME_STEPS.some((s) => s.slug === step)) notFound();
-  // The add step is the demo walk-through; a real account is sent to the upload flow. Reading, people and ready show sample policy results, so only the demo session sees them.
-  if (step === "add") return <RealUserToUpload><OnboardingFlow slug={step} /></RealUserToUpload>;
+  // Every step is the demo walk-through. A real account is sent to the upload flow, so it never sees sample policy, people or wins; nothing shows while the session loads.
   return (
-    <DemoGate empty={<EmptyState title="Nothing read yet" body="Add a policy first. What Knowvia finds in it shows here." />}>
-      <OnboardingFlow slug={step} />
-    </DemoGate>
+    <RealUserToUpload>
+      <DemoGate empty={<EmptyState title="Nothing read yet" body="Add a policy first. What Knowvia finds in it shows here." />}>
+        <OnboardingFlow slug={step} />
+      </DemoGate>
+    </RealUserToUpload>
   );
 }
