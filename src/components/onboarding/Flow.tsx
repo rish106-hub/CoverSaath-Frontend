@@ -25,6 +25,8 @@ export function OnboardingFlow({ slug }: { slug: string }) {
   const idx = Math.max(0, WELCOME_STEPS.findIndex((s) => s.slug === slug));
   const step = WELCOME_STEPS[idx]!;
   const [walletOpen, setWalletOpen] = useState(false);
+  const { state: me } = useMe();
+  const demo = me.status === "ready" && me.me.source !== "backend";
   const last = idx === WELCOME_STEPS.length - 1;
   const ob = useOnboarding(idx);
   const go = (i: number) => router.push(`/welcome/${WELCOME_STEPS[i]!.slug}`);
@@ -55,7 +57,7 @@ export function OnboardingFlow({ slug }: { slug: string }) {
         {slug === "add" ? <AddStep way={ob.state.way ?? "dl"} onWay={(way) => ob.patch({ way })} status={ob.status} onRetry={ob.retry} /> : null}
         {slug === "reading" ? <ReadingStep /> : null}
         {slug === "people" ? <PeopleStep people={ob.state.people} onToggle={(id, v) => ob.patch({ people: { ...defaultPeople(), ...ob.state.people, [id]: v } })} status={ob.status} onRetry={ob.retry} /> : null}
-        {slug === "ready" ? <ReadyStep onWallet={() => setWalletOpen(true)} /> : null}
+        {slug === "ready" ? <ReadyStep demo={demo} onWallet={() => setWalletOpen(true)} /> : null}
         <div className={styles.nav}>
           <button type="button" className={`${styles.btn} ${idx === 0 ? styles.btnHidden : ""}`} onClick={() => go(idx - 1)} tabIndex={idx === 0 ? -1 : 0}>Back</button>
           {last ? (
@@ -65,7 +67,7 @@ export function OnboardingFlow({ slug }: { slug: string }) {
           )}
         </div>
       </main>
-      {walletOpen ? <WalletSheet onClose={() => setWalletOpen(false)} /> : null}
+      {walletOpen && demo ? <WalletSheet onClose={() => setWalletOpen(false)} /> : null}
     </div>
   );
 }
@@ -251,7 +253,9 @@ function PeopleStep({ people, onToggle, status, onRetry }: { people?: Record<str
   );
 }
 
-function ReadyStep({ onWallet }: { onWallet: () => void }) {
+/** The wins and the wallet card are the sample policy (Meera, Northstar): demo only. A real account never sees them, and nothing shows while we do not know yet. */
+function ReadyStep({ demo, onWallet }: { demo: boolean; onWallet: () => void }) {
+  if (!demo) return null;
   return (
     <div className={styles.col}>
       <div className={styles.wins}>
