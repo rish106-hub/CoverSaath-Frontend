@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adapters, type UiOnboarding } from "@/adapters";
 import { SaveState } from "@/components/ui/SaveState";
+import { useMe } from "@/components/shell/useMe";
 import { useAutosave } from "@/lib/use-autosave";
 import { Kicker } from "@/components/type";
 import dynamic from "next/dynamic";
@@ -144,21 +145,34 @@ function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl"
   );
 }
 
-/** Findings from the ReadingAdapter first, then the schedule facts, so the list is never empty. */
+/**
+ * Demo session: ReadingAdapter findings for the sample policy, then the sample schedule facts, so the list is never empty.
+ * Real session: only the findings of the person's own first holding; no sample rows, and none when there is no holding yet.
+ */
 function useFindings(): { rows: Row[]; loading: boolean } {
-  const [rows, setRows] = useState<Row[]>(READING_FINDINGS.map((f) => ({ ...f })));
+  const { state } = useMe();
+  const known = state.status !== "loading";
+  const demo = state.status === "ready" && state.me.source !== "backend";
+  const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
+    if (!known) return;
     let live = true;
-    adapters.reading.findings("northstar-floater").then((fs) => {
-      if (live) setLoading(false);
-      if (!live || fs.length === 0) return;
-      const fromAdapter: Row[] = fs.map((f) => ({ icon: "◎", k: f.label, v: f.answer, ref: f.pageRef, disagrees: f.disagrees }));
+    const toRows = (fs: Awaited<ReturnType<typeof adapters.reading.findings>>): Row[] => fs.map((f) => ({ icon: "◎", k: f.label, v: f.answer, ref: f.pageRef, disagrees: f.disagrees }));
+    const done = (fromAdapter: Row[]) => {
+      if (!live) return;
+      setLoading(false);
+      if (!demo) { setRows(fromAdapter); return; }
+      if (fromAdapter.length === 0) { setRows(READING_FINDINGS.map((f) => ({ ...f }))); return; }
       const seen = new Set(fromAdapter.map((r) => r.k));
       setRows([...fromAdapter, ...READING_FINDINGS.filter((f) => !seen.has(f.k)).map((f) => ({ ...f }))].slice(0, 6));
-    }).catch(() => { if (live) setLoading(false); });
+    };
+    const load = demo
+      ? adapters.reading.findings("northstar-floater")
+      : adapters.policy.list().then((ps) => (ps[0] ? adapters.reading.findings(ps[0].id) : []));
+    load.then((fs) => done(toRows(fs))).catch(() => done([]));
     return () => { live = false; };
-  }, []);
+  }, [known, demo]);
   return { rows, loading };
 }
 
@@ -172,7 +186,7 @@ function ReadingStep() {
     <>
     <div>
       <Kicker>{WELCOME_STEPS[1].kicker}</Kicker>
-      <h1 className={styles.h1}>{loading ? "Reading your policy" : `${rows.length} key terms found`}</h1>
+      <h1 className={styles.h1}>{loading ? "Reading your policy" : rows.length ? `${rows.length} key terms found` : "No key terms read yet"}</h1>
     </div>
     <div className={styles.read}>
       <div className={styles.doc} aria-hidden>
