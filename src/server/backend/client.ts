@@ -98,6 +98,8 @@ export function createBackendClient(opts: ClientOptions) {
         json: { displayName: `${input.name.split(" ").slice(-1)[0]} family`, owner: { displayName: input.name, contactEmail: input.email, locale: "en-IN" } },
       });
       if (r.status === 401 || r.status === 403) throw new AppError(503, "CONFIG_MISSING");
+      // The backend is at its live-session cap or rate limit: a retry later works, so say that and not a generic rejection.
+      if (r.status === 429) throw new AppError(429, "RATE_LIMITED", true);
       const d = parse(createSchema, ok(r, false));
       return { householdId: d.household.id, ownerMemberId: d.ownerMember.id, adultUserId: d.session.adultUserId, token: d.session.token, expiresAt: d.session.expiresAt };
     },
