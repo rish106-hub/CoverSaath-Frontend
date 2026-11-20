@@ -13,11 +13,11 @@ const isProd = process.env.NODE_ENV === "production";
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://checkout.razorpay.com`,
+  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://checkout.razorpay.com https://static.cloudflareinsights.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://cdn.razorpay.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com https://api.razorpay.com https://lumberjack.razorpay.com${isProd ? "" : " ws: wss:"}`,
+  `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com https://api.razorpay.com https://lumberjack.razorpay.com https://cloudflareinsights.com${isProd ? "" : " ws: wss:"}`,
   // Razorpay Standard Checkout (add a second policy) opens its payment window in a frame from these hosts.
   "frame-src https://api.razorpay.com https://checkout.razorpay.com",
   "media-src 'self' blob:",
