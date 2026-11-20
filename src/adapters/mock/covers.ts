@@ -1,6 +1,7 @@
 import { AdapterError, type CoversAdapter } from "../types";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES } from "../documents-contract";
 import { precheck } from "../uploads";
+import { formatValue, labelOf } from "@/components/covers/format";
 import { containsUin, type Conflicts, type HoldingSummary, type WordingState, type CreationIssue, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
 import { PINCODE, type HospitalView } from "../chat-contract";
 import { delay } from "./delay";
@@ -10,6 +11,11 @@ import { delay } from "./delay";
 // `extracted_unverified` until a person chooses, as on the real path.
 
 const quote = (page: number, text: string) => ({ pageId: `page-${page}`, blockIndex: 0, quote: text });
+/** A term only the insurer's wording states (ADR 0036): tier ida_wording, extracted_unverified, with the insurer's page and a quote. No insurer is named: any insurer looks the same. */
+const INSURER_FACT: Facts["facts"][number] = {
+  factKey: "pre_hospitalisation_days", factClass: "product_term", valueType: "number", unit: "days", group: "cover", status: "extracted_unverified", value: 60, sourceTier: "ida_wording", alternatives: [], checkWithInsurer: true, openConflictId: null,
+  sources: [{ id: "s-pre-ida", tier: "ida_wording", status: "extracted_unverified", value: 60, page: null, quote: "Medical expenses incurred for up to 60 days before the date of admission are covered.", reference: { source: "fss", pageNumber: 9, verificationStatus: "unverified" }, current: true }],
+};
 const factsSeed = (wording: WordingState): Facts["facts"] => [
   { factKey: "sum_insured", factClass: "personal_value", valueType: "money", unit: "paise", group: "limits", status: "extracted_unverified", value: 50_000_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-si-own", tier: "own_pdf", status: "extracted_unverified", value: 50_000_000, page: { pageId: "page-1", pageNumber: 1, blockIndex: 0, documentKind: "policy_schedule" }, quote: "Sum insured Rs 5,00,000", current: true }] },
   { factKey: "room_rent_limit", factClass: "product_term", valueType: "text", unit: "none", group: "limits", status: "conflicting", value: null, alternatives: [], checkWithInsurer: true, openConflictId: "c-room", sources: [] },
@@ -19,6 +25,7 @@ const factsSeed = (wording: WordingState): Facts["facts"] => [
   { factKey: "ped_waiting_months", factClass: "product_term", valueType: "number", unit: "months", group: "waiting", status: "extracted_unverified", value: 36, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ped-own", tier: "own_pdf", status: "extracted_unverified", value: 36, page: { pageId: "page-2", pageNumber: 2, blockIndex: 4 }, quote: "36 months for pre-existing diseases", current: true }] },
   { factKey: "exclusion_cosmetic", factClass: "product_term", valueType: "bool", unit: "none", group: "exclusions", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-ex-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-3", pageNumber: 3, blockIndex: 2 }, quote: "Cosmetic treatment is not covered", current: true }] },
   { factKey: "cashless_network", factClass: "product_term", valueType: "bool", unit: "none", group: "cashless", status: "extracted_unverified", value: true, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-cl-own", tier: "own_pdf", status: "extracted_unverified", value: true, page: { pageId: "page-1", pageNumber: 1, blockIndex: 6 }, quote: "Cashless at network hospitals", current: true }] },
+  ...(wording === "fss" ? [INSURER_FACT] : []),
   { factKey: "premium_total", factClass: "personal_value", valueType: "money", unit: "paise", group: "money", status: "extracted_unverified", value: 1_850_000, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null, sources: [{ id: "s-pr-own", tier: "own_pdf", status: "extracted_unverified", value: 1_850_000, page: { pageId: "page-1", pageNumber: 1, blockIndex: 9 }, quote: "Total premium Rs 18,500", current: true }] },
 ];
 const conflictsSeed = (wording: WordingState): Conflicts["conflicts"] => [
@@ -94,7 +101,30 @@ const guard = <T>(v: T): T => {
   return v;
 };
 
+/** policy.md as the backend renders it (ADR 0039), from the seeded facts. Insurer-tier lines carry the insurer label, page and quote. FOR LEGAL REVIEW: reader-facing wording is not final. */
+function memoryMarkdown(state: State): string {
+  const line = (f: Facts["facts"][number]): string => {
+    const src = f.sources.find((x) => x.tier === f.sourceTier) ?? f.sources[0];
+    const value = f.status === "conflicting" ? "two readings" : formatValue(f.value, f.unit, f.valueType);
+    const quote = src?.quote ? ` Quote: "${src.quote}"` : "";
+    if (f.sourceTier === "ida_wording" && f.status === "extracted_unverified") return `- ${labelOf(f.factKey)}? ${value} (insurer wording, not checked)${quote} [insurer_wording, p.${src?.reference?.pageNumber ?? 0}]`;
+    const tag = f.status === "conflicting" ? "[unknown]" : `[own_pdf, p.${src?.page?.pageNumber ?? Number(/\d+$/.exec(src?.page?.pageId ?? "")?.[0] ?? 0)}]`;
+    return `- ${labelOf(f.factKey)}? ${value} (read from your document, not verified)${quote} ${tag}`;
+  };
+  const own = state.facts.filter((f) => f.sourceTier !== "ida_wording");
+  const insurer = state.facts.filter((f) => f.sourceTier === "ida_wording" && f.status === "extracted_unverified");
+  return [
+    "# Memory", "",
+    "> Built from your own documents and answers, shown only to you. Values read from your documents are not verified. The insurer's wording governs; check with the insurer before relying on any line.", "",
+    "## Policy", "", `- Product: ${state.confirmed ? "Example Health Plan" : "unknown"} ${state.confirmed ? "[owner statement]" : "[unknown]"}`, "",
+    "## Cover and limits", "", ...(own.length > 0 ? own.map(line) : ["- None recorded. [unknown]"]), "",
+    "## Insurer terms your document doesn't state", "", ...(insurer.length > 0 ? insurer.map(line) : ["- None recorded. [unknown]"]), "",
+    "## Open questions", "", ...(state.facts.length > 0 ? ["- What does the policy cover for co-payment? [unknown]"] : ["- None recorded. [unknown]"]), "",
+  ].join("\n");
+}
+
 export const mockCovers: CoversAdapter = {
+  memoryDocument: async (holdingId) => delay(memoryMarkdown(get(holdingId).state)),
   uploadDocument: async (file, key, kind, policyType, onStage) => {
     onStage?.("sending");
     const pre = precheck(file, MAX_UPLOAD_BYTES);

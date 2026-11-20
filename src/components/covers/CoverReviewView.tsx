@@ -7,7 +7,8 @@ import { errorText } from "@/adapters/documents-contract";
 import type { ConflictView, FactView, Facts, SourceView } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "./use-holdings";
-import { STATUS_TEXT, formatValue, groupFacts, isOpen, labelOf, pageText, sideLabel, sourceLabel, tierText } from "./format";
+import { isInsurerUnchecked } from "@/adapters/insurer-tier";
+import { formatValue, groupFacts, isOpen, labelOf, pageText, sideLabel, sourceLabel, sourcePageNumber, sourceQuote, statusText, tierText } from "./format";
 import s from "./covers.module.css";
 
 function Source({ src, unit, type }: { src: SourceView; unit?: string | null; type?: string | null }) {
@@ -51,13 +52,16 @@ function ConflictCard({ c, onChoose, busy }: { c: ConflictView; onChoose: (c: Co
 
 function FactCard({ f }: { f: FactView }) {
   const first = f.sources.find((x) => x.tier === f.sourceTier) ?? f.sources[0];
-  const page = first ? pageText(first.page) : null;
+  const insurer = isInsurerUnchecked(f.sourceTier ?? first?.tier, f.status);
+  const n = first ? sourcePageNumber(first) : null;
+  const page = insurer ? (n ? `Page ${n}` : null) : first ? pageText(first.page) : null;
+  const quote = sourceQuote(first, f.sourceTier);
   return (
     <li className={s.fact} data-open={isOpen(f.status)}>
       <span className={s.factName}>{labelOf(f.factKey)}</span>
       <span className={s.factValue}>{f.status === "conflicting" ? "Two readings" : formatValue(f.value, f.unit, f.valueType)}</span>
-      <span className={s.status}>{f.status === "user_confirmed" ? sourceLabel(f.status, f.sourceTier) : STATUS_TEXT[f.status]}</span>
-      {first?.quote ? <p className={s.src}>&ldquo;{first.quote}&rdquo;{page ? ` · ${page}` : ""}</p> : null}
+      <span className={s.status}>{f.status === "user_confirmed" ? sourceLabel(f.status, f.sourceTier) : statusText(f.status, f.sourceTier ?? first?.tier)}</span>
+      {quote ? <p className={s.src}>&ldquo;{quote}&rdquo;{page ? ` · ${page}` : ""}</p> : insurer && page ? <p className={s.src}>{page}</p> : null}
     </li>
   );
 }

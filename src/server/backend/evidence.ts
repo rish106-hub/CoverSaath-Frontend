@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { AppError } from "./errors";
 import { gen, need, withDocuments, withReadGrant, writeDocsState, type Ctx } from "./documents";
-import { PATH_ID, IDEMPOTENCY_KEY, type AskQuestion, type CatalogueReview, type ConfirmPolicyProfile, type CoveragePreview, type HandoffQuery, type PassThrough } from "@/adapters/evidence-contract";
+import { passagesOut, passagesQueryIn, PATH_ID, IDEMPOTENCY_KEY, type AskQuestion, type CatalogueReview, type ConfirmPolicyProfile, type CoveragePreview, type HandoffQuery, type PassThrough } from "@/adapters/evidence-contract";
 
 // BFF for the evidence routes: policy profile, questions with quotes, decision catalogue, coverage preview, source pack, deletion
 // inventory and integrations (CoverSaath /api/v1). Server only. This is the one BFF: the website no longer proxies the backend.
@@ -133,6 +133,23 @@ export async function getSourcePack(ctx: Ctx, caseId: string): Promise<Out> {
   ownCase(ctx, caseId);
   const r = await withReadGrant(ctx, () => ctx.client.send("GET", `/api/v1/cases/${enc(caseId)}/source-pack`, ctx.session.t));
   return out(r.body);
+}
+
+/**
+ * Passages matching a short query: from the person's own read documents, and (separately) from the insurer's wording for the linked
+ * plan (backend plan C4). `caseId` may be `current`, the case this session made. The backend answers 503 READBACK_DISABLED unless its
+ * readback is on. The query travels in the URL on the server side only; it is never logged here.
+ */
+export async function getPassages(ctx: Ctx, caseId: string, q: string | null, limit: string | null): Promise<Out> {
+  const id = caseId === "current" && ctx.state.c ? ctx.state.c : caseId;
+  ownCase(ctx, id);
+  const query = passagesQueryIn.safeParse({ q: q ?? "", ...(limit ? { limit } : {}) });
+  if (!query.success) throw new AppError(400, "INVALID_INPUT");
+  const params = new URLSearchParams({ q: query.data.q, ...(query.data.limit ? { limit: String(query.data.limit) } : {}) });
+  const r = await withReadGrant(ctx, () => ctx.client.send("GET", `/api/v1/cases/${enc(id)}/passages?${params}`, ctx.session.t));
+  const shaped = passagesOut.safeParse(r.body);
+  if (!shaped.success) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  return out(shaped.data);
 }
 
 /** Needs no reading consent: after a withdrawal the person must still see, and be able to delete, what is held. */

@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/shell/EmptyState";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
 import { stateOf } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
+import { MemoryDocument } from "./MemoryDocument";
+import { PassageSearch } from "./PassageSearch";
 import { ErrorBox, FactItem, Headlines, Loading, Pending, StageBox, TermsStatus } from "./parts";
 import { usePolicies } from "./use-policies";
 
@@ -35,6 +37,8 @@ export function RealPolicyDetail({ id }: { id: string }) {
         </SectionHeading>
       ))}
       {p.notFound > 0 ? <p className={s.quiet}>{p.notFound} {p.notFound === 1 ? "detail was" : "details were"} not found in your document.</p> : null}
+      {p.stage === "needs_review" || p.stage === "ready" ? <MemoryDocument holdingId={p.id} /> : null}
+      {p.stage === "needs_review" || p.stage === "ready" ? <PassageSearch /> : null}
       <div className={s.row}>
         <Link className="k-btn k-btn--secondary" href="/policies">All policies</Link>
         <Link className="k-btn k-btn--secondary" href={`/chat?holding=${encodeURIComponent(p.id)}`}>Ask about this policy</Link>

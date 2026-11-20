@@ -1,5 +1,5 @@
 import { AdapterError, type EvidenceAdapter } from "./types";
-import { evidenceOut, type PassThrough } from "./evidence-contract";
+import { evidenceOut, passagesOut, type PassThrough } from "./evidence-contract";
 
 // Browser client for the same-origin evidence BFF (/api/app/...). It never sees the backend token or the backend.
 
@@ -40,6 +40,12 @@ export const backendEvidence: EvidenceAdapter = {
   designateConfirmer: (adultUserId) => call("/api/app/catalogue-confirmers", { method: "POST", json: { adultUserId } }),
   preview: (body) => call("/api/app/coverage-preview", { method: "POST", json: body }),
   sourcePack: (caseId) => call(`/api/app/cases/${enc(caseId)}/source-pack`),
+  passages: async (caseId, query, limit) => {
+    const params = new URLSearchParams({ q: query, ...(limit ? { limit: String(limit) } : {}) });
+    const r = passagesOut.safeParse(await call(`/api/app/cases/${enc(caseId)}/passages?${params}`));
+    if (!r.success) throw new AdapterError("BACKEND_BAD_RESPONSE");
+    return r.data;
+  },
   deletionInventory: (caseId) => call(`/api/app/cases/${enc(caseId)}/deletion-inventory`),
   integrations: () => call("/api/app/integrations"),
 };
