@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { useState } from "react";
 import { backendMembers, backendScenarios, type ScenarioAdapter } from "@/adapters/scenarios";
 import { mockScenarios } from "@/adapters/mock/scenarios";

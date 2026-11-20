@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { InsurerTile } from "./InsurerTile";
 import {
-  PEOPLE, SCENARIOS, SCENARIO_KEYS, NO_LEVERS, calc, familyRow, inr, leverSaving, policyFor, prosCons, rs, sectionBars, shortBill, verdict, waterfall, youNote,
+  PEOPLE, SCENARIOS, SCENARIO_KEYS, NO_LEVERS, calc, familyRow, inr, leverSaving, policyFor, prosCons, sectionBars, shortBill, verdict, waterfall, youNote,
   type Levers, type Person, type Quality, type Scenario,
 } from "@/lib/stress";
 import { SaveState } from "@/components/ui/SaveState";

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
-import { stateOf } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
 import { MemoryDocument } from "./MemoryDocument";
 import { PassageSearch } from "./PassageSearch";
