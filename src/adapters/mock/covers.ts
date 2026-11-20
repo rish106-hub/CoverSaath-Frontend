@@ -1,7 +1,6 @@
 import { AdapterError, type CoversAdapter } from "../types";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES } from "../documents-contract";
 import { precheck } from "../uploads";
-import { formatValue, labelOf } from "@/components/covers/format";
 import { containsUin, type Conflicts, type HoldingSummary, type WordingState, type CreationIssue, type DeclarationView, type DueView, type Facts, type PremiumView } from "../covers-contract";
 import { PINCODE, type HospitalView } from "../chat-contract";
 import { delay } from "./delay";
@@ -40,11 +39,18 @@ const conflictsSeed = (wording: WordingState): Conflicts["conflicts"] => [
     ] },
 ];
 
-type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null; wording: WordingState };
+type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null; wording: WordingState; handoffOpen?: boolean };
 const holdings = new Map<string, { documentId: string; state: State; linked: { documentId: string; kind: string }[] }>();
 const docs = new Map<string, string>();
 /** Test hook: documents the mock backend could not make a holding from. */
 const issues = new Map<string, CreationIssue>();
+/** Test hook: an FSS handoff is open for this holding (wording `missing`, reason `not_checked`). `finish` flips it to the insurer's wording (`fss`) with its facts. */
+export const setMockHandoff = (holdingId: string, mode: "open" | "finish"): void => {
+  const h = holdings.get(holdingId);
+  if (!h) return;
+  if (mode === "open") { h.state.wording = "missing"; h.state.handoffOpen = true; h.state.facts = factsSeed("missing"); h.state.conflicts = conflictsSeed("missing"); return; }
+  h.state.handoffOpen = false; h.state.wording = "fss"; h.state.facts = factsSeed("fss"); h.state.conflicts = conflictsSeed("fss");
+};
 export const setMockCreationIssue = (documentId: string, state: CreationIssue["state"] | null): void => {
   if (state) issues.set(documentId, { documentId, state, code: state === "failed" ? "HOLDING_CREATE_FAILED" : null });
   else issues.delete(documentId);
@@ -88,7 +94,7 @@ const summaryOf = (s: State): HoldingSummary => {
     policyPeriod: read ? { factKey: "policy_period", value: SEED_PERIOD, status: "extracted_unverified" } : null,
     premium: money("premium_total"),
     wordingState: s.wording,
-    wordingReason: s.wording === "fss" ? null : s.wording === "missing" ? "no_match" : null,
+    wordingReason: s.wording === "fss" ? null : s.wording === "missing" ? (s.handoffOpen ? "not_checked" : "no_match") : null,
   };
 };
 const get = (id: string) => {
@@ -102,14 +108,16 @@ const guard = <T>(v: T): T => {
 };
 
 /** policy.md as the backend renders it (ADR 0039), from the seeded facts. Insurer-tier lines carry the insurer label, page and quote. FOR LEGAL REVIEW: reader-facing wording is not final. */
+const label = (key: string): string => { const w = key.replace(/_/g, " "); return w.charAt(0).toUpperCase() + w.slice(1); };
+const plain = (v: unknown, unit?: string | null): string => (typeof v === "number" ? (unit === "paise" ? `Rs ${v / 100}` : unit === "days" ? `${v} days` : unit === "months" ? `${v} months` : String(v)) : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v ?? "Not found"));
 function memoryMarkdown(state: State): string {
   const line = (f: Facts["facts"][number]): string => {
     const src = f.sources.find((x) => x.tier === f.sourceTier) ?? f.sources[0];
-    const value = f.status === "conflicting" ? "two readings" : formatValue(f.value, f.unit, f.valueType);
+    const value = f.status === "conflicting" ? "two readings" : plain(f.value, f.unit);
     const quote = src?.quote ? ` Quote: "${src.quote}"` : "";
-    if (f.sourceTier === "ida_wording" && f.status === "extracted_unverified") return `- ${labelOf(f.factKey)}? ${value} (insurer wording, not checked)${quote} [insurer_wording, p.${src?.reference?.pageNumber ?? 0}]`;
+    if (f.sourceTier === "ida_wording" && f.status === "extracted_unverified") return `- ${label(f.factKey)}: ${value} (insurer wording, not checked)${quote} [insurer_wording, p.${src?.reference?.pageNumber ?? 0}]`;
     const tag = f.status === "conflicting" ? "[unknown]" : `[own_pdf, p.${src?.page?.pageNumber ?? Number(/\d+$/.exec(src?.page?.pageId ?? "")?.[0] ?? 0)}]`;
-    return `- ${labelOf(f.factKey)}? ${value} (read from your document, not verified)${quote} ${tag}`;
+    return `- ${label(f.factKey)}: ${value} (read from your document, not verified)${quote} ${tag}`;
   };
   const own = state.facts.filter((f) => f.sourceTier !== "ida_wording");
   const insurer = state.facts.filter((f) => f.sourceTier === "ida_wording" && f.status === "extracted_unverified");

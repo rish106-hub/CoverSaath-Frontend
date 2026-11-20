@@ -30,6 +30,7 @@ export const mockEvidence: EvidenceAdapter = {
   review: () => delay({ recorded: true }),
   designateConfirmer: (adultUserId) => delay({ adultUserId, designated: true }),
   preview: () => delay({ contractVersion: "household-scenario/v1", members: [], notes: [] }),
+  holdingPassages: (_holdingId, query) => mockEvidence.passages("current", query),
   passages: (caseId, query) => {
     const q = query.trim().toLowerCase();
     const hit = (text: string) => q.split(/\s+/).some((w) => w.length > 2 && text.toLowerCase().includes(w));

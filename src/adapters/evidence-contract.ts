@@ -101,6 +101,8 @@ export const insurerPassageView = z.object({
 export type InsurerPassage = z.infer<typeof insurerPassageView>;
 
 export const passagesOut = z.object({
+  /** The backend's own notice that passages are not answers. FOR LEGAL REVIEW. */
+  notice: z.string().max(600).nullish(),
   passages: z.array(ownPassageView).max(20).default([]),
   /** A row that is not the insurer's wording, or does not fit, is dropped on its own; the rest still show. */
   insurerPassages: z.array(z.unknown()).max(20).default([]).transform((rows) => rows.flatMap((row) => { const r = insurerPassageView.safeParse(row); return r.success ? [r.data] : []; })),

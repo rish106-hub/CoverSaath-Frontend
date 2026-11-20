@@ -1,7 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { AppError } from "./errors";
-import { gen, need, withDocuments, withReadGrant, writeDocsState, type Ctx } from "./documents";
+import { containsUin, holdingDocumentsIn } from "@/adapters/covers-contract";
+import { gen, hydrateDocsState, need, withDocuments, withReadGrant, writeDocsState, type Ctx } from "./documents";
 import { passagesOut, passagesQueryIn, PATH_ID, IDEMPOTENCY_KEY, type AskQuestion, type CatalogueReview, type ConfirmPolicyProfile, type CoveragePreview, type HandoffQuery, type PassThrough } from "@/adapters/evidence-contract";
 
 // BFF for the evidence routes: policy profile, questions with quotes, decision catalogue, coverage preview, source pack, deletion
@@ -141,14 +142,37 @@ export async function getSourcePack(ctx: Ctx, caseId: string): Promise<Out> {
  * readback is on. The query travels in the URL on the server side only; it is never logged here.
  */
 export async function getPassages(ctx: Ctx, caseId: string, q: string | null, limit: string | null): Promise<Out> {
+  need(ctx.session);
+  // A fresh sign-in has a blank sealed state: read the case back from the backend first, as the documents list does.
+  await hydrateDocsState(ctx);
   const id = caseId === "current" && ctx.state.c ? ctx.state.c : caseId;
   ownCase(ctx, id);
+  return fetchPassages(ctx, id, q, limit);
+}
+
+/**
+ * Passages for one holding: only when the holding's own document is in the case this session holds, so the search never runs on
+ * another policy's case. Any other holding is a 404.
+ */
+export async function getHoldingPassages(ctx: Ctx, holdingId: string, q: string | null, limit: string | null): Promise<Out> {
+  need(ctx.session);
+  await hydrateDocsState(ctx);
+  const caseId = ctx.state.c;
+  if (!caseId) throw new AppError(404, "NOT_FOUND");
+  const linked = holdingDocumentsIn.safeParse((await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/documents`, ctx.session.t)).body);
+  if (!linked.success) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  const inCase = new Set((await withReadGrant(ctx, () => ctx.client.list(ctx.session.t, caseId))).map((d) => d.id));
+  if (!linked.data.documents.some((d) => inCase.has(d.documentId))) throw new AppError(404, "NOT_FOUND");
+  return fetchPassages(ctx, caseId, q, limit);
+}
+
+async function fetchPassages(ctx: Ctx, id: string, q: string | null, limit: string | null): Promise<Out> {
   const query = passagesQueryIn.safeParse({ q: q ?? "", ...(limit ? { limit } : {}) });
   if (!query.success) throw new AppError(400, "INVALID_INPUT");
   const params = new URLSearchParams({ q: query.data.q, ...(query.data.limit ? { limit: String(query.data.limit) } : {}) });
   const r = await withReadGrant(ctx, () => ctx.client.send("GET", `/api/v1/cases/${enc(id)}/passages?${params}`, ctx.session.t));
   const shaped = passagesOut.safeParse(r.body);
-  if (!shaped.success) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  if (!shaped.success || containsUin(shaped.data)) throw new AppError(502, "BACKEND_BAD_RESPONSE");
   return out(shaped.data);
 }
 

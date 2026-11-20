@@ -71,6 +71,26 @@ describe("passages", () => {
     const other = await passages.GET(req("/api/app/cases/case-9/passages?q=room"), { params: Promise.resolve({ caseId: "case-9" }) });
     expect(other.status).toBe(404);
   });
+  it("passes the backend's 503 READBACK_DISABLED as a coded error without its words", async () => {
+    reply = { status: 503, body: JSON.stringify({ error: { code: "READBACK_DISABLED", message: "backend words that must not leak" } }), type: "application/json" };
+    const res = await passages.GET(req("/api/app/cases/case-1/passages?q=room"), C);
+    expect(res.status).toBe(503);
+    const text = JSON.stringify(await res.json());
+    expect(text).toContain("READBACK_DISABLED");
+    expect(text).not.toContain("must not leak");
+  });
+  it("`current` with no session case is a 404, and a signed-out call is a 401", async () => {
+    jar.set(DOCS_COOKIE, sealValue({ h: "h1", exp: Date.now() + 60_000, d: {} }, SECRET));
+    expect((await passages.GET(req("/api/app/cases/current/passages?q=room"), CUR)).status).toBe(404);
+    jar.delete("kv_session");
+    expect((await passages.GET(req("/api/app/cases/case-1/passages?q=room"), C)).status).toBe(401);
+  });
+  it("refuses a body that holds a UIN, and keeps the backend notice", async () => {
+    reply.body = JSON.stringify({ passages: [{ snippet: "Policy SYNTH00001V010101 text." }], insurerPassages: [] });
+    expect((await passages.GET(req("/api/app/cases/case-1/passages?q=room"), C)).status).toBe(502);
+    reply.body = JSON.stringify({ notice: "Passages are not answers.", passages: [], insurerPassages: [] });
+    expect((await (await passages.GET(req("/api/app/cases/case-1/passages?q=room"), C)).json()).data.notice).toBe("Passages are not answers.");
+  });
   it("refuses a bad query before calling the backend", async () => {
     const before = calls.length;
     expect((await passages.GET(req("/api/app/cases/case-1/passages?q=%3Cscript%3E"), C)).status).toBe(400);
@@ -80,6 +100,22 @@ describe("passages", () => {
   it("fails closed on a body that is not an object", async () => {
     reply.body = JSON.stringify({ passages: "nope" });
     expect((await passages.GET(req("/api/app/cases/case-1/passages?q=room"), C)).status).toBe(502);
+  });
+});
+
+describe("holding passages", () => {
+  const HP = { params: Promise.resolve({ id: "holding-1" }) };
+  it("searches only when the holding's document is in the session case", async () => {
+    const hp = await import("@/app/api/app/covers/holdings/[id]/passages/route");
+    const routes: Record<string, unknown> = {
+      "/api/v1/holdings/holding-1/documents": { holdingId: "holding-1", documents: [{ documentId: "doc-1", kind: "schedule" }] },
+      "/api/v1/cases/case-1/documents": { caseId: "case-1", documents: [{ id: "doc-1", documentKind: "policy_schedule", byteSize: 1, status: "accepted", uploadedAt: "2026-11-10T00:00:00.000Z" }] },
+      "/api/v1/cases/case-1/passages": { passages: [], insurerPassages: [] },
+    };
+    vi.stubGlobal("fetch", async (url: string) => new Response(JSON.stringify(routes[new URL(url).pathname] ?? {}), { status: 200 }));
+    expect((await hp.GET(req("/api/app/covers/holdings/holding-1/passages?q=room"), HP)).status).toBe(200);
+    routes["/api/v1/holdings/holding-1/documents"] = { holdingId: "holding-1", documents: [{ documentId: "doc-other", kind: "schedule" }] };
+    expect((await hp.GET(req("/api/app/covers/holdings/holding-1/passages?q=room"), HP)).status).toBe(404);
   });
 });
 
@@ -95,6 +131,10 @@ describe("memory document", () => {
     expect(data.markdown).toContain("[insurer_wording, p.9]");
     expect(data.markdown).not.toMatch(/UIN|SYNTH00001V010101/);
     expect(calls.at(-1)?.url).toBe("/api/v1/holdings/holding-1/memory-document");
+  });
+  it("refuses a success that is not markdown", async () => {
+    reply = { status: 200, body: "# Memory\n", type: "text/html" };
+    expect((await memory.GET(req("/api/app/covers/holdings/holding-1/memory-document"), H)).status).toBe(502);
   });
   it("refuses a UIN anywhere else in the body", async () => {
     reply = { status: 200, body: "# Memory\n\n- Note SYNTH00001V010101\n", type: "text/markdown" };

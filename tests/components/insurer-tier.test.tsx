@@ -9,6 +9,7 @@ import { SourceLine } from "@/components/agent/SourceLine";
 import { MemoryDocumentBody, parseMemoryMarkdown } from "@/components/cover-real/MemoryDocument";
 import { PassageResults } from "@/components/cover-real/PassageSearch";
 import { passagesOut } from "@/adapters/evidence-contract";
+import { statusText, sourceLabel, sideLabel } from "@/components/covers/format";
 import { mockCovers } from "@/adapters/mock/covers";
 import { mockEvidence } from "@/adapters/mock/evidence";
 import { mockChat } from "@/adapters/mock/chat";
@@ -53,6 +54,28 @@ describe("insurer tier labels", () => {
   it("reads an unknown tier or status from a newer backend as missing, not an error", () => {
     const r = factsIn.safeParse({ holdingId: "h1", status: "ready", facts: [{ factKey: "k", status: "unknown", sources: [{ id: "s", tier: "brand_new_tier", status: "brand_new" }] }] });
     expect(r.success).toBe(true);
+  });
+});
+
+describe("fail-safe labels", () => {
+  it("says your document only for tier own_pdf; an unknown or missing tier is another source", () => {
+    expect(statusText("extracted_unverified", "own_pdf")).toBe("Read from your document");
+    expect(statusText("extracted_unverified", "brand_new_tier")).toBe("Another source");
+    expect(statusText("extracted_unverified", undefined)).toBe("Another source");
+    expect(sourceLabel("extracted_unverified", "own_pdf")).toBe("Your schedule");
+    expect(sourceLabel("extracted_unverified", "brand_new_tier")).toBe("Another source");
+    expect(sourceLabel("extracted_unverified", undefined)).toBe("Another source");
+  });
+  it("says verified only for a reviewed reading; ida_wording with unknown status is not verified", () => {
+    expect(sourceLabel("reviewed_reference", "ida_wording")).toBe("Insurer terms (verified)");
+    expect(sourceLabel("unknown", "ida_wording")).not.toMatch(/verified/);
+    expect(sourceLabel("unknown", "ida_wording")).toBe("The insurer's wording");
+    expect(statusText("unknown", "ida_wording")).not.toMatch(/verified|your document/i);
+  });
+  it("conflict sides: verified only for reviewed readings", () => {
+    expect(sideLabel({ id: "a", tier: "ida_wording", source: "reviewed_reference", status: "reviewed_reference", verificationStatus: "verified", pageNumber: 12 })).toBe("Insurer terms (verified), page 12");
+    expect(sideLabel({ id: "a", tier: "ida_wording", source: "reviewed_reference", status: "reviewed_reference", reference: { verificationStatus: "unverified", pageNumber: 4 } })).toBe("Insurer terms, page 4");
+    expect(sideLabel({ id: "a", tier: "ida_wording", reference: { pageNumber: 4 } })).not.toMatch(/verified/);
   });
 });
 
@@ -111,7 +134,9 @@ describe("passages and policy.md", () => {
     expect(parseMemoryMarkdown(md).filter((b) => b.kind === "heading").map((b) => b.kind === "heading" && b.text)).toEqual(["Insurer terms your document doesn't state", "Open questions"]);
     render(<MemoryDocumentBody markdown={md} />);
     expect(screen.getByText("Insurer terms your document doesn't state")).toBeTruthy();
-    expect(screen.getByText(/\(insurer wording, not checked\) \[insurer_wording, p\.9\]/)).toBeTruthy();
+    expect(screen.getByText(/\(insurer wording, not checked\) \(insurer's wording, page 9\)/)).toBeTruthy();
+    expect(screen.getByText(/Co-payment\? \(not found\)/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/\[unknown\]|\[insurer_wording/);
     expect(screen.getByText("Open questions")).toBeTruthy();
   });
   it("shows markdown as text: markup and html in it are not run", () => {

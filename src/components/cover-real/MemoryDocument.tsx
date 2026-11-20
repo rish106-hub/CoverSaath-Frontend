@@ -30,6 +30,17 @@ export function parseMemoryMarkdown(markdown: string): MdBlock[] {
   return blocks;
 }
 
+const TAG_KIND: Record<string, string> = { insurer_wording: "insurer's wording", own_pdf: "your document", policy_schedule: "policy schedule", policy_wording: "policy terms and conditions", endorsement: "endorsement" };
+
+/** The backend's machine tags in plain words: "[unknown]" (not found), "[owner statement]" (you told us), "[insurer_wording, p.9]" (insurer's wording, page 9). */
+export function plainTags(line: string): string {
+  return line.replace(/\s*\[([a-z_ ]+)(?:,\s*p\.(\d+))?(?:,\s*[^\]]*)?\]/g, (_m, kind: string, page?: string) => {
+    const k = kind.trim();
+    const name = k === "unknown" ? "not found" : k === "owner statement" ? "you told us" : k === "policy record" ? "policy record" : TAG_KIND[k] ?? "another source";
+    return ` (${name}${page ? `, page ${page}` : ""})`;
+  });
+}
+
 /** The sections as headed blocks. The document's own `# title` line is not shown twice: the page has its own heading. */
 export function MemoryDocumentBody({ markdown }: { markdown: string }) {
   const blocks = parseMemoryMarkdown(markdown).filter((b) => b.kind !== "title");
@@ -45,8 +56,8 @@ export function MemoryDocumentBody({ markdown }: { markdown: string }) {
     <div className={s.stack} data-testid="memory-document">
       {out.map((sec, i) => {
         const body = sec.blocks.map((b, j) => b.kind === "list"
-          ? <ul key={j} className={s.facts}>{b.items.map((it, k) => <li key={k} className={s.src}>{it}</li>)}</ul>
-          : <p key={j} className={b.kind === "note" ? s.quiet : s.src}>{b.kind === "title" || b.kind === "heading" ? "" : b.text}</p>);
+          ? <ul key={j} className={s.facts}>{b.items.map((it, k) => <li key={k} className={s.src}>{plainTags(it)}</li>)}</ul>
+          : <p key={j} className={b.kind === "note" ? s.quiet : s.src}>{b.text}</p>);
         return sec.title ? <SectionHeading key={i} title={sec.title}>{body}</SectionHeading> : <div key={i}>{body}</div>;
       })}
     </div>

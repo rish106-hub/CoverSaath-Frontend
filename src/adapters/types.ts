@@ -156,6 +156,8 @@ export interface EvidenceAdapter {
   sourcePack(caseId: string): Promise<PassThrough>;
   /** Passages matching `query`: `passages` from the person's own documents and `insurerPassages` from the insurer's wording, kept apart. `caseId` may be "current". */
   passages(caseId: string, query: string, limit?: number): Promise<Passages>;
+  /** Same, for the case behind one holding. Rejects NOT_FOUND when the session case is not this holding's. */
+  holdingPassages(holdingId: string, query: string, limit?: number): Promise<Passages>;
   deletionInventory(caseId: string): Promise<PassThrough>;
   integrations(): Promise<PassThrough>;
 }

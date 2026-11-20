@@ -26,6 +26,13 @@ async function call(path: string, init: { method?: "GET" | "POST"; json?: unknow
   return data as PassThrough;
 }
 
+async function passagesCall(path: string, query: string, limit?: number) {
+  const params = new URLSearchParams({ q: query, ...(limit ? { limit: String(limit) } : {}) });
+  const r = passagesOut.safeParse(await call(`${path}?${params}`));
+  if (!r.success) throw new AdapterError("BACKEND_BAD_RESPONSE");
+  return r.data;
+}
+
 export const backendEvidence: EvidenceAdapter = {
   policyProfile: (documentId) => call(`/api/app/documents/${enc(documentId)}/policy-profile`),
   confirmPolicyProfile: (documentId, statement, key) => call(`/api/app/documents/${enc(documentId)}/policy-profile/confirm`, { method: "POST", json: statement, key }),
@@ -40,12 +47,8 @@ export const backendEvidence: EvidenceAdapter = {
   designateConfirmer: (adultUserId) => call("/api/app/catalogue-confirmers", { method: "POST", json: { adultUserId } }),
   preview: (body) => call("/api/app/coverage-preview", { method: "POST", json: body }),
   sourcePack: (caseId) => call(`/api/app/cases/${enc(caseId)}/source-pack`),
-  passages: async (caseId, query, limit) => {
-    const params = new URLSearchParams({ q: query, ...(limit ? { limit: String(limit) } : {}) });
-    const r = passagesOut.safeParse(await call(`/api/app/cases/${enc(caseId)}/passages?${params}`));
-    if (!r.success) throw new AdapterError("BACKEND_BAD_RESPONSE");
-    return r.data;
-  },
+  passages: (caseId, query, limit) => passagesCall(`/api/app/cases/${enc(caseId)}/passages`, query, limit),
+  holdingPassages: (holdingId, query, limit) => passagesCall(`/api/app/covers/holdings/${enc(holdingId)}/passages`, query, limit),
   deletionInventory: (caseId) => call(`/api/app/cases/${enc(caseId)}/deletion-inventory`),
   integrations: () => call("/api/app/integrations"),
 };

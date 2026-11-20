@@ -16,7 +16,7 @@ function Source({ src, unit, type }: { src: SourceView; unit?: string | null; ty
     <>
       <span className={s.tag}>{sideLabel(src)}</span>
       <b>{formatValue(src.value, unit, type)}</b>
-      {src.quote ? <p className={s.src}>&ldquo;{src.quote}&rdquo;</p> : null}
+      {sourceQuote(src) ? <p className={s.src}>&ldquo;{sourceQuote(src)}&rdquo;</p> : null}
     </>
   );
 }

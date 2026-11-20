@@ -123,6 +123,13 @@ export const TERMS_TEXT: Record<PolicyView["wordingState"], string> = {
 };
 
 /**
+ * While an FSS handoff is open the backend answers wordingState `missing` with wordingReason `not_checked`: the insurer's wording has
+ * not been looked up yet. That is waiting, not an error and not "unknown". FOR LEGAL REVIEW: wording not final.
+ */
+export const isWaitingForWording = (p: Pick<PolicyView, "wordingState" | "wordingReason">): boolean => p.wordingState === "missing" && p.wordingReason === "not_checked";
+export const WAITING_TEXT = "Waiting for the insurer's wording";
+
+/**
  * Where the insurer's terms stand. When they are not attached, "Add the terms yourself" takes the person's own PDF through the
  * existing wording flow: upload as the terms, then link to this holding (the same documents route as before). The backend then
  * reports `manual`, so the page asks again once the link is made.
@@ -149,8 +156,8 @@ export function TermsStatus({ p, onAdded }: { p: PolicyView; onAdded?: () => voi
     }
   }
   return (
-    <div className={s.row} data-testid="terms-status" data-state={p.wordingState}>
-      <span className={s.lead} role="status">{busy ? "Adding your terms\u2026" : TERMS_TEXT[p.wordingState]}</span>
+    <div className={s.row} data-testid="terms-status" data-state={isWaitingForWording(p) ? "waiting" : p.wordingState}>
+      <span className={s.lead} role="status">{busy ? "Adding your terms\u2026" : isWaitingForWording(p) ? WAITING_TEXT : TERMS_TEXT[p.wordingState]}</span>
       {p.wordingState === "missing" ? (
         <>
           <button type="button" className="k-btn k-btn--secondary k-btn--sm" disabled={busy} onClick={() => input.current?.click()}>Add the terms yourself</button>

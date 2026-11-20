@@ -8,12 +8,21 @@ import { stateOf } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
 import { MemoryDocument } from "./MemoryDocument";
 import { PassageSearch } from "./PassageSearch";
-import { ErrorBox, FactItem, Headlines, Loading, Pending, StageBox, TermsStatus } from "./parts";
+import { useEffect } from "react";
+import { isWaitingForWording, ErrorBox, FactItem, Headlines, Loading, Pending, StageBox, TermsStatus } from "./parts";
 import { usePolicies } from "./use-policies";
 
 /** /policies/[id] for a real account: the holding's facts, each with its status and where it was read. */
 export function RealPolicyDetail({ id }: { id: string }) {
-  const { state, reload } = usePolicies();
+  const { state, reload, refresh } = usePolicies();
+  const waiting = state.kind === "ready" && state.policies.some((x) => x.id === id && isWaitingForWording(x));
+  // While the insurer's wording is awaited, ask again now and then (quietly) so the insurer facts appear when the state turns to fss. Stops after about 3 minutes.
+  useEffect(() => {
+    if (!waiting) return;
+    let n = 0;
+    const t = setInterval(() => { n += 1; if (n > 18) clearInterval(t); else refresh(); }, 10_000);
+    return () => clearInterval(t);
+  }, [waiting, refresh]);
   if (state.kind === "loading") return <Loading what="your policy" />;
   if (state.kind === "error") return <ErrorBox code={state.code} onRetry={reload} />;
   const p = state.kind === "ready" ? state.policies.find((x) => x.id === id) : undefined;
@@ -38,7 +47,7 @@ export function RealPolicyDetail({ id }: { id: string }) {
       ))}
       {p.notFound > 0 ? <p className={s.quiet}>{p.notFound} {p.notFound === 1 ? "detail was" : "details were"} not found in your document.</p> : null}
       {p.stage === "needs_review" || p.stage === "ready" ? <MemoryDocument holdingId={p.id} /> : null}
-      {p.stage === "needs_review" || p.stage === "ready" ? <PassageSearch /> : null}
+      {p.stage === "needs_review" || p.stage === "ready" ? <PassageSearch holdingId={p.id} /> : null}
       <div className={s.row}>
         <Link className="k-btn k-btn--secondary" href="/policies">All policies</Link>
         <Link className="k-btn k-btn--secondary" href={`/chat?holding=${encodeURIComponent(p.id)}`}>Ask about this policy</Link>

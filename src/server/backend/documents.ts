@@ -104,6 +104,7 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   REVISION_CONFLICT: [409, "REVISION_CONFLICT", false],
   // Chat threads and turns (backend ADR 0031). Only the code is read.
   MEMORY_DISABLED: [503, "MEMORY_DISABLED", false],
+  READBACK_DISABLED: [503, "READBACK_DISABLED", false],
   CHAT_THREAD_NOT_FOUND: [404, "NOT_FOUND", false],
   CHAT_REQUEST_INVALID: [400, "INVALID_INPUT", false],
 };
@@ -205,7 +206,10 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
       const res = await doFetch(`${base}${path}`, { method, headers, body, signal: controller.signal, cache: "no-store", redirect: "error" });
       const text = await res.text();
       // `text`: a markdown body (the memory document). A success is returned as the string; a failure is still a JSON error body.
-      if (o.text && res.status >= 200 && res.status < 300) return { status: res.status, body: text };
+      if (o.text && res.status >= 200 && res.status < 300) {
+        if (!(res.headers.get("content-type") ?? "").toLowerCase().startsWith("text/markdown")) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+        return { status: res.status, body: text };
+      }
       let parsed: unknown = null;
       try {
         parsed = text ? JSON.parse(text) : null;
