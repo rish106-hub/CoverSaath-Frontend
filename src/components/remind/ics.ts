@@ -1,6 +1,6 @@
 export type RemindItem = { title: string; /** YYYY-MM-DD */ date: string; detail?: string };
 
-const esc = (t: string) => t.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+const esc = (t: string) => t.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 const compact = (d: string) => d.replace(/-/g, "");
 
 function nextDay(d: string): string {
