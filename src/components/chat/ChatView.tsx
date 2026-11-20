@@ -12,7 +12,8 @@ import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
 import { ChatConsentCard, WithdrawConsent, useChatConsent } from "./ChatConsent";
 import { useHoldings } from "@/components/covers/use-holdings";
-import { STATUS_TEXT } from "@/components/covers/format";
+import { statusText } from "@/components/covers/format";
+import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL, clipQuote, insurerLine, isInsurerUnchecked } from "@/adapters/insurer-tier";
 import s from "./chat.module.css";
 
 // Chat about the household's cover. The answer streams in; when it is complete it shows the facts it used, each with where it came from, and
@@ -46,7 +47,7 @@ function FactChips({ a }: { a: TurnAnswer }) {
           <li key={f.factId} className={s.chip} data-check={f.checkWithInsurer}>
             <b>{f.label}</b>
             {f.valueText ? <span>{f.valueText}</span> : null}
-            <span>{STATUS_TEXT[f.status]}</span>
+            <span>{statusText(f.status, f.sourceTier)}</span>
             {/* FOR LEGAL REVIEW: wording on a product term. The insurer's own wording governs. */}
             {f.checkWithInsurer ? <span data-role="check">Check with the insurer</span> : null}
           </li>
@@ -56,31 +57,44 @@ function FactChips({ a }: { a: TurnAnswer }) {
   );
 }
 
-const DOC_LABEL: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions", endorsement: "Endorsement" };
+const DOC_LABEL: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions", endorsement: "Endorsement", [INSURER_SOURCE]: INSURER_UNCHECKED_LABEL };
 
-/** Document and page for each source the answer rests on, from the answer's own citations and those on its facts. Deduplicated. */
+type Cite = { documentKind?: string | null; page?: number | null };
+const isInsurerCite = (c: Cite): boolean => c.documentKind === INSURER_SOURCE;
+
+/** Document and page for each source the answer rests on, from the answer's own citations and those on its facts. Deduplicated.
+ *  The insurer's wording is its own line, "From the insurer's wording, not checked" (FOR LEGAL REVIEW), never "Your document". */
 export function citationLines(a: TurnAnswer): string[] {
-  const fromSources = (a.sources ?? []).map((x) => ({ documentKind: x.kind === "wording" ? "policy_wording" : x.kind, page: x.page }));
-  const all = [...fromSources, ...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
+  const fromSources: Cite[] = (a.sources ?? []).map((x) => ({ documentKind: x.kind === "wording" ? "policy_wording" : x.kind, page: x.page }));
+  // The card's insurer-tier sources (ida_wording, not checked) read the same as the stream's insurer sources.
+  const fromCard: Cite[] = (a.card?.sources ?? []).filter((c) => isInsurerUnchecked(c.tier, c.status)).map((c) => ({ documentKind: INSURER_SOURCE, page: c.page }));
+  const all: Cite[] = [...fromSources, ...fromCard, ...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
   const seen = new Set<string>();
   const out: string[] = [];
   for (const c of all) {
-    const doc = c.documentKind ? DOC_LABEL[c.documentKind] ?? "Your document" : "Your document";
-    const line = c.page ? `${doc}, page ${c.page}` : doc;
+    const line = isInsurerCite(c) ? insurerLine(c.page) : `${c.documentKind ? DOC_LABEL[c.documentKind] ?? "Your document" : "Your document"}${c.page ? `, page ${c.page}` : ""}`;
     if (!seen.has(line)) { seen.add(line); out.push(line); }
   }
   return out;
 }
 
+/** Quotes of insurer-tier sources on the card, at most 160 characters each. No link: there is no document of the household behind them. */
+export function insurerQuotes(a: TurnAnswer): string[] {
+  const quotes = [...(a.card?.sources ?? []).filter((c) => isInsurerUnchecked(c.tier, c.status)).map((c) => c.quote), ...(a.sources ?? []).filter((x) => x.kind === INSURER_SOURCE).map((x) => x.quote)];
+  return [...new Set(quotes.map((q) => clipQuote(q)).filter((q): q is string => Boolean(q)))];
+}
+
 function Citations({ a }: { a: TurnAnswer }) {
   const lines = citationLines(a);
   if (lines.length === 0) return null;
+  const quotes = insurerQuotes(a);
   return (
     <div>
       <p className={s.small}>Sources</p>
       <ul className={s.facts} aria-label="Sources">
         {lines.map((l) => <li key={l} className={s.chip}>{l}</li>)}
       </ul>
+      {quotes.map((q) => <p key={q} className={s.small}><q>{q}</q></p>)}
     </div>
   );
 }

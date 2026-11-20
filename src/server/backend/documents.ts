@@ -104,6 +104,7 @@ const BY_CODE: Record<string, [number, AppError["code"], boolean]> = {
   REVISION_CONFLICT: [409, "REVISION_CONFLICT", false],
   // Chat threads and turns (backend ADR 0031). Only the code is read.
   MEMORY_DISABLED: [503, "MEMORY_DISABLED", false],
+  READBACK_DISABLED: [503, "READBACK_DISABLED", false],
   CHAT_THREAD_NOT_FOUND: [404, "NOT_FOUND", false],
   CHAT_REQUEST_INVALID: [400, "INVALID_INPUT", false],
 };
@@ -189,10 +190,10 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
   const base = opts.baseUrl.replace(/\/+$/, "");
   const doFetch: FetchLike = opts.fetch ?? guardedFetch;
 
-  async function send(method: "GET" | "POST" | "PUT" | "DELETE", path: string, token: string, o: { json?: unknown; headers?: Record<string, string>; bytes?: Uint8Array; timeoutMs?: number } = {}): Promise<Out> {
+  async function send(method: "GET" | "POST" | "PUT" | "DELETE", path: string, token: string, o: { json?: unknown; headers?: Record<string, string>; bytes?: Uint8Array; timeoutMs?: number; text?: boolean } = {}): Promise<Out> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), o.timeoutMs ?? 8000);
-    const headers: Record<string, string> = { accept: "application/json", authorization: `Bearer ${token}`, ...o.headers };
+    const headers: Record<string, string> = { accept: o.text ? "text/markdown, application/json" : "application/json", authorization: `Bearer ${token}`, ...o.headers };
     let body: BodyInit | undefined;
     if (o.bytes) {
       headers["content-type"] = "application/pdf";
@@ -204,6 +205,11 @@ export function createDocumentsClient(opts: { baseUrl: string; fetch?: FetchLike
     try {
       const res = await doFetch(`${base}${path}`, { method, headers, body, signal: controller.signal, cache: "no-store", redirect: "error" });
       const text = await res.text();
+      // `text`: a markdown body (the memory document). A success is returned as the string; a failure is still a JSON error body.
+      if (o.text && res.status >= 200 && res.status < 300) {
+        if (!(res.headers.get("content-type") ?? "").toLowerCase().startsWith("text/markdown")) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+        return { status: res.status, body: text };
+      }
       let parsed: unknown = null;
       try {
         parsed = text ? JSON.parse(text) : null;

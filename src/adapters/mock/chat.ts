@@ -1,5 +1,6 @@
 import { AdapterError, type ChatAdapter } from "../types";
 import { containsUin } from "../covers-contract";
+import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL } from "../insurer-tier";
 import { turnIn, type FactUsed, type TurnAnswer, type TurnInput } from "../chat-contract";
 
 // In-memory stand-in for the chat routes, with the BFF's rules: a message of 1 to 1000 characters, a thread must exist, the answer
@@ -14,7 +15,7 @@ const FACTS: Record<string, FactUsed> = {
   si: { factId: "f-si", factKey: "sum_insured", label: "Sum insured", status: "extracted_unverified", sourceTier: "own_pdf", valueText: "Rs 5,00,000", checkWithInsurer: false },
 };
 
-type Script = Pick<TurnAnswer, "status" | "intent" | "answer" | "factsUsed" | "computed" | "openConflicts"> & { sources?: TurnAnswer["sources"] } & { retrieval: "vector" | "keyword" | "facts_only" };
+type Script = Pick<TurnAnswer, "status" | "intent" | "answer" | "factsUsed" | "computed" | "openConflicts"> & { sources?: TurnAnswer["sources"]; card?: TurnAnswer["card"] } & { retrieval: "vector" | "keyword" | "facts_only" };
 
 function scriptFor(message: string): Script {
   const m = message.toLowerCase();
@@ -26,6 +27,17 @@ function scriptFor(message: string): Script {
       answer: "Your policy terms apply a 10% co-payment on claims after age 60. The sum insured on your schedule is Rs 5,00,000.",
       factsUsed: [copay, si], computed: null, openConflicts: [],
       sources: [{ kind: "wording", document_id: "doc-mock-wording", page: 7, ref: "4.2" }],
+    };
+  }
+  if (/pre-?hospital|before (the )?admission|60 days/.test(m)) {
+    // The household's documents do not say; the insurer's wording does (ADR 0039 D9). Its own kind of source, no document id, tier insurer_wording.
+    const quote = "Medical expenses incurred for up to 60 days before the date of admission are covered.";
+    return {
+      status: "evidence_found", intent: "clause_lookup", retrieval: "facts_only",
+      answer: `The documents you uploaded don't say. ${INSURER_UNCHECKED_LABEL}: expenses up to 60 days before admission are covered. Check with the insurer.`,
+      factsUsed: [], computed: null, openConflicts: [],
+      sources: [{ kind: INSURER_SOURCE, tier: INSURER_SOURCE, page: 9, quote, ref: "insurer:mock" }],
+      card: { status: "evidence_found", headline: "Not stated in your documents", sources: [{ tier: "ida_wording", status: "extracted_unverified", page: 9, quote }] },
     };
   }
   if (/knee|surgery|operation|procedure/.test(m)) {
@@ -78,7 +90,7 @@ export const mockChat: ChatAdapter = {
     }
     await tick(60, signal);
     if (signal?.aborted) return;
-    onEvent({ type: "answer", data: { turnId: `turn-mock-${n}-${Date.now()}`, status: sc.status, intent: sc.intent, answer: sc.answer, answerSource: "deterministic", factsUsed: sc.factsUsed, computed: sc.computed, openConflicts: sc.openConflicts, ...(sc.sources ? { sources: sc.sources } : {}) } });
+    onEvent({ type: "answer", data: { turnId: `turn-mock-${n}-${Date.now()}`, status: sc.status, intent: sc.intent, answer: sc.answer, answerSource: "deterministic", factsUsed: sc.factsUsed, computed: sc.computed, openConflicts: sc.openConflicts, ...(sc.sources ? { sources: sc.sources } : {}), ...(sc.card ? { card: sc.card } : {}) } });
     onEvent({ type: "done", data: {} });
   },
 };

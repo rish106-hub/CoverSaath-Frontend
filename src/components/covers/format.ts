@@ -1,4 +1,5 @@
 import type { FactView, ResolvedStatus, SourceView } from "@/adapters/covers-contract";
+import { INSURER_UNCHECKED_LABEL, clipQuote, isInsurerUnchecked } from "@/adapters/insurer-tier";
 
 // Pure display helpers for the cover screens. No decision is made here: a status is shown as the backend gave it.
 
@@ -63,11 +64,21 @@ export const isOpen = (s: ResolvedStatus): boolean => s === "conflicting" || s =
 export const TIER_TEXT: Record<string, string> = { own_pdf: "Your document", ida_wording: "The insurer's wording", user_declaration: "What you told us" };
 export const tierText = (tier: string | null | undefined): string => TIER_TEXT[tier ?? ""] ?? "Another source";
 
+/** What the status chip says. An unchecked insurer reading is never "read from your document" (FOR LEGAL REVIEW: wording not final). */
+export function statusText(status: ResolvedStatus, tier?: string | null): string {
+  if (isInsurerUnchecked(tier, status)) return INSURER_UNCHECKED_LABEL;
+  // Fail safe: "read from your document" only for a reading that is known to come from the person's own document.
+  if (status === "extracted_unverified" && tier !== "own_pdf") return tierText(tier);
+  return STATUS_TEXT[status];
+}
+
 /** Where a fact came from, in one label. A conflict and the person's own choice come before the tier; a verified reference is the insurer's terms. */
 export function sourceLabel(status: ResolvedStatus, tier: string | null | undefined): string {
   if (status === "conflicting") return "Conflicting";
   if (status === "user_confirmed" || tier === "user_declaration") return "Confirmed by you";
-  if (status === "reviewed_reference" || tier === "ida_wording") return "Insurer terms (verified)";
+  if (isInsurerUnchecked(tier, status)) return INSURER_UNCHECKED_LABEL;
+  if (status === "reviewed_reference") return "Insurer terms (verified)";
+  if (tier !== "own_pdf") return tierText(tier);
   return "Your schedule";
 }
 
@@ -82,10 +93,18 @@ const isOwnSide = (src: SourceView): boolean => src.source === "own_document" ||
 export function sideLabel(src: SourceView): string {
   const ref = isReferenceSide(src);
   const name = src.documentName?.trim() || (ref ? "Insurer terms" : isOwnSide(src) ? "Your schedule" : tierText(src.tier));
-  const verified = ref && src.verificationStatus !== "unverified" ? " (verified)" : "";
-  const n = src.pageNumber ?? src.page?.pageNumber ?? null;
+  // Verified only for a reviewed reading whose verification is not "unverified". A missing status is never "verified".
+  const verification = src.verificationStatus ?? src.reference?.verificationStatus;
+  const verified = ref && (src.status === "reviewed_reference" || src.source === "reviewed_reference") && verification !== "unverified" && src.status !== "extracted_unverified" ? " (verified)" : "";
+  const n = sourcePageNumber(src);
   return `${name}${verified}${n ? `, page ${n}` : ""}`;
 }
+
+/** The 1-based page of one reading: the insurer's page for an insurer-tier row, else the page of the person's document. */
+export const sourcePageNumber = (src: SourceView): number | null => src.reference?.pageNumber ?? src.pageNumber ?? src.page?.pageNumber ?? null;
+
+/** The quote shown with a reading. An insurer-tier quote is held to 160 characters. */
+export const sourceQuote = (src: SourceView | undefined, tier?: string | null): string | null => (src?.quote ? (tier === "ida_wording" || src.tier === "ida_wording" || src.source === "reviewed_reference" ? clipQuote(src.quote) : src.quote) : null);
 
 export function pageText(page: SourceView["page"]): string | null {
   if (!page) return null;

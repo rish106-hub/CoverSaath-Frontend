@@ -104,8 +104,9 @@ const page = z.object({ pageId: z.string().max(128), blockIndex: z.number().int(
 /** One reading of a fact in one tier (own PDF, insurer wording, your declaration). `value` is whatever the backend typed it as. */
 export const sourceView = z.object({
   id: z.string().max(128),
-  tier: z.enum(["own_pdf", "ida_wording", "user_declaration"]).optional(),
-  status: status.optional(),
+  /** An unknown tier or status from a newer backend reads as missing, never as an error. */
+  tier: z.enum(["own_pdf", "ida_wording", "user_declaration"]).optional().catch(undefined),
+  status: status.optional().catch(undefined),
   value: z.unknown().optional(),
   page,
   quote: z.string().max(2000).nullish(),
@@ -116,6 +117,8 @@ export const sourceView = z.object({
   documentName: z.string().max(200).nullish(),
   pageNumber: z.number().int().min(1).max(10000).nullish(),
   verificationStatus: z.string().max(40).nullish(),
+  /** Insurer-tier rows (ADR 0036): where in the insurer's wording the reading came from. The quote is on the source itself. */
+  reference: z.object({ source: z.string().max(40).nullish(), pageNumber: z.number().int().min(1).max(10000).nullish(), verificationStatus: z.string().max(40).nullish() }).nullish().catch(null),
 });
 export type SourceView = z.infer<typeof sourceView>;
 
@@ -237,3 +240,8 @@ export const deletedOut = z.object({ deleted: z.literal(true) });
 
 /** What every cover route answers: `{ ok: true, data }`. */
 export const coverOut = z.object({ ok: z.literal(true).optional(), data: z.unknown() });
+
+/** The owner's memory document (policy.md) as markdown (backend ADR 0039). A body over 200 000 characters is refused, not cut. */
+export const MEMORY_DOCUMENT_MAX = 200_000;
+export const memoryDocumentIn = z.object({ holdingId: id, markdown: z.string().min(1).max(MEMORY_DOCUMENT_MAX) });
+export type MemoryDocument = z.infer<typeof memoryDocumentIn>;
