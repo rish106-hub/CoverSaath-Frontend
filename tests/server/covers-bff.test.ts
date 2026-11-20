@@ -367,7 +367,7 @@ describe("holdings flag off and consent required", () => {
   });
   it("maps 403 CONSENT_REQUIRED on writes and keeps the session", async () => {
     for (const [k, run] of writes) {
-      routes[k.replace("POST ", "POST ").replace(" /", " /")] = { status: 403, body: bk("CONSENT_REQUIRED") };
+      routes[k] = { status: 403, body: bk("CONSENT_REQUIRED") };
       const res = await run();
       expect([res.status, (await res.json()).code]).toEqual([403, "CONSENT_REQUIRED"]);
     }

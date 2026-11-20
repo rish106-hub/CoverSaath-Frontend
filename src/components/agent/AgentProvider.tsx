@@ -1,7 +1,6 @@
 "use client";
 
 import { voiceOnHold } from "./voice-hold";
-import { prefersReducedMotion } from "@/lib/use-reduced-motion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { adapters, AdapterError, type AssistantReply } from "@/adapters";
@@ -54,7 +53,6 @@ export function useAgent(): Ctx {
   return c;
 }
 
-const reduced = prefersReducedMotion;
 
 export function AgentProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/home";

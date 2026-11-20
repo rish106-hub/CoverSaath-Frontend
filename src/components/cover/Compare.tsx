@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Kicker, PageTitle, Recommended, SectionHeading } from "@/components/type";
 import { InsurerTile } from "./InsurerTile";
 import {

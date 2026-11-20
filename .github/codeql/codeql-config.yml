@@ -1,0 +1,4 @@
+name: CoverSaath frontend CodeQL config
+# design/*.dc.html are design-canvas prototypes with {{template}} bindings, not shipped code.
+paths-ignore:
+  - design
