@@ -9,6 +9,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import * as threads from "@/app/api/app/chat/threads/route";
+import { TURN_IDLE_MS } from "@/adapters/chat-timing";
 import * as turns from "@/app/api/app/chat/threads/[id]/turns/route";
 import * as consent from "@/app/api/app/chat/consent/route";
 import * as hospitals from "@/app/api/app/covers/holdings/[id]/hospitals/route";
@@ -234,7 +235,7 @@ describe("a stalled backend stream", () => {
       });
       const res = await turns.POST(req("/x", "POST", { json: { message: "What is the room rent limit?" } }), { params: Promise.resolve({ id: "th-1" }) });
       const reading = res.text();
-      await vi.advanceTimersByTimeAsync(26_000);
+      await vi.advanceTimersByTimeAsync(TURN_IDLE_MS + 1_000);
       const text = await reading;
       expect(text).toContain("event: meta");
       expect(text).toContain('event: error\ndata: {"code":"BACKEND_TIMEOUT"}');

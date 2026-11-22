@@ -2,15 +2,16 @@ import { runtime as backendRuntime, readSession, clearSession, failure, AppError
 import { assertSameOrigin } from "@/server/backend/guard";
 import { readCappedBody } from "@/server/backend/body";
 import { createDocumentsClient } from "@/server/backend/documents";
+import { TURN_MAX_DURATION_S } from "@/adapters/chat-timing";
 import { streamTurn } from "@/server/backend/chat-v1";
 import { pathId } from "@/server/backend/evidence";
 import { turnIn } from "@/adapters/chat-contract";
 
 // Node runtime on purpose (no `runtime = 'edge'`): the backend SSE body is passed through, one sanitised event at a time. A Vercel Function
-// allows 300 s by default; a turn is cut off after 55 s by the BFF.
+// allows 300 s by default; a turn is cut off after TURN_TIMEOUT_MS by the BFF.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = TURN_MAX_DURATION_S;
 
 /** A message is at most 1000 characters plus a small procedure block. */
 const MAX_TURN_BODY = 8 * 1024;

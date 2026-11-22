@@ -1,6 +1,7 @@
 import { runtime as backendRuntime, readSession, json, failure, AppError } from "@/server/backend";
 import { assertSameOrigin } from "@/server/backend/guard";
 import { createChatClient, chatBody } from "@/server/backend/chat";
+import { CHAT_MAX_DURATION_S } from "@/adapters/chat-timing";
 import { readCappedBody } from "@/server/backend/body";
 
 /** A chat message is at most 500 characters plus a page path; 4 KB is generous and stops a large body before it is buffered. */
@@ -8,7 +9,7 @@ const MAX_CHAT_BODY = 4096;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = CHAT_MAX_DURATION_S;
 
 /** Ask Knowvia, backed by the CoverSaath chat route. readSession (not readAnySession): a demo session gets a coded 403 and stays on the mock. */
 export async function POST(req: Request) {

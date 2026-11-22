@@ -5,11 +5,12 @@ import { guardedFetch } from "./resilience";
 import { mapFailure } from "./user-data";
 import { answerSourceSchema, answerStatusSchema } from "@/adapters/schemas";
 import type { FetchLike } from "./client";
+import { CHAT_TIMEOUT_MS } from "@/adapters/chat-timing";
 
 // BFF client for the backend chat route (P7a): POST /api/v1/households/:id/chat. Chat v0 is deterministic and cited. The backend
 // token stays server-side. The message is never logged and never echoed in errors.
 
-export const CHAT_TIMEOUT_MS = 15_000;
+export { CHAT_TIMEOUT_MS };
 export const chatBody = z.object({ text: z.string().trim().min(1).max(500), page: z.string().regex(/^\/[a-z0-9/_-]{0,64}$/).optional() });
 export type ChatBody = z.infer<typeof chatBody>;
 

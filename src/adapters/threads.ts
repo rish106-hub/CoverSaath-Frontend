@@ -3,6 +3,7 @@ import { answerEvent, deltaEvent, errorEvent, metaEvent, threadIn, type TurnEven
 import { coverOut } from "./covers-contract";
 import { consentOut } from "./documents-contract";
 import type { z } from "zod";
+import { TURN_IDLE_MS, TURN_WATCHDOG_MS } from "./chat-timing";
 
 // Browser client for the same-origin chat BFF (/api/app/chat/threads). It reads the streamed turn (text/event-stream) and hands each
 // event to the page. It never sees the backend token or the backend. Every event is parsed again here, so a malformed frame is an error,
@@ -10,9 +11,8 @@ import type { z } from "zod";
 
 const HEADERS = { "x-knowvia-app": "1" };
 
-/** A turn never waits longer than this in total, or this long for the next bytes. Past either the page shows "That took too long" and offers a retry. */
-export const TURN_WATCHDOG_MS = 50_000;
-export const TURN_IDLE_MS = 25_000;
+/** A turn never waits longer than TURN_WATCHDOG_MS in total, or TURN_IDLE_MS for the next bytes (chat-timing.ts). Past either the page shows "That took too long" and offers a retry. */
+export { TURN_WATCHDOG_MS, TURN_IDLE_MS };
 
 async function failedWith(res: Response): Promise<AdapterError> {
   const b = ((await res.json().catch(() => null)) ?? {}) as { code?: unknown; retryable?: unknown };
