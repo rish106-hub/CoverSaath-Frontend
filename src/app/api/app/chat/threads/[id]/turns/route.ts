@@ -2,7 +2,6 @@ import { runtime as backendRuntime, readSession, clearSession, failure, AppError
 import { assertSameOrigin } from "@/server/backend/guard";
 import { readCappedBody } from "@/server/backend/body";
 import { createDocumentsClient } from "@/server/backend/documents";
-import { TURN_MAX_DURATION_S } from "@/adapters/chat-timing";
 import { streamTurn } from "@/server/backend/chat-v1";
 import { pathId } from "@/server/backend/evidence";
 import { turnIn } from "@/adapters/chat-contract";
@@ -11,7 +10,8 @@ import { turnIn } from "@/adapters/chat-contract";
 // allows 300 s by default; a turn is cut off after TURN_TIMEOUT_MS by the BFF.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = TURN_MAX_DURATION_S;
+// Next.js reads segment config statically: keep a literal; tests/adapters/chat-timing.test.ts pins it to TURN_MAX_DURATION_S.
+export const maxDuration = 90;
 
 /** A message is at most 1000 characters plus a small procedure block. */
 const MAX_TURN_BODY = 8 * 1024;
