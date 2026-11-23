@@ -1,6 +1,6 @@
 /**
  * Mirror of the backend's server-side analytics allowlist (CoverSaath `src/contracts/analytics-events.js`, ADR 0033).
- * The backend emits these nine events from the worker's outbox, only for a household with an active analytics grant and only
+ * The backend emits these ten events from the worker's outbox, only for a household with an active analytics grant and only
  * while its `ANALYTICS_ENABLED` is exactly "true". The app never sends them itself: this file exists so the app and the backend
  * cannot drift (tests/lib/analytics-allowlist.test.ts compares it with tests/fixtures/backend-analytics-events.json, a snapshot of
  * the backend contract) and so the consent scope for the backend grant is named in one place.
@@ -33,6 +33,7 @@ export const BACKEND_ANALYTICS_EVENTS = {
   insurer_confirmed: { candidate_rank: count(3), manual: flag },
   parse_completed: { facts: count(10_000), conflicts: count(10_000), ms: count(86_400_000) },
   conflict_resolved: { choice: oneOf("primary", "alternative") },
+  reading_confirmed: { fact_class: oneOf("personal_value", "product_term") },
   declaration_added: { kind: oneOf("pre_existing_disease", "prior_condition", "habit", "occupation", "nominee", "other") },
   premium_recorded: {
     channel: oneOf("upi", "card", "netbanking", "cheque", "cash", "salary_deduction", "unknown"),
