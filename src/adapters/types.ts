@@ -2,7 +2,7 @@ import type * as S from "./schemas";
 import type { ReferenceProducts, ReferenceQuery } from "./reference-contract";
 import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 import type { HospitalView, ThreadView, TurnEvent, TurnInput } from "./chat-contract";
-import type { Candidates, Confirmed, CreationIssue, HoldingsView, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingDocuments, HoldingView, LinkDocumentInput, Linked, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
+import type { Candidates, Confirmed, CreationIssue, HoldingsView, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingDocuments, HoldingView, LinkDocumentInput, Linked, PayDueInput, PremiumInput, PremiumView, ReadingConfirmed, ResolveConflict, Resolved } from "./covers-contract";
 import type { DocumentKind, PolicyType } from "./documents-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough, Passages } from "./evidence-contract";
 
@@ -187,6 +187,8 @@ export interface CoversAdapter {
   facts(holdingId: string): Promise<Facts>;
   conflicts(holdingId: string): Promise<Conflicts>;
   resolveConflict(holdingId: string, conflictId: string, choice: ResolveConflict): Promise<Resolved>;
+  /** The owner confirms a printed reading (a source id from facts). The backend copies its value into their own statement. */
+  confirmReading(holdingId: string, factId: string): Promise<ReadingConfirmed>;
   declarations(memberId?: string): Promise<DeclarationView[]>;
   addDeclaration(input: DeclarationInput): Promise<DeclarationView>;
   updateDeclaration(declarationId: string, input: DeclarationUpdateInput): Promise<DeclarationView>;

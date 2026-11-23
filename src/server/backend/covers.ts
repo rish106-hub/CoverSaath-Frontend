@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { AppError } from "./errors";
 import { need, withDocuments, withReadGrant, type Ctx } from "./documents";
-import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, memoryDocumentIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
+import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, memoryDocumentIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, readingConfirmedIn, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
 
 // BFF for the cover screens: holdings, product candidates, confirm product, facts, conflicts and their resolution, declarations,
 // premiums and dues and dues (CoverSaath /api/v1/holdings and /api/v1/households/{id}/...). Server only. The backend token stays in the sealed
@@ -92,6 +92,13 @@ export async function resolveConflict(ctx: Ctx, holdingId: string, conflictId: s
   need(ctx.session);
   const r = await ctx.client.send("POST", `/api/v1/holdings/${enc(holdingId)}/conflicts/${enc(conflictId)}/resolve`, ctx.session.t, { json: choice });
   return out(shape(resolvedIn, r.body));
+}
+
+/** The owner confirms a printed reading. No body goes to the backend (it rejects one); a missing or replaced reading is a 404. */
+export async function confirmReading(ctx: Ctx, holdingId: string, factId: string): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("POST", `/api/v1/holdings/${enc(holdingId)}/facts/${enc(factId)}/confirm`, ctx.session.t);
+  return out(shape(readingConfirmedIn, r.body));
 }
 
 // ---- Declarations, premiums, dues (CoverSaath #104) ---------------------------------------------------------------------------
