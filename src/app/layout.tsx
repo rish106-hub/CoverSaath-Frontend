@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   description: "Your family's health cover, explained in rupees.",
 };
 
+// Cloudflare Web Analytics token: public by design, ships in the page. Cookieless.
+const CF_BEACON = JSON.stringify({ token: "4ca4716292c644ef8ca736a08800b726" });
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" data-theme="light" className={`${newsreader.variable} ${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
@@ -25,6 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CapabilityInit />
         <SpeedInsights />
         <Analytics />
+        {process.env.NODE_ENV === "production" && (
+          <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={CF_BEACON} />
+        )}
       </body>
     </html>
   );

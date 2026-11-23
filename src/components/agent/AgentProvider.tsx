@@ -1,6 +1,6 @@
 "use client";
 
-import { prefersReducedMotion } from "@/lib/use-reduced-motion";
+import { voiceOnHold } from "./voice-hold";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { adapters, AdapterError, type AssistantReply } from "@/adapters";
@@ -53,7 +53,6 @@ export function useAgent(): Ctx {
   return c;
 }
 
-const reduced = prefersReducedMotion;
 
 export function AgentProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/home";
@@ -246,6 +245,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   // Hold V: keydown opens and listens, keyup submits. Ignored while an input is focused.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      if (voiceOnHold()) return;
       if (e.key.toLowerCase() !== "v" || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.repeat || isEditable(e.target)) return;
       if (holdRef.current.held) return;

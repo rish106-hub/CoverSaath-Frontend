@@ -193,7 +193,7 @@ export function EmergencyView() {
         </div>
 
         <div className={s.col}>
-          <SectionHeading title="Nearest hospital" description={loc === 0 ? undefined : "Kothrud, Pune"}>
+          <SectionHeading title="Nearest hospital" >
             <div className={s.panel}>
               <div className={ui.row + " " + ui.wrap}>
                 {Object.entries(emergencyIssues).map(([key, v]) => (

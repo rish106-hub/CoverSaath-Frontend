@@ -68,7 +68,7 @@ export function CommandPalette() {
               {docs.map((d) => <Command.Item key={d.id} value={`document ${d.name}`} onSelect={() => go("/policies")}>{d.name}</Command.Item>)}
             </Command.Group>
             <Command.Group heading="Actions">
-              <Command.Item value="action add document policy" onSelect={() => go("/welcome/add")}>Add a document</Command.Item>
+              <Command.Item value="action add document policy" onSelect={() => go("/covers/add")}>Add a document</Command.Item>
               <Command.Item value="action emergency" onSelect={() => go("/emergency")}>Emergency</Command.Item>
               <Command.Item value="action switch theme dark light" onSelect={() => { setPaletteOpen(false); toggle(); }}>Switch light and dark</Command.Item>
             </Command.Group>

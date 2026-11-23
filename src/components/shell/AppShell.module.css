@@ -6,7 +6,7 @@
 .dock { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; }
 .skip { position: absolute; left: 8px; top: -64px; z-index: 100; padding: 10px 16px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); font: 600 14px var(--font-sans); }
 .skip:focus { top: 8px; }
-@media (min-width: 960px) and (max-width: 1199px) {
+@media (min-width: 960px) and (max-width: 1023px) {
   .shell { --side-w: 72px; }
 }
 @media (max-width: 959px) {

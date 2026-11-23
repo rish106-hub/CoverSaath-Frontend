@@ -7,10 +7,11 @@ import { pathId } from "@/server/backend/evidence";
 import { turnIn } from "@/adapters/chat-contract";
 
 // Node runtime on purpose (no `runtime = 'edge'`): the backend SSE body is passed through, one sanitised event at a time. A Vercel Function
-// allows 300 s by default; a turn is cut off after 55 s by the BFF.
+// allows 300 s by default; a turn is cut off after TURN_TIMEOUT_MS by the BFF.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// Next.js reads segment config statically: keep a literal; tests/adapters/chat-timing.test.ts pins it to TURN_MAX_DURATION_S.
+export const maxDuration = 90;
 
 /** A message is at most 1000 characters plus a small procedure block. */
 const MAX_TURN_BODY = 8 * 1024;

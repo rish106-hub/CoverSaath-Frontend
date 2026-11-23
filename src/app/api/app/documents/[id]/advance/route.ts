@@ -3,7 +3,7 @@ import { AppError } from "@/server/backend";
 import { advanceDocument, withDocuments } from "@/server/backend/documents";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const body = z.strictObject({ retry: z.boolean().optional() });
 

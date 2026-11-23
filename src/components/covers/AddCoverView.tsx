@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { adapters } from "@/adapters";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type PolicyType } from "@/adapters/documents-contract";
 import { makeRequestKey, uploads } from "@/adapters/uploads";
+import { stageOf } from "@/adapters/covers";
 import type { CandidateView, Candidates } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf } from "./use-holdings";
@@ -44,7 +45,8 @@ function UploadSteps({ stage }: { stage: NonNullable<Slot["stage"]> }) {
 function SlotStatus({ slot, name }: { slot: Slot; name: string }) {
   if (slot.status === "empty") return <p className={s.quiet}>Drop the PDF here, or choose it from your device.</p>;
   const file = slot.file?.name ?? name;
-  if (slot.status === "working" || slot.status === "waiting") return <UploadSteps stage={slot.status === "waiting" ? "matching" : (slot.stage ?? "sending")} />;
+  if (slot.status === "working") return <UploadSteps stage={slot.stage ?? "sending"} />;
+  if (slot.status === "waiting") return <><UploadSteps stage={slot.stage ?? "sending"} /><p className={s.quiet}>Still working on it. A long policy can take a minute or two.</p></>;
   if (slot.status === "done") return <p className={s.lead} role="status" data-state="done">{file}: added.</p>;
   return <p className={s.alert} role="alert" data-state="failed">{file}: {errorText(slot.code ?? "")}</p>;
 }
@@ -55,7 +57,7 @@ export function AddCoverView() {
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState<boolean | null>(null);
   const [agreed, setAgreed] = useState(false);
-  const [policyType, setPolicyType] = useState<PolicyType | "">("");
+  const [policyType, setPolicyType] = useState<PolicyType | "">("personal_health");
   const [typeLocked, setTypeLocked] = useState(false);
   const [schedule, setSchedule] = useState<Slot>(emptySlot);
   const [holdingId, setHoldingId] = useState<string | null>(null);
@@ -124,12 +126,32 @@ export function AddCoverView() {
       if (!live) return;
       setConsent(r.consent);
       if (r.policyType) { setPolicyType(r.policyType); setTypeLocked(true); }
+      // A schedule still being checked or read when the page was left or reloaded comes back here, ahead of the payment card:
+      // it already holds its slot. "?resume=1" has its own path above.
+      if (!r.consent || new URLSearchParams(window.location.search).get("resume") === "1") return;
+      const open = r.documents.find((d) => d.busy && d.kind === "policy_schedule" && d.note !== "DELETING" && d.note !== "QUARANTINED");
+      if (!open) return;
+      return adapters.covers.holdingsView().then(async (view) => {
+        if (!live || view.holdings.some((h) => h.documentId === open.id)) return;
+        const slot: Slot = { ...emptySlot(), status: "waiting", documentId: open.id, stage: stageOf(open) };
+        setResumed(true);
+        setSchedule(slot);
+        setBusy(true);
+        try {
+          const next = await checkSchedule(adapters.covers, slot, (stage) => { if (live) setSchedule((cur) => ({ ...cur, stage })); });
+          if (live) await afterSchedule(next);
+        } finally {
+          if (live) setBusy(false);
+        }
+      }).catch(() => undefined);
     }).catch((e) => {
       if (!live) return;
       setError(codeOf(e));
       setConsent(false);
     });
     return () => { live = false; };
+    // afterSchedule only calls setters and the candidates fetch; the first render copy is enough for this once-on-load effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function accept() {
@@ -190,8 +212,9 @@ export function AddCoverView() {
 
   async function checkAgain() {
     setBusy(true);
+    const onStage = (stage: NonNullable<Slot["stage"]>) => setSchedule((cur) => ({ ...cur, stage }));
     try {
-      await afterSchedule(await checkSchedule(adapters.covers, schedule));
+      await afterSchedule(await checkSchedule(adapters.covers, schedule, onStage));
     } finally {
       setBusy(false);
     }

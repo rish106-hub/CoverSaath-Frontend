@@ -2,7 +2,8 @@ import type { ConflictView, WordingReason, WordingState, FactView, Headline, Hol
 import type { Finding, Policy } from "./schemas";
 import { AdapterError, type PolicyAdapter, type ReadingAdapter } from "./types";
 import { backendCovers } from "./covers";
-import { STATUS_TEXT, documentKindText, formatValue, isOpen, labelOf, pageText, rupees, sourceLabel, tierText } from "@/components/covers/format";
+import { isInsurerUnchecked } from "./insurer-tier";
+import { STATUS_TEXT, documentKindText, formatValue, isOpen, labelOf, pageText, rupees, sourceLabel, sourcePageNumber, sourceQuote, statusText, tierText } from "@/components/covers/format";
 
 // Real-mode policy view: the household's stored holdings and their facts, mapped for /home, /policies and /policies/[id].
 // Nothing here decides anything. A status is shown as the backend gave it; a model-read value is never presented as verified.
@@ -62,17 +63,20 @@ export const codeOf = (e: unknown): string => (e instanceof AdapterError ? e.cod
 
 export function factLine(f: FactView): FactLine {
   const src = f.sources.find((x) => x.tier === f.sourceTier) ?? f.sources[0];
-  const page = src ? pageText(src.page) : null;
+  const insurer = isInsurerUnchecked(f.sourceTier ?? src?.tier, f.status);
+  // An insurer-tier reading shows the insurer's page; its source label already names the tier, so the citation is the page alone.
+  const n = src ? sourcePageNumber(src) : null;
+  const page = insurer ? (n ? `Page ${n}` : null) : src ? pageText(src.page) : null;
   return {
     key: f.factKey,
     label: labelOf(f.factKey),
     value: f.status === "conflicting" ? "Two readings" : f.status === "unknown" ? "Not found" : formatValue(f.value, f.unit, f.valueType),
     status: f.status,
-    statusText: STATUS_TEXT[f.status],
+    statusText: statusText(f.status, f.sourceTier ?? src?.tier),
     sourceText: sourceLabel(f.status, f.sourceTier ?? src?.tier),
     open: isOpen(f.status),
-    citation: src ? [tierText(src.tier), documentKindText(src.page?.documentKind), page].filter(Boolean).join(", ") : null,
-    quote: src?.quote ?? null,
+    citation: src ? (insurer ? page : [tierText(src.tier), documentKindText(src.page?.documentKind), page].filter(Boolean).join(", ")) : null,
+    quote: sourceQuote(src, f.sourceTier),
     group: f.group ?? null,
     conflictId: f.openConflictId ?? null,
   };

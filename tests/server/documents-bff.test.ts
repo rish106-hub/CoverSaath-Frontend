@@ -15,6 +15,7 @@ vi.mock("next/headers", () => ({
 import * as docs from "@/app/api/app/documents/route";
 import * as consent from "@/app/api/app/documents/consent/route";
 import * as one from "@/app/api/app/documents/[id]/route";
+import * as chatConsent from "@/app/api/app/chat/consent/route";
 import * as advance from "@/app/api/app/documents/[id]/advance/route";
 import { checkPdfUpload, mapDocFailure, DOCS_COOKIE } from "@/server/backend/documents";
 import { MAX_UPLOAD_BYTES } from "@/adapters/documents-contract";
@@ -546,5 +547,51 @@ describe("helpers", () => {
     await grant();
     jar.set("kv_session", seal({ t: "tok-secret", h: "h2", m: "m1", a: "adult1", exp: Date.now() + 60_000 }, SECRET));
     expect((await (await docs.GET(req("/api/app/documents"))).json()).consent).toBe(false);
+  });
+});
+
+describe("rebuilding state from the backend when kv_docs is empty", () => {
+  const sc = (resourceType: string, resourceId: string | null, action: string, dataCategory: string, recipient: string | null = null) => ({ resourceType, resourceId, action, dataCategory, recipient });
+  const grants = [
+    { id: "chat-old", purpose: "coverage_reconstruction", status: "revoked", scopes: [sc("household", null, "derive", "insurance_question", "gemini")] },
+    { id: "chat-1", purpose: "coverage_reconstruction", status: "active", scopes: [sc("household", null, "derive", "insurance_question", "gemini"), sc("household", null, "derive", "insurance_question", "voyage")] },
+    { id: "view-1", purpose: "document_processing", status: "active", scopes: [sc("case", "case-1", "read", "source_pack_metadata", "adult1")] },
+    { id: "collect-1", purpose: "document_processing", status: "active", scopes: [sc("document", null, "collect", "insurance_document")] },
+  ];
+  beforeEach(() => {
+    routes["GET /api/v1/households/h1/cases"] = { status: 200, body: { householdId: "h1", cases: [{ id: "case-2", policyType: "personal_health", status: "closed" }, { id: "case-1", policyType: "personal_health", status: "collecting" }], truncated: false } };
+    routes["GET /api/v1/households/h1/consents"] = { status: 200, body: { householdId: "h1", consents: grants, truncated: false } };
+  });
+
+  it("brings back the case, the consent and the documents without a new grant", async () => {
+    expect(jar.has(DOCS_COOKIE)).toBe(false);
+    const list = await (await docs.GET(req("/api/app/documents"))).json();
+    expect(list).toMatchObject({ ok: true, consent: true, policyType: "personal_health" });
+    expect(list.documents).toHaveLength(1);
+    expect(calls.some((c) => c.method === "POST" && c.url === "/api/v1/consents")).toBe(false);
+    expect(calls.find((c) => c.url === "/api/v1/cases/case-1/documents")?.url).toBeDefined();
+  });
+  it("falls back to the empty state when the lists cannot be read", async () => {
+    routes["GET /api/v1/households/h1/cases"] = { status: 503, body: null };
+    const list = await (await docs.GET(req("/api/app/documents"))).json();
+    expect(list).toMatchObject({ ok: true, consent: false, documents: [] });
+  });
+  it("does not call the lists when the cookie already holds state", async () => {
+    await grant();
+    calls.length = 0;
+    await docs.GET(req("/api/app/documents"));
+    expect(calls.some((c) => c.url.endsWith("/cases") || c.url.endsWith("/consents"))).toBe(false);
+  });
+  it("finds an existing chat grant before asking again, and makes no new grant", async () => {
+    jar.set(DOCS_COOKIE, sealValue({ h: "h1", exp: Date.now() + 60_000, d: {}, g: "collect-1" }, SECRET));
+    const res = await (await chatConsent.GET(req("/api/app/chat/consent"))).json();
+    expect(res).toMatchObject({ ok: true, consent: true });
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+    expect(openValue<{ exp: number; ch?: string }>(jar.get(DOCS_COOKIE), SECRET)?.ch).toBe("chat-1");
+  });
+  it("reports no chat consent when the backend holds none that is active", async () => {
+    jar.set(DOCS_COOKIE, sealValue({ h: "h1", exp: Date.now() + 60_000, d: {}, g: "collect-1" }, SECRET));
+    routes["GET /api/v1/households/h1/consents"] = { status: 200, body: { householdId: "h1", consents: [grants[0]], truncated: false } };
+    expect((await (await chatConsent.GET(req("/api/app/chat/consent"))).json()).consent).toBe(false);
   });
 });

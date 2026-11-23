@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { AppError } from "./errors";
 import { need, withDocuments, withReadGrant, type Ctx } from "./documents";
-import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
+import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, memoryDocumentIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
 
 // BFF for the cover screens: holdings, product candidates, confirm product, facts, conflicts and their resolution, declarations,
 // premiums and dues and dues (CoverSaath /api/v1/holdings and /api/v1/households/{id}/...). Server only. The backend token stays in the sealed
@@ -29,7 +29,12 @@ export async function listHoldings(ctx: Ctx): Promise<{ data: unknown }> {
   const r = await ctx.client.send("GET", `/api/v1/households/${enc(ctx.session.h)}/holdings`, ctx.session.t);
   // The backend's `creation_issues` (snake_case) is the same list as `creationIssues`; older backends send neither.
   const body = r.body && typeof r.body === "object" && "creation_issues" in r.body && !("creationIssues" in r.body) ? { ...(r.body as object), creationIssues: (r.body as { creation_issues: unknown }).creation_issues } : r.body;
-  return out(shape(holdingsIn, body));
+  // One holding that looks like it holds a UIN is dropped on its own; the rest of the list still goes out.
+  const parsed = holdingsIn.safeParse(body);
+  if (!parsed.success) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  const kept = { ...parsed.data, holdings: parsed.data.holdings.filter((h) => !containsUin(h)) };
+  if (containsUin({ ...kept, holdings: [] })) throw new AppError(502, "BACKEND_BAD_RESPONSE");
+  return out(kept);
 }
 
 /** Up to three candidates: insurer and product name, nothing else. The page confirms one by `candidateId`. */
@@ -51,6 +56,15 @@ export async function getFacts(ctx: Ctx, holdingId: string): Promise<{ data: unk
   need(ctx.session);
   const r = await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/facts`, ctx.session.t);
   return out(shape(factsIn, r.body));
+}
+
+/** The owner's memory document (policy.md) as markdown. Backend 503 MEMORY_DISABLED / 403 CONSENT_REQUIRED / 404 pass through as coded errors. Never cached. */
+export async function getMemoryDocument(ctx: Ctx, holdingId: string): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/memory-document`, ctx.session.t, { text: true });
+  // The document has a "- UIN:" line for the owner. A UIN is service-only in this app, so that line is dropped here, and a UIN anywhere else refuses the body.
+  const markdown = typeof r.body === "string" ? r.body.split("\n").filter((line) => !/^\s*-\s*UIN:/i.test(line)).join("\n") : r.body;
+  return out(shape(memoryDocumentIn, { holdingId, markdown }));
 }
 
 /** Documents linked to one holding: the schedule that made it and any terms and conditions added after. */

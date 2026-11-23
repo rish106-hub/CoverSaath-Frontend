@@ -9,7 +9,7 @@ import type { CreationIssue } from "@/adapters/covers-contract";
  * The household's stored holdings with their facts, as one screen state, plus the documents the backend could not make a holding
  * from (`issues`). `reload` asks again (used while a document is being read).
  */
-export function usePolicies(): { state: DashState; issues: CreationIssue[]; reload: () => void } {
+export function usePolicies(): { state: DashState; issues: CreationIssue[]; reload: () => void; refresh: () => void } {
   const [policies, setPolicies] = useState<PolicyView[] | null>(null);
   const [issues, setIssues] = useState<CreationIssue[]>([]);
   const [code, setCode] = useState<string | null>(null);
@@ -26,5 +26,7 @@ export function usePolicies(): { state: DashState; issues: CreationIssue[]; relo
     return () => { live = false; };
   }, [tick]);
   const reload = useCallback(() => { setCode(null); setPolicies(null); setTick((t) => t + 1); }, []);
-  return { state: stateOf(policies, code), issues, reload };
+  /** Asks again without clearing the screen (used while the insurer's wording is awaited). */
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { state: stateOf(policies, code), issues, reload, refresh };
 }

@@ -20,6 +20,7 @@ export const meSchema = z.object({
   householdName: z.string(),
   owner: z.object({ id: z.string(), displayName: z.string(), email: z.string().optional() }),
   source: z.enum(["backend", "mock", "demo"]),
+  trial: z.boolean().optional(),
 });
 export type Me = z.infer<typeof meSchema>;
 
@@ -77,7 +78,7 @@ export type LearnPost = z.infer<typeof learnPostSchema>;
 
 /** Where an answer came from. Optional so older replies (and the demo) still parse. */
 export const answerSourceSchema = z.object({
-  tier: z.enum(["household_evidence", "reference", "none"]),
+  tier: z.enum(["household_evidence", "reference", "insurer_wording", "none"]),
   label: z.string().max(200),
   page: z.number().int().positive().optional(),
   quote: z.string().max(600).optional(),

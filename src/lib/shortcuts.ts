@@ -30,7 +30,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { id: "emergency", keys: ["e"], label: "Emergency", section: "Act", href: "/emergency" },
   { id: "voice", keys: ["v"], label: "Hold to talk to Knowvia", section: "Act" },
   { id: "type", keys: ["/"], label: "Type to Knowvia", section: "Act" },
-  { id: "add-document", keys: ["n"], label: "Add a document", section: "Act", href: "/welcome/add" },
+  { id: "add-document", keys: ["n"], label: "Add a document", section: "Act", href: "/covers/add" },
   { id: "theme", keys: ["t"], label: "Switch light and dark", section: "Act" },
   { id: "help", keys: ["?"], label: "Show shortcuts", section: "Act" },
   { id: "close", keys: ["escape"], label: "Close", section: "Act" },

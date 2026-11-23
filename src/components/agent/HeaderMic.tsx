@@ -2,11 +2,13 @@
 
 import { useAgent } from "./AgentProvider";
 import { MicGlyph } from "./VoiceIcons";
+import { voiceOnHold } from "./voice-hold";
 import styles from "./agent.module.css";
 
 /** Small mic in the top bar, next to the theme button. Opens the panel in voice mode. */
 export function HeaderMic() {
   const { open, close, view } = useAgent();
+  if (voiceOnHold()) return null;
   return (
     <button type="button" className={styles.headMic} aria-label="Talk to Knowvia" title="Talk to Knowvia. Or hold V and speak." aria-keyshortcuts="V" aria-expanded={view !== "closed"} onClick={(e) => (view === "closed" ? open(e.currentTarget, { anchor: "dock" }) : close())}>
       <MicGlyph size={18} />

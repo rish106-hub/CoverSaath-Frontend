@@ -32,7 +32,7 @@ function GroupIcon({ id }: { id: GroupId }) {
 }
 
 /**
- * Left sidebar pinned on every app page. Between 960 and 1199px it is an icon rail (labels move to tooltips). Below 960px it becomes a top bar with a menu button
+ * Left sidebar pinned on every app page. Between 960 and 1023px it is an icon rail (labels move to tooltips). Below 960px it becomes a top bar with a menu button
  * that opens the same sidebar as a drawer. The "Today" and "Reading list" blocks only show on /home.
  */
 export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {

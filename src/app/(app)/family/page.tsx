@@ -1,7 +1,8 @@
-import { DemoGate, EmptyState } from "@/components/shell/EmptyState";
-import { PageTitle, Kicker } from "@/components/type";
+import { DemoGate } from "@/components/shell/EmptyState";
+import { Kicker } from "@/components/type";
+import { FamilyTitle } from "@/components/family/FamilyTitle";
 import { FamilyView } from "@/components/family";
-import { FamilyOwner } from "@/components/shell";
+import { RealFamily } from "@/components/family/RealFamily";
 import { pageFor } from "@/lib/ia";
 
 export const metadata = { title: "People and invites" };
@@ -13,9 +14,9 @@ export default function Page() {
     <>
       <div>
         {page.kicker ? <Kicker>{page.kicker}</Kicker> : null}
-        <PageTitle>{page.title}</PageTitle>
+        <FamilyTitle demo={page.title} />
       </div>
-      <DemoGate empty={<EmptyState title="Only you so far" body="Upload your policy and Knowvia reads it for you. The people it covers are added to your family from there."><FamilyOwner /></EmptyState>}><FamilyView /></DemoGate>
+      <DemoGate empty={<RealFamily />}><FamilyView /></DemoGate>
     </>
   );
 }

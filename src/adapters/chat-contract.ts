@@ -46,6 +46,9 @@ export const sourceView = z.object({
   document_id: z.string().max(128).nullish(),
   page: z.number().int().min(1).max(10_000).nullish(),
   ref: z.string().max(200).nullish(),
+  /** Kind `insurer_wording` (ADR 0039): the insurer's own wording, with no document of the household behind it. Tier is `insurer_wording` too. */
+  tier: z.string().max(40).nullish(),
+  quote: z.string().max(400).nullish(),
 });
 export type AnswerSource = z.infer<typeof sourceView>;
 
@@ -61,6 +64,21 @@ export const factUsed = z.object({
   citation: citationView.nullish(),
 });
 export type FactUsed = z.infer<typeof factUsed>;
+
+/** One source on the chat answer card (answer-card/v1). Tier `ida_wording` with status `extracted_unverified` is the insurer's wording, not checked. */
+export const cardSourceView = z.object({
+  tier: z.string().max(40),
+  status: z.string().max(40),
+  page: z.number().int().min(1).max(10_000).nullish(),
+  quote: z.string().max(400).nullish(),
+});
+/** Only what the page shows. Anything the backend adds is dropped; a card that does not fit is left out, not an error. */
+export const cardView = z.object({
+  status: z.string().max(40).nullish(),
+  headline: z.string().max(400).nullish(),
+  sources: z.array(cardSourceView).max(8).default([]),
+});
+export type CardView = z.infer<typeof cardView>;
 
 const check = z.object({ id: z.string().max(80), status: z.enum(["ok", "attention", "info", "unknown"]), detail: z.string().max(600), factIds: z.array(z.string().max(128)).max(20).default([]) });
 export const computedView = z.object({
@@ -85,6 +103,7 @@ export const answerEvent = z.object({
   /** Additive backend field: "numbers_unverified" when the model wrote figures that were not checked against a fact. Unknown values are kept as text, never shown raw. */
   citations: z.array(citationView).max(20).optional(),
   sources: z.array(sourceView).max(20).optional(),
+  card: cardView.nullish().catch(undefined),
   modelStatus: z.string().max(60).optional(),
   truncated: z.boolean().optional(),
 });

@@ -65,3 +65,47 @@ export type CoveragePreview = z.infer<typeof coveragePreviewIn>;
 
 /** What every evidence route answers: `{ ok: true, data }`. `data` is the backend body. */
 export const evidenceOut = z.object({ ok: z.literal(true).optional(), data: z.unknown() });
+
+// ---- Passages (backend GET /api/v1/cases/{caseId}/passages, ADR 0012 D9, plan C4) -------------------------------------------------
+// Two separate lists: `passages` come from the person's own read documents; `insurerPassages` come from the insurer's public wording
+// for the plan the policy is linked to. Never merged. FOR LEGAL REVIEW: the labels are not final. zod objects drop unknown keys, so a
+// field the backend adds later never reaches the page; a missing insurer list reads as empty.
+
+export const PASSAGE_QUERY = /^[\p{L}\p{N} .,'%/&()-]{2,100}$/u;
+export const passagesQueryIn = z.object({ q: z.string().trim().regex(PASSAGE_QUERY), limit: z.coerce.number().int().min(1).max(10).optional() }).strict();
+export type PassagesQuery = z.infer<typeof passagesQueryIn>;
+
+const PASSAGE_SNIPPET_MAX = 280;
+export const ownPassageView = z.object({
+  clauseId: z.string().max(128).nullish(),
+  documentId: z.string().max(128).nullish(),
+  kind: z.string().max(40).nullish(),
+  title: z.string().max(200).nullish(),
+  page: z.number().int().min(1).max(10_000).nullish(),
+  snippet: z.string().max(PASSAGE_SNIPPET_MAX),
+});
+export type OwnPassage = z.infer<typeof ownPassageView>;
+
+/** The insurer's wording: no link to a document of the household, only an opaque chunk id, the version, the page and a short snippet. */
+export const insurerPassageView = z.object({
+  chunkId: z.string().max(128),
+  versionId: z.string().max(128).nullish(),
+  documentId: z.string().max(128).nullish(),
+  page: z.number().int().min(1).max(10_000).nullish(),
+  pageSha256: z.string().max(64).nullish(),
+  /** Always `insurer_wording`. Anything else is not the insurer's wording and is dropped by the parser below. */
+  source: z.literal("insurer_wording"),
+  label: z.string().max(200).nullish(),
+  snippet: z.string().max(PASSAGE_SNIPPET_MAX),
+});
+export type InsurerPassage = z.infer<typeof insurerPassageView>;
+
+export const passagesOut = z.object({
+  /** The backend's own notice that passages are not answers. FOR LEGAL REVIEW. */
+  notice: z.string().max(600).nullish(),
+  passages: z.array(ownPassageView).max(20).default([]),
+  /** A row that is not the insurer's wording, or does not fit, is dropped on its own; the rest still show. */
+  insurerPassages: z.array(z.unknown()).max(20).default([]).transform((rows) => rows.flatMap((row) => { const r = insurerPassageView.safeParse(row); return r.success ? [r.data] : []; })),
+  truncated: z.boolean().optional(),
+});
+export type Passages = z.infer<typeof passagesOut>;

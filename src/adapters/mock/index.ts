@@ -1,5 +1,4 @@
 import type { Adapters } from "../types";
-import { AdapterError } from "../types";
 import { detectWalletPlatform } from "@/lib/wallet-detect";
 import { delay } from "./delay";
 import { mockProfile } from "./profile";

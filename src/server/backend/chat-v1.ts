@@ -5,6 +5,7 @@ import { mapDocFailure, need, type Ctx } from "./documents";
 import { guardedFetch } from "./resilience";
 import { runtime } from "./index";
 import { answerEvent, deltaEvent, errorEvent, hospitalsIn, metaEvent, threadIn, type TurnInput } from "@/adapters/chat-contract";
+import { TURN_IDLE_MS, TURN_TIMEOUT_MS } from "@/adapters/chat-timing";
 import { containsUin } from "@/adapters/covers-contract";
 
 // BFF for chat threads, streamed turns and hospitals (CoverSaath chat v1, PR #102). Server only. The backend token stays in the sealed
@@ -13,7 +14,9 @@ import { containsUin } from "@/adapters/covers-contract";
 // looks like it holds a UIN is refused. The message is never logged and never echoed in an error.
 
 const enc = encodeURIComponent;
-export const TURN_TIMEOUT_MS = 55_000;
+// TURN_TIMEOUT_MS caps the whole turn; TURN_IDLE_MS is the longest silence from the backend before the stream ends with one coded
+// BACKEND_TIMEOUT error, so the page never hangs. Values and backend evidence: src/adapters/chat-timing.ts.
+export { TURN_TIMEOUT_MS, TURN_IDLE_MS };
 /** Largest single SSE frame (or unfinished tail) read from the backend. Larger means a broken or hostile upstream. */
 const MAX_FRAME = 64 * 1024;
 const out = (data: unknown): { data: unknown } => ({ data });
@@ -135,10 +138,22 @@ export async function streamTurn(ctx: Ctx, threadId: string, turn: TurnInput & {
   const reader = stream.getReader();
   const body2 = new ReadableStream<Uint8Array>({
     async pull(c) {
+      let idle: ReturnType<typeof setTimeout> | undefined;
       try {
-        const { done, value } = await reader.read();
-        if (done) { clearTimeout(timer); c.close(); } else c.enqueue(value);
+        const quiet = new Promise<"idle">((resolve) => { idle = setTimeout(() => resolve("idle"), TURN_IDLE_MS); });
+        const got = await Promise.race([reader.read(), quiet]);
+        clearTimeout(idle);
+        if (got === "idle") {
+          clearTimeout(timer);
+          controller.abort();
+          c.enqueue(new TextEncoder().encode(frame("error", { code: "BACKEND_TIMEOUT" })));
+          c.close();
+          void reader.cancel().catch(() => undefined);
+          return;
+        }
+        if (got.done) { clearTimeout(timer); c.close(); } else c.enqueue(got.value);
       } catch {
+        clearTimeout(idle);
         clearTimeout(timer);
         c.close();
       }

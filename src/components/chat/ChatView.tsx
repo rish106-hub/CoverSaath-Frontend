@@ -7,11 +7,13 @@ import { AdapterError } from "@/adapters/types";
 import { errorText } from "@/adapters/documents-contract";
 import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/chat-contract";
 import { MicGlyph } from "@/components/agent/VoiceIcons";
+import { voiceOnHold } from "@/components/agent/voice-hold";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
-import { makeRequestKey } from "@/adapters/uploads";
+import { ChatConsentCard, WithdrawConsent, useChatConsent } from "./ChatConsent";
 import { useHoldings } from "@/components/covers/use-holdings";
-import { STATUS_TEXT } from "@/components/covers/format";
+import { statusText } from "@/components/covers/format";
+import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL, clipQuote, insurerLine, isInsurerUnchecked } from "@/adapters/insurer-tier";
 import s from "./chat.module.css";
 
 // Chat about the household's cover. The answer streams in; when it is complete it shows the facts it used, each with where it came from, and
@@ -45,7 +47,7 @@ function FactChips({ a }: { a: TurnAnswer }) {
           <li key={f.factId} className={s.chip} data-check={f.checkWithInsurer}>
             <b>{f.label}</b>
             {f.valueText ? <span>{f.valueText}</span> : null}
-            <span>{STATUS_TEXT[f.status]}</span>
+            <span>{statusText(f.status, f.sourceTier)}</span>
             {/* FOR LEGAL REVIEW: wording on a product term. The insurer's own wording governs. */}
             {f.checkWithInsurer ? <span data-role="check">Check with the insurer</span> : null}
           </li>
@@ -55,31 +57,44 @@ function FactChips({ a }: { a: TurnAnswer }) {
   );
 }
 
-const DOC_LABEL: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions", endorsement: "Endorsement" };
+const DOC_LABEL: Record<string, string> = { policy_schedule: "Policy schedule", policy_wording: "Policy terms and conditions", endorsement: "Endorsement", [INSURER_SOURCE]: INSURER_UNCHECKED_LABEL };
 
-/** Document and page for each source the answer rests on, from the answer's own citations and those on its facts. Deduplicated. */
+type Cite = { documentKind?: string | null; page?: number | null };
+const isInsurerCite = (c: Cite): boolean => c.documentKind === INSURER_SOURCE;
+
+/** Document and page for each source the answer rests on, from the answer's own citations and those on its facts. Deduplicated.
+ *  The insurer's wording is its own line, "From the insurer's wording, not checked" (FOR LEGAL REVIEW), never "Your document". */
 export function citationLines(a: TurnAnswer): string[] {
-  const fromSources = (a.sources ?? []).map((x) => ({ documentKind: x.kind === "wording" ? "policy_wording" : x.kind, page: x.page }));
-  const all = [...fromSources, ...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
+  const fromSources: Cite[] = (a.sources ?? []).map((x) => ({ documentKind: x.kind === "wording" ? "policy_wording" : x.kind, page: x.page }));
+  // The card's insurer-tier sources (ida_wording, not checked) read the same as the stream's insurer sources.
+  const fromCard: Cite[] = (a.card?.sources ?? []).filter((c) => isInsurerUnchecked(c.tier, c.status)).map((c) => ({ documentKind: INSURER_SOURCE, page: c.page }));
+  const all: Cite[] = [...fromSources, ...fromCard, ...(a.citations ?? []), ...a.factsUsed.map((f) => f.citation).filter((c): c is NonNullable<typeof c> => Boolean(c))];
   const seen = new Set<string>();
   const out: string[] = [];
   for (const c of all) {
-    const doc = c.documentKind ? DOC_LABEL[c.documentKind] ?? "Your document" : "Your document";
-    const line = c.page ? `${doc}, page ${c.page}` : doc;
+    const line = isInsurerCite(c) ? insurerLine(c.page) : `${c.documentKind ? DOC_LABEL[c.documentKind] ?? "Your document" : "Your document"}${c.page ? `, page ${c.page}` : ""}`;
     if (!seen.has(line)) { seen.add(line); out.push(line); }
   }
   return out;
 }
 
+/** Quotes of insurer-tier sources on the card, at most 160 characters each. No link: there is no document of the household behind them. */
+export function insurerQuotes(a: TurnAnswer): string[] {
+  const quotes = [...(a.card?.sources ?? []).filter((c) => isInsurerUnchecked(c.tier, c.status)).map((c) => c.quote), ...(a.sources ?? []).filter((x) => x.kind === INSURER_SOURCE).map((x) => x.quote)];
+  return [...new Set(quotes.map((q) => clipQuote(q)).filter((q): q is string => Boolean(q)))];
+}
+
 function Citations({ a }: { a: TurnAnswer }) {
   const lines = citationLines(a);
   if (lines.length === 0) return null;
+  const quotes = insurerQuotes(a);
   return (
     <div>
       <p className={s.small}>Sources</p>
       <ul className={s.facts} aria-label="Sources">
         {lines.map((l) => <li key={l} className={s.chip}>{l}</li>)}
       </ul>
+      {quotes.map((q) => <p key={q} className={s.small}><q>{q}</q></p>)}
     </div>
   );
 }
@@ -103,37 +118,15 @@ export function ChatView() {
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   // False on the server and first paint, then what the browser can do: no hydration mismatch.
-  const canSpeak = useSyncExternalStore(() => () => undefined, () => adapters.voice.supported(), () => false);
+  const canSpeak = useSyncExternalStore(() => () => undefined, () => !voiceOnHold() && adapters.voice.supported(), () => false);
   const [note, setNote] = useState<string | null>(null);
   const thread = useRef<{ id: string; holdingId: string | null } | null>(null);
   const abort = useRef<AbortController | null>(null);
   const seq = useRef(0);
   const holdingId = current?.id;
-  // null while checking. A failed check does not block: the server refuses a turn without the go-ahead and the card then appears.
-  const [consent, setConsent] = useState<boolean | null>(null);
-  const [agreed, setAgreed] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [consentError, setConsentError] = useState<string | null>(null);
-  const consentKey = useRef(makeRequestKey());
-
-  useEffect(() => {
-    let live = true;
-    adapters.chat.consent().then((c) => { if (live) setConsent(c); }, () => { if (live) setConsent(true); });
-    return () => { live = false; };
-  }, []);
-
-  async function accept() {
-    setSaving(true);
-    setConsentError(null);
-    try {
-      await adapters.chat.grantConsent(consentKey.current);
-      setConsent(true);
-    } catch (e) {
-      setConsentError(codeOf(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+  // null while checking. A failed check counts as not given: the card shows (fail closed).
+  const cc = useChatConsent();
+  const { consent, required } = cc;
 
   useEffect(() => () => { abort.current?.abort(); }, []);
   // A different cover is a different conversation.
@@ -168,12 +161,12 @@ export function ChatView() {
     } catch (e) {
       const code = codeOf(e);
       if (code === "NOT_FOUND") thread.current = null; // the thread is gone: the next question opens a new one
-      if (code === "CONSENT_REQUIRED") { setConsent(false); consentKey.current = makeRequestKey(); } // withdrawn or expired: ask again
+      if (code === "CONSENT_REQUIRED") required(); // withdrawn or expired: ask again
       patch(aid, (m) => ({ ...m, busy: false, error: code }));
     } finally {
       setBusy(false);
     }
-  }, [busy, holdingId, patch]);
+  }, [busy, holdingId, patch, required]);
 
   function speak() {
     if (listening) { adapters.voice.stop?.(); return; }
@@ -204,23 +197,7 @@ export function ChatView() {
       {listError ? <p className={s.alert} role="alert">{errorText(listError)}</p> : null}
 
       {consent === false ? (
-        // FOR LEGAL REVIEW: this wording, the purpose and the two providers named are not final.
-        <SectionHeading title="Before we answer">
-          <div className={s.card}>
-            <p className={s.lead}>To answer a question about your cover we send the question, and short passages from your own cover details that relate to it, to two services.</p>
-            <ul className={s.list}>
-              <li>A language service (Anthropic) writes the answer in plain words.</li>
-              <li>A search service (Voyage) finds the passages that relate to your question.</li>
-            </ul>
-            <p className={s.lead}>Your policy file itself is not sent. You can withdraw this at any time.</p>
-            <label className={s.check}>
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-              <span>Yes, you can use these services to answer my questions.</span>
-            </label>
-            {consentError ? <p className={s.alert} role="alert">{errorText(consentError)}</p> : null}
-            <button type="button" className="k-btn k-btn--primary" disabled={!agreed || saving} onClick={accept}>{saving ? "Saving..." : "Continue"}</button>
-          </div>
-        </SectionHeading>
+        <SectionHeading title="Before we answer"><ChatConsentCard c={cc} /></SectionHeading>
       ) : null}
 
       <SectionHeading title="Conversation" description="Answers come from your own documents and the insurer's wording, with the facts shown.">
@@ -263,6 +240,8 @@ export function ChatView() {
         {canSpeak ? <p className={s.quiet}>{adapters.voice.notice ?? ""} The words you speak are saved with this conversation.</p> : null}
         {note ? <p className={s.note} role="status">{note}</p> : null}
       </form>
+
+      {consent === true ? <WithdrawConsent c={cc} /> : null}
 
       <div className={s.row}>
         <Link className="k-btn k-btn--secondary" href="/hospitals">Network hospitals</Link>

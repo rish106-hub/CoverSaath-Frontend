@@ -34,7 +34,7 @@ describe("evidence adapters", () => {
   it("every ported route has a real and a mock method", () => {
     const names = Object.keys(realAdapters.evidence).sort();
     expect(names).toEqual(Object.keys(mockEvidence).sort());
-    expect(names).toEqual(["answer", "ask", "confirmPolicyProfile", "deletionInventory", "designateConfirmer", "handoff", "integrations", "policyProfile", "preview", "review", "sourcePack"]);
+    expect(names).toEqual(["answer", "ask", "confirmPolicyProfile", "deletionInventory", "designateConfirmer", "handoff", "holdingPassages", "integrations", "passages", "policyProfile", "preview", "review", "sourcePack"]);
     expect(mockAdapters.evidence).toBe(mockEvidence);
   });
   it("the mock answers are never verified", async () => {

@@ -1,8 +1,9 @@
-import { DemoGate, EmptyState } from "@/components/shell/EmptyState";
+import { DemoGate } from "@/components/shell/EmptyState";
 import { StressTest } from "@/components/cover/StressTest";
+import { RealStress } from "@/components/cover-real/RealStress";
 
 export const metadata = { title: "Stress test" };
 
 export default function Page() {
-  return <DemoGate empty={<EmptyState title="Stress test starts from your own policy" body="Upload your policy and Knowvia reads it for you." />}><StressTest /></DemoGate>;
+  return <DemoGate empty={<RealStress />}><StressTest /></DemoGate>;
 }

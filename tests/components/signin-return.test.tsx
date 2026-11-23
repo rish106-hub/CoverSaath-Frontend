@@ -23,6 +23,6 @@ describe("sign-in return path", () => {
   });
   it.each(["//evil.example", "https://evil.example", "/%2F%2Fevil.example", "/admin"])("ignores an unsafe return path %s", async (bad) => {
     await signedIn(`/signin?next=${encodeURIComponent(bad)}`);
-    expect(screen.getByRole("link", { name: "Add my policy" })).toHaveAttribute("href", "/welcome/add");
+    expect(screen.getByRole("link", { name: "Add my policy" })).toHaveAttribute("href", "/covers/add");
   });
 });

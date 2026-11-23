@@ -11,10 +11,11 @@ const listen = vi.fn();
 const hospitals = vi.fn();
 const consentGet = vi.fn();
 const consentGrant = vi.fn();
+const consentRevoke = vi.fn();
 vi.mock("@/adapters", () => ({
   adapters: {
     covers: { holdings: async () => [{ id: "hold-1", status: "ready" }], hospitals: (...a: unknown[]) => hospitals(...a) },
-    chat: { startThread: (...a: unknown[]) => startThread(...a), turn: (...a: unknown[]) => turn(...a), consent: () => consentGet(), grantConsent: (...a: unknown[]) => consentGrant(...a), revokeConsent: vi.fn() },
+    chat: { startThread: (...a: unknown[]) => startThread(...a), turn: (...a: unknown[]) => turn(...a), consent: () => consentGet(), grantConsent: (...a: unknown[]) => consentGrant(...a), revokeConsent: () => consentRevoke() },
     voice: { supported: () => true, listen: () => listen(), stop: vi.fn(), notice: "Audio is sent to a speech service to turn it into text." },
   },
 }));
@@ -37,6 +38,7 @@ beforeEach(() => {
   hospitals.mockReset();
   consentGet.mockReset().mockResolvedValue(true);
   consentGrant.mockReset().mockResolvedValue(undefined);
+  consentRevoke.mockReset().mockResolvedValue(undefined);
 });
 afterEach(cleanup);
 
@@ -53,6 +55,16 @@ describe("ChatView", () => {
     expect(screen.getByText("Thirty days.")).toBeDefined();
     expect(startThread).toHaveBeenCalledWith("hold-1");
     expect(turn.mock.calls[0]?.[1]).toEqual({ message: "Is knee surgery covered?", inputKind: "text" });
+  });
+
+  it("shows no voice button or microphone note while voice is on hold", async () => {
+    process.env.NEXT_PUBLIC_VOICE_ON_HOLD = "true";
+    try {
+      render(<ChatView />);
+      await waitFor(() => expect(screen.getByRole("button", { name: "Ask" })).toBeDefined());
+      expect(screen.queryByRole("button", { name: /Ask by voice/ })).toBeNull();
+      expect(screen.queryByText(/words you speak/)).toBeNull();
+    } finally { process.env.NEXT_PUBLIC_VOICE_ON_HOLD = "false"; }
   });
 
   it("sends a spoken question as a voice turn and keeps no audio", async () => {
@@ -89,7 +101,7 @@ describe("ChatView go-ahead", () => {
     consentGet.mockResolvedValue(false);
     render(<ChatView />);
     expect(await screen.findByText("Before we answer")).toBeDefined();
-    expect(screen.getByText(/Anthropic/)).toBeDefined();
+    expect(screen.getByText(/Gemini/)).toBeDefined();
     expect(screen.getByText(/Voyage/)).toBeDefined();
     expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Waiting periods?" } });
@@ -99,6 +111,19 @@ describe("ChatView go-ahead", () => {
     await waitFor(() => expect(consentGrant).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryByText("Before we answer")).toBeNull());
     await waitFor(() => expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(false));
+  });
+  it("shows the card when the go-ahead check fails (fails closed)", async () => {
+    consentGet.mockRejectedValue(new Error("down"));
+    render(<ChatView />);
+    expect(await screen.findByText("Before we answer")).toBeDefined();
+    expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it("withdraws the go-ahead and brings the card back", async () => {
+    render(<ChatView />);
+    fireEvent.click(await screen.findByRole("button", { name: "Withdraw consent" }));
+    await waitFor(() => expect(consentRevoke).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText("Before we answer")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Withdraw consent" })).toBeNull();
   });
   it("shows the card again when a turn is refused for missing go-ahead", async () => {
     const { AdapterError } = await import("@/adapters/types");

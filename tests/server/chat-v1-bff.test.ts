@@ -9,6 +9,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import * as threads from "@/app/api/app/chat/threads/route";
+import { TURN_IDLE_MS } from "@/adapters/chat-timing";
 import * as turns from "@/app/api/app/chat/threads/[id]/turns/route";
 import * as consent from "@/app/api/app/chat/consent/route";
 import * as hospitals from "@/app/api/app/covers/holdings/[id]/hospitals/route";
@@ -79,7 +80,7 @@ describe("chat threads", () => {
 });
 
 describe("chat go-ahead", () => {
-  it("grants one household grant naming anthropic and voyage, with a replay-safe key, and remembers it", async () => {
+  it("grants one household grant naming gemini and voyage, with a replay-safe key, and remembers it", async () => {
     jsonReply = { status: 201, body: { id: "grant-chat-1" } };
     const res = await consent.POST(req("/x", "POST", { json: { accept: true, requestId: "req-12345678" } }));
     expect(res.status).toBe(200);
@@ -87,7 +88,7 @@ describe("chat go-ahead", () => {
     expect(calls[0]).toMatchObject({ method: "POST", url: "/api/v1/consents", body: { householdId: "h1", subjectAdultId: "adult1", purpose: "coverage_reconstruction" } });
     expect(calls[0]?.headers["idempotency-key"]).toBe("chat-req-12345678");
     const scopes = (calls[0]?.body as { scopes: { recipient: string; resourceType: string; action: string; dataCategory: string }[] }).scopes;
-    expect(scopes.map((s) => s.recipient).sort()).toEqual(["anthropic", "voyage"]);
+    expect(scopes.map((s) => s.recipient).sort()).toEqual(["gemini", "voyage"]);
     for (const s of scopes) expect(s).toMatchObject({ resourceType: "household", action: "derive", dataCategory: "insurance_question" });
     const cookie = jar.get("kv_docs");
     expect(cookie).toBeTruthy();
@@ -215,5 +216,32 @@ describe("hospitals", () => {
     const res = await hospitals.GET(req("/x?pincode=400053", "GET"), P("hold-1"));
     expect(res.status).toBe(404);
     expect((await res.json()).code).toBe("NOT_FOUND");
+  });
+});
+
+describe("a stalled backend stream", () => {
+  it("ends with one coded BACKEND_TIMEOUT error instead of hanging", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+        // Sends the meta event, then goes quiet until the request is aborted.
+        const body = new ReadableStream<Uint8Array>({
+          start(c) {
+            c.enqueue(new TextEncoder().encode(frame("meta", { thread_id: "th-1", intent: "x", retrieval_mode: "keyword", facts_available: 0, open_conflicts: 0 })));
+            init.signal?.addEventListener("abort", () => { try { c.error(new Error("aborted")); } catch { /* already closed */ } });
+          },
+        });
+        return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+      });
+      const res = await turns.POST(req("/x", "POST", { json: { message: "What is the room rent limit?" } }), { params: Promise.resolve({ id: "th-1" }) });
+      const reading = res.text();
+      await vi.advanceTimersByTimeAsync(TURN_IDLE_MS + 1_000);
+      const text = await reading;
+      expect(text).toContain("event: meta");
+      expect(text).toContain('event: error\ndata: {"code":"BACKEND_TIMEOUT"}');
+      expect(text).not.toContain("event: done");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

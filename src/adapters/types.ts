@@ -4,7 +4,7 @@ import type { MemberAdapter, ScenarioAdapter } from "./scenarios";
 import type { HospitalView, ThreadView, TurnEvent, TurnInput } from "./chat-contract";
 import type { Candidates, Confirmed, CreationIssue, HoldingsView, ConfirmProduct, Conflicts, DeclarationInput, DeclarationUpdateInput, DeclarationView, DueInput, DueState, DueView, Facts, HoldingDocuments, HoldingView, LinkDocumentInput, Linked, PayDueInput, PremiumInput, PremiumView, ResolveConflict, Resolved } from "./covers-contract";
 import type { DocumentKind, PolicyType } from "./documents-contract";
-import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough } from "./evidence-contract";
+import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough, Passages } from "./evidence-contract";
 
 export class AdapterError extends Error {
   constructor(public code: string, public retryable = false) {
@@ -154,6 +154,10 @@ export interface EvidenceAdapter {
   designateConfirmer(adultUserId: string): Promise<PassThrough>;
   preview(body: CoveragePreview): Promise<PassThrough>;
   sourcePack(caseId: string): Promise<PassThrough>;
+  /** Passages matching `query`: `passages` from the person's own documents and `insurerPassages` from the insurer's wording, kept apart. `caseId` may be "current". */
+  passages(caseId: string, query: string, limit?: number): Promise<Passages>;
+  /** Same, for the case behind one holding. Rejects NOT_FOUND when the session case is not this holding's. */
+  holdingPassages(holdingId: string, query: string, limit?: number): Promise<Passages>;
   deletionInventory(caseId: string): Promise<PassThrough>;
   integrations(): Promise<PassThrough>;
 }
@@ -164,7 +168,9 @@ export type UploadStage = "sending" | "checking" | "reading" | "details";
 /** The cover screens: add a cover, say which product it is, read the facts, settle conflicts, declarations and premiums. */
 export interface CoversAdapter {
   /** Sends one PDF (up to 4 MB) as `kind` of a `policyType` policy and waits for it to be scanned and read. `key` is reused on a retry. */
-  uploadDocument(file: File, key: string, kind: DocumentKind, policyType: PolicyType, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string }>;
+  uploadDocument(file: File, key: string, kind: DocumentKind, policyType: PolicyType, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string; busy?: boolean }>;
+  /** Moves an uploaded document on again (the page's "Check again"): the same follow-up as `uploadDocument`, without sending the file. */
+  resumeDocument(documentId: string, onStage?: (stage: UploadStage) => void): Promise<{ documentId: string; busy?: boolean }>;
   /** The holding the backend made from a document, once it exists (null while it has not). Waits a little for it. */
   holdingFor(documentId: string): Promise<string | null>;
   /** `uploadDocument` then `holdingFor`: the one-PDF path. */
@@ -194,6 +200,8 @@ export interface CoversAdapter {
   payPremiumDue(dueId: string, input: PayDueInput): Promise<DueView>;
   /** Network hospitals of one cover for a six-digit pincode. */
   hospitals(holdingId: string, pincode: string): Promise<HospitalView[]>;
+  /** The private memory document (policy.md) of one cover, as markdown. Owner only. Rejects with AdapterError (MEMORY_DISABLED, CONSENT_REQUIRED, NOT_FOUND). */
+  memoryDocument(holdingId: string): Promise<string>;
 }
 
 /** Chat about the household's cover: a thread, then streamed turns. The browser never sees the backend token or calls the backend. */

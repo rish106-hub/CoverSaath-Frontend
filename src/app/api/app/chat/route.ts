@@ -8,7 +8,8 @@ const MAX_CHAT_BODY = 4096;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+// Next.js reads segment config statically: keep a literal; tests/adapters/chat-timing.test.ts pins it to CHAT_MAX_DURATION_S.
+export const maxDuration = 60;
 
 /** Ask Knowvia, backed by the CoverSaath chat route. readSession (not readAnySession): a demo session gets a coded 403 and stays on the mock. */
 export async function POST(req: Request) {

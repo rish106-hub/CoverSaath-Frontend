@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { adapters } from "@/adapters";
+import { backendCovers } from "@/adapters/covers";
+import type { HoldingView } from "@/adapters/covers-contract";
 import { invalidateMe } from "@/components/shell/useMe";
 import { DemoGate, EmptyState } from "@/components/shell/EmptyState";
 
@@ -21,9 +23,12 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const noHoldings = () => vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: [], creationIssues: [] });
+
 describe("DemoGate", () => {
-  it("shows the empty state with an Upload your policy action to a real account, and no mock content", async () => {
+  it("shows the empty state with an Upload your policy action to a real account with no covers, and no mock content", async () => {
     vi.spyOn(adapters.household, "me").mockResolvedValue(me("backend"));
+    noHoldings();
     view();
     expect(await screen.findByTestId("empty-state")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Upload your policy" })).toBeInTheDocument();
@@ -46,5 +51,29 @@ describe("DemoGate", () => {
     view();
     expect(await screen.findByText(/Meera Rao mock family/)).toBeInTheDocument();
     expect(screen.queryByTestId("empty-state")).toBeNull();
+  });
+  it("does not tell a real account that already has a cover to upload one", async () => {
+    vi.spyOn(adapters.household, "me").mockResolvedValue(me("backend"));
+    vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: [{ id: "holding-1" } as unknown as HoldingView], creationIssues: [] });
+    view();
+    expect(await screen.findByRole("link", { name: "View your covers" })).toHaveAttribute("href", "/policies");
+    expect(screen.queryByRole("link", { name: "Upload your policy" })).toBeNull();
+  });
+  it("shows a retry, not the empty state, when the session check fails", async () => {
+    vi.spyOn(adapters.household, "me").mockRejectedValue(new Error("down"));
+    view();
+    expect(await screen.findByTestId("unreachable-state")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(screen.queryByTestId("empty-state")).toBeNull();
+  });
+  it("shows a retry when the covers cannot be read, and the covers state once the retry works", async () => {
+    vi.spyOn(adapters.household, "me").mockResolvedValue(me("backend"));
+    const spy = vi.spyOn(backendCovers, "holdingsView").mockRejectedValueOnce(Object.assign(new Error("x"), { code: "BACKEND_UNREACHABLE" }));
+    spy.mockResolvedValue({ holdings: [{ id: "holding-1" } as unknown as HoldingView], creationIssues: [] });
+    view();
+    const btn = await screen.findByRole("button", { name: "Try again" });
+    expect(screen.queryByTestId("empty-state")).toBeNull();
+    fireEvent.click(btn);
+    expect(await screen.findByRole("link", { name: "View your covers" })).toBeInTheDocument();
   });
 });
