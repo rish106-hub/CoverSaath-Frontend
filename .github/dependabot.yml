@@ -5,6 +5,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint (via eslint-config-next) supports typescript >=4.8.4 <6.1.0; a newer TypeScript breaks `npm run lint` in CI.
+      # Lift this when eslint-config-next ships a typescript-eslint that supports it.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
