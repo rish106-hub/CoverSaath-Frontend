@@ -36,6 +36,15 @@ describe("browser chat client", () => {
     await expect(run(stream(["event: answer\ndata: {not json}\n\n"]))).rejects.toBeInstanceOf(AdapterError);
     await expect(run(stream([frame("answer", { turnId: "t" })]))).rejects.toMatchObject({ code: "CHAT_STREAM_FAILED" });
   });
+  it("skips heartbeat comment lines, alone or ahead of an event", async () => {
+    const seen = await run(stream([": heartbeat\n\n", ": heartbeat\n\n", frame("meta", { threadId: "th-1", intent: "x", retrievalMode: "facts_only" }), ": heartbeat\n\n", frame("answer", ANSWER), frame("done", {})]));
+    expect(seen.map((e) => e.type)).toEqual(["meta", "answer", "done"]);
+  });
+  it("maps the backend's CHAT_TURN_TIMEOUT error event to a retryable coded error", async () => {
+    const err = await run(stream([": heartbeat\n\n", frame("delta", { text: "Par" }), frame("error", { code: "CHAT_TURN_TIMEOUT" })])).catch((e) => e);
+    expect(err).toBeInstanceOf(AdapterError);
+    expect(err).toMatchObject({ code: "CHAT_TURN_TIMEOUT", retryable: true });
+  });
   it("turns a JSON failure into its code", async () => {
     await expect(run(new Response(JSON.stringify({ code: "MEMORY_DISABLED", retryable: false }), { status: 503 }))).rejects.toMatchObject({ code: "MEMORY_DISABLED" });
   });

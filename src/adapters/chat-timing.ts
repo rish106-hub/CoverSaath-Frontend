@@ -25,3 +25,8 @@ export const CHAT_TIMEOUT_MS = BACKEND_MODEL_CALL_MAX_MS + MARGIN_MS; // 45 s
 /** Vercel maxDuration (seconds) for the routes, above the matching BFF cap. */
 export const TURN_MAX_DURATION_S = 90;
 export const CHAT_MAX_DURATION_S = 60;
+
+/** The backend ends a turn that runs past its own deadline (about 25 s) with one `error { code: CHAT_TURN_TIMEOUT }`. Nothing is stored, so the same message can be sent again. */
+export const CHAT_TURN_TIMEOUT = "CHAT_TURN_TIMEOUT";
+/** Codes that mean "ran out of time": the backend's own deadline, the BFF idle cut and the browser watchdog. */
+export const isTurnTimeout = (code: string): boolean => code === CHAT_TURN_TIMEOUT || code === "BACKEND_TIMEOUT";
