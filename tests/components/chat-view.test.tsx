@@ -94,6 +94,37 @@ describe("ChatView", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Cashless hospitals near 400053/ }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/not switched on/);
   });
+
+  it("on a turn timeout clears the partial words, says it took too long and Retry resends the same message", async () => {
+    const { AdapterError } = await import("@/adapters/types");
+    turn.mockReset().mockImplementationOnce(async (_i: string, _x: unknown, on: (e: TurnEvent) => void) => {
+      on({ type: "delta", data: { text: "Partial words " } });
+      throw new AdapterError("CHAT_TURN_TIMEOUT", true);
+    }).mockImplementation(async (_i: string, _x: unknown, on: (e: TurnEvent) => void) => { on(answer()); on({ type: "done", data: {} }); });
+    render(<ChatView />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ask" })).toBeDefined());
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Is knee surgery covered?" } });
+    await waitFor(() => expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("That took too long. Try again.");
+    expect(screen.queryByText(/Partial words/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("Thirty days.")).toBeDefined();
+    expect(turn).toHaveBeenCalledTimes(2);
+    expect(turn.mock.calls[1]?.[1]).toEqual(turn.mock.calls[0]?.[1]);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    expect(screen.getAllByText("Is knee surgery covered?")).toHaveLength(1);
+  });
+
+  it("shows the generic line with Retry for another error code or a dropped stream", async () => {
+    const { AdapterError } = await import("@/adapters/types");
+    turn.mockRejectedValue(new AdapterError("CHAT_STREAM_FAILED", true));
+    render(<ChatView />);
+    fireEvent.click(await screen.findByRole("button", { name: /What are my waiting periods/ }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Something went wrong. Try again.");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
+  });
 });
 
 describe("ChatView go-ahead", () => {

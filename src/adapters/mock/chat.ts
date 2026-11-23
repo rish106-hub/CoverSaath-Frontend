@@ -63,6 +63,10 @@ let n = 0;
 const tick = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve) => { const t = setTimeout(resolve, process.env.NODE_ENV === "test" ? 0 : ms); signal?.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true }); });
 
 let consented = false;
+// A message with "simulate timeout" in it runs like the backend's per-turn deadline: some words stream, then one CHAT_TURN_TIMEOUT error. Only the
+// first try times out, so Retry with the same message gets its answer. Reset with resetMockChatTimeouts() in tests.
+const timedOut = new Set<string>();
+export const resetMockChatTimeouts = () => timedOut.clear();
 
 export const mockChat: ChatAdapter = {
   async consent() { return consented; },
@@ -87,6 +91,10 @@ export const mockChat: ChatAdapter = {
       await tick(60, signal);
       if (signal?.aborted) return;
       onEvent({ type: "delta", data: { text: `${words.slice(i, i + 4).join(" ")} ` } });
+    }
+    if (/simulate timeout/i.test(p.data.message) && !timedOut.has(p.data.message)) {
+      timedOut.add(p.data.message);
+      throw new AdapterError("CHAT_TURN_TIMEOUT", true);
     }
     await tick(60, signal);
     if (signal?.aborted) return;

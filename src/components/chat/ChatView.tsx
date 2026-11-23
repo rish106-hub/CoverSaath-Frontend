@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { adapters } from "@/adapters";
 import { AdapterError } from "@/adapters/types";
+import { isTurnTimeout } from "@/adapters/chat-timing";
 import { errorText } from "@/adapters/documents-contract";
 import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/chat-contract";
 import { MicGlyph } from "@/components/agent/VoiceIcons";
@@ -23,7 +24,15 @@ import s from "./chat.module.css";
 
 const PROMPTS = ["Planned knee surgery in Jan, is it covered?", "What are my waiting periods?", "Cashless hospitals near 400053"] as const;
 
-type Msg = { id: number; role: "user" | "assistant"; text: string; busy?: boolean; error?: string; answer?: TurnAnswer; voice?: boolean };
+type Msg = { id: number; role: "user" | "assistant"; text: string; busy?: boolean; error?: string; answer?: TurnAnswer; voice?: boolean; retry?: { text: string; voice: boolean } };
+
+/** Refusals that sending the same message again cannot fix: no Retry. Everything else (a timeout, a dropped stream, a backend hiccup) offers one. */
+const NO_RETRY = new Set(["CONSENT_REQUIRED", "UNAUTHENTICATED", "INVALID_INPUT", "DEMO_READ_ONLY", "MEMORY_DISABLED"]);
+/** Chat turn failures in plain words: too slow, a coded refusal that has its own line, or the generic line. */
+export function turnErrorText(code: string): string {
+  if (isTurnTimeout(code)) return "That took too long. Try again.";
+  return NO_RETRY.has(code) ? errorText(code) : "Something went wrong. Try again.";
+}
 
 const codeOf = (e: unknown): string => (e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE");
 
@@ -162,11 +171,19 @@ export function ChatView() {
       const code = codeOf(e);
       if (code === "NOT_FOUND") thread.current = null; // the thread is gone: the next question opens a new one
       if (code === "CONSENT_REQUIRED") required(); // withdrawn or expired: ask again
-      patch(aid, (m) => ({ ...m, busy: false, error: code }));
+      // Partial words of the failed turn are cleared; the Retry button resends the same text.
+      patch(aid, (m) => ({ ...m, busy: false, text: "", answer: undefined, error: code, retry: NO_RETRY.has(code) ? undefined : { text, voice } }));
     } finally {
       setBusy(false);
     }
   }, [busy, holdingId, patch, required]);
+
+  /** Drops the failed pair and sends the same words again, as a voice turn if it was one. */
+  function retry(uid: number, aid: number, r: { text: string; voice: boolean }) {
+    if (busy) return;
+    setMsgs((all) => all.filter((m) => m.id !== uid && m.id !== aid));
+    void ask(r.text, r.voice);
+  }
 
   function speak() {
     if (listening) { adapters.voice.stop?.(); return; }
@@ -207,7 +224,7 @@ export function ChatView() {
           </div>
         ) : (
           <ol className={s.log} role="log" aria-live="polite" aria-label="Conversation">
-            {msgs.map((m) => (
+            {msgs.map((m, i) => (
               <li key={m.id} className={s.msg} data-role={m.role} data-busy={m.busy === true}>
                 <span className={s.who}>{m.role === "user" ? (m.voice ? "You said" : "You") : "Knowvia"}</span>
                 {m.text ? <p>{m.text}</p> : m.busy ? <p className={s.quiet}>Looking in your cover…</p> : null}
@@ -217,7 +234,8 @@ export function ChatView() {
                 {m.answer ? <Checks a={m.answer} /> : null}
                 {m.answer && m.answer.openConflicts.length > 0 ? <p className={s.quiet}>Some details in your cover are not settled. <Link href="/covers/review">Review them</Link>.</p> : null}
                 {m.answer?.intent === "network_hospitals" ? <p className={s.quiet}><Link href="/hospitals">Open network hospitals</Link></p> : null}
-                {m.error ? <p className={s.alert} role="alert">{errorText(m.error)}</p> : null}
+                {m.error ? <p className={s.alert} role="alert">{turnErrorText(m.error)}</p> : null}
+                {m.error && m.retry ? <div className={s.row}><button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => retry(msgs[i - 1]?.id ?? 0, m.id, m.retry!)}>Retry</button></div> : null}
               </li>
             ))}
           </ol>

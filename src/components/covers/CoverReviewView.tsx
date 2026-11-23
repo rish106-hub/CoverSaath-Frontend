@@ -50,18 +50,28 @@ function ConflictCard({ c, onChoose, busy }: { c: ConflictView; onChoose: (c: Co
   );
 }
 
-function FactCard({ f }: { f: FactView }) {
+/** The printed reading the owner can confirm: a current own-document reading, or an insurer reading that carries a quote. None once they have confirmed it. */
+function confirmable(f: FactView): SourceView | null {
+  if (f.status === "conflicting" || f.status === "user_confirmed") return null;
+  if (f.sources.some((x) => x.tier === "user_declaration" && x.current !== false)) return null;
+  const ok = (x: SourceView) => x.current !== false && (x.tier === "own_pdf" || (x.tier === "ida_wording" && x.quote != null));
+  return f.sources.find((x) => x.tier === f.sourceTier && ok(x)) ?? f.sources.find(ok) ?? null;
+}
+
+function FactCard({ f, onConfirm, busy, confirming }: { f: FactView; onConfirm: (f: FactView, reading: SourceView) => void; busy: boolean; confirming: boolean }) {
   const first = f.sources.find((x) => x.tier === f.sourceTier) ?? f.sources[0];
   const insurer = isInsurerUnchecked(f.sourceTier ?? first?.tier, f.status);
   const n = first ? sourcePageNumber(first) : null;
   const page = insurer ? (n ? `Page ${n}` : null) : first ? pageText(first.page) : null;
   const quote = sourceQuote(first, f.sourceTier);
+  const reading = confirmable(f);
   return (
     <li className={s.fact} data-open={isOpen(f.status)}>
       <span className={s.factName}>{labelOf(f.factKey)}</span>
       <span className={s.factValue}>{f.status === "conflicting" ? "Two readings" : formatValue(f.value, f.unit, f.valueType)}</span>
       <span className={s.status}>{f.status === "user_confirmed" ? sourceLabel(f.status, f.sourceTier) : statusText(f.status, f.sourceTier ?? first?.tier)}</span>
       {quote ? <p className={s.src}>&ldquo;{quote}&rdquo;{page ? ` · ${page}` : ""}</p> : insurer && page ? <p className={s.src}>{page}</p> : null}
+      {reading ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => onConfirm(f, reading)} aria-label={`Confirm ${labelOf(f.factKey)}`}>{confirming ? "Confirming…" : "Confirm"}</button> : null}
     </li>
   );
 }
@@ -73,6 +83,7 @@ export function CoverReviewView({ holding }: { holding?: string }) {
   const [conflicts, setConflicts] = useState<ConflictView[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const id = current?.id;
 
@@ -112,6 +123,23 @@ export function CoverReviewView({ holding }: { holding?: string }) {
     }
   }
 
+  async function confirm(f: FactView, reading: SourceView) {
+    if (!id || busy) return;
+    setBusy(true);
+    setConfirming(f.factKey);
+    setNote(null);
+    try {
+      await adapters.covers.confirmReading(id, reading.id);
+      await load(id);
+    } catch (e) {
+      const code = codeOf(e);
+      setError(code.includes("NOT_FOUND") ? "READING_CHANGED" : code);
+    } finally {
+      setConfirming(null);
+      setBusy(false);
+    }
+  }
+
   const pending = conflicts.filter((c) => c.resolution === "pending");
   const groups = facts ? groupFacts(facts.facts) : [];
 
@@ -130,7 +158,7 @@ export function CoverReviewView({ holding }: { holding?: string }) {
         </label>
       ) : null}
 
-      {listError || error ? <p className={s.alert} role="alert">{errorText(error ?? listError ?? "")}</p> : null}
+      {listError || error ? <p className={s.alert} role="alert">{error === "READING_CHANGED" ? "That reading has changed. Refresh the page and try again." : errorText(error ?? listError ?? "")}</p> : null}
       {note ? <p className={s.done} role="status">{note}</p> : null}
 
       {holdings && holdings.length === 0 && !listError ? (
@@ -156,7 +184,7 @@ export function CoverReviewView({ holding }: { holding?: string }) {
         <div className={s.groups}>
           {groups.map((g) => (
             <SectionHeading key={g.label} title={g.label}>
-              <ul className={s.facts}>{g.facts.map((f) => <FactCard key={f.factKey} f={f} />)}</ul>
+              <ul className={s.facts}>{g.facts.map((f) => <FactCard key={f.factKey} f={f} onConfirm={(ff, r) => void confirm(ff, r)} busy={busy} confirming={confirming === f.factKey} />)}</ul>
             </SectionHeading>
           ))}
         </div>

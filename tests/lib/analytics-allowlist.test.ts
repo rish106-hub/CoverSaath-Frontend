@@ -12,9 +12,9 @@ describe("backend analytics allowlist mirror", () => {
     expect(BACKEND_ANALYTICS_CONSENT_SCOPE.recipient).toBe(snapshot.recipient);
   });
 
-  it("is exactly the nine planned events", () => {
+  it("is exactly the ten planned events", () => {
     expect(Object.keys(BACKEND_ANALYTICS_EVENTS).sort()).toEqual([
-      "chat_turn", "conflict_resolved", "cover_uploaded", "declaration_added", "hospital_search", "insurer_confirmed", "parse_completed", "premium_recorded", "voice_turn",
+      "chat_turn", "conflict_resolved", "cover_uploaded", "declaration_added", "hospital_search", "insurer_confirmed", "parse_completed", "premium_recorded", "reading_confirmed", "voice_turn",
     ]);
   });
 

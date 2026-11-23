@@ -245,3 +245,26 @@ describe("a stalled backend stream", () => {
     }
   });
 });
+
+describe("the backend's per-turn deadline", () => {
+  it("passes heartbeats on and forwards the one CHAT_TURN_TIMEOUT error", async () => {
+    const enc = (t: string) => new TextEncoder().encode(t);
+    vi.stubGlobal("fetch", async () => new Response(new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(enc(": heartbeat\n\n"));
+        c.enqueue(enc(frame("meta", { thread_id: "th-1", intent: "x", retrieval_mode: "keyword", facts_available: 0, open_conflicts: 0 })));
+        c.enqueue(enc(": heartbeat\n\n"));
+        c.enqueue(enc(frame("error", { code: "CHAT_TURN_TIMEOUT" })));
+        c.close();
+      },
+    }), { status: 200, headers: { "content-type": "text/event-stream" } }));
+    const res = await turns.POST(req("/x", "POST", { json: { message: "What is the room rent limit?" } }), { params: Promise.resolve({ id: "th-1" }) });
+    const text = await res.text();
+    expect(text.startsWith(": heartbeat\n\n")).toBe(true);
+    expect(text).toContain('event: error\ndata: {"code":"CHAT_TURN_TIMEOUT"}');
+    expect(text).not.toContain("event: done");
+  });
+  it("keeps the route's maxDuration at 30 s or more", async () => {
+    expect(turns.maxDuration).toBeGreaterThanOrEqual(30);
+  });
+});

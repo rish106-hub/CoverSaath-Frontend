@@ -84,6 +84,32 @@ describe("mock covers adapter", () => {
     await expect(mockCovers.resolveConflict(holdingId as string, cf.id, { chosenFactId: cf.candidates[1]!.id })).rejects.toMatchObject({ code: "CONFLICT_ALREADY_RESOLVED" });
     expect((await mockCovers.facts(holdingId as string)).facts.every((f) => f.status !== "conflicting")).toBe(true);
   });
+  it("mock confirmReading turns a printed reading into your own confirmed statement", async () => {
+    const { holdingId } = await mockCovers.upload(pdf(), "k", OPTS);
+    const c = await mockCovers.candidates(holdingId as string);
+    await mockCovers.confirmProduct(holdingId as string, { candidateId: c.candidates[0]!.candidateId, expectedVersion: c.profileVersion }, "ck-1234567890");
+    const before = (await mockCovers.facts(holdingId as string)).facts.find((f) => f.factKey === "sum_insured")!;
+    const r = await mockCovers.confirmReading(holdingId as string, before.sources[0]!.id);
+    expect(r).toMatchObject({ factKey: "sum_insured", status: "user_confirmed", replay: false });
+    const after = (await mockCovers.facts(holdingId as string)).facts.find((f) => f.factKey === "sum_insured")!;
+    expect(after).toMatchObject({ status: "user_confirmed", sourceTier: "user_declaration", value: before.value });
+    expect(after.sources.some((x) => x.tier === "user_declaration" && x.captureMethod === "reading_confirm")).toBe(true);
+    expect((await mockCovers.confirmReading(holdingId as string, before.sources[0]!.id)).replay).toBe(true);
+    await expect(mockCovers.confirmReading(holdingId as string, "nope")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+  it("real confirmReading posts to the confirm path with no body", async () => {
+    const seen: { url: string; init: RequestInit }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      seen.push({ url, init });
+      return new Response(JSON.stringify({ ok: true, data: { factId: "d1", factKey: "sum_insured", status: "user_confirmed", replay: false } }), { status: 200 });
+    });
+    expect(await backendCovers.confirmReading("h1", "s 1")).toMatchObject({ factKey: "sum_insured", status: "user_confirmed" });
+    expect(seen[0]?.url).toBe("/api/app/covers/holdings/h1/facts/s%201/confirm");
+    expect(seen[0]?.init.method).toBe("POST");
+    expect(seen[0]?.init.body).toBeUndefined();
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ ok: false, code: "NOT_FOUND", retryable: false }), { status: 404 }));
+    await expect(backendCovers.confirmReading("h1", "s1")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
   it("real adapter sends the new verbs to same-origin paths only", async () => {
     const seen: { url: string; method?: string }[] = [];
     vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
