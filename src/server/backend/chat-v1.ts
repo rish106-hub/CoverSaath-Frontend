@@ -65,7 +65,9 @@ export function sanitiseSse(): TransformStream<string, string> {
       if (line.startsWith("event:")) name = line.slice(6).trim();
       else if (line.startsWith("data:")) data.push(line.slice(5).replace(/^ /, ""));
     }
-    if (!name && data.length === 0) return; // comment or keep-alive
+    // A comment line (the backend's `: heartbeat`, written at once and about every 5 s) carries no data. Pass one bare heartbeat on so the browser
+    // and any proxy see bytes while the model works; nothing from the comment text itself is forwarded.
+    if (!name && data.length === 0) { if (raw.trimStart().startsWith(":")) c.enqueue(": heartbeat\n\n"); return; }
     if (!(name in SCHEMAS)) return bad(c);
     const schema = SCHEMAS[name];
     let payload: unknown = {};
