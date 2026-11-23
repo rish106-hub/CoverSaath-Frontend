@@ -221,6 +221,20 @@ export const mockCovers: CoversAdapter = {
     if (h.state.conflicts.every((x) => x.resolution !== "pending")) h.state.status = "ready";
     return delay({ conflictId, resolvingFactId: `decl-${conflictId}`, status: "user_confirmed" as const, holdingStatus: h.state.status, replay: false });
   },
+  confirmReading: async (holdingId, factId) => {
+    const h = get(holdingId);
+    const fact = h.state.facts.find((f) => f.sources.some((x) => x.id === factId));
+    const src = fact?.sources.find((x) => x.id === factId);
+    if (!fact || !src || src.current === false || src.tier === "user_declaration") throw new AdapterError("NOT_FOUND");
+    if (src.tier === "ida_wording" && !src.quote) throw new AdapterError("NOT_FOUND");
+    const id = `decl-${factId}`;
+    const replay = fact.sources.some((x) => x.id === id);
+    if (!replay) fact.sources.push({ id, tier: "user_declaration", status: "user_confirmed", value: src.value, page: null, quote: null, captureMethod: "reading_confirm", current: true });
+    fact.status = "user_confirmed";
+    fact.value = src.value;
+    fact.sourceTier = "user_declaration";
+    return delay({ factId: id, factKey: fact.factKey, status: "user_confirmed" as const, replay });
+  },
   declarations: (memberId) => delay(structuredClone(declarations.filter((d) => !memberId || d.memberId === memberId))),
   addDeclaration: async (input) => {
     const row: DeclarationView = { id: `declaration-mock-${++seq}`, memberId: input.memberId, holdingId: input.holdingId ?? null, kind: input.kind, label: input.label, declaredOn: input.declaredOn ?? null, declaredToInsurer: input.declaredToInsurer ?? null, revision: 1 };

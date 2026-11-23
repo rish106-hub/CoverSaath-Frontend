@@ -21,6 +21,7 @@ import * as facts from "@/app/api/app/covers/holdings/[id]/facts/route";
 import * as holdingDocs from "@/app/api/app/covers/holdings/[id]/documents/route";
 import * as conflicts from "@/app/api/app/covers/holdings/[id]/conflicts/route";
 import * as resolve from "@/app/api/app/covers/holdings/[id]/conflicts/[cid]/resolve/route";
+import * as confirmReading from "@/app/api/app/covers/holdings/[id]/facts/[factId]/confirm/route";
 import * as declarations from "@/app/api/app/covers/declarations/route";
 import * as premiums from "@/app/api/app/covers/premiums/route";
 import * as declarationRow from "@/app/api/app/covers/declarations/[did]/route";
@@ -62,6 +63,7 @@ beforeEach(() => {
     "GET /api/v1/holdings/holding-1/documents": { status: 200, body: { holdingId: "holding-1", documents: [{ documentId: "doc-1", kind: "schedule", extra: "dropped" }] } },
     "POST /api/v1/holdings/holding-1/documents": { status: 200, body: { holdingId: "holding-1", documentId: "doc-2", kind: "wording", linked: true } },
     "GET /api/v1/holdings/holding-1/conflicts": { status: 200, body: { holdingId: "holding-1", status: "conflicts", conflicts: [{ id: "c-1", factKey: "room_rent_limit", factClass: "product_term", valueType: "text", reason: "own_vs_insurer", resolution: "pending", resolvedAt: null, resolvingFactId: null, checkWithInsurer: true, candidates: [{ id: "f1", tier: "own_pdf", value: "1%", quote: "1% per day" }, { id: "f2", tier: "ida_wording", value: "2%", quote: "2% per day" }] }] } },
+    "POST /api/v1/holdings/holding-1/facts/s1/confirm": { status: 200, body: { factId: "d-9", factKey: "sum_insured", status: "user_confirmed", replay: false, extra: "dropped" } },
     "POST /api/v1/holdings/holding-1/conflicts/c-1/resolve": { status: 200, body: { conflictId: "c-1", resolvingFactId: "d-1", status: "user_confirmed", holdingStatus: "ready", replay: false } },
   };
   vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
@@ -255,6 +257,37 @@ describe("facts, conflicts, resolve", () => {
     const res = await resolve.POST(req("/x", "POST", { json: { chosenFactId: "f2" } }), p({ id: "holding-1", cid: "c-1" }));
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe("CONFLICT_ALREADY_RESOLVED");
+  });
+});
+
+describe("confirm a printed reading", () => {
+  const P = p({ id: "holding-1", factId: "s1" });
+  it("posts to the backend with no body and returns the contract fields only", async () => {
+    const res = await confirmReading.POST(req("/x", "POST"), P);
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toEqual({ factId: "d-9", factKey: "sum_insured", status: "user_confirmed", replay: false });
+    expect(calls.at(-1)).toMatchObject({ method: "POST", url: "/api/v1/holdings/holding-1/facts/s1/confirm" });
+    expect(calls.at(-1)?.body).toBeUndefined();
+  });
+  it("needs the app marker and a session", async () => {
+    expect((await confirmReading.POST(req("/x", "POST", { marker: false }), P)).status).toBe(403);
+    jar.clear();
+    expect((await confirmReading.POST(req("/x", "POST"), P)).status).toBe(401);
+    expect(calls).toHaveLength(0);
+  });
+  it("maps a missing or replaced reading to a coded 404 and hides backend words", async () => {
+    routes["POST /api/v1/holdings/holding-1/facts/s1/confirm"] = { status: 404, body: bk("MEMORY_FACT_NOT_FOUND") };
+    const res = await confirmReading.POST(req("/x", "POST"), P);
+    expect(res.status).toBe(404);
+    const b = await res.json();
+    expect(b.code).toBe("NOT_FOUND");
+    expect(JSON.stringify(b)).not.toContain("backend words");
+  });
+  it("maps any other backend failure to a safe coded error", async () => {
+    routes["POST /api/v1/holdings/holding-1/facts/s1/confirm"] = { status: 500, body: bk("BOOM") };
+    const res = await confirmReading.POST(req("/x", "POST"), P);
+    expect(res.status).toBe(502);
+    expect((await res.json()).code).toBe("BACKEND_UNREACHABLE");
   });
 });
 

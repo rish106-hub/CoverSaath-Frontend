@@ -161,6 +161,9 @@ export type Conflicts = z.infer<typeof conflictsIn>;
 
 export const resolveConflictIn = z.object({ chosenFactId: id, alternativeIndex: z.number().int().min(0).max(9).optional() }).strict();
 export type ResolveConflict = z.infer<typeof resolveConflictIn>;
+/** Answer to confirming a printed reading: the owner's own statement now stands for it. The request has no body. */
+export const readingConfirmedIn = z.object({ factId: z.string().max(128), factKey: z.string().max(80), status: z.literal("user_confirmed"), replay: z.boolean() });
+export type ReadingConfirmed = z.infer<typeof readingConfirmedIn>;
 export const resolvedIn = z.object({ conflictId: z.string().max(128), resolvingFactId: z.string().max(128), status: z.literal("user_confirmed"), holdingStatus: z.enum(HOLDING_STATUSES), replay: z.boolean() });
 export type Resolved = z.infer<typeof resolvedIn>;
 
