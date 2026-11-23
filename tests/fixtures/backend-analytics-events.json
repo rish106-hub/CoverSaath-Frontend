@@ -56,6 +56,15 @@
         ]
       }
     },
+    "reading_confirmed": {
+      "fact_class": {
+        "kind": "enum",
+        "values": [
+          "personal_value",
+          "product_term"
+        ]
+      }
+    },
     "declaration_added": {
       "kind": {
         "kind": "enum",
