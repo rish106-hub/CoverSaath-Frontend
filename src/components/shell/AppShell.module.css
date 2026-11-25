@@ -10,7 +10,8 @@
   .shell { --side-w: 72px; }
 }
 @media (max-width: 959px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
+  /* The grid is min-height 100vh; with the default stretch, the free space was shared into the top bar row until the page content arrived, then taken back (layout shift 0.33 on /home). */
+  .shell { grid-template-columns: minmax(0, 1fr); align-content: start; }
   .main { padding: 16px var(--gutter) 96px; }
   /* Sits inside the sidebar's top bar, which reserves room on the right. */
   .bar { position: fixed; top: 10px; right: var(--gutter); z-index: 41; min-height: 0; }
