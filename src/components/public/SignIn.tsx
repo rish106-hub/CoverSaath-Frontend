@@ -40,7 +40,7 @@ export function SignIn() {
   const returnTo = useReturnPath();
   // The showcase pane is hidden by CSS at 1100px and below. Not mounting it there keeps its card lanes, ticker and animations off phones (it was most of the main-thread work on /signin).
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
-  const demoRequested = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("demo") === "1", () => false);
+  const demoRequested = useSyncExternalStore(() => () => {}, () => process.env.NEXT_PUBLIC_ADAPTERS === "mock" && new URLSearchParams(window.location.search).get("demo") === "1", () => false);
 
   function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
     return once(async () => {
@@ -112,7 +112,7 @@ export function SignIn() {
             {via === "phone" ? (
               <label className={styles.field}>
                 <span className={styles.cc}>+91</span>
-                <input inputMode="numeric" autoComplete="tel-national" aria-label="Mobile number" placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <input inputMode="numeric" autoComplete="tel-national" aria-label="Mobile number" placeholder="•••••  •••••" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </label>
             ) : (
               <label className={styles.field}>
@@ -194,8 +194,6 @@ function DemoCard({ returnTo }: { returnTo: string | null }) {
         <h2 className={styles.sub} style={{ margin: 0, color: "var(--ink)", fontWeight: 600 }}>Demo</h2>
         <p className={styles.small} style={{ margin: "4px 0 0" }}>Look around the app.</p>
       </div>
-      <label className={styles.field}><input type="email" aria-label="Email" readOnly value="demo@demo.com" /></label>
-      <label className={styles.field}><input type="text" aria-label="Password" readOnly value="demo123" /></label>
       {error ? <p className={styles.err} role="alert">{error}</p> : null}
       <button type="submit" className={styles.cta} disabled={busy}>Look around</button>
     </form>

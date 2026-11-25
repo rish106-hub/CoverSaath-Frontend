@@ -24,7 +24,7 @@ import s from "./chat.module.css";
 // page shows its words. Voice reuses the existing speech adapter (the recording goes to the speech service through the BFF and is not kept here);
 // only the words come back, and they go to the chat as a voice turn.
 
-const PROMPTS = ["Planned knee surgery in Jan, is it covered?", "What are my waiting periods?", "Cashless hospitals near 400053"] as const;
+const PROMPTS = ["What are my waiting periods?", "What does my policy not cover?", "Find a cashless hospital near me"] as const;
 
 /** Where one assistant turn is: waiting, past SLOW_AFTER_MS, resent after a failure, answered, or ended by a timeout or another failure. */
 type TurnPhase = "pending" | "slow" | "retrying";

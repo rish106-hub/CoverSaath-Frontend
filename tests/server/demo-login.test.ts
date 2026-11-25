@@ -37,6 +37,7 @@ beforeEach(() => {
   vi.stubEnv("KNOWVIA_BOOTSTRAP_TOKEN", "b".repeat(40));
   vi.stubEnv("SESSION_COOKIE_SECRET", SECRET);
   vi.stubEnv("DEMO_LOGIN_ENABLED", "true");
+  vi.stubEnv("NEXT_PUBLIC_ADAPTERS", "mock");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
