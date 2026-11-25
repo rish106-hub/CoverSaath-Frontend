@@ -259,6 +259,7 @@ function ShowcasePanel() {
 
   const [paused, setPaused] = useState(false);
   const reduce = useReducedMotion();
+  // Low-capacity devices count as reduced motion here, so the lanes stop with the ticker and the control is hidden (CSS alone only sees the media query).
   // WCAG 2.2.2: the lanes and the headline rotation run on their own for more than 5s, so visitors get a visible pause control (hover alone excludes keyboard and touch).
   useTicker(() => setH((x) => (x + 1) % AUTH_HEADS.length), 3200, !reduce && !paused);
 
@@ -288,7 +289,7 @@ function ShowcasePanel() {
           <button key={id} type="button" className={`${styles.filter} ${filter === id ? styles.filterOn : ""}`} onClick={() => { setFilter(id); setPick(null); }} aria-pressed={filter === id}>{label}</button>
         ))}
       </div>
-      <div className={`${styles.lanes} ${paused ? styles.lanesPaused : ""}`}>
+      <div className={`${styles.lanes} ${paused || reduce ? styles.lanesPaused : ""}`}>
         {[0, 1, 2].map((off) => (
           <div key={`${filter}-${off}`} className={`${styles.lane} ${off === 1 ? styles.down : styles.up}`}>
             {lane(off).map((c, k) => (
