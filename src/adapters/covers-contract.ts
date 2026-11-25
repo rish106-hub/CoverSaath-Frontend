@@ -36,7 +36,7 @@ export type Headline = z.infer<typeof headlineView>;
  */
 export const WORDING_STATES = ["fss", "manual", "missing"] as const;
 export type WordingState = (typeof WORDING_STATES)[number];
-export const WORDING_REASONS = ["unavailable", "rate_limited", "unauthorized", "no_match", "version_unresolved", "synthetic_only", "invalid_response", "disabled", "no_usable_facts", "not_checked"] as const;
+export const WORDING_REASONS = ["unavailable", "rate_limited", "unauthorized", "no_match", "version_unresolved", "synthetic_only", "invalid_response", "disabled", "no_usable_facts", "not_checked", "pending"] as const;
 export type WordingReason = (typeof WORDING_REASONS)[number];
 
 /** Insurer and product name are null until the owner confirmed the product. Older backends send no summary at all. */
