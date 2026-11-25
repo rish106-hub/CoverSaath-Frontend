@@ -248,6 +248,14 @@ export function ChatView() {
         <SectionHeading title="Before we answer"><ChatConsentCard c={cc} /></SectionHeading>
       ) : null}
 
+      {holdings === null ? <p className={s.quiet} role="status">Loading your covers…</p> : null}
+      {holdings && holdings.length === 0 && !listError ? (
+        <SectionHeading title="No cover yet">
+          <p className={s.quiet}>Add your policy and you can ask about it here.</p>
+          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a cover</Link></div>
+        </SectionHeading>
+      ) : null}
+
       <SectionHeading title="Conversation" description="Answers come from your own documents and the insurer's wording, with the facts shown.">
         {first ? (
           <div className={s.prompts} role="group" aria-label="Suggested questions">

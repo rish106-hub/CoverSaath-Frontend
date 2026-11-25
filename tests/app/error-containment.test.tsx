@@ -40,7 +40,7 @@ describe("error containment", () => {
 
   it("loading and not-found render", () => {
     render(<><Loading /><NotFound /></>);
-    expect(screen.getByLabelText("Loading")).toBeInTheDocument();
+    expect(screen.getByText("Loading")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/could not find/);
   });
 });

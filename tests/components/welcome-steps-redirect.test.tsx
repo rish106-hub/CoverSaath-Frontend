@@ -32,6 +32,7 @@ describe.each(STEPS)("welcome step %s", (slug) => {
     me = { status: "loading" };
     const { container } = render(await Step({ params: Promise.resolve({ step: slug }) }));
     expect(replace).not.toHaveBeenCalled();
-    expect(container.textContent).toBe("");
+    // Only the skeleton's screen-reader text may show; no step content.
+    expect(container.textContent).toBe("Loading");
   });
 });

@@ -48,7 +48,7 @@ describe("holding overview states", () => {
   it("loading: the session gate shows a skeleton while the session is unknown", () => {
     meCall.mockReturnValue(new Promise(() => undefined));
     render(<DemoGate empty={<EmptyState title="Nothing here yet" body="x" />}><p>demo</p></DemoGate>);
-    expect(screen.getByLabelText("Loading")).toBeTruthy();
+    expect(screen.getByText("Loading")).toBeTruthy();
     expect(screen.queryByText("demo")).toBeNull();
   });
 });
