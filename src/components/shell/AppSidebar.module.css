@@ -59,3 +59,8 @@
   .aside.open { transform: none; visibility: visible; }
 }
 @media (prefers-reduced-motion: reduce) { .aside, .item, .emergency { transition: none; } .item:hover { transform: none; } }
+
+@media (pointer: coarse) {
+  .item, .on { min-height: 44px; }
+  .emergency { min-height: 44px; }
+}

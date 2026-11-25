@@ -69,3 +69,5 @@ html[data-motion="reduced"] .coach { animation: none; }
   .keyHint { display: inline-block; }
 }
 @media (hover: none), (pointer: coarse) { .coachKey { display: none; } }
+
+@media (pointer: coarse) { .headMic { width: 44px; height: 44px; } }

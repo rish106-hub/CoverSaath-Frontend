@@ -49,3 +49,5 @@ html[data-motion="reduced"] { --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-x
 
 html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
 html[data-motion="reduced"] .k-lift:hover, html[data-motion="reduced"] .k-lift:active { transform: none; }
+/* /home LCP: the greeting block (its h1 is the largest paint) is first in the main column and must not wait on, or fade in through, the entrance animation. Other siblings keep their motion. */
+.k-stagger > .k-no-reveal { animation: none; }

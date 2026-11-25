@@ -1,3 +1,4 @@
 .notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 16px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); font: 400 var(--fs-13) var(--font-sans); color: var(--graphite); }
 .notice a { color: var(--harbour); }
 .x { background: none; border: 0; padding: 0; font: inherit; color: var(--harbour); text-decoration: underline; cursor: pointer; white-space: nowrap; }
+@media (pointer: coarse) { .x { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; } }

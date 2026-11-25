@@ -1,5 +1,4 @@
 import { AdapterError } from "./types";
-import { upload as blobUpload } from "@vercel/blob/client";
 import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, blobInfoOut, consentOut, deleteOut, listOut, oneOut, type DocView, type DocumentKind, type PolicyType } from "./documents-contract";
 import { fetchWithRetry } from "@/lib/retry-fetch";
 
@@ -82,6 +81,8 @@ async function uploadLarge(file: File, kind: DocumentKind, key: string, policyTy
   }
   const pathname = `${info.prefix}${makeRequestKey()}.pdf`;
   try {
+    // Loaded on demand: only the large-file path needs the Blob client, so no route ships it in its initial bundle.
+    const { upload: blobUpload } = await import("@vercel/blob/client");
     await blobUpload(pathname, file, {
       access: "private",
       handleUploadUrl: "/api/app/documents/blob-token",
