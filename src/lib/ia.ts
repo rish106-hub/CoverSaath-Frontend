@@ -74,17 +74,17 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/covers/review", href: "/covers/review", tab: "What we found", group: "cover",
-    title: "What we found in your policy", kicker: "Your family’s cover",
+    title: "What we found in your policy",
     sections: [{ heading: "Needs your decision" }, { heading: "Limits" }, { heading: "Waiting" }, { heading: "Exclusions" }, { heading: "Cashless" }, { heading: "Money" }],
   },
   {
     route: "/chat", href: "/chat", tab: "Ask about your cover", group: "cover",
-    title: "Ask about your cover", kicker: "Your family’s cover",
+    title: "Ask about your cover",
     sections: [{ heading: "Conversation" }],
   },
   {
     route: "/hospitals", href: "/hospitals", tab: "Network hospitals", group: "cover",
-    title: "Network hospitals", kicker: "Your family’s cover",
+    title: "Network hospitals",
     sections: [{ heading: "Search by pincode" }],
   },
   {
