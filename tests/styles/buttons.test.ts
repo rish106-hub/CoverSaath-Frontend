@@ -10,8 +10,8 @@ function cssFiles(dir: string): string[] {
 }
 
 const BUTTONISH = /(btn|button|cta|chip|pill|tab|big)/i;
-// Round on purpose: switch tracks and knobs, dots, avatars, orbs, progress bars, status tags.
-const ALLOW = /(\bsw\b|switch|knob|dot|avatar|orb|tickbig|tag|badge|bar|heads|swatch|table|state|status|beta|count|kind|verdict|ring|donut)/i;
+// Round on purpose: switch tracks and knobs, dots, avatars, orbs, progress bars, status tags, and the floating Ask Knowvia button (56px circle, the only icon-only floating control).
+const ALLOW = /(^button\.dock$|\bsw\b|switch|knob|dot|avatar|orb|tickbig|tag|badge|bar|heads|swatch|table|state|status|beta|count|kind|verdict|ring|donut)/i;
 
 describe("boxy buttons", () => {
   const tokens = readFileSync("src/styles/tokens.css", "utf8");

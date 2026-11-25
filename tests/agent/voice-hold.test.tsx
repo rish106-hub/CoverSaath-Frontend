@@ -18,12 +18,14 @@ describe("voice on hold", () => {
     const { container } = render(<AgentProvider><HeaderMic /></AgentProvider>);
     expect(container.querySelector("button")).toBeNull();
   });
-  it("dock is a typed 'Ask Knowvia' button with no mic, key cap or wave", () => {
+  it("dock is a typed 'Ask Knowvia' round button with one mic glyph, no key cap or wave", () => {
     const { container } = render(<AgentProvider><AskDock /></AgentProvider>);
     const dock = container.querySelector("[data-ask-trigger]")!;
     expect(dock.textContent).toBe("Ask Knowvia");
     expect(dock.getAttribute("aria-keyshortcuts")).toBeNull();
-    expect(dock.querySelector("kbd, svg")).toBeNull();
+    expect(dock.getAttribute("aria-label")).toBe("Ask Knowvia");
+    expect(dock.querySelector("kbd")).toBeNull();
+    expect(dock.querySelectorAll("svg")).toHaveLength(1);
   });
   it("shows no voice intro dialog", () => {
     const { container } = render(<AgentProvider><AgentLayer /></AgentProvider>);

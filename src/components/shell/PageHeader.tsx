@@ -16,7 +16,7 @@ export function PageHeader({ pathname }: { pathname: string }) {
   return (
     <header className={styles.phead}>
       <div className={styles.prow}>
-        <nav className={styles.crumbs} aria-label="Breadcrumb">
+        <nav className={styles.crumbs} aria-label="Breadcrumb" data-testid="page-breadcrumb">
           <BrandMark size={20} compact />
           {group ? (
             <>
@@ -30,7 +30,7 @@ export function PageHeader({ pathname }: { pathname: string }) {
         </nav>
       </div>
       {group ? (
-        <nav className={styles.ptabs} aria-label={group.label}>
+        <nav className={styles.ptabs} aria-label={group.label} data-testid="page-subtabs">
           {tabs.map((t) => {
             const on = t.tab === page?.tab;
             return (
