@@ -33,3 +33,4 @@
 /* Shared states for every module button class (they do not carry .k-btn). */
 button:not(:disabled):active, a[class*="cta"]:active, a[class*="btn"]:active { transform: translateY(1px); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+.k-soon { margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--sunken); color: var(--graphite); font: 600 var(--fs-12) var(--font-sans); }
