@@ -207,7 +207,7 @@ export function AccessCard() {
         // DRAFT - FOR LEGAL REVIEW: trial and data-keeping wording.
         <p className={styles.trialNote}>Trial: starts fresh each visit.{googleSignIn ? " Use Google to keep your data." : ""}</p>
       ) : null}
-      <div className={styles.note}><span>No card needed. Leave any time.</span><Link href="/privacy">Privacy</Link></div>
+      <div className={styles.note}><Link href="/privacy">Privacy</Link></div>
     </form>
   );
 }

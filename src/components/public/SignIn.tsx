@@ -155,7 +155,7 @@ export function SignIn() {
 
         <div className={styles.whys}>
           {AUTH_WHYS.map((w) => (
-            <div key={w.t} className={styles.why}><span className={styles.whyI} aria-hidden>{w.i}</span><span className={styles.whyT}>{w.t}</span><span className={styles.whyD}>{w.d}</span></div>
+            <div key={w.t} className={styles.why}><span className={styles.whyI} aria-hidden>{w.i}</span><span className={styles.whyT}>{w.t}</span></div>
           ))}
         </div>
         <div className={styles.terms}>By continuing you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.</div>

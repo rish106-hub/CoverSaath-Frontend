@@ -97,5 +97,5 @@
   .brand { gap: 6px; min-width: 0; }
   .navRight { gap: 6px; flex-shrink: 0; }
   .navRight :global(.k-btn) { white-space: nowrap; padding-inline: 10px; }
-  .beta { padding: 2px 7px; font-size: var(--fs-12); }
+  .beta { padding: 2px 7px; font-size: var(--fs-13); }
 }

@@ -31,13 +31,13 @@ export function RealHome() {
       <SectionHeading title="Your cover at a glance">
         <div className={rows.rows}>
           <BentoGrid cols={3}>
-            <Tile tone="ink" label="Policies" value={policies.length} caption="on your account" href="/policies" />
-            {sumInsured ? <Tile label="Sum insured" value={sumInsured.value} caption={sumInsured.statusText} href={policyHref} /> : <MissingTile label="Sum insured" />}
+            <Tile tone="ink" label="Policies" value={policies.length} href="/policies" />
+            {sumInsured ? <Tile label="Sum insured" value={sumInsured.value} href={policyHref} /> : <MissingTile label="Sum insured" />}
             {renewal ? <Tile label="Next renewal" value={renewal.value} href={policyHref} /> : <MissingTile label="Next renewal" />}
           </BentoGrid>
           <BentoGrid cols={3}>
             <Tile tone="marker" label="Next step" value={next.label} caption={next.detail} href={next.href} />
-            <SoonTile label="Cover per person" caption="See who is covered for how much" />
+            <SoonTile label="Cover per person" />
             <AskCard prompts={ASK_PROMPTS} />
           </BentoGrid>
         </div>
