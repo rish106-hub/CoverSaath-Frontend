@@ -1,0 +1,24 @@
+/* Loading skeleton styles. Shimmer moves background-position only, so it never triggers layout. */
+.shimmer {
+  background: linear-gradient(90deg, var(--sunken) 0%, var(--line) 50%, var(--sunken) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2000ms linear infinite;
+}
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.block { border-radius: 14px; }
+.root { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.bar { height: 44px; width: 60%; border-radius: 14px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tile { height: 132px; }
+.wide { height: 220px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.row { height: 56px; }
+.pills { display: flex; gap: 12px; }
+.pill { height: 40px; flex: 1; border-radius: 14px; }
+.panel { height: 120px; }
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; }
+}

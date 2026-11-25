@@ -8,6 +8,7 @@ import { backendUploads } from "@/adapters/uploads";
 import { pickFile, runTerms } from "@/components/covers/add-cover-flow";
 import type { CreationIssue } from "@/adapters/covers-contract";
 import { keyFacts, type FactLine, type HeadlineLine, type PolicyView, type Stage } from "@/adapters/real-policy";
+import { Skeleton } from "@/components/ui/Skeleton";
 import s from "@/components/covers/covers.module.css";
 
 /** What a person can do next, per stage of a holding that has no facts yet. */
@@ -33,7 +34,8 @@ export function ErrorBox({ code, onRetry }: { code: string; onRetry?: () => void
 }
 
 export function Loading({ what }: { what: string }) {
-  return <p className={s.quiet} role="status">Loading {what}...</p>;
+  void what; // kept for call-site compatibility; the skeleton replaces the sentence.
+  return <Skeleton shape="bento" />;
 }
 
 export function StageBox({ p, onRetry }: { p: PolicyView; onRetry?: () => void }) {

@@ -16,6 +16,7 @@ import { useHoldings } from "@/components/covers/use-holdings";
 import { statusText } from "@/components/covers/format";
 import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL, clipQuote, insurerLine, isInsurerUnchecked } from "@/adapters/insurer-tier";
 import { CoverOptions } from "@/components/covers/holding-label";
+import { Skeleton } from "@/components/ui/Skeleton";
 import s from "./chat.module.css";
 
 // Chat about the household's cover. The answer streams in; when it is complete it shows the facts it used, each with where it came from, and
@@ -228,6 +229,19 @@ export function ChatView() {
 
   const announcement = announcementOf(msgs);
   const first = msgs.length === 0;
+  // While covers load, show only the heading and the skeleton. Rendering the conversation and composer under it would
+  // push them up the moment the skeleton goes, which is a visible layout shift on every chat open.
+  if (holdings === null) {
+    return (
+      <div className={s.stack}>
+        <div>
+          <Kicker>Your family&rsquo;s cover</Kicker>
+          <PageTitle>Ask about your cover</PageTitle>
+        </div>
+        <Skeleton shape="chat" />
+      </div>
+    );
+  }
   return (
     <div className={s.stack}>
       <div>
@@ -248,7 +262,6 @@ export function ChatView() {
         <SectionHeading title="Before we answer"><ChatConsentCard c={cc} /></SectionHeading>
       ) : null}
 
-      {holdings === null ? <p className={s.quiet} role="status">Loading your covers…</p> : null}
       {holdings && holdings.length === 0 && !listError ? (
         <SectionHeading title="No cover yet">
           <p className={s.quiet}>Add your policy and you can ask about it here.</p>

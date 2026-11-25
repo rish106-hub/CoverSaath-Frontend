@@ -33,18 +33,18 @@ describe("chat with no cover (row 7)", () => {
     let release!: (v: unknown[]) => void;
     h.holdings = () => new Promise((r) => { release = r; });
     render(<ChatView />);
-    expect(await screen.findByText("Loading your covers…")).toBeTruthy();
+    expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.queryByText("No cover yet")).toBeNull();
     release([]);
     expect(await screen.findByText("No cover yet")).toBeTruthy();
-    expect(screen.queryByText("Loading your covers…")).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
     expect(screen.getByRole("link", { name: "Add a cover" }).getAttribute("href")).toBe("/covers/add");
   });
 
   it("does not show No cover yet when a cover exists", async () => {
     h.holdings = () => Promise.resolve([{ id: "h1", status: "ready" }]);
     render(<ChatView />);
-    await waitFor(() => expect(screen.queryByText("Loading your covers…")).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
     expect(screen.queryByText("No cover yet")).toBeNull();
   });
 });
