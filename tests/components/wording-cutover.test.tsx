@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
-import { factsIn, type HoldingView } from "@/adapters/covers-contract";
+import { factsIn, holdingsIn, type HoldingView } from "@/adapters/covers-contract";
 import { mockCovers, setMockHandoff } from "@/adapters/mock/covers";
 import { RealPolicyDetail } from "@/components/cover-real/RealPolicyDetail";
 import { WAITING_TEXT, isWaitingForWording } from "@/components/cover-real/parts";
@@ -12,14 +12,17 @@ import { WAITING_TEXT, isWaitingForWording } from "@/components/cover-real/parts
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); });
 
-const holding = (wordingState: "missing" | "fss", wordingReason: "not_checked" | null): HoldingView => ({
+const holding = (wordingState: "missing" | "fss", wordingReason: "not_checked" | "pending" | "no_match" | null): HoldingView => ({
   id: "h1", documentId: "d1", kind: "policy_schedule", status: "ready",
   summary: { insurerName: "Example Insurer", productName: "Example Health Plan 01", wordingState, wordingReason, sumInsured: null, policyPeriod: null, premium: null },
 } as unknown as HoldingView);
 
 describe("waiting for the insurer's wording", () => {
-  it("only missing + not_checked is waiting", () => {
+  it("only missing + (pending | not_checked) is waiting", () => {
     expect(isWaitingForWording({ wordingState: "missing", wordingReason: "not_checked" })).toBe(true);
+    expect(isWaitingForWording({ wordingState: "missing", wordingReason: "pending" })).toBe(true);
+    expect(isWaitingForWording({ wordingState: "missing", wordingReason: null })).toBe(false);
+    expect(isWaitingForWording({ wordingState: "manual", wordingReason: null })).toBe(false);
     expect(isWaitingForWording({ wordingState: "missing", wordingReason: "no_match" })).toBe(false);
     expect(isWaitingForWording({ wordingState: "fss", wordingReason: null })).toBe(false);
   });
@@ -54,5 +57,39 @@ describe("waiting for the insurer's wording", () => {
     setMockHandoff(id, "finish");
     expect((await mockCovers.holdings()).find((x) => x.id === id)?.summary).toMatchObject({ wordingState: "fss", wordingReason: null });
     expect((await mockCovers.facts(id)).facts.some((f) => f.sourceTier === "ida_wording" && f.status === "extracted_unverified")).toBe(true);
+  });
+  it("pending: keeps the reason through the contract, shows loading (never not attached, no manual button), then flips to attached on the next payload", async () => {
+    expect(holdingsIn.parse({ holdings: [{ id: "h1", status: "ready", summary: { wordingState: "missing", wordingReason: "pending" } }] }).holdings[0]?.summary?.wordingReason).toBe("pending");
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let state: "pending" | "fss" = "pending";
+    vi.spyOn(backendCovers, "holdingsView").mockImplementation(async () => ({ holdings: [state === "pending" ? holding("missing", "pending") : holding("fss", null)], creationIssues: [] }));
+    vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "ready", conflicts: [] });
+    vi.spyOn(backendCovers, "facts").mockResolvedValue(factsIn.parse({ holdingId: "h1", status: "ready", unknownKeys: [], facts: [] }));
+    render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByText(WAITING_TEXT)).toBeInTheDocument();
+    expect(screen.getByTestId("terms-status")).toHaveAttribute("data-state", "waiting");
+    expect(screen.queryByText(/not attached/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add the terms yourself" })).toBeNull();
+    state = "fss";
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_500); });
+    expect(await screen.findByText("Insurer terms attached (verified)")).toBeInTheDocument();
+    expect(screen.queryByText(WAITING_TEXT)).toBeNull();
+  });
+  it("no_match still shows not attached with the manual button", async () => {
+    vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: [holding("missing", "no_match")], creationIssues: [] });
+    vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "ready", conflicts: [] });
+    vi.spyOn(backendCovers, "facts").mockResolvedValue(factsIn.parse({ holdingId: "h1", status: "ready", unknownKeys: [], facts: [] }));
+    render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByText("Insurer terms not attached yet")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
+  });
+  it("the mock passes through missing + pending, then flips to fss", async () => {
+    const id = (await mockCovers.upload(new File([new Uint8Array(64)], "p.pdf", { type: "application/pdf" }), "k-98-1", { kind: "policy_schedule", policyType: "personal_health" })).holdingId as string;
+    await mockCovers.candidates(id);
+    await mockCovers.confirmProduct(id, { candidateId: "product-example-02", expectedVersion: 0 }, "k-98-confirm-1");
+    setMockHandoff(id, "pending");
+    expect((await mockCovers.holdings()).find((x) => x.id === id)?.summary).toMatchObject({ wordingState: "missing", wordingReason: "pending" });
+    setMockHandoff(id, "finish");
+    expect((await mockCovers.holdings()).find((x) => x.id === id)?.summary).toMatchObject({ wordingState: "fss", wordingReason: null });
   });
 });

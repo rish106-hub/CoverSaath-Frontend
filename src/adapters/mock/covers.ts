@@ -39,17 +39,18 @@ const conflictsSeed = (wording: WordingState): Conflicts["conflicts"] => [
     ] },
 ];
 
-type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null; wording: WordingState; handoffOpen?: boolean };
+type State = { facts: Facts["facts"]; conflicts: Conflicts["conflicts"]; status: Facts["status"]; version: number; confirmed: string | null; key: string | null; wording: WordingState; handoffOpen?: boolean; pullPending?: boolean };
 const holdings = new Map<string, { documentId: string; state: State; linked: { documentId: string; kind: string }[] }>();
 const docs = new Map<string, string>();
 /** Test hook: documents the mock backend could not make a holding from. */
 const issues = new Map<string, CreationIssue>();
-/** Test hook: an FSS handoff is open for this holding (wording `missing`, reason `not_checked`). `finish` flips it to the insurer's wording (`fss`) with its facts. */
-export const setMockHandoff = (holdingId: string, mode: "open" | "finish"): void => {
+/** Test hook: `pending` mirrors the backend's few seconds after ready (wording `missing`, reason `pending`) while the insurer pack is pulled. An FSS handoff open for this holding (wording `missing`, reason `not_checked`). `finish` flips it to the insurer's wording (`fss`) with its facts. */
+export const setMockHandoff = (holdingId: string, mode: "open" | "pending" | "finish"): void => {
   const h = holdings.get(holdingId);
   if (!h) return;
   if (mode === "open") { h.state.wording = "missing"; h.state.handoffOpen = true; h.state.facts = factsSeed("missing"); h.state.conflicts = conflictsSeed("missing"); return; }
-  h.state.handoffOpen = false; h.state.wording = "fss"; h.state.facts = factsSeed("fss"); h.state.conflicts = conflictsSeed("fss");
+  if (mode === "pending") { h.state.wording = "missing"; h.state.handoffOpen = false; h.state.pullPending = true; h.state.facts = factsSeed("missing"); h.state.conflicts = conflictsSeed("missing"); return; }
+  h.state.handoffOpen = false; h.state.pullPending = false; h.state.wording = "fss"; h.state.facts = factsSeed("fss"); h.state.conflicts = conflictsSeed("fss");
 };
 export const setMockCreationIssue = (documentId: string, state: CreationIssue["state"] | null): void => {
   if (state) issues.set(documentId, { documentId, state, code: state === "failed" ? "HOLDING_CREATE_FAILED" : null });
@@ -94,7 +95,7 @@ const summaryOf = (s: State): HoldingSummary => {
     policyPeriod: read ? { factKey: "policy_period", value: SEED_PERIOD, status: "extracted_unverified" } : null,
     premium: money("premium_total"),
     wordingState: s.wording,
-    wordingReason: s.wording === "fss" ? null : s.wording === "missing" ? (s.handoffOpen ? "not_checked" : "no_match") : null,
+    wordingReason: s.wording === "fss" ? null : s.wording === "missing" ? (s.handoffOpen ? "not_checked" : s.pullPending ? "pending" : "no_match") : null,
   };
 };
 const get = (id: string) => {

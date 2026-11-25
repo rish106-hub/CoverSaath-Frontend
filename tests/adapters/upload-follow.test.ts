@@ -86,6 +86,7 @@ describe("page numbers and wording from the backend", () => {
   });
   it("wording reasons: not_checked is known, attached is not sent by the backend", () => {
     expect(WORDING_REASONS).toContain("not_checked");
+    expect(WORDING_REASONS).toContain("pending");
     expect(WORDING_REASONS).not.toContain("attached");
   });
   it("reads the per-document factsState and tolerates an older or newer backend", () => {

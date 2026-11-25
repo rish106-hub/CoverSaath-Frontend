@@ -123,11 +123,13 @@ export const TERMS_TEXT: Record<PolicyView["wordingState"], string> = {
 };
 
 /**
- * While an FSS handoff is open the backend answers wordingState `missing` with wordingReason `not_checked`: the insurer's wording has
- * not been looked up yet. That is waiting, not an error and not "unknown". FOR LEGAL REVIEW: wording not final.
+ * The backend answers wordingState `missing` with wordingReason `not_checked` while an FSS handoff is open, and `pending` for the
+ * few seconds after a holding is ready while the insurer pack is pulled. Either way the insurer's wording has not been looked up
+ * yet: that is waiting, not an error and not "not attached". FOR LEGAL REVIEW: wording not final.
  */
-export const isWaitingForWording = (p: Pick<PolicyView, "wordingState" | "wordingReason">): boolean => p.wordingState === "missing" && p.wordingReason === "not_checked";
-export const WAITING_TEXT = "Waiting for the insurer's wording";
+export const isWaitingForWording = (p: Pick<PolicyView, "wordingState" | "wordingReason">): boolean => p.wordingState === "missing" && (p.wordingReason === "pending" || p.wordingReason === "not_checked");
+// FOR LEGAL REVIEW: wording not final.
+export const WAITING_TEXT = "Insurer terms loading\u2026";
 
 /**
  * Where the insurer's terms stand. When they are not attached, "Add the terms yourself" takes the person's own PDF through the
@@ -158,7 +160,7 @@ export function TermsStatus({ p, onAdded }: { p: PolicyView; onAdded?: () => voi
   return (
     <div className={s.row} data-testid="terms-status" data-state={isWaitingForWording(p) ? "waiting" : p.wordingState}>
       <span className={s.lead} role="status">{busy ? "Adding your terms\u2026" : isWaitingForWording(p) ? WAITING_TEXT : TERMS_TEXT[p.wordingState]}</span>
-      {p.wordingState === "missing" ? (
+      {p.wordingState === "missing" && !isWaitingForWording(p) ? (
         <>
           <button type="button" className="k-btn k-btn--secondary k-btn--sm" disabled={busy} onClick={() => input.current?.click()}>Add the terms yourself</button>
           <input ref={input} type="file" accept="application/pdf,.pdf" hidden aria-label="Policy terms PDF" data-testid="terms-input" onChange={(e) => void take(e.target.files?.[0])} />
