@@ -160,7 +160,7 @@ export function TermsStatus({ p, onAdded }: { p: PolicyView; onAdded?: () => voi
   return (
     <div className={s.row} data-testid="terms-status" data-state={isWaitingForWording(p) ? "waiting" : p.wordingState}>
       <span className={s.lead} role="status">{busy ? "Adding your terms\u2026" : isWaitingForWording(p) ? WAITING_TEXT : TERMS_TEXT[p.wordingState]}</span>
-      {p.wordingState === "missing" && !isWaitingForWording(p) ? (
+      {p.wordingState === "missing" && p.wordingReason !== "pending" ? (
         <>
           <button type="button" className="k-btn k-btn--secondary k-btn--sm" disabled={busy} onClick={() => input.current?.click()}>Add the terms yourself</button>
           <input ref={input} type="file" accept="application/pdf,.pdf" hidden aria-label="Policy terms PDF" data-testid="terms-input" onChange={(e) => void take(e.target.files?.[0])} />

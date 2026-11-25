@@ -83,6 +83,15 @@ describe("waiting for the insurer's wording", () => {
     expect(await screen.findByText("Insurer terms not attached yet")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
   });
+  it("not_checked (open handoff, can last hours) shows waiting but keeps the manual button", async () => {
+    vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: [holding("missing", "not_checked")], creationIssues: [] });
+    vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "ready", conflicts: [] });
+    vi.spyOn(backendCovers, "facts").mockResolvedValue(factsIn.parse({ holdingId: "h1", status: "ready", unknownKeys: [], facts: [] }));
+    render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByText(WAITING_TEXT)).toBeInTheDocument();
+    expect(screen.queryByText(/not attached/i)).toBeNull();
+    expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
+  });
   it("the mock passes through missing + pending, then flips to fss", async () => {
     const id = (await mockCovers.upload(new File([new Uint8Array(64)], "p.pdf", { type: "application/pdf" }), "k-98-1", { kind: "policy_schedule", policyType: "personal_health" })).holdingId as string;
     await mockCovers.candidates(id);
