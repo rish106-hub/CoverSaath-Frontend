@@ -4,6 +4,7 @@ import Link from "next/link";
 import { isValidElement, useCallback, useEffect, useState, type ReactElement, type ReactNode } from "react";
 import { backendCovers } from "@/adapters/covers";
 import { useMe } from "./useMe";
+import { PageSkeleton } from "./ErrorPanel";
 import styles from "./EmptyState.module.css";
 
 /** Where "Upload your policy" goes. One place, so the upload flow can move without touching every page. */
@@ -52,7 +53,7 @@ function WithHoldings({ empty }: { empty: ReactElement<{ title: string }> }) {
     return () => { live = false; };
   }, [tick]);
   const retry = useCallback(() => { setSeen("loading"); setTick((t) => t + 1); }, []);
-  if (seen === "loading") return null;
+  if (seen === "loading") return <PageSkeleton />;
   if (seen === "failed") return <Unreachable onRetry={retry} />;
   if (seen === "none") return <>{empty}</>;
   return <EmptyState title={empty.props.title} body="Your cover is already on Knowvia. This page cannot use it yet." cta="View your covers" href="/policies" />;
@@ -65,7 +66,8 @@ function WithHoldings({ empty }: { empty: ReactElement<{ title: string }> }) {
  */
 export function DemoGate({ children, empty }: { children: ReactNode; empty: ReactNode }) {
   const { state, retry } = useMe();
-  if (state.status === "loading") return null;
+  // A skeleton, not nothing: a blank page reads as broken. It carries no demo content, so none can flash for a real account.
+  if (state.status === "loading") return <PageSkeleton />;
   if (state.status === "ready" && state.me.source !== "backend") return <>{children}</>;
   if (state.status === "down") return <Unreachable onRetry={retry} />;
   if (state.status === "ready" && isUploadPrompt(empty)) return <WithHoldings empty={empty} />;

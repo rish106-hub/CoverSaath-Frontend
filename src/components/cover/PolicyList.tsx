@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adapters, type Member, type Policy } from "@/adapters";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
+import { ErrorPanel } from "@/components/shell/ErrorPanel";
 import { PeopleChips } from "./PeopleChips";
 import styles from "./PolicyList.module.css";
 
@@ -20,17 +21,21 @@ const day = (iso: string) => {
 export function PolicyList() {
   const [policies, setPolicies] = useState<Policy[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     Promise.all([adapters.policy.list(), adapters.household.household()]).then(([p, h]) => {
       if (!live) return;
       setPolicies(p);
       setMembers(h.members);
-    }).catch(() => live && setPolicies([]));
+    // A failed load must not read as "no policies yet": that would tell the person to upload a cover they already hold.
+    }).catch(() => live && setFailed(true));
     return () => {
       live = false;
     };
-  }, []);
+  }, [attempt]);
+  const retry = useCallback(() => { setFailed(false); setPolicies(null); setAttempt((n) => n + 1); }, []);
   const people = (ids: string[]) => ids.map((id) => members.find((m) => m.id === id) ?? { name: id, relation: id });
 
   return (
@@ -40,7 +45,8 @@ export function PolicyList() {
         <PageTitle>My policies</PageTitle>
       </div>
       <SectionHeading title="Your policies">
-        {policies === null ? <p className={styles.quiet} role="status">Loading your policies...</p> : null}
+        {policies === null && !failed ? <p className={styles.quiet} role="status">Loading your policies...</p> : null}
+        {failed ? <ErrorPanel onRetry={retry} title="Your policies did not load" home={false} /> : null}
         {policies?.length === 0 ? <EmptyState title="No policies yet" body="Upload your policy and Knowvia reads it for you. It shows here with its cover, renewal date and who it covers." /> : null}
         <div className={styles.grid}>
           {policies?.map((p) => (
