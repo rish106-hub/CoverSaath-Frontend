@@ -6,7 +6,7 @@ import styles from "./BackendDown.module.css";
 export function BackendDown({ onRetry }: { onRetry?: () => void }) {
   return (
     <div className={styles.box} role="status">
-      <h3 className={styles.h}>Can’t reach Knowvia right now</h3>
+      <h2 className={styles.h}>Can’t reach Knowvia right now</h2>
       <p className={styles.p}>Your information is safe. Try again in a moment.</p>
       {onRetry ? <button type="button" className={styles.btn} onClick={onRetry}>Try again</button> : null}
     </div>

@@ -26,7 +26,7 @@ describe("welcome walk-through states", () => {
   it("shows a loading state, not a blank page, while the session is unknown", () => {
     me = { status: "loading" };
     render(<RealUserToUpload><p>steps</p></RealUserToUpload>);
-    expect(screen.getByLabelText("Loading")).toBeTruthy();
+    expect(screen.getByText("Loading")).toBeTruthy();
     expect(screen.queryByText("steps")).toBeNull();
   });
 

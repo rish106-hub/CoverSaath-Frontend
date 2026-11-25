@@ -28,7 +28,7 @@ export function paiseFrom(text: string): number | null {
 /** Declarations and money. Skippable: the review works without it, but answers about waiting periods and claims are firmer with it. */
 export function DeclarationsView({ holding }: { holding?: string }) {
   const { current } = useHoldings(holding);
-  const [members, setMembers] = useState<MemberRecord[]>([]);
+  const [members, setMembers] = useState<MemberRecord[] | null>(null); // null = still loading, [] = none yet
   const [decls, setDecls] = useState<DeclarationView[]>([]);
   const [pays, setPays] = useState<PremiumView[]>([]);
   // Page-level load error, plus one error per form so a failure shows next to the form that submitted it.
@@ -53,13 +53,13 @@ export function DeclarationsView({ holding }: { holding?: string }) {
 
   useEffect(() => {
     let live = true;
-    adapters.members.list().then((m) => { if (live) { setMembers(m); setMemberId((cur) => cur || m[0]?.id || ""); } }, () => undefined);
+    adapters.members.list().then((m) => { if (live) { setMembers(m); setMemberId((cur) => cur || m[0]?.id || ""); } }, (e) => { if (live) { setMembers([]); setError(codeOf(e)); } });
     adapters.covers.declarations().then((d) => { if (live) setDecls(d); }, (e) => { if (live) setError(codeOf(e)); });
     adapters.covers.premiums().then((p) => { if (live) setPays(p); }, (e) => { if (live) setError(codeOf(e)); });
     return () => { live = false; };
   }, []);
 
-  const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? "A family member";
+  const nameOf = (id: string) => members?.find((m) => m.id === id)?.name ?? "A family member";
   const reviewHref = current ? `/covers/review?holding=${encodeURIComponent(current.id)}` : "/covers/review";
 
   async function addDeclaration(e: React.FormEvent) {
@@ -126,10 +126,11 @@ export function DeclarationsView({ holding }: { holding?: string }) {
         <form className={s.card} onSubmit={(e) => void addDeclaration(e)}>
           {declError ? <p className={s.alert} id="decl-error" role="alert">{errorText(declError)}</p> : null}
           <p className={s.quiet}>These are about health, so we keep them sealed and use them only to answer your questions.</p>
-          {members.length === 0 ? <p className={s.quiet}>Add the people on this policy first. <Link href="/family">Open My family</Link></p> : null}
+          {members === null ? <p className={s.quiet} role="status">Loading the people on this policy…</p> : null}
+          {members?.length === 0 && !error ? <p className={s.quiet}>Add the people on this policy first. <Link href="/family">Open My family</Link></p> : null}
           <div className={s.grid2}>
             <label className={s.field}>Person
-              <select value={memberId} onChange={(e) => setMemberId(e.target.value)} required>{members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+              <select value={memberId} onChange={(e) => setMemberId(e.target.value)} required>{(members ?? []).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
             </label>
             <label className={s.field}>Kind
               <select value={kind} onChange={(e) => setKind(e.target.value as DeclarationKind)}>{DECLARATION_KINDS.map((k) => <option key={k} value={k}>{KIND_TEXT[k]}</option>)}</select>
@@ -148,7 +149,7 @@ export function DeclarationsView({ holding }: { holding?: string }) {
               </select>
             </label>
           </div>
-          <div className={s.row}><button type="submit" className="k-btn" disabled={busy || !memberId || !label.trim()}>Save declaration</button></div>
+          <div className={s.row}><button type="submit" className="k-btn" disabled={busy || members === null || !memberId || !label.trim()}>Save declaration</button></div>
         </form>
         {decls.length > 0 ? (
           <ul className={s.list} aria-label="Saved declarations">

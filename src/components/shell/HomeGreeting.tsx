@@ -20,12 +20,13 @@ export function HomeGreeting() {
     setHello(greeting(d.getHours()));
     setToday(d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" }));
   }, []);
-  if (state.status === "down") return <BackendDown onRetry={retry} />;
   const first = state.status === "ready" ? state.me.owner.displayName.split(" ")[0] : null;
   return (
     <div>
       <Kicker>{today || " "}</Kicker>
-      <PageTitle>{first ? `${hello}, ${first}.` : state.status === "signed-out" ? `${hello}.` : `${hello}.`}</PageTitle>
+      <PageTitle>{first ? `${hello}, ${first}.` : `${hello}.`}</PageTitle>
+      {/* The h1 stays when the backend is down so the page keeps its heading; the notice sits below it as an h2. */}
+      {state.status === "down" ? <BackendDown onRetry={retry} /> : null}
     </div>
   );
 }
