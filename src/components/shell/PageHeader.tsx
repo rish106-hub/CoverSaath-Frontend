@@ -1,14 +1,18 @@
+"use client";
+
 import { BrandMark } from "@/components/brand/BrandMark";
 import Link from "next/link";
-import { groupById, pagesIn, pageFor, type GroupId } from "@/lib/ia";
+import { groupById, groupHome, navHref, pagesIn, pageFor, type GroupId } from "@/lib/ia";
+import { useNavAudience } from "./EmptyState";
 import styles from "./PageHeader.module.css";
 
 /** Header at the top of every app page except /home (board Compare: .phead). */
 export function PageHeader({ pathname }: { pathname: string }) {
   const page = pageFor(pathname);
+  const audience = useNavAudience();
   const groupId: GroupId | null = page?.group ?? null;
   const group = groupId ? groupById(groupId) : null;
-  const tabs = groupId ? pagesIn(groupId) : [];
+  const tabs = groupId ? pagesIn(groupId, audience) : [];
   return (
     <header className={styles.phead}>
       <div className={styles.prow}>
@@ -18,7 +22,7 @@ export function PageHeader({ pathname }: { pathname: string }) {
             <>
               <span aria-hidden>/</span>
               <span className={styles.dot} style={{ background: group.color }} aria-hidden />
-              <Link href={group.home}>{group.label}</Link>
+              <Link href={groupHome(group, audience)}>{group.label}</Link>
             </>
           ) : null}
           <span aria-hidden>/</span>
@@ -30,7 +34,7 @@ export function PageHeader({ pathname }: { pathname: string }) {
           {tabs.map((t) => {
             const on = t.tab === page?.tab;
             return (
-              <Link key={t.route} href={t.href} className={on ? styles.tabOn : undefined} style={on ? { borderColor: group.color } : undefined} aria-current={on ? "page" : undefined}>
+              <Link key={t.route} href={navHref(t, audience)} className={on ? styles.tabOn : undefined} style={on ? { borderColor: group.color } : undefined} aria-current={on ? "page" : undefined}>
                 {t.tab}
               </Link>
             );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { isValidElement, useCallback, useEffect, useState, type ReactElement, type ReactNode } from "react";
 import { backendCovers } from "@/adapters/covers";
+import type { NavAudience } from "@/lib/ia";
 import { useMe } from "./useMe";
 import { PageSkeleton } from "./ErrorPanel";
 import styles from "./EmptyState.module.css";
@@ -72,4 +73,13 @@ export function DemoGate({ children, empty }: { children: ReactNode; empty: Reac
   if (state.status === "down") return <Unreachable onRetry={retry} />;
   if (state.status === "ready" && isUploadPrompt(empty)) return <WithHoldings empty={empty} />;
   return <>{empty}</>;
+}
+
+/**
+ * Which nav a viewer gets. Anything but a confirmed demo session gets the real nav, so demo-only links never flash
+ * while the session loads and never show for a backend account.
+ */
+export function useNavAudience(): NavAudience {
+  const { state } = useMe();
+  return state.status === "ready" && state.me.source !== "backend" ? "demo" : "real";
 }

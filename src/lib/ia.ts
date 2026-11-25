@@ -2,13 +2,23 @@
 
 export type GroupId = "cover" | "family" | "money" | "help";
 
-export type Group = { id: GroupId; label: string; color: string; home: string };
+export type Group = {
+  id: GroupId;
+  label: string;
+  color: string;
+  home: string;
+  /** Breadcrumb target for real accounts, when `home` is a demo-only page. */
+  realHome?: string;
+};
+
+/** Who is looking at the nav. "real" = a backend (beta) account; "demo" = the mock demo session. */
+export type NavAudience = "demo" | "real";
 
 export const GROUPS: readonly Group[] = [
   { id: "cover", label: "My cover", color: "var(--g-cover)", home: "/home" },
   { id: "family", label: "My family", color: "var(--g-family)", home: "/family" },
   { id: "money", label: "My money", color: "var(--g-money)", home: "/money" },
-  { id: "help", label: "Help", color: "var(--g-help)", home: "/desk" },
+  { id: "help", label: "Help", color: "var(--g-help)", home: "/desk", realHome: "/emergency" },
 ] as const;
 
 export type PageDef = {
@@ -23,6 +33,10 @@ export type PageDef = {
   kicker?: string;
   /** Section headings from the board; content comes from W1-W5. */
   sections: { heading: string; description?: string }[];
+  /** Real accounts have no live view for this page yet (it opens "cannot use it yet"), so nav hides it for them. */
+  demoOnly?: boolean;
+  /** Link target for real accounts when it differs from `href`. */
+  realHref?: string;
 };
 
 export const PAGES: readonly PageDef[] = [
@@ -99,6 +113,7 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/review", href: "/review", tab: "Things to check", group: "cover",
+    demoOnly: true,
     title: "3 things need you. Knowvia handled the rest.", kicker: "Your review · 1 Nov 2026",
     sections: [{ heading: "Recommended · check and edit" }, { heading: "New this round · have a look" }],
   },
@@ -116,6 +131,7 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/cards", href: "/cards", tab: "Cards and wallet", group: "family",
+    demoOnly: true,
     title: "E-card, in your wallet", kicker: "Show this at any hospital desk.",
     sections: [{ heading: "Add to your wallet" }, { heading: "On the back of the pass" }],
   },
@@ -145,6 +161,7 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/desk", href: "/desk", tab: "Claims and insurer talks", group: "help",
+    demoOnly: true,
     title: "We talk to the TPA and insurer. You get updates.", kicker: "Claims and insurer talks",
     sections: [
       { heading: "Your cases" },
@@ -154,6 +171,7 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/emergency", href: "/emergency", tab: "Emergency", group: "help",
+    realHref: "/hospitals",
     title: "Emergency", kicker: "Stay calm. Knowvia has the papers ready.",
     sections: [
       { heading: "Cashless e-card" },
@@ -163,11 +181,13 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/assistant", href: "/assistant", tab: "Ask Knowvia", group: "help",
+    demoOnly: true,
     title: "Ask Knowvia", kicker: "Plain-language helper",
     sections: [{ heading: "How Knowvia understands you" }, { heading: "Try saying" }],
   },
   {
     route: "/shortcuts", href: "/shortcuts", tab: "Shortcuts", group: null,
+    demoOnly: true,
     title: "One input, start to finish", kicker: "Pick how you move. Never switch.",
     sections: [{ heading: "Keyboard" }, { heading: "Mouse" }, { heading: "Voice" }],
   },
@@ -194,8 +214,18 @@ export const ONBOARDING_ROUTES = ["/welcome", "/welcome/add", "/welcome/reading"
 
 export const groupById = (id: GroupId): Group => GROUPS.find((g) => g.id === id) as Group;
 
-export function pagesIn(group: GroupId): PageDef[] {
-  return PAGES.filter((p) => p.group === group && !p.route.includes("["));
+/** Tabs of a group. Real accounts never see pages that would open "cannot use it yet". */
+export function pagesIn(group: GroupId, audience: NavAudience = "demo"): PageDef[] {
+  return PAGES.filter((p) => p.group === group && !p.route.includes("[") && !(audience === "real" && p.demoOnly));
+}
+
+/** Where a nav link goes for this audience (Emergency leads real accounts to network hospitals). */
+export function navHref(page: PageDef, audience: NavAudience = "demo"): string {
+  return audience === "real" && page.realHref ? page.realHref : page.href;
+}
+
+export function groupHome(group: Group, audience: NavAudience = "demo"): string {
+  return audience === "real" && group.realHome ? group.realHome : group.home;
 }
 
 /** Resolve a pathname to its page definition (dynamic routes included). */
