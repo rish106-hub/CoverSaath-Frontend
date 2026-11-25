@@ -8,6 +8,7 @@ import {
   BANDS, DEFAULT_WEIGHTS, PRIORITIES, SCENARIOS, WEIGHT_LABELS, bestIndex, cycleWeight, fitScores, lakh, plans, rows, verdictText, youPaysL,
   type Band, type Dot, type Kind,
 } from "@/lib/fit";
+import { SoonButton } from "@/components/ui/SoonButton";
 import { SaveState } from "@/components/ui/SaveState";
 import { useScenario } from "@/lib/use-scenario";
 import { compareCodec, type CompareState } from "@/lib/scenario-codecs";
@@ -196,11 +197,12 @@ export function Compare() {
           <SectionHeading title="Buy direct from the insurer">
             <div className={styles.direct}>
               {DIRECT.map((d) => (
-                <a key={d.logo} href="#direct" className={styles.dcard}>
+                <div key={d.logo} className={styles.dcard}>
                   <InsurerTile code={d.logo} size={32} />
                   <span className={styles.name}>{d.name}</span>
                   <span className="k-btn k-btn--secondary k-btn--sm">Visit site</span>
-                </a>
+                  <SoonButton className="k-btn--sm">Buy direct</SoonButton>
+                </div>
               ))}
             </div>
           </SectionHeading>

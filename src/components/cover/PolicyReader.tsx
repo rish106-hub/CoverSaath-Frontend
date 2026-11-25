@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { adapters, type Finding, type Policy } from "@/adapters";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { DOCS, PAGES, READING_POLICY_ID, TOPICS, guidesFor, topicPageKey, type DocId, type Topic } from "@/data/mock/policy";
+import { SoonButton } from "@/components/ui/SoonButton";
 import styles from "./PolicyReader.module.css";
 
 const WHO = [{ id: "self", label: "You" }, { id: "spouse", label: "Spouse" }, { id: "child", label: "Child" }];
@@ -102,14 +103,14 @@ export function PolicyReader({ id }: { id: string }) {
               <Link href="/assistant" className="k-btn k-btn--secondary k-btn--sm">Listen</Link>
             </div>
             {cur ? guidesFor(cur.id).map((g) => (
-              <Link key={g.title} href="/home" className={styles.guide}>
+              <div key={g.title} className={styles.guide}>
                 <span className={`${styles.thumb} ${styles[g.tone]}`} aria-hidden>{g.icon}</span>
                 <span>
                   <span className={styles.gkind}>{g.kind}</span>
                   <span className={styles.gtitle}>{g.title}</span>
-                  <span className={`k-btn k-btn--secondary k-btn--sm ${styles.glink}`}>Read guide</span>
+                  <SoonButton className={`k-btn--secondary k-btn--sm ${styles.glink}`}>Read guide</SoonButton>
                 </span>
-              </Link>
+              </div>
             )) : null}
           </div>
         </div>
