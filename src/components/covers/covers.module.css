@@ -29,7 +29,7 @@
 .fact { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--sheet); }
 .fact[data-open="true"] { border-color: var(--ochre); background: var(--g-money-bg); }
 .factName { font: 500 var(--fs-13) var(--font-sans); color: var(--graphite); }
-.factValue { font: 400 var(--fs-22)/1.2 var(--font-serif); color: var(--ink); overflow-wrap: anywhere; }
+.factValue { font: 400 var(--fs-22)/1.2 var(--font-serif); color: var(--ink); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .status { font: 600 var(--fs-12) var(--font-sans); color: var(--graphite); }
 .fact[data-open="true"] .status { color: var(--g-money); }
 .src { margin: 0; font: 400 var(--fs-13)/1.4 var(--font-sans); color: var(--graphite); overflow-wrap: anywhere; }

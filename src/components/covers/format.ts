@@ -15,14 +15,12 @@ const GROUP_OF: Record<string, GroupLabel> = {
 };
 export const groupOf = (group: string | null | undefined): GroupLabel => GROUP_OF[group ?? ""] ?? "Other details";
 
-/** "room_rent_limit" becomes "Room rent limit". The backend sends keys, not display text. */
-export function labelOf(factKey: string): string {
-  const words = factKey.replace(/_/g, " ").trim();
-  return words ? words.charAt(0).toUpperCase() + words.slice(1) : factKey;
-}
+export { labelOf } from "@/lib/fact-labels";
 
 export const rupees = (paise: number): string => `Rs ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(paise / 100)}`;
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v.trim()) ? Number(v) : null);
+// A form header such as "Intermediary Name | Code | Phone" is template text the reader picked up, not an answer.
+const isTemplateText = (s: string): boolean => s.split(" | ").length > 2;
 const plural = (n: number, one: string): string => `${n} ${n === 1 ? one : `${one}s`}`;
 
 /** One value in plain words, by its unit. Null or an unreadable value is "Not found". */
@@ -46,9 +44,15 @@ export function formatValue(value: unknown, unit: string | null | undefined, typ
       const d = new Date(`${value.slice(0, 10)}T00:00:00Z`);
       if (!Number.isNaN(d.getTime())) return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
     }
-    return value;
+    return isTemplateText(value) ? "Not found" : value;
   }
-  return "See the document";
+  if (typeof value === "object") {
+    const o = value as Record<string, unknown>;
+    if (typeof o.days === "number" && Number.isFinite(o.days)) return plural(o.days, "day");
+    if (typeof o.amountMinor === "number" && Number.isSafeInteger(o.amountMinor)) return rupees(o.amountMinor);
+    if (typeof o.text === "string" && o.text !== "") return isTemplateText(o.text) ? "Not found" : o.text;
+  }
+  return "Not found";
 }
 
 export const STATUS_TEXT: Record<ResolvedStatus, string> = {

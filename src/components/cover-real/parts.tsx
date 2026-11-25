@@ -56,7 +56,7 @@ export function FactItem({ f }: { f: FactLine }) {
       <span className={s.factName}>{f.label}</span>
       <span className={s.factValue}>{f.value}</span>
       <span className={s.status}>{f.statusText}</span>
-      <span className={s.tag} data-testid="fact-source">{f.sourceText}</span>
+      {f.sourceText !== f.statusText ? <span className={s.tag} data-testid="fact-source">{f.sourceText}</span> : null}
       {f.quote ? <p className={s.src}>&ldquo;{f.quote}&rdquo;{f.citation ? ` · ${f.citation}` : ""}</p> : f.citation ? <p className={s.src}>{f.citation}</p> : null}
     </li>
   );

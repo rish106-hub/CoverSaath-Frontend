@@ -21,11 +21,11 @@ const fact = (o: Partial<FactView> & { factKey: string }): FactView => ({ status
 const own = (pageId = "page-2", quote = "Room rent up to 5000") => ({ id: "s1", tier: "own_pdf" as const, page: { pageId, pageNumber: Number(pageId.replace(/\D/g, "")) }, quote });
 const FACTS: FactView[] = [
   fact({ factKey: "room_rent_limit", group: "limits", unit: "paise", valueType: "number", value: 500000, sourceTier: "own_pdf", sources: [own()] }),
-  fact({ factKey: "initial_waiting", group: "waiting", unit: "days", value: 30, status: "user_confirmed", sourceTier: "own_pdf", sources: [{ id: "s2", tier: "own_pdf" }] }),
-  fact({ factKey: "co_pay", group: "limits", status: "conflicting", openConflictId: "c1" }),
-  fact({ factKey: "bonus", group: "money", status: "unknown" }),
+  fact({ factKey: "waiting_initial", group: "waiting", unit: "days", value: 30, status: "user_confirmed", sourceTier: "own_pdf", sources: [{ id: "s2", tier: "own_pdf" }] }),
+  fact({ factKey: "copay_percent", group: "limits", status: "conflicting", openConflictId: "c1" }),
+  fact({ factKey: "loyalty_bonus", group: "money", status: "unknown" }),
 ];
-const CONFLICT: ConflictView = { id: "c1", factKey: "co_pay", reason: "tier_mismatch", resolution: "pending", checkWithInsurer: false, candidates: [] };
+const CONFLICT: ConflictView = { id: "c1", factKey: "copay_percent", reason: "tier_mismatch", resolution: "pending", checkWithInsurer: false, candidates: [] };
 
 describe("toPolicyView", () => {
   it("maps a holding with facts: value, honest status, citation", () => {
@@ -34,7 +34,7 @@ describe("toPolicyView", () => {
     expect(room).toMatchObject({ value: "Rs 5,000", status: "extracted_unverified", statusText: "Read from your document", citation: "Your document, Page 2" });
     expect(room?.statusText).not.toMatch(/verified|confirmed/i);
     expect(v.notFound).toBe(1);
-    expect(v.pending).toEqual([{ id: "c1", label: "Co pay" }]);
+    expect(v.pending).toEqual([{ id: "c1", label: "Co-pay" }]);
     expect(containsUin(v)).toBe(false);
   });
   it("maps a holding with no facts to an empty list, not an error", () => {
@@ -43,11 +43,11 @@ describe("toPolicyView", () => {
   });
   it("shows a conflicting fact as two readings and an unknown one as not found", () => {
     const v = toPolicyView(holding("conflicts"), { facts: FACTS, unknownKeys: [], conflicts: [CONFLICT] });
-    expect(v.facts.find((f) => f.key === "co_pay")).toMatchObject({ value: "Two readings", open: true, conflictId: "c1" });
-    expect(v.facts.find((f) => f.key === "bonus")).toMatchObject({ value: "Not found", open: true });
+    expect(v.facts.find((f) => f.key === "copay_percent")).toMatchObject({ value: "Two readings", open: true, conflictId: "c1" });
+    expect(v.facts.find((f) => f.key === "loyalty_bonus")).toMatchObject({ value: "Not found", open: true });
   });
   it("leaves the citation null when the backend returned none", () => {
-    const v = toPolicyView(holding(), { facts: [fact({ factKey: "co_pay", value: 10, unit: "percent" })], unknownKeys: [], conflicts: [] });
+    const v = toPolicyView(holding(), { facts: [fact({ factKey: "copay_percent", value: 10, unit: "percent" })], unknownKeys: [], conflicts: [] });
     expect(v.facts[0]).toMatchObject({ citation: null, quote: null, value: "10%" });
   });
   it("ignores guessed product and insurer facts; names come only from the summary", () => {
@@ -109,7 +109,7 @@ describe("toPolicyView", () => {
   });
   it("orders key facts with limits first and skips unknown ones", () => {
     const v = toPolicyView(holding(), { facts: FACTS, unknownKeys: [], conflicts: [] });
-    expect(keyFacts(v).map((f) => f.key)).toEqual(["room_rent_limit", "co_pay", "initial_waiting"]);
+    expect(keyFacts(v).map((f) => f.key)).toEqual(["room_rent_limit", "copay_percent", "waiting_initial"]);
   });
 });
 
@@ -146,7 +146,7 @@ describe("loading from the backend routes", () => {
     expect((await realAdapters.policy.list()).map((p) => p.id)).toEqual(["h1"]);
     expect(await realAdapters.policy.get("nope")).toBeNull();
     const f = await realAdapters.reading.findings("h1");
-    expect(f.find((x) => x.label === "Co pay")?.disagrees).toBe(true);
+    expect(f.find((x) => x.label === "Co-pay")?.disagrees).toBe(true);
     vi.spyOn(backendCovers, "facts").mockRejectedValue(new AdapterError("BACKEND_UNREACHABLE"));
     expect(await realAdapters.reading.findings("h1")).toEqual([]);
   });
@@ -247,7 +247,7 @@ describe("screens", () => {
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByRole("heading", { name: "Waiting" })).toBeInTheDocument();
     expect(screen.getByText("You confirmed this")).toBeInTheDocument();
-    expect(screen.getByText("2 details were not found in your document.")).toBeInTheDocument();
+    expect(screen.getByText("Not found in this policy (2)")).toBeInTheDocument();
     cleanup();
     stub([holding("ready", "other")]);
     render(<RealPolicyDetail id="h1" />);
