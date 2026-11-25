@@ -95,7 +95,7 @@ describe("Settings over the backend", () => {
     fireEvent.click(motion);
     expect(await screen.findByText(/Could not save/)).toBeInTheDocument();
     expect(motion).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect((prefsStore.prefs as { reducedMotion: boolean }).reducedMotion).toBe(true);
   });
@@ -158,7 +158,7 @@ describe("Emergency location", () => {
     render(<EmergencyView />);
     fireEvent.click(await screen.findByRole("button", { name: "Allow location" }));
     expect(await screen.findByText(/Could not save/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
   });
 });

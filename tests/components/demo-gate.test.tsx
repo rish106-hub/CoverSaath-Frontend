@@ -11,7 +11,7 @@ const me = (source: "backend" | "demo" | "mock") => ({ householdId: "h", househo
 
 function view() {
   return render(
-    <DemoGate empty={<EmptyState title="Nothing here yet" body="Upload your policy and Knowvia reads it for you." />}>
+    <DemoGate empty={<EmptyState title="Nothing here yet" body="Add a policy and Knowvia reads it for you." />}>
       <p>Meera Rao mock family</p>
     </DemoGate>,
   );
@@ -26,12 +26,12 @@ afterEach(() => {
 const noHoldings = () => vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: [], creationIssues: [] });
 
 describe("DemoGate", () => {
-  it("shows the empty state with an Upload your policy action to a real account with no covers, and no mock content", async () => {
+  it("shows the empty state with an Add a policy action to a real account with no covers, and no mock content", async () => {
     vi.spyOn(adapters.household, "me").mockResolvedValue(me("backend"));
     noHoldings();
     view();
     expect(await screen.findByTestId("empty-state")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Upload your policy" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Add a policy" })).toBeInTheDocument();
     expect(screen.queryByText(/Meera Rao/)).toBeNull();
   });
   it("shows the empty state to a signed-out visitor", async () => {
@@ -56,8 +56,8 @@ describe("DemoGate", () => {
     vi.spyOn(adapters.household, "me").mockResolvedValue(me("backend"));
     vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({ holdings: [{ id: "holding-1" } as unknown as HoldingView], creationIssues: [] });
     view();
-    expect(await screen.findByRole("link", { name: "View your covers" })).toHaveAttribute("href", "/policies");
-    expect(screen.queryByRole("link", { name: "Upload your policy" })).toBeNull();
+    expect(await screen.findByRole("link", { name: "View your policies" })).toHaveAttribute("href", "/policies");
+    expect(screen.queryByRole("link", { name: "Add a policy" })).toBeNull();
   });
   it("shows a retry, not the empty state, when the session check fails", async () => {
     vi.spyOn(adapters.household, "me").mockRejectedValue(new Error("down"));
@@ -74,6 +74,6 @@ describe("DemoGate", () => {
     const btn = await screen.findByRole("button", { name: "Try again" });
     expect(screen.queryByTestId("empty-state")).toBeNull();
     fireEvent.click(btn);
-    expect(await screen.findByRole("link", { name: "View your covers" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "View your policies" })).toBeInTheDocument();
   });
 });

@@ -136,10 +136,10 @@ export function AddMemberSheet({ onClose, onSent, onAdded }: { onClose: () => vo
                 <button key={v} type="button" className={styles.chip} data-on={via === v} aria-pressed={via === v} onClick={() => setVia(v)}>{v === "whatsapp" ? "WhatsApp" : "SMS"}</button>
               ))}
             </div>
-            {failed ? <span className={styles.err} role="alert">Could not add them. Try again.</span> : null}
+            {failed ? <span className={styles.err} role="alert">{"Couldn't add them. Try again."}</span> : null}
           </div>
         )}
-        {!features.memberContact && failed ? <span className={styles.err} role="alert">Could not add them. Try again.</span> : null}
+        {!features.memberContact && failed ? <span className={styles.err} role="alert">{"Couldn't add them. Try again."}</span> : null}
         <div>
           <button type="button" className={styles.cta} onClick={() => void next()} disabled={busy}>
             {!features.memberContact ? (busy ? "Adding…" : "Add to household") : step === 1 ? "Continue" : busy ? "Sending…" : "Send invite"}

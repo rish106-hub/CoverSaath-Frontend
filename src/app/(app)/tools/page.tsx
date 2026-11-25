@@ -10,7 +10,7 @@ export default function Page() {
     <>
       <div>
         {page?.kicker ? <Kicker>{page.kicker}</Kicker> : null}
-        <PageTitle>{page?.title ?? "Free tools. No sign-up."}</PageTitle>
+        <PageTitle>{page?.title ?? "Calculators"}</PageTitle>
       </div>
       <ToolsPage />
     </>

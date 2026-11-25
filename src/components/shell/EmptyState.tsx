@@ -8,11 +8,11 @@ import { useMe } from "./useMe";
 import { PageSkeleton } from "./ErrorPanel";
 import styles from "./EmptyState.module.css";
 
-/** Where "Upload your policy" goes. One place, so the upload flow can move without touching every page. */
+/** Where "Add a policy" goes. One place, so the upload flow can move without touching every page. */
 export const UPLOAD_HREF = "/covers/add";
 
 /** An honest empty page: what is missing and the one next action. */
-export function EmptyState({ title, body, cta = "Upload your policy", href = UPLOAD_HREF, children }: { title: string; body: string; cta?: string; href?: string; children?: ReactNode }) {
+export function EmptyState({ title, body, cta = "Add a policy", href = UPLOAD_HREF, children }: { title: string; body: string; cta?: string; href?: string; children?: ReactNode }) {
   return (
     <section className={styles.box} aria-label={title} data-testid="empty-state">
       <h2 className={styles.h}>{title}</h2>
@@ -34,7 +34,7 @@ function Unreachable({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** Whether `empty` is the generic "Upload your policy" prompt (real-mode pages that draw their own state are left alone). */
+/** Whether `empty` is the generic "Add a policy" prompt (real-mode pages that draw their own state are left alone). */
 const isUploadPrompt = (empty: ReactNode): empty is ReactElement<{ title: string; href?: string }> =>
   isValidElement(empty) && empty.type === EmptyState && (empty.props as { href?: string }).href === undefined;
 
@@ -57,7 +57,7 @@ function WithHoldings({ empty }: { empty: ReactElement<{ title: string }> }) {
   if (seen === "loading") return <PageSkeleton />;
   if (seen === "failed") return <Unreachable onRetry={retry} />;
   if (seen === "none") return <>{empty}</>;
-  return <EmptyState title={empty.props.title} body="Your cover is already on Knowvia. This page cannot use it yet." cta="View your covers" href="/policies" />;
+  return <EmptyState title={empty.props.title} body="Your policy is on Knowvia. This page is coming soon." cta="View your policies" href="/policies" />;
 }
 
 /**

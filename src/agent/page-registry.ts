@@ -95,7 +95,7 @@ export const PAGE_CONTEXT: Record<string, PageContext> = {
     ex("Find a cashless hospital near me", ["Network hospitals", "Search by pincode", "Shows hospitals in your network"], "/hospitals", "Find hospitals"),
   ] },
   // Cover screens (S-B2).
-  "/covers/add": { route: "/covers/add", page: "Add a cover", reads: "your policies and this page", examples: [
+  "/covers/add": { route: "/covers/add", page: "Add a policy", reads: "your policies and this page", examples: [
     ex("What are my waiting periods?", ["Your policy", "Reads the waiting period section", "Answers with the page it came from"], "/chat", "Ask this"),
     ex("What does my policy not cover?", ["Your policy", "Reads the exclusions", "Answers with the page it came from"], "/chat", "Ask this"),
     ex("Find a cashless hospital near me", ["Network hospitals", "Search by pincode", "Shows hospitals in your network"], "/hospitals", "Find hospitals"),

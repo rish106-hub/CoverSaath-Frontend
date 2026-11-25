@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AdapterError } from "@/adapters/types";
 import { uploads as backendUploads, makeRequestKey, precheck } from "@/adapters/uploads";
 import { MAX_LARGE_UPLOAD_BYTES, MAX_UPLOAD_BYTES, NOTE_TEXT, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type DocView, type DocumentKind, type PolicyType, type StepState } from "@/adapters/documents-contract";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import styles from "./UploadView.module.css";
 
 const KIND_LABEL: Record<DocumentKind, string> = { policy_wording: "Terms and conditions", policy_schedule: "Policy schedule", endorsement: "Endorsement" };
@@ -196,7 +196,6 @@ export function UploadView() {
   return (
     <>
       <div>
-        <Kicker>Your family’s cover</Kicker>
         <PageTitle>Add a policy</PageTitle>
       </div>
 

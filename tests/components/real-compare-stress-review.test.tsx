@@ -58,7 +58,7 @@ describe("real compare / stress / review", () => {
   it("review lists real open conflicts and links to settle them", async () => {
     real([holding("a", 500000, "conflicts")], [], [{ id: "c1", factKey: "room_rent_limit", resolution: "pending", reason: "x", candidates: [], checkWithInsurer: false }]);
     render(<ReviewP />);
-    const link = await screen.findByRole("link", { name: "Settle it" });
+    const link = await screen.findByRole("link", { name: "Decide" });
     expect(link.getAttribute("href")).toBe("/covers/review?holding=a");
     expect(screen.getByText(/Room rent limit/)).toBeInTheDocument();
   });

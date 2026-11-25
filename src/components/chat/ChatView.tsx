@@ -9,7 +9,7 @@ import { errorText } from "@/adapters/documents-contract";
 import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/chat-contract";
 import { MicGlyph } from "@/components/agent/VoiceIcons";
 import { voiceOnHold } from "@/components/agent/voice-hold";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
 import { ChatConsentCard, WithdrawConsent, useChatConsent } from "./ChatConsent";
 import { useHoldings } from "@/components/covers/use-holdings";
@@ -235,7 +235,6 @@ export function ChatView() {
     return (
       <div className={s.stack}>
         <div>
-          <Kicker>Your family&rsquo;s cover</Kicker>
           <PageTitle>Ask about your cover</PageTitle>
         </div>
         <Skeleton shape="chat" />
@@ -245,7 +244,6 @@ export function ChatView() {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>Ask about your cover</PageTitle>
       </div>
 
@@ -263,9 +261,9 @@ export function ChatView() {
       ) : null}
 
       {holdings && holdings.length === 0 && !listError ? (
-        <SectionHeading title="No cover yet">
+        <SectionHeading title="No policy yet">
           <p className={s.quiet}>Add your policy and you can ask about it here.</p>
-          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a cover</Link></div>
+          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a policy</Link></div>
         </SectionHeading>
       ) : null}
 
@@ -290,7 +288,7 @@ export function ChatView() {
                 {m.answer && m.answer.openConflicts.length > 0 ? <p className={s.quiet}>Some details in your cover are not settled. <Link href="/covers/review">Review them</Link>.</p> : null}
                 {m.answer?.intent === "network_hospitals" ? <p className={s.quiet}><Link href="/hospitals">Open network hospitals</Link></p> : null}
                 {m.error ? <p className={s.alert} role="alert">{turnErrorText(m.error)}</p> : null}
-                {m.error && m.retry ? <div className={s.row}><button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => retry(msgs[i - 1]?.id ?? 0, m.id, m.retry!)}>Retry</button></div> : null}
+                {m.error && m.retry ? <div className={s.row}><button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => retry(msgs[i - 1]?.id ?? 0, m.id, m.retry!)}>Try again</button></div> : null}
               </li>
             ))}
           </ol>

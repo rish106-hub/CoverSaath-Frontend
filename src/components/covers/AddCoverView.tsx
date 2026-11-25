@@ -7,7 +7,7 @@ import { MAX_UPLOAD_BYTES, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type Poli
 import { makeRequestKey, uploads } from "@/adapters/uploads";
 import { stageOf } from "@/adapters/covers";
 import type { CandidateView, Candidates } from "@/adapters/covers-contract";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { PageSkeleton } from "@/components/shell/ErrorPanel";
 import { ErrorBox } from "@/components/cover-real/parts";
 import { codeOf } from "./use-holdings";
@@ -270,8 +270,7 @@ export function AddCoverView() {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
-        <PageTitle>Add a cover</PageTitle>
+        <PageTitle>Add a policy</PageTitle>
       </div>
 
       {consent === null && !loadFailure ? <div role="status" aria-label="Loading your upload page"><PageSkeleton height={160} /></div> : null}
@@ -402,7 +401,7 @@ export function AddCoverView() {
       {checking ? <p className={s.quiet} role="status" data-state="checking">Checking your insurer&rsquo;s terms&hellip;</p> : null}
 
       {done && holdingId ? (
-        <SectionHeading title="Next">
+        <SectionHeading title="What's next">
           <div className={s.done} role="status">
             <span>Your cover is saved.</span>
             <div className={s.row}>

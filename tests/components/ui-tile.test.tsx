@@ -60,7 +60,7 @@ describe("tile", () => {
     const fn = vi.fn();
     render(<RetryTile label="Cover" onRetry={fn} />);
     expect(screen.getByText("Couldn't load")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });

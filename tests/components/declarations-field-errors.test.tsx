@@ -29,7 +29,7 @@ describe("declarations and money field errors", () => {
     render(<DeclarationsView />);
     const amount = await screen.findByLabelText("Amount in rupees");
     // Wait for holdings so the form is submittable.
-    await waitFor(() => expect(screen.queryByText("Add a cover first.")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("Add a policy first.")).toBeNull());
     fireEvent.change(amount, { target: { value: "abc" } });
     fireEvent.submit(amount.closest("form")!);
     const alert = await screen.findByRole("alert");

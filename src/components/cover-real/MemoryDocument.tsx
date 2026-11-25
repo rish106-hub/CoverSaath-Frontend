@@ -162,7 +162,7 @@ export function MemoryDocument({ holdingId }: { holdingId: string }) {
   }, [holdingId, request]);
   const load = answer?.request === request ? answer.load : null;
   if (load?.phase === "error" && OFF_CODES.includes(load.code)) return null;
-  const title = "What we hold about this policy";
+  const title = "Policy summary";
   if (!load) return <SectionHeading title={title}><p className={s.quiet} role="status">Loading your policy summary...</p></SectionHeading>;
   if (load.phase === "error") {
     return (

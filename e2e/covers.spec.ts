@@ -11,7 +11,7 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
 
   await addSchedule(page, { name: "policy.pdf", buffer: SYNTHETIC_PDF });
-  await expect(page.getByRole("heading", { name: "Add a cover" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Add a policy" })).toBeVisible();
 
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await expect(page.getByText("Example Insurer – Example Health Plan 01")).toBeVisible();

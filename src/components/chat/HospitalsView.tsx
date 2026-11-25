@@ -5,7 +5,7 @@ import { useState } from "react";
 import { adapters } from "@/adapters";
 import { errorText } from "@/adapters/documents-contract";
 import { PINCODE, type HospitalView } from "@/adapters/chat-contract";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "@/components/covers/use-holdings";
 import { CoverOptions } from "@/components/covers/holding-label";
 import s from "./chat.module.css";
@@ -38,7 +38,6 @@ export function HospitalsView({ holding, pincode }: { holding?: string; pincode?
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>Network hospitals</PageTitle>
       </div>
 
@@ -52,9 +51,9 @@ export function HospitalsView({ holding, pincode }: { holding?: string; pincode?
       {listError || error ? <p className={s.alert} role="alert">{errorText(error ?? listError ?? "")}</p> : null}
 
       {holdings && holdings.length === 0 && !listError ? (
-        <SectionHeading title="No cover yet">
+        <SectionHeading title="No policy yet">
           <p className={s.quiet}>Add your policy and we can show the hospitals in its network.</p>
-          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a cover</Link></div>
+          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a policy</Link></div>
         </SectionHeading>
       ) : null}
 

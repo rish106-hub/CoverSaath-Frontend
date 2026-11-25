@@ -48,7 +48,7 @@ test("a failed turn offers Retry, and a slow turn says it is still working", asy
   await page.getByRole("button", { name: "Ask", exact: true }).click();
   await expect(log.getByRole("alert")).toHaveText("Something went wrong. Try again.");
   await expect(page.getByLabel("Your question")).toBeEnabled();
-  await log.getByRole("button", { name: "Retry" }).click();
+  await log.getByRole("button", { name: "Try again" }).click();
   await expect(log.getByText(/36 months for pre-existing diseases/)).toBeVisible();
   await expect(log.getByRole("alert")).toHaveCount(0);
 

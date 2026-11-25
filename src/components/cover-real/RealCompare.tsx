@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import type { PolicyView } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
@@ -35,13 +35,12 @@ export function RealCompare() {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Compare plans</Kicker>
         <PageTitle>Your policies side by side</PageTitle>
       </div>
       {state.kind === "loading" ? <Loading what="your policies" /> : null}
       {state.kind === "error" ? <ErrorBox code={state.code} onRetry={reload} /> : null}
       {state.kind === "empty" && issues.length > 0 ? <CreationIssues issues={issues} onRetry={reload} /> : null}
-      {state.kind === "empty" && issues.length === 0 ? <EmptyState title="Compare starts from your own policy" body="Upload your policy and Knowvia reads it for you." /> : null}
+      {state.kind === "empty" && issues.length === 0 ? <EmptyState title="Add a policy to compare" body="Knowvia reads it, then compares section by section." /> : null}
       {state.kind === "ready" ? <Ready policies={state.policies} /> : null}
     </div>
   );
@@ -70,7 +69,7 @@ function Ready({ policies }: { policies: PolicyView[] }) {
         </SectionHeading>
       ) : null}
       <div className={s.row}>
-        <Link className="k-btn k-btn--secondary" href="/covers/add">Add a cover</Link>
+        <Link className="k-btn k-btn--secondary" href="/covers/add">Add a policy</Link>
         <Link className="k-btn k-btn--secondary" href="/stress-test">Stress test a policy</Link>
       </div>
     </>

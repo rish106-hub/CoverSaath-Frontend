@@ -8,7 +8,7 @@ import { insurerLine } from "@/adapters/insurer-tier";
 import { SectionHeading } from "@/components/type";
 import s from "@/components/covers/covers.module.css";
 
-// Search the wording. Two lists, kept apart: passages from the person's own documents, and passages from the insurer's wording for
+// Search your policy wording. Two lists, kept apart: passages from the person's own documents, and passages from the insurer's wording for
 // the linked plan, each labelled "From the insurer's wording, not checked" (FOR LEGAL REVIEW). A passage is a short snippet, not an
 // answer. There is no link from an insurer passage to a document of the household: there is none behind it.
 
@@ -54,7 +54,7 @@ export function PassageSearch({ holdingId }: { holdingId: string }) {
   };
   if (error === "NOT_FOUND") return null;
   return (
-    <SectionHeading title="Search the wording">
+    <SectionHeading title="Search your policy wording">
       <form className={s.row} onSubmit={(e) => { e.preventDefault(); void run(); }}>
         <input className={s.field} aria-label="Search the policy wording" placeholder="For example: waiting period" maxLength={100} value={q} onChange={(e) => setQ(e.target.value)} />
         <button type="submit" className="k-btn k-btn--secondary" disabled={!valid || busy}>Search</button>

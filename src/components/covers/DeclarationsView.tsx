@@ -6,7 +6,7 @@ import { adapters } from "@/adapters";
 import { errorText } from "@/adapters/documents-contract";
 import type { MemberRecord } from "@/adapters/scenarios";
 import { DECLARATION_KINDS, PAID_VIA, PAYMENT_CHANNELS, type DeclarationKind, type DeclarationView, type PaidVia, type PaymentChannel, type PremiumView } from "@/adapters/covers-contract";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "./use-holdings";
 import { formatValue, todayIso } from "./format";
 import s from "./covers.module.css";
@@ -114,7 +114,6 @@ export function DeclarationsView({ holding }: { holding?: string }) {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>Declarations and money</PageTitle>
         <p className={s.quiet}>You can skip this and come back. With it, answers about waiting periods and claims fit you better.</p>
       </div>
@@ -161,7 +160,7 @@ export function DeclarationsView({ holding }: { holding?: string }) {
       <SectionHeading title="Premium you paid" description="When, how much and how, so renewals and claims line up.">
         <form className={s.card} onSubmit={(e) => void addPremium(e)}>
           {premiumError ? <p className={s.alert} id="premium-error" role="alert">{errorText(premiumError)}</p> : null}
-          {!current ? <p className={s.quiet}>Add a cover first. <Link href="/covers/add">Add a cover</Link></p> : null}
+          {!current ? <p className={s.quiet}>Add a policy first. <Link href="/covers/add">Add a policy</Link></p> : null}
           <div className={s.grid2}>
             <label className={s.field}>Amount in rupees
               <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" required aria-invalid={premiumError === "INVALID_INPUT" && paiseFrom(amount) === null ? true : undefined} aria-describedby={premiumError ? "premium-error" : undefined} />

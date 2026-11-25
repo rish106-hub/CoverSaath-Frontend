@@ -41,6 +41,6 @@ describe("error containment", () => {
   it("loading and not-found render", () => {
     render(<><Loading /><NotFound /></>);
     expect(screen.getByRole("status")).toHaveTextContent("Loading");
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/could not find/);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/couldn't find/);
   });
 });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { adapters, type Member, type Policy } from "@/adapters";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { ErrorPanel } from "@/components/shell/ErrorPanel";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -42,13 +42,12 @@ export function PolicyList() {
   return (
     <>
       <div>
-        <Kicker>Your family’s cover</Kicker>
         <PageTitle>My policies</PageTitle>
       </div>
       <SectionHeading title="Your policies">
         {policies === null && !failed ? <Skeleton shape="bento" /> : null}
         {failed ? <ErrorPanel onRetry={retry} title="Your policies did not load" home={false} /> : null}
-        {policies?.length === 0 ? <EmptyState title="No policies yet" body="Upload your policy and Knowvia reads it for you. It shows here with its cover, renewal date and who it covers." /> : null}
+        {policies?.length === 0 ? <EmptyState title="No policies yet" body="Add a policy and Knowvia reads it for you. It shows here with its cover, renewal date and who it covers." /> : null}
         <div className={styles.grid}>
           {policies?.map((p) => (
             <Link key={p.id} href={`/policies/${p.id}`} className={styles.card}>
