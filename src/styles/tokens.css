@@ -37,6 +37,12 @@
   --g-money-bg: #f5ead0;
   --g-help-bg: #e1ecf6;
 
+  /* Always-dark panel (booking card, dark info card) that holds --paper-fixed text. Unlike the
+     -fixed tokens it follows the theme: in dark mode a #16130f card would nearly vanish on the
+     #12100d page, so the dark block lifts the fill and adds a visible edge. */
+  --panel-inverse-bg: #16130f;
+  --panel-inverse-edge: #e6e1d7;
+
   /* Theme-invariant palette. Unlike the tokens above, the dark block never overrides these.
      They exist for surfaces and ink that stay the same in both themes (always-dark cards,
      ink on --marker chips, wallet pass faces, tone swatches). Using --ink or --paper there
@@ -159,6 +165,8 @@
   --g-family-bg: #3a2219;
   --g-money-bg: #35280f;
   --g-help-bg: #17283a;
+  --panel-inverse-bg: #25211b;
+  --panel-inverse-edge: #6f695f;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.4);

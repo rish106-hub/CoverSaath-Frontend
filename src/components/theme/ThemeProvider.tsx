@@ -10,8 +10,11 @@ export const THEME_KEY = "knowvia-theme";
 type Ctx = { theme: Theme; setTheme: (t: Theme, opts?: { persist?: boolean }) => void; toggle: () => void };
 const ThemeContext = createContext<Ctx>({ theme: "light", setTheme: () => {}, toggle: () => {} });
 
-/** Inline script run before paint so the stored theme applies with no flash. */
-export const themeInitScript = `try{var t=localStorage.getItem("${THEME_KEY}");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light")}catch(e){document.documentElement.setAttribute("data-theme","light")}`;
+/**
+ * Inline script run before paint so the stored theme applies with no flash. With nothing stored
+ * (first visit) it follows the OS setting; an explicit stored choice always wins.
+ */
+export const themeInitScript = `try{var t=localStorage.getItem("${THEME_KEY}");if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","light")}`;
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");

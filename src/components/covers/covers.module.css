@@ -45,14 +45,14 @@
 /* Upload steps: driven by the backend's real document steps; only the current step animates. */
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .step { display: flex; align-items: center; gap: 10px; font: 400 var(--fs-14)/1.4 var(--font-sans); color: var(--graphite); }
-.step[data-step="todo"] { opacity: 0.55; }
+.step[data-step="todo"] .stepDot { border-color: var(--graphite); }
 .step[data-step="done"] { color: var(--ink, inherit); }
 .step[data-step="active"] { color: var(--ink, inherit); font-weight: 600; }
 .stepDot { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: var(--fs-11); line-height: 1; }
-.step[data-step="done"] .stepDot { background: var(--harbour); border-color: var(--harbour); color: var(--white-fixed); }
+.step[data-step="done"] .stepDot { background: var(--harbour); border-color: var(--harbour); color: var(--on-harbour); }
 .step[data-step="active"] .stepDot { border-color: var(--harbour); animation: step-pulse 1.2s ease-in-out infinite; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@keyframes step-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--step-pulse-fixed) 45%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--step-pulse-fixed) 0%, transparent); } }
+@keyframes step-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--harbour) 45%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--harbour) 0%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .step[data-step="active"] .stepDot { animation: none; } }
 html[data-motion="reduced"] .step[data-step="active"] .stepDot { animation: none; }
 
