@@ -1,10 +1,10 @@
 .phead { display: flex; flex-direction: column; gap: 14px; }
 .prow { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.crumbs { display: flex; align-items: center; gap: 8px; font: 500 14px var(--font-sans); color: var(--graphite); }
+.crumbs { display: flex; align-items: center; gap: 8px; font: 500 var(--fs-14) var(--font-sans); color: var(--graphite); }
 .crumbs a:hover { color: var(--ink); }
 .crumbs b { color: var(--ink); font-weight: 600; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .ptabs { display: flex; overflow-x: auto; max-width: 100%; align-items: flex-end; gap: 28px; border-bottom: 1px solid var(--line); }
-.ptabs a { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; margin-bottom: -1px; border-bottom: 2px solid transparent; font: 500 15px var(--font-sans); color: var(--graphite); }
+.ptabs a { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; margin-bottom: -1px; border-bottom: 2px solid transparent; font: 500 var(--fs-15) var(--font-sans); color: var(--graphite); }
 .ptabs a:hover { color: var(--ink); }
 .ptabs a.tabOn { color: var(--ink); font-weight: 600; }

@@ -126,12 +126,12 @@ function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl"
       <SaveState status={status} onRetry={onRetry} />
       {/* The real upload lives on Add a cover (consent, type, schedule, plan). */}
       <Link href="/covers/add" className={styles.drop} data-testid="welcome-upload">
-        <span aria-hidden style={{ fontSize: 22 }}>⇪</span>
+        <span aria-hidden style={{ fontSize: "var(--fs-22)" }}>⇪</span>
         <span>Upload your policy PDF</span>
         <span className={styles.dropFmt}>PDF, up to 15 MB</span>
       </Link>
       <section aria-label="Can’t find your policy?">
-        <h2 style={{ font: "600 20px/1.25 var(--font-sans)", margin: 0, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>Can’t find your policy?</h2>
+        <h2 style={{ font: "600 var(--fs-20)/1.25 var(--font-sans)", margin: 0, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>Can’t find your policy?</h2>
         <div className={styles.tips} style={{ marginTop: 16 }}>
           {ONBOARD_TIPS.map((t) => (
             <div key={t.t} className={`${styles.tip} ${tones[t.tone]}`}>

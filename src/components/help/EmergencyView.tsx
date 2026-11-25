@@ -152,8 +152,8 @@ export function EmergencyView() {
           <SectionHeading title="Cashless e-card">
             <div className={s.ecard}>
               <div className={s.ecardTop}>
-                <span style={{ width: 36, height: 36, borderRadius: 8, background: "#0e4f4a", color: "#f7f5f0", display: "inline-flex", alignItems: "center", justifyContent: "center", font: "600 13px var(--font-sans)" }} aria-hidden>{parent ? "MC" : "NH"}</span>
-                <span style={{ font: "600 14px var(--font-sans)", color: "#0e4f4a" }}>Cashless e-card</span>
+                <span style={{ width: 36, height: 36, borderRadius: 8, background: "var(--harbour-fixed)", color: "var(--paper-fixed)", display: "inline-flex", alignItems: "center", justifyContent: "center", font: "600 var(--fs-13) var(--font-sans)" }} aria-hidden>{parent ? "MC" : "NH"}</span>
+                <span style={{ font: "600 var(--fs-14) var(--font-sans)", color: "var(--harbour-fixed)" }}>Cashless e-card</span>
               </div>
               <div className={s.ecardName}>{p.full}</div>
               <dl className={s.facts}>
@@ -182,7 +182,7 @@ export function EmergencyView() {
                 <button key={st.t} type="button" className={s.chk} style={i === 0 ? { borderTop: 0 } : undefined} role="checkbox" aria-checked={!!done[i]} onClick={() => setDone((d) => ({ ...d, [i]: !d[i] }))}>
                   <span className={cx(s.box, done[i] && s.boxOn)} aria-hidden>{done[i] ? "✓" : ""}</span>
                   <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontSize: 16, fontWeight: 500 }}>{st.t}</span>
+                    <span style={{ fontSize: "var(--fs-16)", fontWeight: 500 }}>{st.t}</span>
                     <span className={ui.small}>{st.d}</span>
                     {st.ref ? <span className={cx(s.ref, st.warn && s.refWarn)}>{st.ref}</span> : null}
                   </span>
@@ -206,7 +206,7 @@ export function EmergencyView() {
                 <div className={s.loc}>
                   <span className={s.locDot} aria-hidden />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 500 }}>Allow location to find a hospital</div>
+                    <div style={{ fontSize: "var(--fs-16)", fontWeight: 500 }}>Allow location to find a hospital</div>
                     <div className={ui.small}>Used for this search only.</div>
                   </div>
                   <button type="button" className="k-btn k-btn--primary" onClick={allow}>Allow location</button>
@@ -238,7 +238,7 @@ export function EmergencyView() {
                     <div key={h.pin} className={cx(s.hosp, h.top && s.hospTop)}>
                       <div className={s.hospHead}>
                         <div>
-                          <div className={ui.row}><span className={cx(s.badge, h.top && s.badgeTop)}>{h.pin}</span><span style={{ fontSize: 17, fontWeight: 500 }}>{h.name}</span></div>
+                          <div className={ui.row}><span className={cx(s.badge, h.top && s.badgeTop)}>{h.pin}</span><span style={{ fontSize: "var(--fs-17)", fontWeight: 500 }}>{h.name}</span></div>
                           <div className={ui.small} style={{ marginTop: 4 }}>{h.distance} · {h.why}</div>
                         </div>
                         <span className={s.tag}>{h.tag}</span>
@@ -262,7 +262,7 @@ export function EmergencyView() {
               <div className={s.groups} role="group" aria-label="Blood group">
                 {Object.entries(stock).map(([g, n]) => (
                   <button key={g} type="button" className={cx(s.grp, g === grp && s.grpOn)} aria-pressed={g === grp} onClick={() => setGrp(g)}>
-                    <span style={{ fontSize: 18, fontWeight: 600 }}>{g}</span>
+                    <span style={{ fontSize: "var(--fs-18)", fontWeight: 600 }}>{g}</span>
                     <span className={cx(s.units, n < 4 && s.low)}>{n} u</span>
                   </button>
                 ))}

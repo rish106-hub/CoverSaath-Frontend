@@ -94,7 +94,7 @@ export function Compare() {
                 <InsurerTile code={p.logo} size={40} />
                 <span className={styles.fitMid}>
                   <span className={styles.name}>{p.name}</span>
-                  <span className={styles.fitTrack} aria-hidden><span style={{ width: `${scores[i]}%`, background: i === best ? "var(--marker)" : "rgba(247,245,240,.55)" }} /></span>
+                  <span className={styles.fitTrack} aria-hidden><span style={{ width: `${scores[i]}%`, background: i === best ? "var(--marker)" : "color-mix(in srgb, var(--paper-fixed) 55%, transparent)" }} /></span>
                 </span>
                 <span className={styles.fitScore}>{scores[i]}%</span>
               </button>

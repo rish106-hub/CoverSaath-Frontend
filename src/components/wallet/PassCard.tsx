@@ -38,7 +38,7 @@ export function PassCard({ card, style, secs, epoch }: { card: WalletCardData; s
       </div>
       <div className={styles.qrBox}>
         <div className={styles.qr} aria-hidden>
-          {cells.map((on, i) => <span key={i} style={{ background: on ? "#16130f" : "#fff" }} />)}
+          {cells.map((on, i) => <span key={i} style={{ background: on ? "var(--ink-fixed)" : "var(--white-fixed)" }} />)}
         </div>
         <div className={styles.qrText}>
           <b>Scan at the insurance desk</b>
@@ -52,7 +52,7 @@ export function PassCard({ card, style, secs, epoch }: { card: WalletCardData; s
 }
 
 export const PASS_STYLES: Record<string, PassStyle> = {
-  apple: { bg: "#0e4f4a", ink: "#f7f5f0", accent: "#f4dc8a", radius: 18 },
-  google: { bg: "#f7f5f0", ink: "#16130f", accent: "#0e4f4a", radius: 24 },
-  samsung: { bg: "#16130f", ink: "#f7f5f0", accent: "#e9785d", radius: 14 },
+  apple: { bg: "var(--harbour-fixed)", ink: "var(--paper-fixed)", accent: "var(--marker)", radius: 18 },
+  google: { bg: "var(--paper-fixed)", ink: "var(--ink-fixed)", accent: "var(--harbour-fixed)", radius: 24 },
+  samsung: { bg: "var(--ink-fixed)", ink: "var(--paper-fixed)", accent: "var(--signal-fixed)", radius: 14 },
 };
