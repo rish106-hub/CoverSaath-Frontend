@@ -15,7 +15,9 @@ test("ask a seeded question and see a streamed answer with facts chips", async (
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Before we answer")).toBeHidden();
-  await page.getByRole("button", { name: /Planned knee surgery in Jan/ }).click();
+  // The suggested prompts no longer name a sample procedure, so the seeded knee question is typed.
+  await page.getByLabel("Your question").fill("Planned knee surgery in Jan, is it covered?");
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
 
   const log = page.getByRole("log", { name: "Conversation" });
   await expect(log.getByText("You", { exact: true })).toBeVisible();
