@@ -57,7 +57,7 @@ describe("ChatView", () => {
     const facts = await screen.findByRole("list", { name: "Facts used" });
     expect(within(facts).getAllByRole("listitem")).toHaveLength(2);
     expect(within(facts).getAllByText("Check with the insurer")).toHaveLength(1);
-    expect(screen.getByText("Thirty days.")).toBeDefined();
+    expect(within(screen.getByRole("log")).getByText("Thirty days.")).toBeDefined();
     expect(startThread).toHaveBeenCalledWith("hold-1");
     expect(turn.mock.calls[0]?.[1]).toEqual({ message: "Is knee surgery covered?", inputKind: "text" });
   });
@@ -114,7 +114,7 @@ describe("ChatView", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("That took too long. Try again.");
     expect(screen.queryByText(/Partial words/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("Thirty days.")).toBeDefined();
+    expect(await within(screen.getByRole("log")).findByText("Thirty days.")).toBeDefined();
     expect(turn).toHaveBeenCalledTimes(2);
     expect(turn.mock.calls[1]?.[1]).toEqual(turn.mock.calls[0]?.[1]);
     expect(screen.queryByRole("alert")).toBeNull();
@@ -198,7 +198,7 @@ describe("ChatView pending states", () => {
     await waitFor(() => expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(turn).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText("Thirty days.")).toBeDefined();
+    expect(await within(screen.getByRole("log")).findByText("Thirty days.")).toBeDefined();
   });
 
   it("on unmount while pending: aborts the turn, clears the slow timer and sets no state later", async () => {
