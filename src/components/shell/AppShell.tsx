@@ -37,7 +37,7 @@ export function AppShell({ pathname: given, children, dock }: { pathname?: strin
         <div className={styles.bar}><HeaderMic /><ThemeButton /></div>
         <TrialNotice />
         {home ? null : <PageHeader pathname={pathname} />}
-        <main key={pathname} id="main-content" tabIndex={-1} className={`${styles.content} k-stagger`}>{children}</main>
+        <main id="main-content" tabIndex={-1} className={`${styles.content} k-content`}>{children}</main>
       </div>
       {dock ? <div className={styles.dock}>{dock}</div> : null}
       <AgentLayer />

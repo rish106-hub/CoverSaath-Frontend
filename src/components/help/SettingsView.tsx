@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation";
 import { adapters, features, type UiPrefs } from "@/adapters";
 import { SaveState } from "@/components/ui/SaveState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAutosave } from "@/lib/use-autosave";
 import { SectionHeading } from "@/components/type";
 import { BrandLogo } from "@/components/logos";
@@ -118,7 +119,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
   return (
     <div className={s.col}>
       <div className={ui.row} role="group" aria-label="Settings status">
-        {load === "loading" ? <span className={ui.small} role="status">Loading your settings</span> : null}
+        {load === "loading" ? <Skeleton shape="list" /> : null}
         {load === "failed" ? (
           <span className={ui.small} role="alert">
             Could not load your settings. <button type="button" className="k-btn k-btn--sm" onClick={loadPrefs}>Retry</button>

@@ -21,8 +21,8 @@ describe("touch targets and mobile layout (#84)", () => {
     expect(read("src/components/type/type.module.css")).toMatch(/overflow-wrap: anywhere; text-wrap: balance/);
   });
   it("exempts the /home greeting block from the entrance animation", () => {
-    expect(read("src/styles/globals.css")).toMatch(/\.k-stagger > \.k-no-reveal \{ animation: none; \}/);
-    expect(read("src/components/shell/HomeGreeting.tsx")).toMatch(/className="k-no-reveal"/);
+    expect(read("src/styles/globals.css")).toMatch(/\.k-content > \.k-no-fade \{ animation: none; \}/);
+    expect(read("src/components/shell/HomeGreeting.tsx")).toMatch(/className="k-no-fade"/);
   });
   it("stacks sign-in tiles under 560px and moves the welcome padding to a module", () => {
     expect(read("src/components/public/signin.module.css")).toMatch(/max-width: 559px\) \{ \.whys \{ grid-template-columns: 1fr; \}/);

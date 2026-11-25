@@ -7,6 +7,7 @@ import { adapters, features, addressSchema, mobileSchema, type Address, type Per
 import { SectionHeading } from "@/components/type";
 import { BrandLogo } from "@/components/logos";
 import { SaveState, useSave } from "@/components/ui/SaveState";
+import { ShimmerBlock, Skeleton } from "@/components/ui/Skeleton";
 import { useMe, invalidateMe } from "@/components/shell";
 import { INDIAN_STATES, roundCoarse } from "@/lib/india";
 import { useSingleFlight } from "@/lib/use-single-flight";
@@ -42,7 +43,7 @@ function YouSection() {
     <div className={s.identity}>
       <span className={s.avatar} aria-hidden>{initials}</span>
       <div className={s.identityText}>
-        <span className={cx(s.strong, s.wrap)} data-testid="you-name">{ready ? name : "Loading"}</span>
+        <span className={cx(s.strong, s.wrap)} data-testid="you-name">{ready ? name : <ShimmerBlock style={{ width: 160, height: 18 }} />}</span>
         <span className={cx(s.small, s.wrap)} data-testid="you-email">{ready ? (me.me.owner.email ?? "Email not shared") : ""}</span>
       </div>
     </div>
@@ -564,7 +565,7 @@ export function ProfileView({ logos }: { logos: Logos }) {
   const wait = failed ? (
     <p className={s.notice} role="alert">Could not load your details. Refresh to try again.</p>
   ) : (
-    <p className={s.small} role="status">Loading your details</p>
+    <Skeleton shape="list" />
   );
   const body: Record<SectionId, ReactNode> = {
     you: <YouSection />,
