@@ -300,3 +300,42 @@ describe("screens", () => {
     await waitFor(() => expect(vi.mocked(backendCovers.holdingsView).mock.calls.length).toBeGreaterThan(holdingsCalls));
   });
 });
+
+describe("real home and list visual structure (#105)", () => {
+  const headingLevels = (root: HTMLElement) => Array.from(root.querySelectorAll("h1,h2,h3,h4")).map((h) => `${h.tagName.toLowerCase()}:${h.textContent}`);
+  it("home: card titles are h3 under h2 sections, and the glance band shows real headline values only", async () => {
+    stub([{ ...holding("ready"), summary: SUMMARY }]);
+    const { container } = render(<RealHome />);
+    expect(await screen.findByRole("heading", { level: 3, name: "Example Health Plan 01" })).toBeInTheDocument();
+    expect(headingLevels(container)).toEqual(["h2:Your cover at a glance", "h2:Your policies", "h3:Example Health Plan 01"]);
+    const glance = screen.getByTestId("glance");
+    expect(glance).toHaveTextContent("Rs 5,00,000");
+    expect(glance).toHaveTextContent("Sum insured");
+    // Conflicting period and unknown premium are not a number to headline: left out, not faked. The conflict goes to the next-step tile.
+    expect(glance).not.toHaveTextContent("Policy period");
+    expect(glance).not.toHaveTextContent("Premium");
+    expect(glance).not.toHaveTextContent("Not found yet");
+    expect(screen.getByRole("link", { name: /Decide on open details/ })).toHaveAttribute("href", "/covers/review?holding=h1");
+  });
+  it("home: nested notes are flat (no card class) so cards never double their border", async () => {
+    stub([holding("insurer_pending")]);
+    render(<RealHome />);
+    const note = await screen.findByTestId("stage-note");
+    expect(note.className).toMatch(/note/);
+    expect(note.className).not.toMatch(/\bcard\b/);
+    expect(screen.getByRole("link", { name: /Pick your plan/ })).toHaveAttribute("href", "/covers/add?resume=1");
+  });
+  it("policies: no repeated 'Your policies' h2; the page title is the h1 and the count stands in", async () => {
+    stub([holding("ready")]);
+    const { container } = render(<RealPolicies />);
+    expect(await screen.findByTestId("policy-count")).toHaveTextContent("1 policy");
+    expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
+    expect(headingLevels(container)).toEqual(["h1:My policies", expect.stringMatching(/^h3:/)]);
+  });
+  it("empty holdings still show the empty state on the list", async () => {
+    stub([]);
+    render(<RealPolicies />);
+    expect(await screen.findByTestId("empty-state")).toBeInTheDocument();
+    expect(screen.queryByTestId("glance")).toBeNull();
+  });
+});
