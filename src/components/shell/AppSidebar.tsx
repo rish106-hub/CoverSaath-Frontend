@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { GROUPS, pageFor, pagesIn, type GroupId } from "@/lib/ia";
-import { DemoGate } from "./EmptyState";
+import { GROUPS, PAGES, navHref, pageFor, pagesIn, type GroupId, type PageDef } from "@/lib/ia";
+import { DemoGate, useNavAudience } from "./EmptyState";
 import { readingList } from "@/data/mock/learn";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { UserChip } from "./UserChip";
@@ -42,6 +42,7 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
   const asideRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const page = pageFor(pathname);
+  const audience = useNavAudience();
   const home = page?.route === "/home";
   // Closed groups are remembered per viewer. Read after mount so server and client markup match.
   const [closed, setClosed] = useState<GroupId[]>([]);
@@ -104,6 +105,9 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
         </div>
         <nav className={styles.groups} aria-label="Knowvia sections">
           {GROUPS.map((g) => {
+            const links = pagesIn(g.id, audience).filter((p) => p.route !== "/emergency");
+            // A group with no real page left (Help, for real accounts) would be an empty heading. Emergency has its own link below.
+            if (links.length === 0) return null;
             const here = page?.group === g.id;
             const expanded = here || !closed.includes(g.id);
             return (
@@ -122,12 +126,10 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
                   <span className={styles.chev} aria-hidden />
                 </button>
                 <div id={`nav-group-${g.id}`} className={styles.links} hidden={!expanded}>
-                  {pagesIn(g.id)
-                    .filter((p) => p.route !== "/emergency")
-                    .map((p) => {
+                  {links.map((p) => {
                       const on = here && page.tab === p.tab;
                       return (
-                        <Link key={p.route} href={p.href} className={on ? styles.on : styles.item} aria-current={on ? "page" : undefined} data-tip={p.tab} data-glyph={p.tab.charAt(0)}>
+                        <Link key={p.route} href={navHref(p, audience)} className={on ? styles.on : styles.item} aria-current={on ? "page" : undefined} data-tip={p.tab} data-glyph={p.tab.charAt(0)}>
                           <span className={styles.label}>{p.tab}</span>
                         </Link>
                       );
@@ -137,7 +139,7 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
             );
           })}
         </nav>
-        <Link href="/emergency" className={styles.emergency} aria-current={page?.route === "/emergency" ? "page" : undefined} data-tip="Emergency">
+        <Link href={navHref(PAGES.find((p) => p.route === "/emergency") as PageDef, audience)} className={styles.emergency} aria-current={page?.route === "/emergency" ? "page" : undefined} data-tip="Emergency">
           <span aria-hidden>●</span> <span className={styles.label}>Emergency</span>
         </Link>
         {home ? (
