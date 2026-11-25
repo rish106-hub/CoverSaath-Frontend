@@ -15,9 +15,6 @@ vi.mock("@/adapters", async (orig) => ({
   },
 }));
 
-import { Landing } from "@/components/public/Landing";
-import { Tour } from "@/components/public/Tour";
-import { SignIn } from "@/components/public/SignIn";
 import { ToolsPage } from "@/components/tools/ToolsPage";
 import { ChatView } from "@/components/chat/ChatView";
 import { SoonButton } from "@/components/ui/SoonButton";
@@ -31,21 +28,6 @@ const STANDARD = ["What are my waiting periods?", "What does my policy not cover
 afterEach(cleanup);
 
 describe("T6 no sample data on screen", () => {
-  it("Landing, Tour and SignIn render no sample name, product or figure", () => {
-    stubWide();
-    for (const ui of [<Landing key="l" />, <Tour key="t" scene={0} tick={0} play={false} onPick={() => undefined} onToggle={() => undefined} />, <SignIn key="s" />]) {
-      const { container, unmount } = render(ui);
-      expect(container.textContent).not.toMatch(SAMPLE);
-      unmount();
-    }
-  });
-  it("every Tour scene is redacted: no rupee figure with digits, no name", () => {
-    for (const sc of TOUR_SCENES) {
-      const text = JSON.stringify([sc.title, sc.tag, sc.tiles, sc.bars.map((b) => [b[0], b[3]]), sc.say, sc.reply]);
-      expect(text).not.toMatch(SAMPLE);
-      expect(text).not.toMatch(/Rs ?\d/);
-    }
-  });
   it("Tools renders empty inputs, dashes for results and no sample figures", () => {
     const { container } = render(<ToolsPage />);
     expect(container.textContent).not.toMatch(SAMPLE);

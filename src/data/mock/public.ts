@@ -1,4 +1,4 @@
-// Copy and numbers for the public screens (Landing, Auth, Onboarding, Wallet). Redacted placeholders only; nothing here is a real figure or person.
+// Copy and numbers for the public screens (Landing, Auth, Onboarding, Wallet). Synthetic data only.
 
 type TourScene = {
   t: string; path: string; title: string; tag: string;
@@ -10,23 +10,23 @@ type TourScene = {
 export const TOUR_NAV = ["Home", "Stress test", "Compare", "Money", "Family", "Emergency", "Talk"];
 
 export const TOUR_SCENES: TourScene[] = [
-  { t: "Home", path: "home", title: "Good evening.", tag: "Health •• / ••", tiles: [["Total cover", "Rs ••,•••", "ink"], ["Premium a month", "Rs ••,•••", "plain"], ["Next renewal", "••", "marker"]], bars: [["Member 1", 100, "ink", "Rs ••,•••"], ["Member 2", 33, "ink", "Rs ••,•••"], ["Member 3", 20, "ochre", "Rs ••,•••"], ["Member 4", 20, "ochre", "Rs ••,•••"]], say: "What needs my attention?", reply: "Your answer appears here, with the page it came from.", nav: 0 },
-  { t: "Stress test", path: "stress-test", title: "If a big bill came, who pays?", tag: "Gap ••", tiles: [["Bill", "Rs ••,•••", "plain"], ["Insurer pays", "Rs ••,•••", "ink"], ["You pay", "Rs ••,•••", "signal"]], bars: [["Bill", 100, "dark", "••"], ["Cap", 52, "signal", "••"], ["Co-pay", 20, "signal", "••"], ["Insurer", 42, "ink", "••"]], say: "What needs my attention?", reply: "Your answer appears here, with the page it came from.", nav: 1 },
-  { t: "Compare", path: "compare", title: "Which plan fits your family?", tag: "Best fit ••", tiles: [["Today", "••", "plain"], ["Top-up", "••", "marker"], ["You’d pay on a big claim", "Rs ••,•••", "ink"]], bars: [["Today", 67, "soft", "••"], ["Plan 1", 94, "ink", "••"], ["Plan 2", 67, "soft", "••"], ["Plan 3", 100, "ink", "••"]], say: "What needs my attention?", reply: "Your answer appears here, with the page it came from.", nav: 2 },
-  { t: "Money", path: "money", title: "Every premium and bill, matched.", tag: "•• paid twice", tiles: [["Receipts found", "••", "plain"], ["80D you can claim", "Rs ••,•••", "ink"], ["On its way back", "Rs ••,•••", "marker"]], bars: [["Month 1", 100, "ink", "••"], ["Month 2", 76, "soft", "••"], ["Month 3", 25, "soft", "••"], ["Month 4", 10, "soft", "••"]], say: "What needs my attention?", reply: "Your answer appears here, with the page it came from.", nav: 3 },
-  { t: "Emergency", path: "emergency", title: "Someone needs care. Start here.", tag: "Cashless nearby", tiles: [["Nearest cashless", "•• min", "signal"], ["Heart unit", "••", "plain"], ["E-card", "••", "ink"]], bars: [["Hospital 1", 92, "ink", "•• min"], ["Hospital 2", 78, "ink", "•• min"], ["Hospital 3", 60, "soft", "•• min"], ["Hospital 4", 40, "soft", "•• min"]], say: "What needs my attention?", reply: "Your answer appears here, with the page it came from.", nav: 5 },
-  { t: "Talk", path: "talk", title: "Say it, it opens.", tag: "Talk to Knowvia", tiles: [["Opens pages", "Any", "ink"], ["Answers", "From your policy", "plain"], ["Where", "Bottom of every page", "marker"]], bars: [["Open my family", 100, "ink", "Opens"], ["Is cataract covered?", 80, "soft", "Answers"], ["Open money desk", 60, "ink", "Opens"], ["Nearest cashless hospital", 40, "soft", "Answers"]], say: "What needs my attention?", reply: "Your answer appears here, with the page it came from.", nav: 6 },
+  { t: "Home", path: "home", title: "Good evening, Meera.", tag: "Health 72 / 100", tiles: [["Total cover", "Rs 23L", "ink"], ["Premium a month", "Rs 5,308", "plain"], ["Next renewal", "13 Mar", "marker"]], bars: [["Meera", 100, "ink", "Rs 15L"], ["Rohan", 33, "ink", "Rs 5L"], ["Mother", 20, "ochre", "Rs 3L"], ["Father", 20, "ochre", "Rs 3L"]], say: "What needs my attention?", reply: "Three things. Father’s room rent differs between documents; that one first.", nav: 0 },
+  { t: "Stress test", path: "stress-test", title: "If Father needed a knee, who pays?", tag: "Big gap", tiles: [["Bill", "Rs 3.8L", "plain"], ["Insurer pays", "Rs 1.6L", "ink"], ["You pay", "Rs 2.2L", "signal"]], bars: [["Bill", 100, "dark", "3.8L"], ["Cap", 52, "signal", "2L"], ["Co-pay", 20, "signal", "20%"], ["Insurer", 42, "ink", "1.6L"]], say: "What would a knee surgery cost Papa?", reply: "About Rs 2.2L from you. The cap and 20% co-pay do most of it.", nav: 1 },
+  { t: "Compare", path: "compare", title: "Which plan fits your family?", tag: "Best fit 94%", tiles: [["Today", "67%", "plain"], ["Kaveri top-up", "94%", "marker"], ["You’d pay on a bypass", "Rs 13k", "ink"]], bars: [["Today", 67, "soft", "67%"], ["Kaveri", 94, "ink", "94%"], ["Meridian", 67, "soft", "67%"], ["Indus", 100, "ink", "100%"]], say: "Parents first. I hate surprise bills.", reply: "Then Indus Shield fits best: no co-pay, any room.", nav: 2 },
+  { t: "Money", path: "money", title: "Every premium and bill, matched.", tag: "1 paid twice", tiles: [["Receipts found", "6", "plain"], ["80D you can claim", "Rs 75k", "ink"], ["On its way back", "Rs 60,890", "marker"]], bars: [["Mar", 100, "ink", "31,700"], ["Apr", 76, "soft", "24,100"], ["Jun", 25, "soft", "7,900"], ["Aug", 10, "soft", "3,240"]], say: "Find my premium receipts for tax.", reply: "Found 4 in Gmail. Your 80D pack is ready for HR.", nav: 3 },
+  { t: "Emergency", path: "emergency", title: "Father needs care. Start here.", tag: "Cashless nearby", tiles: [["Nearest cashless", "7 min", "signal"], ["Heart unit", "Yes", "plain"], ["E-card", "Ready", "ink"]], bars: [["Kothrud", 92, "ink", "7 min"], ["Paud Road", 78, "ink", "11 min"], ["Deccan", 60, "soft", "16 min"], ["Wanowrie", 40, "soft", "24 min"]], say: "Papa ko chest pain ho raha hai.", reply: "Call 112. Kothrud Care is cashless on his plan. Route sent to Rohan.", nav: 5 },
+  { t: "Talk", path: "talk", title: "Say it, it opens.", tag: "Talk to Knowvia", tiles: [["Opens pages", "Any", "ink"], ["Answers", "From your policy", "plain"], ["Where", "Bottom of every page", "marker"]], bars: [["Open my family", 100, "ink", "Opens"], ["Is cataract covered?", 80, "soft", "Answers"], ["Open money desk", 60, "ink", "Opens"], ["Nearest cashless hospital", 40, "soft", "Answers"]], say: "Open my family.", reply: "Opening My family. Tap Talk to Knowvia at the bottom of any page.", nav: 6 },
 ];
 
-/** The four clickable stats: value, label, month, tour scene index, accent token, story. Figures are redacted placeholders, never invented numbers. */
+/** The four clickable stats: value, label, month, tour scene index, accent token, story. */
 export const FAMILY_STATS = [
-  { v: "Rs ••,•••", t: "tax saved", m: "••", scene: 3, accent: "var(--harbour)", story: "Premium receipts found and an 80D proof pack built." },
-  { v: "Rs ••,•••", t: "gap found early", m: "••", scene: 1, accent: "var(--signal)", story: "The stress test shows what you would pay before anyone is in hospital." },
-  { v: "••", t: "better-fitting plan", m: "••", scene: 2, accent: "var(--g-money)", story: "Plans compared on what your family cares about." },
-  { v: "•• min", t: "to admission", m: "••", scene: 4, accent: "var(--g-family)", story: "Nearest cashless hospital found, e-card ready at the desk." },
+  { v: "Rs 75k", t: "tax saved", m: "January", scene: 3, accent: "var(--harbour)", story: "Found 4 premium receipts in Gmail and built her 80D proof pack for HR." },
+  { v: "Rs 2.2L", t: "gap found early", m: "March", scene: 1, accent: "var(--signal)", story: "The stress test showed Father’s knee surgery would leave Rs 2.2L to pay, before anyone was in hospital." },
+  { v: "94%", t: "better-fitting plan", m: "May", scene: 2, accent: "var(--g-money)", story: "Compared four plans on what the family cares about and found a top-up that fits 94%." },
+  { v: "22 min", t: "to admission", m: "August", scene: 4, accent: "var(--g-family)", story: "Father’s chest pain: nearest cashless heart unit, e-card ready at the desk, admitted in 22 minutes." },
 ] as const;
 
-export const FAMILY_ALL_YEAR = { accent: "var(--harbour)", story: "One home for every policy and person, with the next renewal on the calendar." };
+export const FAMILY_ALL_YEAR = { accent: "var(--harbour)", story: "All year · One home for 3 policies and 5 people, with the next renewal already on the calendar." };
 
 export const LANDING_POINTS = [
   { i: "◐", t: "Reads your policy in a minute", d: "Plain words, with page references." },
@@ -42,15 +42,15 @@ export const AUTH_HEADS: [string, string][] = [
 export const AUTH_FILTERS = [["all", "Everything"], ["cover", "My cover"], ["family", "My family"], ["money", "Money"]] as const;
 export type AuthCard = { k: string; v: string; d: string; ref: string; more: string; tag: "cover" | "family" | "money"; bar: number; tone: "paper" | "marker" | "coral" | "dark" | "mist" | "ochre" };
 export const AUTH_CARDS: AuthCard[] = [
-  { k: "YOUR COVER", v: "Rs ••,•••", d: "Shared by •• people", ref: "Schedule p.••", more: "Your policy’s cover amount appears here, read from your schedule.", tag: "cover", bar: 70, tone: "paper" },
-  { k: "ROOM LIMIT", v: "Rs ••,•••", d: "A single private room", ref: "p.•• §••", more: "Pick a room within the limit and every other charge is paid in full.", tag: "cover", bar: 50, tone: "marker" },
-  { k: "TAX YOU CAN SAVE", v: "Rs ••,•••", d: "80D, old regime", ref: "Premium receipts", more: "Your 80D limit appears here, worked out from your receipts.", tag: "money", bar: 100, tone: "coral" },
-  { k: "CO-PAY", v: "••", d: "Of every claim", ref: "Senior plan p.••", more: "What you pay on each claim appears here, with the page it came from.", tag: "family", bar: 20, tone: "dark" },
-  { k: "NEXT RENEWAL", v: "••", d: "Your policy", ref: "Schedule p.••", more: "We’ll compare plans before renewal so you can decide early.", tag: "family", bar: 35, tone: "mist" },
-  { k: "BIG BILL", v: "Rs ••,•••", d: "You’d pay this today", ref: "Stress test", more: "What a big bill would leave on you appears here.", tag: "money", bar: 58, tone: "paper" },
-  { k: "RECEIPTS FOUND", v: "••", d: "In your Gmail", ref: "Money desk", more: "A premium that looks paid twice opens a refund case for you.", tag: "money", bar: 80, tone: "ochre" },
-  { k: "CASHLESS NEAR YOU", v: "•• min", d: "A hospital near you", ref: "Network list", more: "Whether your e-card works there appears here.", tag: "family", bar: 90, tone: "paper" },
-  { k: "WAITING PERIOD", v: "••", d: "Your policy", ref: "p.•• §••", more: "Waiting periods are read from your policy and shown with the page.", tag: "cover", bar: 100, tone: "mist" },
+  { k: "YOUR COVER", v: "Rs 5,00,000", d: "Shared by 3 people", ref: "Schedule p.1", more: "One floater for you, Rohan and Kabir. It refills once a year if a claim uses it up.", tag: "cover", bar: 70, tone: "paper" },
+  { k: "ROOM LIMIT", v: "Rs 5,000/day", d: "A single private room", ref: "p.12 §4.1", more: "Pick a room within this and every other charge is paid in full.", tag: "cover", bar: 50, tone: "marker" },
+  { k: "TAX YOU CAN SAVE", v: "Rs 75,000", d: "80D, old regime", ref: "Premium receipts", more: "Rs 25,000 for your family plus Rs 50,000 for parents over 60.", tag: "money", bar: 100, tone: "coral" },
+  { k: "CO-PAY · PARENTS", v: "20%", d: "Of every claim", ref: "Senior plan p.2", more: "On a Rs 1,00,000 bill your parents pay Rs 20,000.", tag: "family", bar: 20, tone: "dark" },
+  { k: "NEXT RENEWAL", v: "13 Mar", d: "Parents’ senior plan", ref: "Schedule p.1", more: "We’ll compare plans in February so you can decide early.", tag: "family", bar: 35, tone: "mist" },
+  { k: "KNEE SURGERY · FATHER", v: "Rs 2.2L", d: "You’d pay this today", ref: "Stress test", more: "A sub-limit plus 20% co-pay. A super top-up cuts it to about Rs 76,000.", tag: "money", bar: 58, tone: "paper" },
+  { k: "RECEIPTS FOUND", v: "6", d: "In your Gmail", ref: "Money desk", more: "One premium looks paid twice. We open a refund case for you.", tag: "money", bar: 80, tone: "ochre" },
+  { k: "CASHLESS NEAR YOU", v: "7 min", d: "Kothrud Care Hospital", ref: "Network list", more: "Your e-card works there. ICU beds and a 24×7 insurance desk.", tag: "family", bar: 90, tone: "paper" },
+  { k: "WAITING PERIOD", v: "Waived", d: "Group plan", ref: "p.8 §3", more: "Old conditions are covered from day one on your employer’s plan.", tag: "cover", bar: 100, tone: "mist" },
 ];
 export const AUTH_WHYS = [
   { i: "◎", t: "One minute to answers", d: "Drop a PDF or use DigiLocker" },

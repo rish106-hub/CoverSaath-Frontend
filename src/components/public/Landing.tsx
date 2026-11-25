@@ -19,7 +19,7 @@ const Tour = dynamic(() => import("./Tour").then((m) => m.Tour), {
 });
 import styles from "./landing.module.css";
 
-/** Beta page: headline, access card, a 20 second tour built from real mini screens, and what Knowvia can do over a year. */
+/** Beta page: headline, access card, a 20 second tour built from real mini screens, and Meera's family stats. */
 export function Landing() {
   const [pos, setPos] = useState({ scene: 0, tick: 0 });
   const { scene, tick } = pos;
@@ -62,9 +62,9 @@ export function Landing() {
         <div className={styles.right}>
           <div className={styles.rowHead}><span className={styles.rowT}>Inside Knowvia</span><span className={styles.rowS}>20-second tour</span></div>
           <Tour scene={scene} tick={tick} play={play} onPick={pick} onToggle={() => setWantPlay(!play)} />
-          <section className={styles.stats} aria-label="Your cover">
+          <section className={styles.stats} aria-label="What Knowvia did for Meera’s family">
             <div className={styles.statsHead}>
-              <h2 className={styles.statsT}>Your family this year</h2>
+              <h2 className={styles.statsT}>Meera’s family this year</h2>
 
             </div>
             <div className={styles.statGrid}>
