@@ -186,7 +186,7 @@ function TopUp() {
                 <span style={{ width: `${r.b}%`, background: "var(--sea-glass)" }} />
                 <span style={{ width: `${r.c}%`, background: "var(--signal)" }} />
               </span>
-              <span style={{ font: "500 14px var(--font-mono)", color: r.you ? "var(--signal-ink)" : "var(--harbour)" }}>You pay {formatLakhShort(r.you)}</span>
+              <span style={{ font: "500 var(--fs-14) var(--font-mono)", color: r.you ? "var(--signal-ink)" : "var(--harbour)" }}>You pay {formatLakhShort(r.you)}</span>
             </div>
           ))}
           <div className={styles.legendRow}>
@@ -235,7 +235,7 @@ function Advisors() {
               <span className={styles.advTop}>
                 <span className={styles.ini} style={{ background: x.tint }} aria-hidden>{x.ini}</span>
                 <span><span className={styles.advName}>{x.name}</span><span className={styles.advRole}>{x.role}</span></span>
-                <span style={{ font: "500 14px var(--font-mono)" }}>★ {x.rating}</span>
+                <span style={{ font: "500 var(--fs-14) var(--font-mono)" }}>★ {x.rating}</span>
               </span>
               <span className={styles.tags}><span className={`${styles.tag} ${styles.tagOk}`}>Licence checked</span>{x.langs.map((l) => <span key={l} className={styles.tag}>{l}</span>)}</span>
               <span className={styles.note}>Next free: <strong>{x.next}</strong></span>

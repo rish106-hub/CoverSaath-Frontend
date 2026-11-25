@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { TurnEvent } from "@/adapters/chat-contract";
 
+// The page's "Still working…" delay, shortened so the tests run on real timers (Testing Library's waitFor hangs under fake setTimeout).
+const SLOW_AFTER_MS = 60;
+vi.mock("@/adapters/chat-timing", async (orig) => ({ ...(await orig<typeof import("@/adapters/chat-timing")>()), SLOW_AFTER_MS: 60 }));
+
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => "/chat" }));
 
 const turn = vi.fn();
@@ -21,6 +25,7 @@ vi.mock("@/adapters", () => ({
 }));
 
 import { ChatView } from "@/components/chat/ChatView";
+import { act } from "@testing-library/react";
 import { HospitalsView } from "@/components/chat/HospitalsView";
 
 const answer = (over = {}): TurnEvent => ({ type: "answer", data: { turnId: "t1", status: "evidence_found", intent: "x", answer: "Thirty days.", answerSource: "deterministic",
@@ -124,6 +129,107 @@ describe("ChatView", () => {
     fireEvent.click(await screen.findByRole("button", { name: /What are my waiting periods/ }));
     expect((await screen.findByRole("alert")).textContent).toBe("Something went wrong. Try again.");
     expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
+  });
+});
+
+describe("ChatView pending states", () => {
+  const hangUntilAbort = () => turn.mockReset().mockImplementation((_i: string, _x: unknown, _on: unknown, signal?: AbortSignal) => new Promise<void>((resolve) => { signal?.addEventListener("abort", () => resolve(), { once: true }); }));
+  const state = () => document.querySelector('li[data-role="assistant"]')?.getAttribute("data-state");
+  const askTyped = async (q: string) => {
+    render(<ChatView />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ask" })).toBeDefined());
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: q } });
+    await waitFor(() => expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  };
+
+  it("goes pending, then slow with 'Still working…' after the slow line, then answered", async () => {
+    let finish: () => void = () => undefined;
+    turn.mockReset().mockImplementation((_i: string, _x: unknown, on: (e: TurnEvent) => void) => new Promise<void>((resolve) => { finish = () => { on(answer()); on({ type: "done", data: {} }); resolve(); }; }));
+    await askTyped("Is knee surgery covered?");
+    await waitFor(() => expect(state()).toBe("pending"));
+    expect(screen.queryByText("Still working…")).toBeNull();
+    await waitFor(() => expect(state()).toBe("slow"));
+    expect(screen.getByText("Still working…")).toBeDefined();
+    await act(async () => { finish(); });
+    await waitFor(() => expect(state()).toBe("answered"));
+    expect(screen.queryByText("Still working…")).toBeNull();
+  });
+
+  it("blocks a second submit while pending: two submits in the same tick send one turn", async () => {
+    hangUntilAbort();
+    await askTyped("Is knee surgery covered?");
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "And waiting periods?" } });
+    const form = screen.getByRole("form", { name: "Ask a question" });
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    await waitFor(() => expect(turn).toHaveBeenCalledTimes(1));
+    expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("marks a timed out turn timed_out, a dropped one failed, and Retry shows retrying before the answer", async () => {
+    const { AdapterError } = await import("@/adapters/types");
+    let finish: () => void = () => undefined;
+    turn.mockReset()
+      .mockRejectedValueOnce(new AdapterError("BACKEND_TIMEOUT", true))
+      .mockImplementationOnce(() => Promise.reject(new AdapterError("CHAT_STREAM_FAILED", true)))
+      .mockImplementation((_i: string, _x: unknown, on: (e: TurnEvent) => void) => new Promise<void>((resolve) => { finish = () => { on(answer()); on({ type: "done", data: {} }); resolve(); }; }));
+    await askTyped("Is knee surgery covered?");
+    await waitFor(() => expect(state()).toBe("timed_out"));
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(state()).toBe("failed"));
+    expect(screen.getByRole("alert").textContent).toBe("Something went wrong. Try again.");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(state()).toBe("retrying"));
+    expect(screen.getByText("Trying again…")).toBeDefined();
+    await act(async () => { finish(); });
+    await waitFor(() => expect(state()).toBe("answered"));
+    expect(turn).toHaveBeenCalledTimes(3);
+  });
+
+  it("never leaves the input stuck after an error: Ask works again for the next question", async () => {
+    const { AdapterError } = await import("@/adapters/types");
+    turn.mockReset().mockRejectedValueOnce(new AdapterError("BACKEND_UNREACHABLE", true)).mockImplementation(async (_i: string, _x: unknown, on: (e: TurnEvent) => void) => { on(answer()); on({ type: "done", data: {} }); });
+    await askTyped("Is knee surgery covered?");
+    await screen.findByRole("alert");
+    const box = screen.getByLabelText("Your question") as HTMLTextAreaElement;
+    expect(box.disabled).toBe(false);
+    fireEvent.change(box, { target: { value: "What are my waiting periods?" } });
+    await waitFor(() => expect((screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(turn).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("Thirty days.")).toBeDefined();
+  });
+
+  it("on unmount while pending: aborts the turn, clears the slow timer and sets no state later", async () => {
+    hangUntilAbort();
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const slowTimers: unknown[] = [];
+    const cleared: unknown[] = [];
+    const realSet = globalThis.setTimeout;
+    const realClear = globalThis.clearTimeout;
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((fn: () => void, ms?: number, ...rest: unknown[]) => {
+      const id = realSet(fn, ms, ...rest);
+      if (ms === SLOW_AFTER_MS) slowTimers.push(id);
+      return id;
+    }) as typeof setTimeout);
+    vi.spyOn(globalThis, "clearTimeout").mockImplementation(((id?: Parameters<typeof clearTimeout>[0]) => { cleared.push(id); return realClear(id); }) as typeof clearTimeout);
+    try {
+      const { unmount } = render(<ChatView />);
+      const prompt = await screen.findByRole("button", { name: /What are my waiting periods/ });
+      await waitFor(() => expect((prompt as HTMLButtonElement).disabled).toBe(false));
+      fireEvent.click(prompt);
+      await waitFor(() => expect(turn).toHaveBeenCalledTimes(1));
+      const signal = turn.mock.calls[0]?.[3] as AbortSignal;
+      expect(slowTimers).toHaveLength(1);
+      unmount();
+      expect(signal.aborted).toBe(true);
+      expect(cleared).toContain(slowTimers[0]);
+      await new Promise((r) => realSet(r, SLOW_AFTER_MS * 3));
+      expect(errors).not.toHaveBeenCalled();
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 });
 

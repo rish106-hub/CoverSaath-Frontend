@@ -3,9 +3,9 @@
 .plain { background: var(--sheet); color: var(--ink); }
 .paper { background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
 .mist { background: var(--mist); color: var(--ink); }
-.marker { background: #f4dc8a; color: #16130f; }
-.signal { background: var(--signal); color: #16130f; }
-.ochre { background: #f1e3b8; color: #16130f; }
-.violet { background: #e4dff0; color: #16130f; }
-.coral { background: #f2b9a8; color: #16130f; }
-.dark { background: #16130f; color: #f7f5f0; }
+.marker { background: var(--marker); color: var(--ink-fixed); }
+.signal { background: var(--signal); color: var(--ink-fixed); }
+.ochre { background: var(--tone-ochre-fixed); color: var(--ink-fixed); }
+.violet { background: var(--tone-violet-fixed); color: var(--ink-fixed); }
+.coral { background: var(--coral-fixed); color: var(--ink-fixed); }
+.dark { background: var(--ink-fixed); color: var(--paper-fixed); }

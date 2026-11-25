@@ -76,7 +76,7 @@ export function DeskView() {
             <div className={s.need}>
               <span className={s.needIcon} aria-hidden>✍</span>
               <span style={{ flex: 1 }}>
-                <span className={ui.strong} style={{ display: "block", fontSize: 15 }}>{signed ? "Nothing needs you" : "One thing needs you"}</span>
+                <span className={ui.strong} style={{ display: "block", fontSize: "var(--fs-15)" }}>{signed ? "Nothing needs you" : "One thing needs you"}</span>
                 <span className={ui.small}>{signed ? "Father’s claim form is signed." : "Sign Father’s claim form."}</span>
               </span>
               <button type="button" className="k-btn k-btn--primary k-btn--sm" onClick={() => setSigned(true)} disabled={signed}>
@@ -155,7 +155,7 @@ export function DeskView() {
                   <span className={cx(s.rungDot, c.rung < 0 ? s.rungNone : i === c.rung ? s.rungCur : i < c.rung ? s.rungPast : undefined)}>{i + 1}</span>
                   <span className={s.rungLine} aria-hidden />
                 </span>
-                <span className={ui.strong} style={{ fontSize: 14 }}>{l.name}</span>
+                <span className={ui.strong} style={{ fontSize: "var(--fs-14)" }}>{l.name}</span>
                 <span className={ui.small}>{l.detail}</span>
                 <span className={ui.small} style={{ color: "var(--harbour)" }}>{c.rung < 0 ? "Not needed" : l.when}</span>
               </li>
@@ -168,7 +168,7 @@ export function DeskView() {
           {deskContacts.map((p) => (
             <div key={p.name} className={s.contact}>
               <span>
-                <span className={ui.strong} style={{ display: "block", fontSize: 14 }}>{p.name}</span>
+                <span className={ui.strong} style={{ display: "block", fontSize: "var(--fs-14)" }}>{p.name}</span>
                 <span className={ui.small}>{p.detail}</span>
               </span>
               <span className={ui.small} style={{ textAlign: "right" }}>Reply due<br /><b>{p.due}</b></span>
@@ -176,7 +176,7 @@ export function DeskView() {
           ))}
         </div>
         <div className={s.live}>
-          <h2 style={{ font: "600 20px var(--font-sans)" }}>Live activity</h2>
+          <h2 style={{ font: "600 var(--fs-20) var(--font-sans)" }}>Live activity</h2>
           {[0, 1, 2, 3].map((k) => (
             <div key={k} className={cx(s.liveRow, k === 0 && s.liveNow)} style={{ opacity: k === 0 ? 1 : 0.8 }}>
               <span className={s.liveDot} aria-hidden />

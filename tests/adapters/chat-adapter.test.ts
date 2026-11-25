@@ -3,6 +3,7 @@ import { backendAssistant, knownRoute, normaliseSteps } from "@/adapters/chat";
 import { AdapterError } from "@/adapters/types";
 import { respond } from "@/agent/responder";
 import { assistantReplySchema } from "@/adapters/schemas";
+import { ASSISTANT_DEADLINE_MS, CHAT_TIMEOUT_MS } from "@/adapters/chat-timing";
 
 const reply = (status: number, body: unknown) => vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(body), { status })));
 afterEach(() => vi.unstubAllGlobals());
@@ -59,5 +60,44 @@ describe("mock responder", () => {
     expect(assistantReplySchema.safeParse(b).success).toBe(true);
     const found = respond("tell me about cataract cover", "/home");
     expect(["evidence_found", "unknown", "out_of_scope"]).toContain(found.answerStatus);
+  });
+});
+
+describe("backendAssistant deadline", () => {
+  const hang = () => vi.stubGlobal("fetch", vi.fn((_u: string, init: RequestInit) => new Promise((_r, reject) => { init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))); })));
+  it("sits just past the BFF cap so the BFF's coded timeout arrives first", () => {
+    expect(ASSISTANT_DEADLINE_MS).toBeGreaterThan(CHAT_TIMEOUT_MS);
+  });
+  it("gives up on a request that never answers with a retryable BACKEND_TIMEOUT", async () => {
+    vi.useFakeTimers();
+    try {
+      hang();
+      const outcome = expect(backendAssistant.ask("hi", "/home")).rejects.toMatchObject({ code: "BACKEND_TIMEOUT", retryable: true });
+      await vi.advanceTimersByTimeAsync(ASSISTANT_DEADLINE_MS + 1);
+      await outcome;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("gives up on a response whose body stalls after the headers", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", vi.fn(async (_u: string, init: RequestInit) => new Response(new ReadableStream<Uint8Array>({ start(c) { init.signal?.addEventListener("abort", () => c.error(new DOMException("aborted", "AbortError"))); } }), { status: 200 })));
+      const outcome = expect(backendAssistant.ask("hi", "/home")).rejects.toMatchObject({ code: "BACKEND_TIMEOUT" });
+      await vi.advanceTimersByTimeAsync(ASSISTANT_DEADLINE_MS + 1);
+      await outcome;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("still answers inside the deadline and leaves no timer behind", async () => {
+    vi.useFakeTimers();
+    try {
+      reply(200, { reply: "Yes." });
+      expect((await backendAssistant.ask("hi", "/home")).reply).toBe("Yes.");
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

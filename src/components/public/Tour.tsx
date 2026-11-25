@@ -13,7 +13,7 @@ export function Tour({ scene, tick, play, onPick, onToggle }: { scene: number; t
     <section className={styles.tour} aria-label="Tour of the app">
       <div className={styles.chrome}>
         <span className={styles.lights} aria-hidden>
-          <i style={{ background: "#e9785d" }} /><i style={{ background: "#e3b85a" }} /><i style={{ background: "#6fa79e" }} />
+          <i style={{ background: "var(--signal-fixed)" }} /><i style={{ background: "var(--ochre)" }} /><i style={{ background: "var(--sea-glass)" }} />
         </span>
         <span className={styles.url}>app.knowvia.in / {sc.path}</span>
         <button type="button" className={styles.play} onClick={onToggle} aria-pressed={!play}>{play ? "❚❚ Pause" : "▶ Play"}</button>

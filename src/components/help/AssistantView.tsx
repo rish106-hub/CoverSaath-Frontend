@@ -41,7 +41,7 @@ export function AssistantView() {
             {u.ref ? <span className={s.ref}>{u.ref}</span> : null}
             <div className={s.acts}>
               {u.acts.map((a) => (
-                <a key={a.text} href={a.href} className={cx("k-btn", a.primary && "k-btn--primary")} style={u.tone === "urgent" ? { background: a.primary ? "#e9785d" : "#f7f5f0", color: "#16130f", borderColor: "transparent" } : undefined}>
+                <a key={a.text} href={a.href} className={cx("k-btn", a.primary && "k-btn--primary")} style={u.tone === "urgent" ? { background: a.primary ? "var(--signal-fixed)" : "var(--paper-fixed)", color: "var(--ink-fixed)", borderColor: "transparent" } : undefined}>
                   {a.text}
                 </a>
               ))}
@@ -58,7 +58,7 @@ export function AssistantView() {
                 <div key={x.title} className={cx(s.item, on && s.itemOn)}>
                   <span className={cx(s.glyph, on && s.glyphOn)} aria-hidden>{x.glyph}</span>
                   <span>
-                    <span className={ui.strong} style={{ display: "block", fontSize: 14 }}>{x.title}</span>
+                    <span className={ui.strong} style={{ display: "block", fontSize: "var(--fs-14)" }}>{x.title}</span>
                     <span className={ui.small}>{x.detail}</span>
                   </span>
                 </div>
@@ -66,7 +66,7 @@ export function AssistantView() {
             })}
           </div>
           <div className={s.instant}>
-            <span aria-hidden style={{ fontSize: 24 }}>⚡</span>
+            <span aria-hidden style={{ fontSize: "var(--fs-24)" }}>⚡</span>
             <span>Words like <b>chest pain</b> or <b>accident</b> open Emergency straight away.</span>
           </div>
         </SectionHeading>

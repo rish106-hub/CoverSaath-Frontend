@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { adapters } from "@/adapters";
 import { AdapterError } from "@/adapters/types";
-import { isTurnTimeout } from "@/adapters/chat-timing";
+import { SLOW_AFTER_MS, isTurnTimeout } from "@/adapters/chat-timing";
 import { errorText } from "@/adapters/documents-contract";
 import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/chat-contract";
 import { MicGlyph } from "@/components/agent/VoiceIcons";
@@ -24,7 +24,11 @@ import s from "./chat.module.css";
 
 const PROMPTS = ["Planned knee surgery in Jan, is it covered?", "What are my waiting periods?", "Cashless hospitals near 400053"] as const;
 
-type Msg = { id: number; role: "user" | "assistant"; text: string; busy?: boolean; error?: string; answer?: TurnAnswer; voice?: boolean; retry?: { text: string; voice: boolean } };
+/** Where one assistant turn is: waiting, past SLOW_AFTER_MS, resent after a failure, answered, or ended by a timeout or another failure. */
+type TurnPhase = "pending" | "slow" | "retrying";
+export type TurnState = TurnPhase | "answered" | "timed_out" | "failed";
+
+type Msg = { id: number; role: "user" | "assistant"; text: string; busy?: boolean; phase?: TurnPhase; error?: string; answer?: TurnAnswer; voice?: boolean; retry?: { text: string; voice: boolean } };
 
 /** Refusals that sending the same message again cannot fix: no Retry. Everything else (a timeout, a dropped stream, a backend hiccup) offers one. */
 const NO_RETRY = new Set(["CONSENT_REQUIRED", "UNAUTHENTICATED", "INVALID_INPUT", "DEMO_READ_ONLY", "MEMORY_DISABLED"]);
@@ -33,6 +37,13 @@ export function turnErrorText(code: string): string {
   if (isTurnTimeout(code)) return "That took too long. Try again.";
   return NO_RETRY.has(code) ? errorText(code) : "Something went wrong. Try again.";
 }
+
+const stateOf = (m: Msg): TurnState | undefined => {
+  if (m.role !== "assistant") return undefined;
+  if (m.error) return isTurnTimeout(m.error) ? "timed_out" : "failed";
+  if (m.busy) return m.phase ?? "pending";
+  return m.answer ? "answered" : undefined;
+};
 
 const codeOf = (e: unknown): string => (e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE");
 
@@ -131,29 +142,39 @@ export function ChatView() {
   const [note, setNote] = useState<string | null>(null);
   const thread = useRef<{ id: string; holdingId: string | null } | null>(null);
   const abort = useRef<AbortController | null>(null);
+  // A ref, not the `busy` state: two submits in the same tick would both read busy=false and send the question twice.
+  const inFlight = useRef(false);
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const mounted = useRef(true);
   const seq = useRef(0);
   const holdingId = current?.id;
   // null while checking. A failed check counts as not given: the card shows (fail closed).
   const cc = useChatConsent();
   const { consent, required } = cc;
 
-  useEffect(() => () => { abort.current?.abort(); }, []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; abort.current?.abort(); clearTimeout(slowTimer.current); };
+  }, []);
   // A different cover is a different conversation.
   useEffect(() => { thread.current = null; }, [holdingId]);
 
-  const patch = useCallback((id: number, f: (m: Msg) => Msg) => setMsgs((all) => all.map((m) => (m.id === id ? f(m) : m))), []);
+  const patch = useCallback((id: number, f: (m: Msg) => Msg) => { if (mounted.current) setMsgs((all) => all.map((m) => (m.id === id ? f(m) : m))); }, []);
 
-  const ask = useCallback(async (raw: string, voice = false) => {
+  const ask = useCallback(async (raw: string, voice = false, resent = false) => {
     const text = raw.trim().slice(0, CHAT_MESSAGE_MAX);
-    if (!text || busy) return;
+    if (!text || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setNote(null);
     setDraft("");
     const uid = (seq.current += 1);
     const aid = (seq.current += 1);
-    setMsgs((all) => [...all, { id: uid, role: "user", text, voice }, { id: aid, role: "assistant", text: "", busy: true }]);
+    setMsgs((all) => [...all, { id: uid, role: "user", text, voice }, { id: aid, role: "assistant", text: "", busy: true, phase: resent ? "retrying" : "pending" }]);
     const ac = new AbortController();
     abort.current = ac;
+    clearTimeout(slowTimer.current);
+    slowTimer.current = setTimeout(() => patch(aid, (m) => (m.busy ? { ...m, phase: "slow" } : m)), SLOW_AFTER_MS);
     const onEvent = (e: TurnEvent) => {
       if (e.type === "delta") patch(aid, (m) => ({ ...m, text: m.text + e.data.text }));
       else if (e.type === "answer") patch(aid, (m) => ({ ...m, text: e.data.answer, answer: e.data, busy: false }));
@@ -166,23 +187,25 @@ export function ChatView() {
         thread.current = t;
       }
       await adapters.chat.turn(t.id, { message: text, inputKind: voice ? "voice" : "text" }, onEvent, ac.signal);
-      patch(aid, (m) => ({ ...m, busy: false }));
+      patch(aid, (m) => ({ ...m, busy: false, phase: undefined }));
     } catch (e) {
       const code = codeOf(e);
       if (code === "NOT_FOUND") thread.current = null; // the thread is gone: the next question opens a new one
       if (code === "CONSENT_REQUIRED") required(); // withdrawn or expired: ask again
       // Partial words of the failed turn are cleared; the Retry button resends the same text.
-      patch(aid, (m) => ({ ...m, busy: false, text: "", answer: undefined, error: code, retry: NO_RETRY.has(code) ? undefined : { text, voice } }));
+      patch(aid, (m) => ({ ...m, busy: false, phase: undefined, text: "", answer: undefined, error: code, retry: NO_RETRY.has(code) ? undefined : { text, voice } }));
     } finally {
-      setBusy(false);
+      clearTimeout(slowTimer.current);
+      inFlight.current = false;
+      if (mounted.current) setBusy(false);
     }
-  }, [busy, holdingId, patch, required]);
+  }, [holdingId, patch, required]);
 
   /** Drops the failed pair and sends the same words again, as a voice turn if it was one. */
   function retry(uid: number, aid: number, r: { text: string; voice: boolean }) {
-    if (busy) return;
+    if (inFlight.current) return;
     setMsgs((all) => all.filter((m) => m.id !== uid && m.id !== aid));
-    void ask(r.text, r.voice);
+    void ask(r.text, r.voice, true);
   }
 
   function speak() {
@@ -225,9 +248,10 @@ export function ChatView() {
         ) : (
           <ol className={s.log} role="log" aria-live="polite" aria-label="Conversation">
             {msgs.map((m, i) => (
-              <li key={m.id} className={s.msg} data-role={m.role} data-busy={m.busy === true}>
+              <li key={m.id} className={s.msg} data-role={m.role} data-busy={m.busy === true} data-state={stateOf(m)}>
                 <span className={s.who}>{m.role === "user" ? (m.voice ? "You said" : "You") : "Knowvia"}</span>
-                {m.text ? <p>{m.text}</p> : m.busy ? <p className={s.quiet}>Looking in your cover…</p> : null}
+                {m.text ? <p>{m.text}</p> : m.busy ? <p className={s.quiet}>{m.phase === "retrying" ? "Trying again…" : "Looking in your cover…"}</p> : null}
+                {m.busy && m.phase === "slow" ? <p className={s.quiet} role="status" data-role="still-working">Still working…</p> : null}
                 {m.answer?.modelStatus === "numbers_unverified" ? <p className={s.quiet} data-role="numbers-unverified">The figures in this answer are not matched to a fact in your cover.</p> : null}
                 {m.answer ? <FactChips a={m.answer} /> : null}
                 {m.answer ? <Citations a={m.answer} /> : null}
