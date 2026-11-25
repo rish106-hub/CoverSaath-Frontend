@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { planInflation, formatLakh, formatRs } from "@/lib/inflation";
 import { reconcileReceipts, findDuplicates, summariseReceipts } from "@/lib/reconcile";
-import { section80D, roomRent, topUpFinder, formatLakhShort } from "@/lib/calculators";
+import { section80D, roomRent } from "@/lib/calculators";
 import { receipts } from "@/data/mock";
 
 const parents = { coverLakh: 3, premiumRs: 31700, premiumGrowth: 0.12 };
@@ -99,25 +99,5 @@ describe("calculators (Tools board)", () => {
   });
   it("room rent within limit pays everything", () => {
     expect(roomRent({ coverRs: 500000, limitPct: 2, roomPerDayRs: 8000, otherRs: 100 }).youPayOther).toBe(0);
-  });
-  it("top-up: Rs 5L base, Rs 12L bypass: you pay Rs 7L, Rs 10L top-up takes it to Rs 0", () => {
-    const t = topUpFinder({ whoIndex: 1, baseLakh: 5, billLakh: 12 });
-    expect(t.fitIndex).toBe(0);
-    expect(t.youNow).toBe(7);
-    expect(t.youAfter).toBe(0);
-    expect(t.options.map((o) => o.fit)).toEqual(["recommended", "also-works", "too-small"]);
-    expect(t.options[0]?.premiumRs).toBe(9500);
-  });
-  it("top-up: Rs 25L base already covers, fit is the smallest", () => {
-    const t = topUpFinder({ whoIndex: 0, baseLakh: 25, billLakh: 12 });
-    expect(t.gap).toBe(0);
-    expect(t.youNow).toBe(0);
-    expect(t.fitIndex).toBe(2);
-  });
-  it("top-up: too-small pick leaves a remainder", () => {
-    const t = topUpFinder({ whoIndex: 0, baseLakh: 5, billLakh: 18, pick: 2 });
-    expect(t.youAfter).toBe(8);
-    expect(formatLakhShort(t.youAfter)).toBe("Rs 8L");
-    expect(formatLakhShort(0.45)).toBe("Rs 45,000");
   });
 });

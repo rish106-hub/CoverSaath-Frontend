@@ -4,22 +4,22 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { features } from "@/adapters";
 import { SectionHeading } from "@/components/type";
+import { SoonButton } from "@/components/ui/SoonButton";
 import { SaveState } from "@/components/ui/SaveState";
 import { DemoGate } from "@/components/shell/EmptyState";
 import { useScenario } from "@/lib/use-scenario";
 import { roomCodec, taxCodec, type RoomState, type TaxState } from "@/lib/scenario-codecs";
-import { section80D, roomRent, topUpFinder, formatLakhShort, TOPUP_WHO, TOPUP_BASE_LAKH, TOPUP_RISKS, type Regime, type TopUpFit } from "@/lib/calculators";
+import { section80D, roomRent, type Regime } from "@/lib/calculators";
 import { advisors, advisorTags, exitAsks, toolWins, moreTools, readNext } from "@/data/mock";
 import styles from "./tools.module.css";
 
 const inr = (n: number) => Math.round(n).toLocaleString("en-IN");
-const lakh = (n: number) => (n >= 100 ? `Rs ${(n / 100).toFixed(n % 100 ? 1 : 0)} Cr` : `Rs ${n}L`);
 
 function Num({ label, value, onChange, step }: { label: string; value: number; onChange: (n: number) => void; step?: number }) {
   return (
     <label className={styles.field}>
       {label}
-      <input type="number" inputMode="numeric" min={0} step={step} value={Number.isFinite(value) ? value : 0} onChange={(e) => { const v = Number(e.target.value); onChange(Number.isFinite(v) && v >= 0 ? v : 0); }} />
+      <input type="number" inputMode="numeric" min={0} step={step} placeholder="0" value={value || ""} onChange={(e) => { const v = Number(e.target.value); onChange(Number.isFinite(v) && v >= 0 ? v : 0); }} />
     </label>
   );
 }
@@ -46,10 +46,11 @@ function Chips({ label, children }: { label: string; children: React.ReactNode }
 
 function Tax() {
   const [regime, setRegime] = useState<Regime>("old");
-  const [self, setSelf] = useState(6200);
-  const [par, setPar] = useState(38400);
+  const [self, setSelf] = useState(0);
+  const [par, setPar] = useState(0);
   const [senior, setSenior] = useState(true);
   const r = useMemo(() => section80D({ regime, selfRs: self, parentsRs: par, senior }), [regime, self, par, senior]);
+  const taxEmpty = self === 0 && par === 0;
   const value = useMemo<TaxState>(() => ({ regime, self, par, senior }), [regime, self, par, senior]);
   const { status, retry, flush } = useScenario<TaxState>({
     tool: "tax", value, codec: taxCodec,
@@ -67,9 +68,9 @@ function Tax() {
       </div>
       <div className={styles.card} aria-live="polite">
         <div className={styles.note}>You can declare under 80D</div>
-        <div className={styles.big}>Rs {inr(r.total)}</div>
-        <div className={styles.resRow}><span>Self, spouse, children (limit Rs 25,000)</span><span>Rs {inr(r.self)}</span></div>
-        <div className={styles.resRow}><span>Parents (limit Rs {inr(r.parentCap)})</span><span>Rs {inr(r.parents)}</span></div>
+        <div className={styles.big}>{taxEmpty ? "—" : `Rs ${inr(r.total)}`}</div>
+        <div className={styles.resRow}><span>Self, spouse, children (limit Rs 25,000)</span><span>{taxEmpty ? "—" : `Rs ${inr(r.self)}`}</span></div>
+        <div className={styles.resRow}><span>Parents (limit Rs {inr(r.parentCap)})</span><span>{taxEmpty ? "—" : `Rs ${inr(r.parents)}`}</span></div>
         {!r.available ? <div className={styles.note}>Section 80D is not available under the new tax regime.</div> : null}
                 <Link href="/money" className="k-btn k-btn--primary">Add receipts</Link>
       </div>
@@ -78,11 +79,12 @@ function Tax() {
 }
 
 function Room() {
-  const [cover, setCover] = useState(500000);
+  const [cover, setCover] = useState(0);
   const [pct, setPct] = useState(1);
-  const [room, setRoom] = useState(8000);
-  const [other, setOther] = useState(120000);
+  const [room, setRoom] = useState(0);
+  const [other, setOther] = useState(0);
   const r = useMemo(() => roomRent({ coverRs: cover, limitPct: pct, roomPerDayRs: room, otherRs: other }), [cover, pct, room, other]);
+  const roomEmpty = cover === 0 && room === 0 && other === 0;
   const value = useMemo<RoomState>(() => ({ cover, pct, room, other }), [cover, pct, room, other]);
   const { status, retry, flush } = useScenario<RoomState>({
     tool: "hospital_bill", value, codec: roomCodec,
@@ -98,11 +100,11 @@ function Room() {
         <SaveState status={status} onRetry={retry} />
       </div>
       <div className={styles.card} aria-live="polite">
-                <div className={styles.head}>{r.over ? "This room is above your limit. Other charges may be cut." : "This room is within your limit."}</div>
-        <div className={styles.resRow}><span>Room limit per day</span><span>Rs {inr(r.eligible)}</span></div>
-        <div className={styles.resRow}><span>Room offered per day</span><span>Rs {inr(room)}</span></div>
-        <div className={styles.resRow}><span>Share of other charges paid</span><span>{Math.round(r.ratio * 100)}%</span></div>
-        <div className={styles.resRow}><span>Other charges you may pay yourself</span><span>Rs {inr(r.youPayOther)}</span></div>
+                <div className={styles.head}>{roomEmpty ? "Enter your cover and the room to see the result." : r.over ? "This room is above your limit. Other charges may be cut." : "This room is within your limit."}</div>
+        <div className={styles.resRow}><span>Room limit per day</span><span>{roomEmpty ? "—" : `Rs ${inr(r.eligible)}`}</span></div>
+        <div className={styles.resRow}><span>Room offered per day</span><span>{roomEmpty ? "—" : `Rs ${inr(room)}`}</span></div>
+        <div className={styles.resRow}><span>Share of other charges paid</span><span>{roomEmpty ? "—" : `${Math.round(r.ratio * 100)}%`}</span></div>
+        <div className={styles.resRow}><span>Other charges you may pay yourself</span><span>{roomEmpty ? "—" : `Rs ${inr(r.youPayOther)}`}</span></div>
                 <Link href="/policies" className="k-btn k-btn--primary">Check my policy</Link>
       </div>
     </div>
@@ -137,78 +139,11 @@ const TABS = [
   { key: "job", when: "Leaving a job", t: "When does my cover end?", heading: "Exit checklist" },
 ] as const;
 
-const FIT_LABEL: Record<TopUpFit, string> = { recommended: "Recommended", "also-works": "Also works", "too-small": "Too small" };
-
 function TopUp() {
-  const [who, setWho] = useState(1);
-  const [base, setBase] = useState(1);
-  const [risk, setRisk] = useState(0);
-  const [pick, setPick] = useState(-1);
-  const bill = TOPUP_RISKS[risk]!.billLakh;
-  const baseL = TOPUP_BASE_LAKH[base]!;
-  const t = useMemo(() => topUpFinder({ whoIndex: who, baseLakh: baseL, billLakh: bill, pick }), [who, baseL, bill, pick]);
-  const worry = TOPUP_RISKS[risk]!.label.toLowerCase();
-  const head =
-    t.youNow === 0
-      ? `Your ${lakh(baseL)} already covers a ${worry} bill.`
-      : `A ${worry} bill of about ${formatLakhShort(bill)} leaves ${formatLakhShort(t.youNow)} on you. ${t.youAfter === 0 ? "A top-up takes it to Rs 0." : `A top-up brings it to ${formatLakhShort(t.youAfter)}.`}`;
-  const pc = (n: number) => (bill ? (n / bill) * 100 : 0);
-  const rows = [
-    { t: "Today", a: pc(t.basePays), b: 0, c: pc(t.youNow), you: t.youNow },
-    { t: "With top-up", a: pc(t.basePays), b: pc(t.topPays), c: pc(t.youAfter), you: t.youAfter },
-  ];
-  const reset = (f: () => void) => () => { f(); setPick(-1); };
   return (
-    <div id="top-up-finder" className={styles.two} style={{ scrollMarginTop: 80 }}>
-      <div className={styles.card}>
-                <Chips label="Who is it for">
-          {TOPUP_WHO.map((w, k) => <button key={w.label} type="button" aria-pressed={who === k} className={`${styles.chip} ${who === k ? styles.chipOn : ""}`} onClick={reset(() => setWho(k))}>{w.label}</button>)}
-        </Chips>
-        <Chips label="Cover you have today">
-          {TOPUP_BASE_LAKH.map((b, k) => <button key={b} type="button" aria-pressed={base === k} className={`${styles.chip} ${base === k ? styles.chipOn : ""}`} onClick={reset(() => setBase(k))}>{lakh(b)}</button>)}
-        </Chips>
-        <Chips label="Treatment">
-          {TOPUP_RISKS.map((r, k) => (
-            <button key={r.label} type="button" aria-pressed={risk === k} className={`${styles.chip} ${risk === k ? styles.chipOn : ""}`} onClick={reset(() => setRisk(k))}>
-              {r.label}<span className={styles.chipSub}>About {formatLakhShort(r.billLakh)}</span>
-            </button>
-          ))}
-        </Chips>
-      </div>
-      <div className={styles.card}>
-        <div className={styles.head} aria-live="polite">{head}</div>
-        <div className={styles.bars}>
-          {rows.map((r) => (
-            <div key={r.t} className={styles.barRow}>
-              <span>{r.t}</span>
-              <span className={styles.stack} role="img" aria-label={`${r.t}: cover pays ${Math.round(r.a)} percent, top-up pays ${Math.round(r.b)} percent, you pay ${Math.round(r.c)} percent`}>
-                <span style={{ width: `${r.a}%`, background: "var(--harbour)" }} />
-                <span style={{ width: `${r.b}%`, background: "var(--sea-glass)" }} />
-                <span style={{ width: `${r.c}%`, background: "var(--signal)" }} />
-              </span>
-              <span style={{ font: "500 var(--fs-14) var(--font-mono)", color: r.you ? "var(--signal-ink)" : "var(--harbour)" }}>You pay {formatLakhShort(r.you)}</span>
-            </div>
-          ))}
-          <div className={styles.legendRow}>
-            <span><span className={styles.sw} style={{ background: "var(--harbour)" }} />Your cover pays</span>
-            <span><span className={styles.sw} style={{ background: "var(--sea-glass)" }} />Top-up pays</span>
-            <span><span className={styles.sw} style={{ background: "var(--signal)" }} />You pay</span>
-          </div>
-        </div>
-        <div className={styles.opts}>
-          {t.options.map((o, k) => (
-            <button key={o.name} type="button" aria-pressed={k === t.pick} className={`${styles.opt} ${o.fit === "recommended" ? styles.optRec : ""} ${k === t.pick ? styles.optOn : ""}`} onClick={() => setPick(k)}>
-              <span style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}><span className={styles.logo} aria-hidden>{o.logo}</span><span className={styles.badge}>{FIT_LABEL[o.fit]}</span></span>
-              <span className={styles.optName}>{o.name}</span>
-              <span className={styles.note}>{lakh(o.siLakh)} extra · Rs {inr(o.premiumRs)} a year</span>
-              <span className={o.covers ? styles.good : styles.bad}>{o.covers ? "Covers this bill fully" : `Leaves ${formatLakhShort(o.leftOnYouLakh)} on you`}</span>
-            </button>
-          ))}
-        </div>
-        <div className={styles.compare}>
-          <Link href="/compare" className="k-btn k-btn--primary">Compare top-ups</Link>
-        </div>
-      </div>
+    <div id="top-up-finder" className={styles.card} style={{ scrollMarginTop: 80 }}>
+      <p className={styles.note}>Top-up plans matched to your policy.</p>
+      <SoonButton>See top-up plans</SoonButton>
     </div>
   );
 }
@@ -219,7 +154,6 @@ function Advisors() {
   const [slot, setSlot] = useState(0);
   const [mode, setMode] = useState(0);
   const [share, setShare] = useState([true, true, false]);
-  const [booked, setBooked] = useState(false);
   const a = advisors[sel]!;
   const slots = [a.next, "Tomorrow 7 pm", "Sat 10 am"];
   const shares = ["Policy summary, one page", "This top-up case", "Claim history"];
@@ -231,7 +165,7 @@ function Advisors() {
         </div>
         <div className={styles.advGrid}>
           {advisors.map((x, k) => (
-            <button key={x.name} type="button" aria-pressed={sel === k} className={`${styles.adv} ${sel === k ? styles.advOn : ""}`} style={{ opacity: tag === 0 || x.tags.includes(tag) ? 1 : 0.5 }} onClick={() => { setSel(k); setBooked(false); }}>
+            <button key={x.name} type="button" aria-pressed={sel === k} className={`${styles.adv} ${sel === k ? styles.advOn : ""}`} style={{ opacity: tag === 0 || x.tags.includes(tag) ? 1 : 0.5 }} onClick={() => { setSel(k); }}>
               <span className={styles.advTop}>
                 <span className={styles.ini} style={{ background: x.tint }} aria-hidden>{x.ini}</span>
                 <span><span className={styles.advName}>{x.name}</span><span className={styles.advRole}>{x.role}</span></span>
@@ -248,7 +182,7 @@ function Advisors() {
           <span className={styles.ini} style={{ background: a.tint }} aria-hidden>{a.ini}</span>
           <span><span className={styles.advName}>{a.name}</span><span className={styles.bookLbl}>First 15 minutes free</span></span>
         </div>
-        <div><span className={styles.bookLbl}>Pick a time</span><div className={styles.bookChips}>{slots.map((t, k) => <button key={t} type="button" aria-pressed={slot === k} className={`${styles.bchip} ${slot === k ? styles.bchipOn : ""}`} onClick={() => { setSlot(k); setBooked(false); }}>{t}</button>)}</div></div>
+        <div><span className={styles.bookLbl}>Pick a time</span><div className={styles.bookChips}>{slots.map((t, k) => <button key={t} type="button" aria-pressed={slot === k} className={`${styles.bchip} ${slot === k ? styles.bchipOn : ""}`} onClick={() => { setSlot(k); }}>{t}</button>)}</div></div>
         <div><span className={styles.bookLbl}>How</span><div className={styles.bookChips}>{["Call", "Video", "WhatsApp"].map((t, k) => <button key={t} type="button" aria-pressed={mode === k} className={`${styles.bchip} ${mode === k ? styles.bchipOn : ""}`} onClick={() => setMode(k)}>{t}</button>)}</div></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span className={styles.bookLbl}>Shared with your OK</span>
@@ -258,9 +192,7 @@ function Advisors() {
             </button>
           ))}
         </div>
-        <button type="button" className={`${styles.bookBtn} ${booked ? styles.bookBtnDone : ""}`} onClick={() => setBooked(true)}>
-          {booked ? "Booked" : `Book with ${a.name.split(" ")[0]}`}
-        </button>
+        <SoonButton>Book a call</SoonButton>
       </div>
     </div>
   );

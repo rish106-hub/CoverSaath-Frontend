@@ -48,6 +48,7 @@ describe("chat BFF", () => {
   it("refuses a demo session with DEMO_READ_ONLY and never calls the backend", async () => {
     cookieValue = seal({ t: "", h: "demo", m: "m", exp: Date.now() + 60_000, demo: true }, SECRET);
     vi.stubEnv("DEMO_LOGIN_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_ADAPTERS", "mock");
     const res = await POST(req({ text: "hi" }));
     expect(res.status).toBe(403);
     expect((await res.json()).code).toBe("DEMO_READ_ONLY");

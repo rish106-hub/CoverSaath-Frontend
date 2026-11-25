@@ -63,10 +63,10 @@ describe("page context", () => {
 
 describe("responder", () => {
   it("answers a page example with its steps and a Go to action", () => {
-    const r = respond("Is Mumma’s cataract covered?", "/home");
-    expect(r.steps).toEqual(["Mother · cover question", "Read senior plan p.14", "Yes, up to Rs 40,000 per eye"]);
-    expect(r.route).toBe("/policies/meridian-senior");
-    expect(r.goLabel).toBe("Open the clause");
+    const r = respond("What are my waiting periods?", "/home");
+    expect(r.steps).toEqual(["Your policy", "Reads the waiting period section", "Answers with the page it came from"]);
+    expect(r.route).toBe("/chat");
+    expect(r.goLabel).toBe("Ask this");
   });
   it("answers a free question from household data with a page ref", () => {
     const r = respond("is cataract covered for Mumma", "/policies");

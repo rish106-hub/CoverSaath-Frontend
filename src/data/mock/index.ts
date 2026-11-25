@@ -6,3 +6,4 @@ export * from "./public";
 export * from "./family";
 export * from "./money-desk";
 export * from "./tools";
+export * from "./demo-only";

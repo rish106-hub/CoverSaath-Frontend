@@ -96,7 +96,7 @@ describe("ChatView", () => {
     const { AdapterError } = await import("@/adapters/types");
     turn.mockRejectedValue(new AdapterError("MEMORY_DISABLED"));
     render(<ChatView />);
-    fireEvent.click(await screen.findByRole("button", { name: /Cashless hospitals near 400053/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Find a cashless hospital near me/ }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/not switched on/);
   });
 

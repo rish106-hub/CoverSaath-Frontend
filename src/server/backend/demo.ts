@@ -8,8 +8,8 @@ export const DEMO_EMAIL = "demo@demo.com";
 const DEMO_PASSWORD = "demo123";
 export const DEMO_SESSION_MS = 12 * 60 * 60 * 1000;
 
-/** The one demo credential is public and fixed (no env override). On by default; DEMO_LOGIN_ENABLED=false is the kill switch (also ends existing demo sessions). */
-export const demoEnabled = (env: NodeJS.ProcessEnv = process.env): boolean => env.DEMO_LOGIN_ENABLED !== "false";
+/** The one demo credential is public and fixed (no env override). Only on in mock mode so a real deployment never offers it; DEMO_LOGIN_ENABLED=false is the extra kill switch (also ends existing demo sessions). */
+export const demoEnabled = (env: NodeJS.ProcessEnv = process.env): boolean => env.NEXT_PUBLIC_ADAPTERS === "mock" && env.DEMO_LOGIN_ENABLED !== "false";
 export const DEMO_NAME = "Meera Rao";
 export const demoCredentials = (): { email: string; password: string } => ({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
 
