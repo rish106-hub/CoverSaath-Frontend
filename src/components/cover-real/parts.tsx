@@ -57,7 +57,8 @@ export function FactItem({ f }: { f: FactLine }) {
     <li className={s.fact} data-open={f.open}>
       <span className={s.factName}>{f.label}</span>
       <span className={s.factValue}>{f.value}</span>
-      {f.status !== "extracted_unverified" ? <span className={s.status}>{f.statusText}</span> : null}
+      {/* The plain "Read from your document" line is dropped as filler; any other status (not checked, conflicting, confirmed) is a trust signal and stays. */}
+      {f.statusText !== "Read from your document" ? <span className={s.status}>{f.statusText}</span> : null}
       {f.sourceText !== f.statusText ? <span className={s.tag} data-testid="fact-source">{f.sourceText}</span> : null}
       {f.citation ? <p className={s.src}>{f.citation}</p> : null}
     </li>

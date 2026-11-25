@@ -27,10 +27,14 @@ describe("FactItem", () => {
     expect(container.textContent).not.toContain("QUOTE_SENTINEL_XYZ");
   });
   it("FactItem status text", () => {
-    const unverified = render(<ul><FactItem f={factLine({ status: "extracted_unverified", statusText: "Unverified reading", sourceText: "Your schedule" })} /></ul>);
+    const unverified = render(<ul><FactItem f={factLine({ status: "extracted_unverified", statusText: "Read from your document", sourceText: "Your schedule" })} /></ul>);
     expect(statusEls(unverified.container)).toHaveLength(0);
-    expect(unverified.container.textContent).not.toMatch(/unverified/i);
+    expect(unverified.container.textContent).not.toContain("Read from your document");
     unverified.unmount();
+    // A reading taken from the insurer's wording and not checked keeps its line: it is a trust signal, not filler.
+    const insurer = render(<ul><FactItem f={factLine({ status: "extracted_unverified", statusText: "From the insurer's wording, not checked", sourceText: "From the insurer's wording, not checked" })} /></ul>);
+    expect(insurer.container.textContent).toContain("From the insurer's wording, not checked");
+    insurer.unmount();
     for (const status of ["conflicting", "unknown", "user_confirmed", "reviewed_reference"] as const) {
       const r = render(<ul><FactItem f={factLine({ status, statusText: `Text for ${status}` })} /></ul>);
       const els = statusEls(r.container);
