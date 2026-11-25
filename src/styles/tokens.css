@@ -9,6 +9,8 @@
   --graphite: #5f5a52;
   --muted: #8c867c; /* decorative only: placeholders, icons. Not used for readable text. */
   --line: #e6e1d7;
+  /* Form control edge, WCAG 1.4.11 (3:1): 3.97 on --sheet, 3.64 on --paper. --line stays for dividers. */
+  --field-border: #857f75;
   --harbour: #0e4f4a;
   --on-harbour: #f7f5f0;
   --sea-glass: #6fa79e;
@@ -131,6 +133,7 @@
   --graphite: #b9b2a5;
   --muted: #8c867c;
   --line: #3a352d;
+  --field-border: #7a7469; /* 3.78 on --sheet, 4.10 on --paper */
   --harbour: #7cc4b8;
   --on-harbour: #0b1412;
   --sea-glass: #6fa79e;

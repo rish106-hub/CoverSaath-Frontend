@@ -31,7 +31,10 @@ export function DeclarationsView({ holding }: { holding?: string }) {
   const [members, setMembers] = useState<MemberRecord[]>([]);
   const [decls, setDecls] = useState<DeclarationView[]>([]);
   const [pays, setPays] = useState<PremiumView[]>([]);
+  // Page-level load error, plus one error per form so a failure shows next to the form that submitted it.
   const [error, setError] = useState<string | null>(null);
+  const [declError, setDeclError] = useState<string | null>(null);
+  const [premiumError, setPremiumError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Declaration form
@@ -64,6 +67,7 @@ export function DeclarationsView({ holding }: { holding?: string }) {
     if (busy || !memberId || !label.trim()) return;
     setBusy(true);
     setSaved(null);
+    setDeclError(null);
     try {
       const row = await adapters.covers.addDeclaration({
         memberId, kind, label: label.trim(), declaredOn: declaredOn || null, declaredToInsurer: toInsurer === "" ? null : toInsurer === "yes", holdingId: current?.id ?? null,
@@ -72,10 +76,10 @@ export function DeclarationsView({ holding }: { holding?: string }) {
       setLabel("");
       setDeclaredOn("");
       setToInsurer("");
-      setError(null);
+      setDeclError(null);
       setSaved("Declaration saved.");
     } catch (err) {
-      setError(codeOf(err));
+      setDeclError(codeOf(err));
     } finally {
       setBusy(false);
     }
@@ -85,9 +89,10 @@ export function DeclarationsView({ holding }: { holding?: string }) {
     e.preventDefault();
     if (busy || !current) return;
     const paise = paiseFrom(amount);
-    if (paise === null) { setError("INVALID_INPUT"); return; }
+    if (paise === null) { setPremiumError("INVALID_INPUT"); return; }
     setBusy(true);
     setSaved(null);
+    setPremiumError(null);
     try {
       const row = await adapters.covers.addPremium({
         holdingId: current.id, amountPaise: paise, paidOn, channel, paidVia: via,
@@ -97,10 +102,10 @@ export function DeclarationsView({ holding }: { holding?: string }) {
       setAmount("");
       setAgentName("");
       setAgentCode("");
-      setError(null);
+      setPremiumError(null);
       setSaved("Premium saved.");
     } catch (err) {
-      setError(codeOf(err));
+      setPremiumError(codeOf(err));
     } finally {
       setBusy(false);
     }
@@ -119,6 +124,7 @@ export function DeclarationsView({ holding }: { holding?: string }) {
       <SectionHeading title="What you told the insurer" description="Health conditions, habits and your nominee, for each person on the policy.">
         {/* FOR LEGAL REVIEW: wording about health details. Not final. */}
         <form className={s.card} onSubmit={(e) => void addDeclaration(e)}>
+          {declError ? <p className={s.alert} id="decl-error" role="alert">{errorText(declError)}</p> : null}
           <p className={s.quiet}>These are about health, so we keep them sealed and use them only to answer your questions.</p>
           {members.length === 0 ? <p className={s.quiet}>Add the people on this policy first. <Link href="/family">Open My family</Link></p> : null}
           <div className={s.grid2}>
@@ -130,11 +136,11 @@ export function DeclarationsView({ holding }: { holding?: string }) {
             </label>
           </div>
           <label className={s.field}>Details
-            <textarea value={label} onChange={(e) => setLabel(e.target.value)} maxLength={500} required />
+            <textarea value={label} onChange={(e) => setLabel(e.target.value)} maxLength={500} required aria-invalid={declError === "INVALID_INPUT" && !label.trim() ? true : undefined} aria-describedby={declError ? "decl-error" : undefined} />
           </label>
           <div className={s.grid2}>
             <label className={s.field}>Declared on
-              <input type="date" value={declaredOn} onChange={(e) => setDeclaredOn(e.target.value)} />
+              <input type="date" value={declaredOn} onChange={(e) => setDeclaredOn(e.target.value)} aria-describedby={declError ? "decl-error" : undefined} />
             </label>
             <label className={s.field}>Told the insurer?
               <select value={toInsurer} onChange={(e) => setToInsurer(e.target.value as "" | "yes" | "no")}>
@@ -153,13 +159,14 @@ export function DeclarationsView({ holding }: { holding?: string }) {
 
       <SectionHeading title="Premium you paid" description="When, how much and how, so renewals and claims line up.">
         <form className={s.card} onSubmit={(e) => void addPremium(e)}>
+          {premiumError ? <p className={s.alert} id="premium-error" role="alert">{errorText(premiumError)}</p> : null}
           {!current ? <p className={s.quiet}>Add a cover first. <Link href="/covers/add">Add a cover</Link></p> : null}
           <div className={s.grid2}>
             <label className={s.field}>Amount in rupees
-              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" required />
+              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" required aria-invalid={premiumError === "INVALID_INPUT" && paiseFrom(amount) === null ? true : undefined} aria-describedby={premiumError ? "premium-error" : undefined} />
             </label>
             <label className={s.field}>Paid on
-              <input type="date" value={paidOn} max={todayIso()} onChange={(e) => setPaidOn(e.target.value)} required />
+              <input type="date" value={paidOn} max={todayIso()} onChange={(e) => setPaidOn(e.target.value)} required aria-invalid={premiumError === "INVALID_INPUT" && !paidOn ? true : undefined} aria-describedby={premiumError ? "premium-error" : undefined} />
             </label>
             <label className={s.field}>How
               <select value={channel} onChange={(e) => setChannel(e.target.value as PaymentChannel)}>{PAYMENT_CHANNELS.map((c) => <option key={c} value={c}>{CHANNEL_TEXT[c]}</option>)}</select>

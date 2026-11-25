@@ -96,3 +96,19 @@ describe("emergency fixed colours", () => {
     expect(readFileSync("src/app/layout.tsx", "utf8")).toMatch(/data-theme="light"/);
   });
 });
+
+// WCAG 1.4.11: a form control edge is the only visible boundary, so it needs 3:1 on every surface a field sits on.
+describe.each([["light", light], ["dark", dark]] as const)("%s theme field border", (_n, t) => {
+  it.each(["sheet", "paper"])("--field-border is at least 3:1 on %s", (surface) => {
+    expect(t["field-border"], "token field-border").toBeDefined();
+    expect(ratio(t["field-border"], t[surface])).toBeGreaterThanOrEqual(3);
+  });
+});
+
+it("form control CSS uses --field-border, not the divider --line", () => {
+  for (const f of ["covers/covers.module.css", "chat/chat.module.css", "cover-real/real.module.css", "access/AccessCard.module.css", "profile/Profile.module.css"]) {
+    const rules = readFileSync(`src/components/${f}`, "utf8").split("\n").filter((l) => /^\.(field input|bill input|input)\b/.test(l) && l.includes("border:"));
+    expect(rules.length, f).toBeGreaterThan(0);
+    for (const r of rules) expect(r, f).toContain("var(--field-border)");
+  }
+});
