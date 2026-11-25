@@ -39,8 +39,14 @@
 .right { background: var(--harbour-fixed); color: var(--paper-fixed); padding: 40px 40px 0; display: flex; flex-direction: column; gap: 22px; overflow: hidden; position: relative; min-width: 0; }
 .rtop { display: flex; justify-content: space-between; align-items: center; }
 .rlab { font: 600 var(--fs-14) var(--font-sans); color: var(--marker); }
-.heads { display: flex; gap: 6px; }
-.heads button { height: 8px; border-radius: 4px; border: 0; cursor: pointer; padding: 0; transition: width var(--t-slow) var(--ease); }
+.rctl { display: flex; align-items: center; gap: 12px; }
+.pause { min-height: 24px; padding: 0 12px; border-radius: var(--r-btn-sm); border: 1px solid color-mix(in srgb, var(--paper-fixed) 60%, transparent); background: transparent; color: var(--paper-fixed); font: 500 var(--fs-13) var(--font-sans); cursor: pointer; }
+.pause:focus-visible, .headBtn:focus-visible { outline: 2px solid var(--marker); outline-offset: 2px; }
+.heads { display: flex; }
+/* The button is the 24px hit area; the 8px dot is drawn inside it. */
+.headBtn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.headDot { display: block; width: 8px; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--paper-fixed) 60%, transparent); transition: width var(--t-slow) var(--ease); }
+.headDotOn { width: 28px; background: var(--marker); }
 .headline { font: 400 var(--fs-52)/1.02 var(--font-serif); letter-spacing: -0.02em; animation: fade 0.42s both; }
 .headline em { display: block; color: var(--marker); }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -50,7 +56,7 @@
 .lane { display: flex; flex-direction: column; gap: 12px; }
 .up { animation: up 38s linear infinite; }
 .down { animation: down 46s linear infinite; }
-.lane:hover { animation-play-state: paused; }
+.lane:hover, .lanesPaused .lane { animation-play-state: paused; }
 .ic { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; border-radius: var(--r-btn); border: 0; cursor: pointer; font-family: var(--font-sans); }
 .icOn { outline: 3px solid var(--marker); }
 .icK { font: 500 var(--fs-13) var(--font-mono); letter-spacing: 0.04em; opacity: 0.85; }
@@ -66,7 +72,7 @@
 @keyframes fade { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
 @keyframes up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
 @keyframes down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .up, .down, .form, .headline, .pick { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .up, .down, .form, .headline, .pick { animation: none; } .headDot { transition: none; } }
 @media (max-width: 1100px) { .page { grid-template-columns: minmax(0, 1fr); } .left { padding: 32px 24px; } .right { display: none; } }
 
 @media (max-width: 560px) { .themeSlot { position: static; padding: 8px 16px 24px; display: flex; justify-content: flex-end; } }
