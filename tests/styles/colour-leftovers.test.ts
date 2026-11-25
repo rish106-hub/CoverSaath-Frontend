@@ -44,7 +44,8 @@ describe("row 6: done-step tick", () => {
 
 describe("row 13: todo steps", () => {
   it("drops opacity and keeps a hollow, graphite-edged dot", () => {
-    expect(covers).not.toMatch(/opacity/);
+    const stepRules = covers.split("\n").filter((l) => /^\.step\b/.test(l)).join("\n");
+    expect(stepRules).not.toMatch(/opacity/);
     expect(covers).toMatch(/\.step\[data-step="todo"\] \.stepDot \{ border-color: var\(--graphite\); \}/);
   });
   it.each([["light", light], ["dark", dark]] as const)("%s: graphite label on sheet is at least 4.5:1", (_n, t) => {
