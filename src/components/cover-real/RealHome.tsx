@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
-import { keyFacts } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
-import { CreationIssues, ErrorBox, FactItem, Headlines, Loading, Pending, StageBox } from "./parts";
+import { CreationIssues, ErrorBox, GlanceBand, Loading, PolicyCard } from "./parts";
 import { usePolicies } from "./use-policies";
 
-/** /home body for a real account: the stored cover and its key facts. */
+/** /home body for a real account: a glance band and one visual card per stored policy, in the same shape as the designed demo home. */
 export function RealHome() {
   const { state, issues, reload } = usePolicies();
   if (state.kind === "loading") return <Loading what="your cover" />;
@@ -18,17 +17,13 @@ export function RealHome() {
   return (
     <div className={s.stack}>
       <CreationIssues issues={issues} onRetry={reload} />
-      <SectionHeading title="Your cover" actions={<Link href="/policies" className="k-btn k-btn--secondary k-btn--sm">All policies</Link>}>
-        <div className={s.stack}>
-          {state.policies.map((p) => (
-            <article key={p.id} className={s.card} aria-label={p.title}>
-              <p className={s.lead}><b>{p.title}</b>{p.insurer ? ` · ${p.insurer}` : ""}</p>
-              <Headlines p={p} />
-              {p.error ? <ErrorBox code={p.error} onRetry={reload} /> : <StageBox p={p} onRetry={reload} />}
-              <Pending p={p} />
-              {keyFacts(p).length > 0 ? <ul className={s.facts}>{keyFacts(p).map((f) => <FactItem key={f.key} f={f} />)}</ul> : null}
-              <div className={s.row}><Link className="k-btn k-btn--secondary" href={`/policies/${encodeURIComponent(p.id)}`}>See all details</Link></div>
-            </article>
+      <SectionHeading title="Your cover at a glance">
+        <GlanceBand policies={state.policies} />
+      </SectionHeading>
+      <SectionHeading title="Your policies" actions={<Link href="/policies" className="k-btn k-btn--secondary k-btn--sm">All policies</Link>}>
+        <div className={s.policyGrid}>
+          {state.policies.map((p, i) => (
+            <PolicyCard key={p.id} p={p} index={i} onRetry={reload} linkLabel="See all details" withPending />
           ))}
         </div>
       </SectionHeading>
