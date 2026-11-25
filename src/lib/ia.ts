@@ -63,13 +63,13 @@ export const PAGES: readonly PageDef[] = [
     sections: [{ heading: "Your policies" }],
   },
   {
-    route: "/covers/add", href: "/covers/add", tab: "Add a cover", group: "cover",
-    title: "Add a cover", kicker: "Your family’s cover",
+    route: "/covers/add", href: "/covers/add", tab: "Add a policy", group: "cover",
+    title: "Add a policy",
     sections: [{ heading: "Policy schedule" }, { heading: "Policy terms and conditions" }, { heading: "Which plan is this?" }],
   },
   {
     route: "/covers/declarations", href: "/covers/declarations", tab: "Declarations and money", group: "cover",
-    title: "Declarations and money", kicker: "Your family’s cover",
+    title: "Declarations and money",
     sections: [{ heading: "What you told the insurer" }, { heading: "Premium you paid" }],
   },
   {
@@ -137,7 +137,7 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/money", href: "/money", tab: "Money desk", group: "money",
-    title: "Every premium and bill, matched.", kicker: "Money desk",
+    title: "Premiums and bills",
     sections: [
       { heading: "Found in your inbox" },
       { heading: "Coming up" },
@@ -149,7 +149,7 @@ export const PAGES: readonly PageDef[] = [
   },
   {
     route: "/tools", href: "/tools", tab: "Calculators and top-ups", group: "money",
-    title: "Free tools. No sign-up.", kicker: "Calculators and top-ups",
+    title: "Calculators",
     sections: [
       { heading: "Section 80D" },
       { heading: "Room rent" },

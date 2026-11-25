@@ -6,7 +6,7 @@ export function RetryTile({ label, onRetry }: { label: string; onRetry: () => vo
     <div className={`${styles.tile} ${styles.plain}`}>
       <span className={styles.label}>{label}</span>
       <span className={styles.caption}>Couldn&apos;t load</span>
-      <button type="button" className="k-btn k-btn--sm k-btn--secondary" onClick={onRetry}>Retry</button>
+      <button type="button" className="k-btn k-btn--sm k-btn--secondary" onClick={onRetry}>Try again</button>
     </div>
   );
 }

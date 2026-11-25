@@ -27,9 +27,9 @@ export const emptyAssistant: AssistantAdapter = {
   ask: () =>
     none({
       reply: "Add your first policy and I can answer from it. Until then I have nothing of yours to read.",
-      steps: ["Open My policies", "Upload your policy", "Ask me again"],
+      steps: ["Open My policies", "Add a policy", "Ask me again"],
       route: "/policies",
-      goLabel: "Upload your policy",
+      goLabel: "Add a policy",
     }),
 };
 export const emptyEmail: EmailAdapter = { scan: () => none({ found: 0, items: [] }) }; // backend gap

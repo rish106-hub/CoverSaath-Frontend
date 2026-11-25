@@ -450,7 +450,7 @@ function SourcesSection({ logos }: { logos: Logos }) {
   return (
     <div className={s.stack}>
       {load === "failed" ? (
-        <p className={s.notice} role="alert">Could not load your sources. <button type="button" className="k-btn k-btn--sm" onClick={loadPrefs}>Retry</button></p>
+        <p className={s.notice} role="alert">{"Couldn't load your sources."} <button type="button" className="k-btn k-btn--sm" onClick={loadPrefs}>Try again</button></p>
       ) : null}
       <ul className={s.sourceGrid}>
         {cards.map((c) => {
@@ -563,7 +563,7 @@ export function ProfileView({ logos }: { logos: Logos }) {
   }, []);
 
   const wait = failed ? (
-    <p className={s.notice} role="alert">Could not load your details. Refresh to try again.</p>
+    <p className={s.notice} role="alert">{"Couldn't load your details. Try again."}</p>
   ) : (
     <Skeleton shape="list" />
   );

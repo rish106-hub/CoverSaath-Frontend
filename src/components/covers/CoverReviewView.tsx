@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { adapters } from "@/adapters";
 import { errorText } from "@/adapters/documents-contract";
 import type { ConflictView, FactView, Facts, SourceView } from "@/adapters/covers-contract";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "./use-holdings";
 import { isInsurerUnchecked } from "@/adapters/insurer-tier";
 import { formatValue, groupFacts, isOpen, labelOf, pageText, sideLabel, sourceLabel, sourcePageNumber, sourceQuote, statusText, tierText } from "./format";
@@ -147,7 +147,6 @@ export function CoverReviewView({ holding }: { holding?: string }) {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>What we found in your policy</PageTitle>
       </div>
 
@@ -163,10 +162,10 @@ export function CoverReviewView({ holding }: { holding?: string }) {
       {note ? <p className={s.done} role="status">{note}</p> : null}
 
       {holdings && holdings.length === 0 && !listError ? (
-        <SectionHeading title="No cover yet">
+        <SectionHeading title="No policy yet">
           <div className={s.card}>
             <p className={s.lead}>Add your policy and we will read it for you.</p>
-            <div className={s.row}><Link className="k-btn" href="/covers/add">Add a cover</Link></div>
+            <div className={s.row}><Link className="k-btn" href="/covers/add">Add a policy</Link></div>
           </div>
         </SectionHeading>
       ) : null}
@@ -178,7 +177,7 @@ export function CoverReviewView({ holding }: { holding?: string }) {
       ) : null}
 
       {facts && facts.facts.length === 0 && holdings && holdings.length > 0 ? (
-        <SectionHeading title="Facts"><p className={s.quiet}>Nothing has been read yet. Confirm your plan on Add a cover, then check back.</p></SectionHeading>
+        <SectionHeading title="Details found"><p className={s.quiet}>Nothing read yet. Confirm your plan on Add a policy, then check back.</p></SectionHeading>
       ) : null}
 
       {groups.length > 0 ? (

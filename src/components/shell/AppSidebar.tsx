@@ -148,7 +148,7 @@ export function AppSidebar({ pathname = "/home" }: { pathname?: string }) {
             <div className={`${styles.block} ${styles.extra}`}>
               <div className={styles.blabel}>Today</div>
               <div className={styles.text}>Father’s senior plan renews in <b>132 days</b>.</div>
-              <Link href="/compare" className={styles.link}>Review it →</Link>
+              <Link href="/compare" className={styles.link}>Review it</Link>
             </div>
             <hr className={`${styles.rule} ${styles.extra}`} />
             <div className={`${styles.block} ${styles.extra}`}>

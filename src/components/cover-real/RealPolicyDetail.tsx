@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
 import { labelOf } from "@/lib/fact-labels";
@@ -26,12 +26,11 @@ export function RealPolicyDetail({ id }: { id: string }) {
   if (state.kind === "loading") return <Loading what="your policy" />;
   if (state.kind === "error") return <ErrorBox code={state.code} onRetry={reload} />;
   const p = state.kind === "ready" ? state.policies.find((x) => x.id === id) : undefined;
-  if (!p) return <EmptyState title="Policy not found" body="This policy is not on your account. Add your policy to see it here." cta="Add a cover" href="/covers/add" />;
+  if (!p) return <EmptyState title="Policy not found" body="This policy isn't on your account." cta="Add a policy" href="/covers/add" />;
   const groups = GROUP_ORDER.map((label) => ({ label, facts: p.facts.filter((f) => groupOf(f.group) === label) })).filter((g) => g.facts.length > 0);
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>{p.title}</PageTitle>
         {p.insurer ? <p className={s.quiet}>{p.insurer}</p> : null}
       </div>

@@ -230,7 +230,7 @@ describe("useAutosave", () => {
     render(<Probe save={save} />);
     await act(async () => { fireEvent.click(screen.getByText("two")); });
     expect(await screen.findByText(/Could not save/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect(save.mock.calls).toEqual([[2], [2]]);
   });

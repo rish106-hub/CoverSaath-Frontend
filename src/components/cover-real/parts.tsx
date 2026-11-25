@@ -13,7 +13,7 @@ import s from "@/components/covers/covers.module.css";
 
 /** What a person can do next, per stage of a holding that has no facts yet. */
 export const STAGE_NOTE: Record<Stage, { title: string; body: string; cta?: { label: string; href: string } } | null> = {
-  reading: { title: "Still being read", body: "We are reading this document. Check again in a moment. If nothing changes, add the document again.", cta: { label: "Add the document again", href: "/covers/add" } },
+  reading: { title: "Still being read", body: "We're reading this document. Check again in a moment.", cta: { label: "Add the document again", href: "/covers/add" } },
   choose_plan: { title: "Tell us which plan this is", body: "Pick your insurer and plan so we can read the right details.", cta: { label: "Choose your plan", href: "/covers/add?resume=1" } },
   needs_review: null,
   ready: null,

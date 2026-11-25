@@ -157,7 +157,7 @@ describe("profile page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save address" }));
     await screen.findByText(/Could not save/);
     expect(screen.getByLabelText("Address line 1")).toHaveValue("22, Park Road");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText(/Pune, Maharashtra 411001/)).toBeInTheDocument();
   });
 
@@ -271,7 +271,7 @@ describe("SaveState", () => {
     expect(screen.getByText("Saved")).toBeInTheDocument();
     const retry = vi.fn();
     rerender(<SaveState status="error" onRetry={retry} />);
-    fireEvent.click(within(container).getByRole("button", { name: "Retry" }));
+    fireEvent.click(within(container).getByRole("button", { name: "Try again" }));
     expect(retry).toHaveBeenCalled();
   });
 });

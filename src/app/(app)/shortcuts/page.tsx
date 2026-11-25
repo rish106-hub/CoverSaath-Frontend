@@ -8,7 +8,7 @@ export default function Page() {
   return (
     <>
       <HelpHead route="/shortcuts" />
-      <DemoGate empty={<EmptyState title="Shortcuts start from your policy" body="Upload your policy and Knowvia reads it for you." />}><ShortcutsView /></DemoGate>
+      <DemoGate empty={<EmptyState title="Add a policy to use shortcuts" body="Knowvia reads it, then shortcuts work on your own policy." />}><ShortcutsView /></DemoGate>
     </>
   );
 }
