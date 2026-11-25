@@ -15,7 +15,7 @@
 .choice b { display: block; font-weight: 600; }
 .choice span { color: var(--graphite); }
 .field { display: flex; flex-direction: column; gap: 6px; font: 500 var(--fs-14) var(--font-sans); color: var(--graphite); min-width: 0; }
-.field input, .field select, .field textarea { min-height: var(--btn-h); padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 400 var(--fs-15) var(--font-sans); max-width: 100%; }
+.field input, .field select, .field textarea { min-height: var(--btn-h); padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--field-border); background: var(--sheet); color: var(--ink); font: 400 var(--fs-15) var(--font-sans); max-width: 100%; }
 .field textarea { padding: 10px 12px; min-height: 88px; }
 .grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
 .done { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--r-lg); background: var(--mist); color: var(--ink); font: 500 var(--fs-15)/1.4 var(--font-sans); }

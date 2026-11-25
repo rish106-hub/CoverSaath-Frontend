@@ -106,7 +106,7 @@
 .chip[data-on="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .twoCol { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 6px; font: 400 var(--fs-13) var(--font-sans); color: var(--graphite); }
-.input, .phone { min-height: 46px; display: flex; align-items: center; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--sheet); color: var(--ink); font: 400 var(--fs-15) var(--font-sans); }
+.input, .phone { min-height: 46px; display: flex; align-items: center; padding: 0 14px; border: 1px solid var(--field-border); border-radius: var(--r-md); background: var(--sheet); color: var(--ink); font: 400 var(--fs-15) var(--font-sans); }
 .input:focus, .phone:focus-within { border: 2px solid var(--harbour); padding: 0 13px; outline: none; }
 .phone { gap: 8px; }
 .cc { color: var(--graphite); }
