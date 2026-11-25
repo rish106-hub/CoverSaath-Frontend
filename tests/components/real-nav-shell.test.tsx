@@ -31,6 +31,7 @@ describe("shell nav by account kind", () => {
     render(<AppSidebar pathname="/policies" />);
     await act(async () => {});
     expect(hrefs()).not.toContain("/assistant");
+    expect(screen.getByText("Emergency").closest("a")).toHaveAttribute("href", "/emergency");
   });
 
   it("demo account: nav unchanged", async () => {
@@ -40,5 +41,6 @@ describe("shell nav by account kind", () => {
     const h = hrefs();
     for (const x of ["/assistant", "/cards", "/desk", "/review", "/emergency"]) expect(h).toContain(x);
     expect(screen.getByRole("button", { name: "Help" })).toBeInTheDocument();
+    expect(screen.getByText("Emergency").closest("a")).toHaveAttribute("href", "/emergency");
   });
 });

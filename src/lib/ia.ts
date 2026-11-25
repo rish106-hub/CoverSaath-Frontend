@@ -11,8 +11,8 @@ export type Group = {
   realHome?: string;
 };
 
-/** Who is looking at the nav. "real" = a backend (beta) account; "demo" = the mock demo session. */
-export type NavAudience = "demo" | "real";
+/** Who is looking at the nav. "real" = a confirmed backend (beta) account; "demo" = a confirmed mock demo session; "pending" = session not known yet. */
+export type NavAudience = "demo" | "real" | "pending";
 
 export const GROUPS: readonly Group[] = [
   { id: "cover", label: "My cover", color: "var(--g-cover)", home: "/home" },
@@ -216,7 +216,7 @@ export const groupById = (id: GroupId): Group => GROUPS.find((g) => g.id === id)
 
 /** Tabs of a group. Real accounts never see pages that would open "cannot use it yet". */
 export function pagesIn(group: GroupId, audience: NavAudience = "demo"): PageDef[] {
-  return PAGES.filter((p) => p.group === group && !p.route.includes("[") && !(audience === "real" && p.demoOnly));
+  return PAGES.filter((p) => p.group === group && !p.route.includes("[") && !(audience !== "demo" && p.demoOnly));
 }
 
 /** Where a nav link goes for this audience (Emergency leads real accounts to network hospitals). */

@@ -29,3 +29,11 @@ describe("nav for real (backend) accounts, issue #104", () => {
     expect(groupHome(GROUPS.find((g) => g.id === "help")!, "demo")).toBe("/desk");
   });
 });
+
+describe("pending session", () => {
+  it("hides demo-only pages but keeps Emergency on /emergency", () => {
+    expect(GROUPS.flatMap((g) => pagesIn(g.id, "pending").map((p) => p.route))).not.toContain("/desk");
+    expect(navHref(emergency, "pending")).toBe("/emergency");
+    expect(groupHome(GROUPS.find((g) => g.id === "help")!, "pending")).toBe("/desk");
+  });
+});

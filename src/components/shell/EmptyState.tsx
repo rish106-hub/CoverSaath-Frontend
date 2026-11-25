@@ -76,10 +76,11 @@ export function DemoGate({ children, empty }: { children: ReactNode; empty: Reac
 }
 
 /**
- * Which nav a viewer gets. Anything but a confirmed demo session gets the real nav, so demo-only links never flash
- * while the session loads and never show for a backend account.
+ * Which nav a viewer gets. While the session loads the audience is "pending": demo-only links stay hidden (no flash for a
+ * real account) but redirect targets stay neutral, because only a confirmed backend account may be sent to real-only targets.
  */
 export function useNavAudience(): NavAudience {
   const { state } = useMe();
-  return state.status === "ready" && state.me.source !== "backend" ? "demo" : "real";
+  if (state.status !== "ready") return "pending";
+  return state.me.source === "backend" ? "real" : "demo";
 }
