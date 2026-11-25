@@ -88,11 +88,11 @@ describe("loading skeleton (row 28)", () => {
     expect(box.querySelector(".sr-only")?.textContent).toBe("Loading");
   });
 
-  it("paints the bars and block with --sunken at full opacity", () => {
+  it("paints the bars and block with --line at full opacity", () => {
     const css = readFileSync("src/components/shell/ErrorPanel.module.css", "utf8");
     for (const sel of [".bar", ".block"]) {
       const rule = css.match(new RegExp(`^\\${sel} \\{([^}]*)\\}`, "m"))![1];
-      expect(rule).toMatch(/background:\s*var\(--sunken\)/);
+      expect(rule).toMatch(/background:\s*var\(--line\)/);
       expect(rule).not.toMatch(/opacity/);
     }
   });
