@@ -22,7 +22,7 @@ export function HomeGreeting() {
   }, []);
   const first = state.status === "ready" ? state.me.owner.displayName.split(" ")[0] : null;
   return (
-    <div>
+    <div className="k-no-reveal">
       <Kicker>{today || " "}</Kicker>
       <PageTitle>{first ? `${hello}, ${first}.` : `${hello}.`}</PageTitle>
       {/* The h1 stays when the backend is down so the page keeps its heading; the notice sits below it as an h2. */}

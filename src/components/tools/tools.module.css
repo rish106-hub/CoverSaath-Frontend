@@ -89,3 +89,7 @@
 .darkCard { background: var(--panel-inverse-bg); color: var(--paper-fixed); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--panel-inverse-edge); }
 .darkLink { color: var(--sea-on-ink); font: 500 var(--fs-14) var(--font-sans); }
 @media (max-width: 700px) { .barRow { grid-template-columns: 1fr; } }
+
+@media (pointer: coarse) {
+  .segBtn, .chip, .bchip, .share { min-height: 44px; }
+}

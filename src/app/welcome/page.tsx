@@ -1,10 +1,11 @@
 import { WelcomeIntro } from "@/components/access/Welcome";
+import styles from "./welcome.module.css";
 
 export const metadata = { title: "Welcome" };
 
 export default function Welcome() {
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "72px 48px", display: "flex", flexDirection: "column", gap: 24 }}>
+    <main className={styles.page}>
       <WelcomeIntro />
     </main>
   );

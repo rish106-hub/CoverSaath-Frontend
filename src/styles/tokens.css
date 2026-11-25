@@ -101,7 +101,7 @@
   --fs-48: 48px;
   --fs-52: 52px;
   /* Fluid display sizes (previously inline clamp() values). */
-  --fs-fluid-page-title: clamp(44px, 4.2vw, 52px);
+  --fs-fluid-page-title: clamp(30px, 7vw, 52px);
   --fs-fluid-stat: clamp(26px, 3vw, 36px);
   --fs-fluid-hero: clamp(40px, 4vw, 54px);
   --fs-fluid-score: clamp(48px, 5vw, 68px);
@@ -113,7 +113,7 @@
   --r-btn: 8px;
   --r-btn-sm: 6px;
   --btn-h: 44px;
-  --btn-h-sm: 36px;
+  --btn-h-sm: 36px; /* raised to 44px for touch in the pointer: coarse block below */
 
   --shadow-sm: 0 1px 2px rgba(22, 19, 15, 0.06), 0 4px 12px rgba(22, 19, 15, 0.04);
   --shadow-md: 0 2px 4px rgba(22, 19, 15, 0.05), 0 12px 32px rgba(22, 19, 15, 0.08);
@@ -180,4 +180,9 @@
     --t-slow: 1ms;
     --t-xslow: 1ms;
   }
+}
+
+/* Touch targets: small buttons reach the 44px minimum on touch screens only, so desktop density is unchanged. */
+@media (pointer: coarse) {
+  :root { --btn-h-sm: 44px; }
 }

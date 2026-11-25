@@ -8,3 +8,10 @@
 .ptabs a { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; margin-bottom: -1px; border-bottom: 2px solid transparent; font: 500 var(--fs-15) var(--font-sans); color: var(--graphite); }
 .ptabs a:hover { color: var(--ink); }
 .ptabs a.tabOn { color: var(--ink); font-weight: 600; }
+
+/* Phones: the page title is what people came for, so the breadcrumb row goes and the tab strip snaps and fades at its right edge to show it scrolls. */
+@media (max-width: 599px) {
+  .prow { display: none; }
+  .ptabs { scroll-snap-type: x proximity; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 28px; }
+  .ptabs a { scroll-snap-align: start; }
+}
