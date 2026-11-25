@@ -8,6 +8,8 @@ import { makeRequestKey, uploads } from "@/adapters/uploads";
 import { stageOf } from "@/adapters/covers";
 import type { CandidateView, Candidates } from "@/adapters/covers-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageSkeleton } from "@/components/shell/ErrorPanel";
+import { ErrorBox } from "@/components/cover-real/parts";
 import { codeOf } from "./use-holdings";
 import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, type Slot } from "./add-cover-flow";
 import { payments, type PolicySlots } from "@/adapters/payments";
@@ -70,6 +72,9 @@ export function AddCoverView() {
   const [over, setOver] = useState(false);
   const [checking, setChecking] = useState(false);
   const [slots, setSlots] = useState<PolicySlots | null>(null);
+  // The first read of the person's consent and uploads failed. Kept apart from `error` so the page never falls through to the consent form on a failed read.
+  const [loadFailure, setLoadFailure] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const scheduleInput = useRef<HTMLInputElement>(null);
   const consentKey = useRef(makeRequestKey());
   const confirmKey = useRef(makeRequestKey());
@@ -146,13 +151,18 @@ export function AddCoverView() {
       }).catch(() => undefined);
     }).catch((e) => {
       if (!live) return;
-      setError(codeOf(e));
-      setConsent(false);
+      // Consent stays unknown (null): showing the consent form after a failed read would ask for a go-ahead already given.
+      setLoadFailure(codeOf(e));
     });
     return () => { live = false; };
-    // afterSchedule only calls setters and the candidates fetch; the first render copy is enough for this once-on-load effect.
+    // afterSchedule only calls setters and the candidates fetch; the first render copy is enough for this once-per-attempt effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadAttempt]);
+
+  function retryLoad() {
+    setLoadFailure(null);
+    setLoadAttempt((n) => n + 1);
+  }
 
   async function accept() {
     setBusy(true);
@@ -264,11 +274,13 @@ export function AddCoverView() {
         <PageTitle>Add a cover</PageTitle>
       </div>
 
-      {consent === null ? <p className={s.quiet} role="status">Loading...</p> : null}
+      {consent === null && !loadFailure ? <div role="status" aria-label="Loading your upload page"><PageSkeleton height={160} /></div> : null}
+      {consent === null && loadFailure ? <ErrorBox code={loadFailure} onRetry={retryLoad} /> : null}
 
       {error ? (
         <p className={s.alert} role="alert">
           {errorText(error)} {error === "UNAUTHENTICATED" ? <Link href="/signin">Sign in</Link> : null}
+          {holdingId && !cands && !done && error !== "UNAUTHENTICATED" ? <> <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void loadCandidates(holdingId)}>Try again</button></> : null}
         </p>
       ) : null}
 

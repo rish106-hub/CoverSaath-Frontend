@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useMe } from "@/components/shell/useMe";
 import { UPLOAD_HREF } from "@/components/shell/EmptyState";
+import { PageSkeleton } from "@/components/shell/ErrorPanel";
 
 /**
  * The welcome steps are a sample walk-through (demo session only). A real account adds its policy in the one real flow,
@@ -14,6 +15,6 @@ export function RealUserToUpload({ children }: { children: ReactNode }) {
   const { state } = useMe();
   const real = state.status === "ready" && state.me.source === "backend";
   useEffect(() => { if (real) router.replace(UPLOAD_HREF); }, [real, router]);
-  if (state.status === "loading" || real) return null;
+  if (state.status === "loading" || real) return <PageSkeleton />;
   return <>{children}</>;
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { adapters, type UiOnboarding } from "@/adapters";
 import { SaveState } from "@/components/ui/SaveState";
 import { useMe } from "@/components/shell/useMe";
+import { ErrorPanel } from "@/components/shell/ErrorPanel";
 import { useAutosave } from "@/lib/use-autosave";
 import { Kicker } from "@/components/type";
 import dynamic from "next/dynamic";
@@ -151,12 +152,15 @@ function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl"
  * Demo session: ReadingAdapter findings for the sample policy, then the sample schedule facts, so the list is never empty.
  * Real session: only the findings of the person's own first holding; no sample rows, and none when there is no holding yet.
  */
-function useFindings(): { rows: Row[]; loading: boolean } {
+function useFindings(): { rows: Row[]; loading: boolean; failed: boolean; retry: () => void } {
   const { state } = useMe();
   const known = state.status !== "loading";
   const demo = state.status === "ready" && state.me.source !== "backend";
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => { setFailed(false); setLoading(true); setAttempt((n) => n + 1); }, []);
   useEffect(() => {
     if (!known) return;
     let live = true;
@@ -172,15 +176,16 @@ function useFindings(): { rows: Row[]; loading: boolean } {
     const load = demo
       ? adapters.reading.findings("northstar-floater")
       : adapters.policy.list().then((ps) => (ps[0] ? adapters.reading.findings(ps[0].id) : []));
-    load.then((fs) => done(toRows(fs))).catch(() => done([]));
+    // A failed read is not "no key terms": it gets its own state with a retry, so the person is never shown an empty list as the answer.
+    load.then((fs) => done(toRows(fs))).catch(() => { if (live) { setLoading(false); setFailed(true); } });
     return () => { live = false; };
-  }, [known, demo]);
-  return { rows, loading };
+  }, [known, demo, attempt]);
+  return { rows, loading, failed, retry };
 }
 
 function ReadingStep() {
   // The sweep runs only while the findings request is in flight; findings show when they arrive, not on a timer.
-  const { rows, loading } = useFindings();
+  const { rows, loading, failed, retry } = useFindings();
   const n = loading ? 0 : rows.length;
   const [say, setSay] = useState(0);
   const shown = rows.slice(0, n).reverse();
@@ -188,7 +193,7 @@ function ReadingStep() {
     <>
     <div>
       <Kicker>{WELCOME_STEPS[1].kicker}</Kicker>
-      <h1 className={styles.h1}>{loading ? "Reading your policy" : rows.length ? `${rows.length} key terms found` : "No key terms read yet"}</h1>
+      <h1 className={styles.h1}>{loading ? "Reading your policy" : failed ? "We could not read your policy yet" : rows.length ? `${rows.length} key terms found` : "No key terms read yet"}</h1>
     </div>
     <div className={styles.read}>
       <div className={styles.doc} aria-hidden>
@@ -200,6 +205,8 @@ function ReadingStep() {
           <span className={styles.foundLab}>{loading ? "Reading…" : `Found · ${n}`}</span>
         </div>
         <div aria-live="polite" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {failed ? <ErrorPanel onRetry={retry} title="The key terms did not load" home={false} /> : null}
+          {!loading && !failed && rows.length === 0 ? <p className={styles.fv} data-testid="reading-empty">Nothing has been read yet. Add a policy and the key terms found in it show here.</p> : null}
           {shown.map((f) => (
             <div key={f.k} className={styles.frow}>
               <span className={styles.fico} aria-hidden>{f.icon}</span>
