@@ -47,15 +47,15 @@
 .headBtn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .headDot { display: block; width: 8px; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--paper-fixed) 60%, transparent); transition: width var(--t-slow) var(--ease); }
 .headDotOn { width: 28px; background: var(--marker); }
-.headline { font: 400 var(--fs-52)/1.02 var(--font-serif); letter-spacing: -0.02em; animation: fade 0.42s both; }
+.headline { font: 400 var(--fs-52)/1.02 var(--font-serif); letter-spacing: -0.02em; animation: headline-in 1020ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
 .headline em { display: block; color: var(--marker); }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-.filter { min-height: 34px; padding: 0 14px; border-radius: var(--r-btn-sm); border: 1px solid color-mix(in srgb, var(--paper-fixed) 35%, transparent); background: transparent; color: var(--paper-fixed); font: 500 var(--fs-13) var(--font-sans); cursor: pointer; }
+.filter { min-height: 34px; padding: 0 14px; border-radius: var(--r-btn-sm); border: 1px solid color-mix(in srgb, var(--paper-fixed) 35%, transparent); background: transparent; color: var(--paper-fixed); font: 500 var(--fs-13) var(--font-sans); cursor: pointer; transition: color 300ms cubic-bezier(0.25, 1, 0.5, 1), background-color 300ms cubic-bezier(0.25, 1, 0.5, 1); }
 .filterOn { background: var(--paper-fixed); color: var(--ink-fixed); border-color: var(--paper-fixed); }
 .lanes { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-height: 480px; max-height: 620px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, var(--black-fixed) 12%, var(--black-fixed) 88%, transparent); mask-image: linear-gradient(transparent, var(--black-fixed) 12%, var(--black-fixed) 88%, transparent); }
 .lane { display: flex; flex-direction: column; gap: 12px; }
-.up { animation: up 38s linear infinite; }
-.down { animation: down 46s linear infinite; }
+.up { animation: up 48s linear infinite; }
+.down { animation: down 56s linear infinite; }
 .lane:hover, .lanesPaused .lane { animation-play-state: paused; }
 .ic { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; border-radius: var(--r-btn); border: 0; cursor: pointer; font-family: var(--font-sans); }
 .icOn { outline: 3px solid var(--marker); }
@@ -70,6 +70,7 @@
 .pickX { min-height: 36px; padding: 0 14px; border-radius: var(--r-btn); border: 1px solid var(--line-strong-fixed); background: var(--white-fixed); color: var(--ink-fixed); font: 500 var(--fs-13) var(--font-sans); cursor: pointer; }
 .themeSlot { position: fixed; right: 16px; bottom: 16px; z-index: 5; }
 @keyframes fade { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
+@keyframes headline-in { 0% { opacity: 0; filter: blur(8px); } 100% { opacity: 1; filter: blur(0); } }
 @keyframes up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
 @keyframes down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .up, .down, .form, .headline, .pick { animation: none; } .headDot { transition: none; } }

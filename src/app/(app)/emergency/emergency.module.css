@@ -1,0 +1,2 @@
+/* Emergency is a panic screen: nothing moves, nothing waits on a transition. */
+.root, .root * { animation: none !important; transition: none !important; }
