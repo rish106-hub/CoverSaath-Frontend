@@ -62,9 +62,11 @@ test("one stage", async ({ page }) => {
     const style = await page.evaluate(() => {
       const kid = document.querySelector("main.k-content > *:not(.k-no-fade)") as HTMLElement;
       const cs = getComputedStyle(kid);
-      return { duration: cs.animationDuration, curve: cs.animationTimingFunction, name: cs.animationName };
+      const reduced = document.documentElement.dataset.motion === "reduced" || matchMedia("(prefers-reduced-motion: reduce)").matches;
+      return { duration: cs.animationDuration, curve: cs.animationTimingFunction, name: cs.animationName, reduced };
     });
-    expect(style.duration).toContain("0.2s");
+    // Under reduced motion (OS setting, in-app setting, or a low-capacity device such as a CI runner) the app shortens every animation to 1ms.
+    expect(style.duration).toContain(style.reduced ? "0.001s" : "0.2s");
     expect(style.curve).toContain("cubic-bezier(0.25, 1, 0.5, 1)");
     expect(style.name).not.toMatch(/transform/);
     await page.unrouteAll();
