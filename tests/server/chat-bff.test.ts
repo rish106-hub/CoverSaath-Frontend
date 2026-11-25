@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { seal } from "@/server/backend/session";
+import { CHAT_TIMEOUT_MS } from "@/adapters/chat-timing";
 
 const SECRET = "s".repeat(40);
 let cookieValue: string | undefined;
@@ -109,5 +110,22 @@ describe("chat BFF", () => {
     expect((await POST(req({ text: "x" }))).status).toBe(502);
     expect(calls).toHaveLength(1); // guardedFetch is a bulkhead plus breaker: it never retries
     expect(signals[0]).toBeInstanceOf(AbortSignal);
+  });
+  it("aborts the upstream call at its deadline and answers 504 BACKEND_TIMEOUT instead of hanging", async () => {
+    vi.useFakeTimers();
+    try {
+      let aborted = false;
+      vi.stubGlobal("fetch", (_u: string, init: RequestInit) => new Promise((_r, reject) => { init.signal?.addEventListener("abort", () => { aborted = true; reject(new DOMException("aborted", "AbortError")); }); }));
+      const pending = POST(req({ text: "x" }));
+      await vi.advanceTimersByTimeAsync(CHAT_TIMEOUT_MS - 1);
+      expect(aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(2);
+      const res = await pending;
+      expect(aborted).toBe(true);
+      expect(res.status).toBe(504);
+      expect(((await res.json()) as { code: string }).code).toBe("BACKEND_TIMEOUT");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -35,6 +35,30 @@ test("ask a seeded question and see a streamed answer with facts chips", async (
   expect(backendCalls, "no browser call to the backend API").toEqual([]);
 });
 
+test("a failed turn offers Retry, and a slow turn says it is still working", async ({ page }) => {
+  test.setTimeout(90_000); // the slow mock stays silent for 12 s
+  await page.goto("/chat");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByText("Before we answer")).toBeHidden();
+  const log = page.getByRole("log", { name: "Conversation" });
+
+  // Mock mode "simulate fail": the first try drops the stream, the same words answer on Retry.
+  await page.getByLabel("Your question").fill("simulate fail: what are my waiting periods?");
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await expect(log.getByRole("alert")).toHaveText("Something went wrong. Try again.");
+  await expect(page.getByLabel("Your question")).toBeEnabled();
+  await log.getByRole("button", { name: "Retry" }).click();
+  await expect(log.getByText(/36 months for pre-existing diseases/)).toBeVisible();
+  await expect(log.getByRole("alert")).toHaveCount(0);
+
+  // Mock mode "simulate slow": silent for 12 s, so the "Still working…" line shows before the answer.
+  await page.getByLabel("Your question").fill("simulate slow: what are my waiting periods?");
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await expect(log.getByText("Still working…")).toBeVisible({ timeout: 15_000 });
+  await expect(log.getByText("Still working…")).toBeHidden({ timeout: 15_000 });
+});
+
 test("hospital list renders for a seeded pincode", async ({ page }) => {
   const backendCalls: string[] = [];
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });

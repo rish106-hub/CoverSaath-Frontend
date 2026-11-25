@@ -30,3 +30,8 @@ export const CHAT_MAX_DURATION_S = 60;
 export const CHAT_TURN_TIMEOUT = "CHAT_TURN_TIMEOUT";
 /** Codes that mean "ran out of time": the backend's own deadline, the BFF idle cut and the browser watchdog. */
 export const isTurnTimeout = (code: string): boolean => code === CHAT_TURN_TIMEOUT || code === "BACKEND_TIMEOUT";
+
+/** After this long without an answer the page adds "Still working…" next to the pending turn. It is only a status line: the turn keeps running. */
+export const SLOW_AFTER_MS = 10_000;
+/** Browser deadline for the non-stream assistant call (Ask panel). Slightly past CHAT_TIMEOUT_MS so the BFF's coded BACKEND_TIMEOUT arrives first. */
+export const ASSISTANT_DEADLINE_MS = CHAT_TIMEOUT_MS + 5_000; // 50 s

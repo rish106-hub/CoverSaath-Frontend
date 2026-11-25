@@ -126,4 +126,16 @@ describe("browser chat go-ahead client", () => {
       vi.useRealTimers();
     }
   });
+  it("gives up when opening a thread never answers, instead of leaving the page pending", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", vi.fn((_u: string, init: RequestInit) => new Promise((_r, reject) => { init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))); })));
+      const outcome = expect(backendChat.startThread("hold-1")).rejects.toMatchObject({ code: "BACKEND_TIMEOUT", retryable: true });
+      await vi.advanceTimersByTimeAsync(TURN_IDLE_MS + 1_000);
+      await outcome;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
