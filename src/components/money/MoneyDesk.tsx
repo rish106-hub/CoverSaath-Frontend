@@ -8,6 +8,7 @@ import { SectionHeading } from "@/components/type";
 import { reconcileReceipts } from "@/lib/reconcile";
 import { formatRs } from "@/lib/inflation";
 import { inbox, expectedRows, months, renewals, byPerson, inFlight, weekLog } from "@/data/mock";
+import { SoonButton } from "@/components/ui/SoonButton";
 import { InflationPlanner } from "./InflationPlanner";
 import { RemindRowSlot } from "./slots";
 import styles from "./money.module.css";
@@ -100,7 +101,7 @@ export function MoneyDesk() {
       <div className={styles.head}>
         <div className={styles.tools}>
           <span className={styles.connected}><BrandLogo id="gmail" size={22} />Gmail connected</span>
-          <button type="button" className="k-btn">Add Outlook</button>
+          <SoonButton>Add Outlook</SoonButton>
           <button type="button" className="k-btn k-btn--primary" onClick={() => runScan(0)} disabled={!done}>{done ? "Scan again" : "Scanning…"}</button>
         </div>
       </div>
@@ -186,7 +187,7 @@ export function MoneyDesk() {
                 ))}
               </div>
             </div>
-            <button type="button" className="k-btn" style={{ alignSelf: "flex-start" }}>Download 80D pack</button>
+            <span style={{ alignSelf: "flex-start" }}><SoonButton>Download 80D pack</SoonButton></span>
           </div>
         </SectionHeading>
         <SectionHeading title="Bill and amount paid">
