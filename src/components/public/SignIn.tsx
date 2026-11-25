@@ -21,6 +21,15 @@ type Step = "start" | "otp" | "mail" | "done";
 const JOURNEY = ["Sign in", "Add policy", "Reading", "Home"];
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
 
+const WIDE_QUERY = "(min-width: 1101px)";
+const subscribeWide = (cb: () => void) => {
+  if (typeof window.matchMedia !== "function") return () => undefined;
+  const m = window.matchMedia(WIDE_QUERY);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+};
+const readWide = () => typeof window.matchMedia === "function" && window.matchMedia(WIDE_QUERY).matches;
+
 export function SignIn() {
   const [step, setStep] = useState<Step>("start");
   const [via, setVia] = useState<"phone" | "mail">("phone");
@@ -29,6 +38,8 @@ export function SignIn() {
   const [error, setError] = useState("");
   const { run: once, busy, alive } = useSingleFlight();
   const returnTo = useReturnPath();
+  // The showcase pane is hidden by CSS at 1100px and below. Not mounting it there keeps its card lanes, ticker and animations off phones (it was most of the main-thread work on /signin).
+  const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const demoRequested = useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).get("demo") === "1", () => false);
 
   function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
@@ -149,7 +160,7 @@ export function SignIn() {
         </div>
         <div className={styles.terms}>By continuing you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.</div>
       </div>
-      <ShowcasePanel />
+      {wide ? <ShowcasePanel /> : null}
       <div className={styles.themeSlot}><ThemeToggle /></div>
     </div>
   );

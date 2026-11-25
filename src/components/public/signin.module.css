@@ -35,7 +35,7 @@
 .whyT { font: 500 var(--fs-13) var(--font-sans); }
 .whyD { font: 400 var(--fs-13)/1.35 var(--font-sans); color: var(--graphite); }
 .terms { margin-top: 14px; max-width: 440px; font: 400 var(--fs-13) var(--font-sans); color: var(--graphite); }
-.terms a { color: var(--harbour); }
+.terms a { color: var(--harbour); text-decoration: underline; }
 .right { background: var(--harbour-fixed); color: var(--paper-fixed); padding: 40px 40px 0; display: flex; flex-direction: column; gap: 22px; overflow: hidden; position: relative; min-width: 0; }
 .rtop { display: flex; justify-content: space-between; align-items: center; }
 .rlab { font: 600 var(--fs-14) var(--font-sans); color: var(--marker); }
