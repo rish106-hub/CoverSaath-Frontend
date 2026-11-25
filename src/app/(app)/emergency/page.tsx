@@ -1,8 +1,10 @@
-import { DemoGate, EmptyState } from "@/components/shell/EmptyState";
+import { SoonBento } from "@/components/soon/SoonBento";
+import { EmergencyLive } from "@/components/soon/EmergencyLive";
+import { DemoGate } from "@/components/shell/EmptyState";
 import { EmergencyView } from "@/components/help/EmergencyView";
 
 export const metadata = { title: "Emergency" };
 
 export default function Page() {
-  return <DemoGate empty={<EmptyState title="Find a hospital near you" body="Search network hospitals by pincode." cta="Find network hospitals" href="/hospitals" />}><EmergencyView /></DemoGate>;
+  return <><EmergencyLive /><DemoGate empty={<SoonBento tiles={[{ label: "E-card for the desk" }, { label: "Blood availability" }, { label: "Share location with family" }]} />}><EmergencyView /></DemoGate></>;
 }

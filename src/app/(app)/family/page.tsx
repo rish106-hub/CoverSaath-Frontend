@@ -1,3 +1,4 @@
+import { SoonBento } from "@/components/soon/SoonBento";
 import { DemoGate } from "@/components/shell/EmptyState";
 import { Kicker } from "@/components/type";
 import { FamilyTitle } from "@/components/family/FamilyTitle";
@@ -16,7 +17,7 @@ export default function Page() {
         {page.kicker ? <Kicker>{page.kicker}</Kicker> : null}
         <FamilyTitle demo={page.title} />
       </div>
-      <DemoGate empty={<RealFamily />}><FamilyView /></DemoGate>
+      <DemoGate empty={<><RealFamily /><SoonBento tiles={[{ label: "People and relations" }, { label: "Who is covered by what" }, { label: "Invite family" }]} /></>}><FamilyView /></DemoGate>
     </>
   );
 }
