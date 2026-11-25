@@ -8,7 +8,7 @@ import styles from "./TrialNotice.module.css";
 const KEY = "kv_trial_notice_dismissed";
 const read = () => {
   try {
-    return window.sessionStorage.getItem(KEY) === "1";
+    return window.localStorage.getItem(KEY) === "1";
   } catch {
     return false;
   }
@@ -23,19 +23,19 @@ export function TrialNotice() {
   const close = () => {
     setClosed(true);
     try {
-      window.sessionStorage.setItem(KEY, "1");
+      window.localStorage.setItem(KEY, "1");
     } catch {
       /* storage blocked: stays closed for this page view only */
     }
   };
   return (
     // DRAFT - FOR LEGAL REVIEW: trial and data-keeping wording.
-    <div className={styles.notice} role="status">
+    <div className={styles.notice} role="status" data-testid="trial-pill">
       <span>
         You’re on a trial. Your data is not kept after you sign out.
         {googleSignIn ? <> <a href="/api/app/auth/google">Sign in with Google</a> to keep it.</> : null}
       </span>
-      <button type="button" className={styles.x} onClick={close} aria-label="Dismiss trial notice">Dismiss</button>
+      <button type="button" className={styles.x} onClick={close} aria-label="Dismiss trial notice" data-testid="trial-pill-dismiss">×</button>
     </div>
   );
 }

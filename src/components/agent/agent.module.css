@@ -2,13 +2,13 @@
 .orbLive { box-shadow: 0 0 0 8px color-mix(in srgb, var(--sea-glass) 25%, transparent), 0 0 0 16px color-mix(in srgb, var(--sea-glass) 12%, transparent); }
 .kbd { font: 500 var(--fs-11) var(--font-mono); padding: 2px 7px; border-radius: 6px; background: var(--sunken); color: var(--ink); }
 
-button.dock { gap: 10px; min-height: 52px; padding: 0 18px 0 8px; font-weight: 600; box-shadow: 0 20px 40px -22px color-mix(in srgb, var(--ink-fixed) 55%, transparent); }
+button.dock { gap: 0; width: 56px; height: 56px; min-height: 56px; padding: 0; border-radius: 50%; justify-content: center; font-weight: 600; box-shadow: 0 20px 40px -22px color-mix(in srgb, var(--ink-fixed) 55%, transparent); }
 .dock:hover { transform: translateY(-2px); }
 .dock:active { transform: translateY(0) scale(0.99); }
 .dockMic { position: relative; flex: none; width: 36px; height: 36px; border-radius: var(--r-btn-sm); display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--white-fixed) 16%, transparent); }
 .dockMic::after { content: ""; position: absolute; inset: -3px; border-radius: calc(var(--r-btn-sm) + 3px); border: 2px solid currentColor; opacity: 0; animation: breathe 2.8s ease-in-out infinite; }
 .dockLabel { font-size: var(--fs-15); white-space: nowrap; }
-.wave { display: inline-flex; align-items: center; gap: 3px; height: 20px; }
+.wave { display: none; }
 .wave i { display: block; width: 3px; height: 100%; border-radius: 2px; background: currentColor; opacity: 0.8; transform: scaleY(0.3); transform-origin: center; animation: wave 1.6s ease-in-out infinite; }
 .wave i:nth-child(2) { animation-delay: 0.15s; }
 .wave i:nth-child(3) { animation-delay: 0.3s; }
@@ -16,7 +16,6 @@ button.dock { gap: 10px; min-height: 52px; padding: 0 18px 0 8px; font-weight: 6
 .wave i:nth-child(5) { animation-delay: 0.6s; }
 @keyframes wave { 0%, 100% { transform: scaleY(0.25); } 50% { transform: scaleY(0.9); } }
 @keyframes breathe { 0%, 100% { opacity: 0; transform: scale(0.96); } 50% { opacity: 0.55; transform: scale(1.06); } }
-@media (max-width: 400px) { .wave { display: none; } button.dock { padding-right: 16px; } }
 @media (prefers-reduced-motion: reduce) { .wave i, .dockMic::after { animation: none; } .wave i { transform: scaleY(0.6); } .dockMic::after { opacity: 0; } }
 html[data-motion="reduced"] .wave i, html[data-motion="reduced"] .dockMic::after { animation: none; }
 html[data-motion="reduced"] .wave i { transform: scaleY(0.6); }
@@ -59,11 +58,17 @@ html[data-motion="reduced"] .coach { animation: none; }
 .overlay h3 { margin: 0; font-size: var(--fs-15); font-weight: 600; color: var(--graphite); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: var(--fs-14); min-height: 28px; }
 .keys { display: inline-flex; gap: 4px; }
-.dockWrap { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30; }
+/* AgentLayer renders the Ask button inside this wrapper, so the wrapper (not AppShell .dock) owns its position: bottom-right. */
+.dockWrap { position: fixed; right: 24px; bottom: 24px; left: auto; transform: none; z-index: 30; transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1); }
+/* On narrow screens the round button can rest over a field (nothing on the page may move for it), so it steps aside while a field has focus and returns on blur. */
+:global(body):has(main :is(input, textarea, select):focus) .dockWrap { opacity: 0; pointer-events: none; }
+/* The voice coach card opens upwards, right-aligned to the button so it never runs off the screen edge. */
+.dockWrap .coach { left: auto; right: 0; transform: none; animation-name: coach-in-end; }
+@keyframes coach-in-end { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* "V" keycap hints: only where a keyboard is likely. */
 .keyHint { display: none; font: 600 var(--fs-11)/1 var(--font-mono); padding: 3px 6px; border-radius: 5px; border: 1px solid currentColor; opacity: 0.75; }
-.dockKey { margin-left: -2px; }
+button.dock .dockKey { display: none; }
 .coachKey { color: var(--graphite); }
 @media (hover: hover) and (pointer: fine) {
   .keyHint { display: inline-block; }
