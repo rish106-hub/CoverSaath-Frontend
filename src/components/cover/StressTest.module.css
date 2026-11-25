@@ -24,7 +24,7 @@
 .stepTitle { display: block; overflow-wrap: anywhere; font: 600 var(--fs-14) var(--font-sans); color: var(--ink); }
 .stepRef { display: block; overflow-wrap: anywhere; font: 400 var(--fs-13) var(--font-sans); color: var(--graphite); }
 .track { position: relative; height: 26px; border-radius: 7px; background: var(--sunken); overflow: hidden; }
-.fill { position: absolute; top: 0; bottom: 0; border-radius: 7px; transition: all var(--t-xslow) var(--ease); }
+.fill { position: absolute; top: 0; bottom: 0; border-radius: 7px; transition: width var(--t-xslow) var(--ease), left var(--t-xslow) var(--ease), background-color var(--t-xslow) var(--ease); }
 .stepVal { font: 400 var(--fs-13) var(--font-mono); text-align: right; }
 .pays { border-radius: var(--r-xl); background: var(--ink); color: var(--paper); padding: 26px; display: flex; flex-direction: column; gap: 14px; }
 .paysTop { display: flex; justify-content: space-between; align-items: center; font: 400 var(--fs-14) var(--font-sans); }

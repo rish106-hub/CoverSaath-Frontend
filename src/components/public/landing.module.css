@@ -31,7 +31,7 @@
 .snavBrand { font: 400 var(--fs-16) var(--font-serif); padding: 4px 8px; }
 .snavItem { font: 400 var(--fs-13) var(--font-sans); padding: 7px 8px; border-radius: 8px; color: var(--graphite); }
 .snavOn { background: var(--ink); color: var(--paper); }
-.sbody { display: flex; flex-direction: column; gap: 12px; animation: pop 0.4s var(--ease) both; min-width: 0; }
+.sbody { display: flex; flex-direction: column; gap: 12px; animation: pop 700ms cubic-bezier(0.37, 0.34, 0.26, 0.9) both; min-width: 0; }
 .shead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .stitle { font: 400 var(--fs-24)/1.1 var(--font-serif); letter-spacing: -0.02em; }
 .stag { font: 600 var(--fs-13) var(--font-sans); padding: 4px 10px; border-radius: 999px; background: var(--mist); color: var(--harbour); white-space: nowrap; }
@@ -43,7 +43,7 @@
 .bars { border-radius: 14px; background: var(--sheet); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .bar { display: grid; grid-template-columns: 80px 1fr 70px; gap: 10px; align-items: center; font: 400 var(--fs-13) var(--font-sans); }
 .barTrack { height: 12px; border-radius: 6px; background: var(--sunken); overflow: hidden; }
-.barFill { display: block; transform-origin: left; height: 12px; border-radius: 6px; animation: grow 0.8s var(--ease) both; }
+.barFill { display: block; transform-origin: left; height: 12px; border-radius: 6px; animation: grow 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 .barV { text-align: right; font-family: var(--font-mono); font-size: var(--fs-13); }
 .ask { border-radius: 14px; background: var(--ink-fixed); color: var(--paper-fixed); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .askHead { display: flex; gap: 8px; align-items: center; font: 600 var(--fs-13) var(--font-sans); }
@@ -72,7 +72,7 @@
 .footLinks { display: flex; gap: 20px; }
 .footLinks a { color: var(--graphite); text-decoration: none; }
 .themeSlot { position: fixed; right: 16px; bottom: 16px; z-index: 5; }
-@keyframes pop { 0% { transform: translateY(8px); opacity: 0.6; } 100% { transform: none; opacity: 1; } }
+@keyframes pop { 0% { transform: translateY(40px); opacity: 0.1; } 100% { transform: none; opacity: 1; } }
 @keyframes grow { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sea-glass) 55%, transparent); } 100% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--sea-glass) 0%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .sbody, .barFill, .orb { animation: none; } .strip i { transition: none; } }

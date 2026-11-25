@@ -8,13 +8,13 @@ const FILL: Record<string, string> = { ink: styles.fillInk, marker: styles.fillM
 export function BarList({ rows }: { rows: BarRow[] }) {
   return (
     <div className={styles.bars} role="list">
-      {rows.map((r) => {
+      {rows.map((r, rowIndex) => {
         const pct = Math.max(0, Math.min(100, Number.isFinite(r.pct) ? r.pct : 0));
         return (
           <div key={r.label} className={styles.bar} role="listitem" data-testid="bar-row">
             <span className={styles.barLabel}>{r.label}</span>
             <span className={styles.barTrack}>
-              <span className={`${styles.barFill} ${(r.tone && FILL[r.tone]) || ""}`.trim()} style={{ width: `${pct}%` }} />
+              <span className={`${styles.barFill} ${(r.tone && FILL[r.tone]) || ""}`.trim()} style={{ width: `${pct}%`, "--bar-index": rowIndex } as React.CSSProperties} />
             </span>
             <span className={styles.barValue}>{r.value}</span>
           </div>
