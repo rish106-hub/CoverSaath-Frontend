@@ -15,6 +15,7 @@ import { ChatConsentCard, WithdrawConsent, useChatConsent } from "./ChatConsent"
 import { useHoldings } from "@/components/covers/use-holdings";
 import { statusText } from "@/components/covers/format";
 import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL, clipQuote, insurerLine, isInsurerUnchecked } from "@/adapters/insurer-tier";
+import { CoverOptions } from "@/components/covers/holding-label";
 import s from "./chat.module.css";
 
 // Chat about the household's cover. The answer streams in; when it is complete it shows the facts it used, each with where it came from, and
@@ -44,6 +45,12 @@ const stateOf = (m: Msg): TurnState | undefined => {
   if (m.busy) return m.phase ?? "pending";
   return m.answer ? "answered" : undefined;
 };
+
+/** The last finished answer only, so a screen reader hears it once, whole, and not each streamed chunk. Empty while a turn is running. */
+export function announcementOf(all: Msg[]): string {
+  const last = all[all.length - 1];
+  return last && last.role === "assistant" && !last.busy && last.answer ? last.text : "";
+}
 
 const codeOf = (e: unknown): string => (e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE");
 
@@ -219,6 +226,7 @@ export function ChatView() {
     );
   }
 
+  const announcement = announcementOf(msgs);
   const first = msgs.length === 0;
   return (
     <div className={s.stack}>
@@ -230,7 +238,7 @@ export function ChatView() {
       {holdings && holdings.length > 1 ? (
         <label className={s.field}>Cover
           <select value={holdingId} onChange={(e) => select(e.target.value)} disabled={busy}>
-            {holdings.map((h, i) => <option key={h.id} value={h.id}>{`Cover ${i + 1}`}</option>)}
+            <CoverOptions holdings={holdings} />
           </select>
         </label>
       ) : null}
@@ -246,9 +254,11 @@ export function ChatView() {
             {PROMPTS.map((p) => <button key={p} type="button" className="k-btn k-btn--secondary" disabled={busy || holdings === null || consent === false} onClick={() => void ask(p)}>{p}</button>)}
           </div>
         ) : (
-          <ol className={s.log} role="log" aria-live="polite" aria-label="Conversation">
+          <>
+          {/* aria-live="off" on the log: its implicit polite live region would re-read every streamed chunk. The finished answer is announced once, below. */}
+          <ol className={s.log} role="log" aria-live="off" aria-label="Conversation">
             {msgs.map((m, i) => (
-              <li key={m.id} className={s.msg} data-role={m.role} data-busy={m.busy === true} data-state={stateOf(m)}>
+              <li key={m.id} className={s.msg} data-role={m.role} data-busy={m.busy === true} data-state={stateOf(m)} aria-busy={m.busy === true ? "true" : undefined}>
                 <span className={s.who}>{m.role === "user" ? (m.voice ? "You said" : "You") : "Knowvia"}</span>
                 {m.text ? <p>{m.text}</p> : m.busy ? <p className={s.quiet}>{m.phase === "retrying" ? "Trying again…" : "Looking in your cover…"}</p> : null}
                 {m.busy && m.phase === "slow" ? <p className={s.quiet} role="status" data-role="still-working">Still working…</p> : null}
@@ -263,6 +273,8 @@ export function ChatView() {
               </li>
             ))}
           </ol>
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true" data-role="answer-announcer">{announcement}</p>
+          </>
         )}
       </SectionHeading>
 

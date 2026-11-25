@@ -9,6 +9,7 @@ import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "./use-holdings";
 import { isInsurerUnchecked } from "@/adapters/insurer-tier";
 import { formatValue, groupFacts, isOpen, labelOf, pageText, sideLabel, sourceLabel, sourcePageNumber, sourceQuote, statusText, tierText } from "./format";
+import { CoverOptions } from "@/components/covers/holding-label";
 import s from "./covers.module.css";
 
 function Source({ src, unit, type }: { src: SourceView; unit?: string | null; type?: string | null }) {
@@ -153,7 +154,7 @@ export function CoverReviewView({ holding }: { holding?: string }) {
       {holdings && holdings.length > 1 ? (
         <label className={s.field}>Cover
           <select value={id} onChange={(e) => { setFacts(null); select(e.target.value); }}>
-            {holdings.map((h, i) => <option key={h.id} value={h.id}>{`Cover ${i + 1}`}</option>)}
+            <CoverOptions holdings={holdings} />
           </select>
         </label>
       ) : null}

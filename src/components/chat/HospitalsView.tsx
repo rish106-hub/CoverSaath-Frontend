@@ -7,6 +7,7 @@ import { errorText } from "@/adapters/documents-contract";
 import { PINCODE, type HospitalView } from "@/adapters/chat-contract";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { codeOf, useHoldings } from "@/components/covers/use-holdings";
+import { CoverOptions } from "@/components/covers/holding-label";
 import s from "./chat.module.css";
 
 /** Network hospitals of one cover, by pincode. The list is the insurer's network as the backend gives it; nothing here ranks or recommends. */
@@ -44,7 +45,7 @@ export function HospitalsView({ holding, pincode }: { holding?: string; pincode?
       {holdings && holdings.length > 1 ? (
         <label className={s.field}>Cover
           <select value={id} onChange={(e) => { setFound(null); select(e.target.value); }}>
-            {holdings.map((h, i) => <option key={h.id} value={h.id}>{`Cover ${i + 1}`}</option>)}
+            <CoverOptions holdings={holdings} />
           </select>
         </label>
       ) : null}
