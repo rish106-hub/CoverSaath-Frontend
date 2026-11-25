@@ -130,12 +130,13 @@ describe("passages and policy.md", () => {
     expect(r.insurerPassages[0]?.snippet.length).toBeLessThanOrEqual(280);
   });
   it("renders the new section, the insurer-tier line and Open questions from the markdown", async () => {
-    const md = ["# Memory", "", "## Insurer terms your document doesn't state", "", "- Pre-hospital days? 60 days (insurer wording, not checked) [insurer_wording, p.9]", "", "## Open questions", "", "- Co-payment? [unknown]", ""].join("\n");
+    const md = ["# Memory", "", "## Insurer terms your document doesn't state", "", "- Pre-hospital days? 60 days (From the insurer's wording, not checked) [insurer_wording, p.9]", "", "## Open questions", "", "- Co-payment? [unknown]", ""].join("\n");
     expect(parseMemoryMarkdown(md).filter((b) => b.kind === "heading").map((b) => b.kind === "heading" && b.text)).toEqual(["Insurer terms your document doesn't state", "Open questions"]);
     render(<MemoryDocumentBody markdown={md} />);
     expect(screen.getByText("Insurer terms your document doesn't state")).toBeTruthy();
-    expect(screen.getByText(/\(insurer wording, not checked\) \(insurer's wording, page 9\)/)).toBeTruthy();
-    expect(screen.getByText(/Co-payment\? \(not found\)/)).toBeTruthy();
+    expect(screen.getByTestId("memory-tier").textContent).toBe("Insurer's wording, not checked");
+    expect(screen.getByText("Insurer's wording, page 9")).toBeTruthy();
+    expect(screen.getByText("Co-payment?")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/\[unknown\]|\[insurer_wording/);
     expect(screen.getByText("Open questions")).toBeTruthy();
   });
@@ -150,7 +151,7 @@ describe("passages and policy.md", () => {
     await mockCovers.confirmProduct(id, { candidateId: "product-example-01", expectedVersion: 0 }, "k-confirm-md-1");
     const md = await mockCovers.memoryDocument(id);
     expect(md).toContain("## Insurer terms your document doesn't state");
-    expect(md).toMatch(/\(insurer wording, not checked\).*\[insurer_wording, p\.9\]/);
+    expect(md).toMatch(/\(From the insurer's wording, not checked\).*\[insurer_wording, p\.9/);
     expect(md).toContain("## Open questions");
     expect(md).not.toMatch(/HDFC|Star Health|ICICI|Niva/i);
     const facts = await mockCovers.facts(id);
