@@ -1,3 +1,4 @@
+import { SoonBento } from "@/components/soon/SoonBento";
 import { DemoGate } from "@/components/shell/EmptyState";
 import { PageTitle, Kicker } from "@/components/type";
 import { RealMoney } from "@/components/money/RealMoney";
@@ -14,7 +15,7 @@ export default function Page() {
         {page?.kicker ? <Kicker>{page.kicker}</Kicker> : null}
         <PageTitle>{page?.title ?? "Money desk"}</PageTitle>
       </div>
-      <DemoGate empty={<RealMoney />}><MoneyDesk /></DemoGate>
+      <DemoGate empty={<><RealMoney /><SoonBento tiles={[{ label: "Premiums this year" }, { label: "Tax you can save (80D)" }, { label: "Receipts" }, { label: "Renewal reminders" }, { label: "Claims paid" }, { label: "Download 80D pack" }]} /></>}><MoneyDesk /></DemoGate>
     </>
   );
 }

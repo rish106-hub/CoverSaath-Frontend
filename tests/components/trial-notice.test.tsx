@@ -7,7 +7,7 @@ vi.mock("@/components/shell/useMe", () => ({ useMe: () => ({ state: me.value, re
 vi.mock("@/adapters", () => ({ googleSignIn: true }));
 import { TrialNotice } from "@/components/shell/TrialNotice";
 
-afterEach(() => { cleanup(); window.sessionStorage.clear(); });
+afterEach(() => { cleanup(); window.localStorage.clear(); });
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 
 describe("TrialNotice", () => {
@@ -19,6 +19,7 @@ describe("TrialNotice", () => {
     expect(screen.getByRole("link", { name: "Sign in with Google" }).getAttribute("href")).toBe("/api/app/auth/google");
     fireEvent.click(screen.getByRole("button", { name: /Dismiss/ }));
     expect(screen.queryByText(/You’re on a trial/)).toBeNull();
+    expect(window.localStorage.getItem("kv_trial_notice_dismissed")).toBe("1");
   });
   it("stays hidden for Google, demo, older sessions and signed-out", async () => {
     for (const v of [{ status: "ready", me: {} }, { status: "ready", me: { trial: false } }, { status: "loading" }, { status: "signed-out" }]) {

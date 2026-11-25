@@ -15,7 +15,9 @@ test("ask a seeded question and see a streamed answer with facts chips", async (
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Before we answer")).toBeHidden();
-  await page.getByRole("button", { name: /Planned knee surgery in Jan/ }).click();
+  // The suggested prompts no longer name a sample procedure, so the seeded knee question is typed.
+  await page.getByLabel("Your question").fill("Planned knee surgery in Jan, is it covered?");
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
 
   const log = page.getByRole("log", { name: "Conversation" });
   await expect(log.getByText("You", { exact: true })).toBeVisible();
@@ -48,7 +50,7 @@ test("a failed turn offers Retry, and a slow turn says it is still working", asy
   await page.getByRole("button", { name: "Ask", exact: true }).click();
   await expect(log.getByRole("alert")).toHaveText("Something went wrong. Try again.");
   await expect(page.getByLabel("Your question")).toBeEnabled();
-  await log.getByRole("button", { name: "Retry" }).click();
+  await log.getByRole("button", { name: "Try again" }).click();
   await expect(log.getByText(/36 months for pre-existing diseases/)).toBeVisible();
   await expect(log.getByRole("alert")).toHaveCount(0);
 

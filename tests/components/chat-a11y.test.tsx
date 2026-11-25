@@ -56,8 +56,8 @@ describe("cover picker labels (#108 row 9)", () => {
 describe("chat announcements (#108 row 8)", () => {
   it("keeps the log silent and marks the streaming message busy, then announces the finished answer once", async () => {
     render(<ChatView />);
-    await waitFor(() => expect((screen.getByRole("button", { name: "Planned knee surgery in Jan, is it covered?" }) as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(screen.getByRole("button", { name: "Planned knee surgery in Jan, is it covered?" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "What are my waiting periods?" }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "What are my waiting periods?" }));
     const log = await screen.findByRole("log", { name: "Conversation" });
     expect(log.getAttribute("aria-live")).toBe("off");
     const announcer = document.querySelector('[data-role="answer-announcer"]') as HTMLElement;

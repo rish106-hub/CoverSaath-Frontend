@@ -2,10 +2,13 @@
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start; }
 .intro { font: 400 var(--fs-15)/1.5 var(--font-sans); color: var(--graphite); max-width: 640px; margin-top: 8px; }
 .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
-.tab { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); min-height: 44px; }
+.tab { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); min-height: 44px; transition: color 300ms cubic-bezier(0.25, 1, 0.5, 1), background-color 300ms cubic-bezier(0.25, 1, 0.5, 1); }
 .tab:hover { border-color: var(--ink); }
 .tabOn { border: 2px solid var(--btn-accent); padding: 13px 15px; background: var(--btn-tint); }
 .tabWhen { font: 600 var(--fs-13) var(--font-mono); letter-spacing: 0.04em; color: var(--graphite); }
+/* Entering tab content: only after the strip has focus (a pointer or key action), so nothing moves when /tools first loads. */
+.tabs:focus-within + * > * { animation: tab-in 300ms ease-in-out both; }
+@keyframes tab-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 .tabT { font: 600 var(--fs-17) var(--font-sans); }
 .field { display: flex; flex-direction: column; gap: 6px; font: 400 var(--fs-14) var(--font-sans); color: var(--graphite); border: 0; padding: 0; margin: 0; }
 .field input { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--field-border); background: var(--paper); font: 500 var(--fs-16) var(--font-sans); color: var(--ink); }

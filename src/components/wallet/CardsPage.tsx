@@ -7,6 +7,7 @@ import type { WalletPlatform } from "@/adapters";
 import { BrandLogo } from "@/components/logos";
 import { Kicker, PageTitle } from "@/components/type";
 import { SHARE_APPLE, SHARE_OTHER, WALLET_PASSES, WALLET_PEOPLE } from "@/data/mock";
+import { SoonButton } from "@/components/ui/SoonButton";
 import { PASS_STYLES, PassCard, useQrClock } from "./PassCard";
 import styles from "./wallet.module.css";
 
@@ -72,7 +73,7 @@ export function CardsPage() {
             </div>
           ) : dev === "android" ? (
             <div><h2 className={styles.panelT}>Add to your wallet</h2>
-              <div className={styles.row} style={{ marginTop: 12 }}><button type="button" className="k-btn k-btn--primary">Add to Google Wallet</button><button type="button" className="k-btn">Add to Samsung Wallet</button></div></div>
+              <div className={styles.row} style={{ marginTop: 12 }}><SoonButton className="k-btn--primary">Add to Google Wallet</SoonButton><SoonButton>Add to Samsung Wallet</SoonButton></div></div>
           ) : (
             <div><h2 className={styles.panelT}>Send it to your phone</h2><div className={styles.panelD}>Pick an app to send the card to your phone.</div></div>
           )}

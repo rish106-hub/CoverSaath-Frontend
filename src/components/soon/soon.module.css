@@ -1,0 +1,29 @@
+/* Emergency actions are static on purpose: no transition or animation anywhere inside. */
+.live,
+.live * {
+  transition: none;
+  animation: none;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 var(--tile-pad);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 12px;
+}
+
+.call {
+  background: var(--signal);
+  color: var(--ink-fixed);
+}
+
+.find {
+  background: var(--sheet);
+  color: inherit;
+  border: 1px solid var(--line);
+}

@@ -21,11 +21,11 @@ const fact = (o: Partial<FactView> & { factKey: string }): FactView => ({ status
 const own = (pageId = "page-2", quote = "Room rent up to 5000") => ({ id: "s1", tier: "own_pdf" as const, page: { pageId, pageNumber: Number(pageId.replace(/\D/g, "")) }, quote });
 const FACTS: FactView[] = [
   fact({ factKey: "room_rent_limit", group: "limits", unit: "paise", valueType: "number", value: 500000, sourceTier: "own_pdf", sources: [own()] }),
-  fact({ factKey: "initial_waiting", group: "waiting", unit: "days", value: 30, status: "user_confirmed", sourceTier: "own_pdf", sources: [{ id: "s2", tier: "own_pdf" }] }),
-  fact({ factKey: "co_pay", group: "limits", status: "conflicting", openConflictId: "c1" }),
-  fact({ factKey: "bonus", group: "money", status: "unknown" }),
+  fact({ factKey: "waiting_initial", group: "waiting", unit: "days", value: 30, status: "user_confirmed", sourceTier: "own_pdf", sources: [{ id: "s2", tier: "own_pdf" }] }),
+  fact({ factKey: "copay_percent", group: "limits", status: "conflicting", openConflictId: "c1" }),
+  fact({ factKey: "loyalty_bonus", group: "money", status: "unknown" }),
 ];
-const CONFLICT: ConflictView = { id: "c1", factKey: "co_pay", reason: "tier_mismatch", resolution: "pending", checkWithInsurer: false, candidates: [] };
+const CONFLICT: ConflictView = { id: "c1", factKey: "copay_percent", reason: "tier_mismatch", resolution: "pending", checkWithInsurer: false, candidates: [] };
 
 describe("toPolicyView", () => {
   it("maps a holding with facts: value, honest status, citation", () => {
@@ -34,7 +34,7 @@ describe("toPolicyView", () => {
     expect(room).toMatchObject({ value: "Rs 5,000", status: "extracted_unverified", statusText: "Read from your document", citation: "Your document, Page 2" });
     expect(room?.statusText).not.toMatch(/verified|confirmed/i);
     expect(v.notFound).toBe(1);
-    expect(v.pending).toEqual([{ id: "c1", label: "Co pay" }]);
+    expect(v.pending).toEqual([{ id: "c1", label: "Co-pay" }]);
     expect(containsUin(v)).toBe(false);
   });
   it("maps a holding with no facts to an empty list, not an error", () => {
@@ -43,11 +43,11 @@ describe("toPolicyView", () => {
   });
   it("shows a conflicting fact as two readings and an unknown one as not found", () => {
     const v = toPolicyView(holding("conflicts"), { facts: FACTS, unknownKeys: [], conflicts: [CONFLICT] });
-    expect(v.facts.find((f) => f.key === "co_pay")).toMatchObject({ value: "Two readings", open: true, conflictId: "c1" });
-    expect(v.facts.find((f) => f.key === "bonus")).toMatchObject({ value: "Not found", open: true });
+    expect(v.facts.find((f) => f.key === "copay_percent")).toMatchObject({ value: "Two readings", open: true, conflictId: "c1" });
+    expect(v.facts.find((f) => f.key === "loyalty_bonus")).toMatchObject({ value: "Not found", open: true });
   });
   it("leaves the citation null when the backend returned none", () => {
-    const v = toPolicyView(holding(), { facts: [fact({ factKey: "co_pay", value: 10, unit: "percent" })], unknownKeys: [], conflicts: [] });
+    const v = toPolicyView(holding(), { facts: [fact({ factKey: "copay_percent", value: 10, unit: "percent" })], unknownKeys: [], conflicts: [] });
     expect(v.facts[0]).toMatchObject({ citation: null, quote: null, value: "10%" });
   });
   it("ignores guessed product and insurer facts; names come only from the summary", () => {
@@ -109,7 +109,7 @@ describe("toPolicyView", () => {
   });
   it("orders key facts with limits first and skips unknown ones", () => {
     const v = toPolicyView(holding(), { facts: FACTS, unknownKeys: [], conflicts: [] });
-    expect(keyFacts(v).map((f) => f.key)).toEqual(["room_rent_limit", "co_pay", "initial_waiting"]);
+    expect(keyFacts(v).map((f) => f.key)).toEqual(["room_rent_limit", "copay_percent", "waiting_initial"]);
   });
 });
 
@@ -146,7 +146,7 @@ describe("loading from the backend routes", () => {
     expect((await realAdapters.policy.list()).map((p) => p.id)).toEqual(["h1"]);
     expect(await realAdapters.policy.get("nope")).toBeNull();
     const f = await realAdapters.reading.findings("h1");
-    expect(f.find((x) => x.label === "Co pay")?.disagrees).toBe(true);
+    expect(f.find((x) => x.label === "Co-pay")?.disagrees).toBe(true);
     vi.spyOn(backendCovers, "facts").mockRejectedValue(new AdapterError("BACKEND_UNREACHABLE"));
     expect(await realAdapters.reading.findings("h1")).toEqual([]);
   });
@@ -167,18 +167,19 @@ const SUMMARY: HoldingView["summary"] = {
 };
 
 describe("screens", () => {
-  it("home and detail show insurer, product and honest headlines", async () => {
+  it("home shows the sum insured tile; detail shows insurer, product and honest headlines", async () => {
     stub([{ ...holding("ready"), summary: SUMMARY }]);
     const home = render(<RealHome />);
+    const sumTile = (await screen.findByText("Sum insured")).closest("a");
+    expect(sumTile).toHaveTextContent("Rs 5,00,000");
+    home.unmount();
+    render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Example Health Plan 01")).toBeInTheDocument();
     expect(screen.getByText(/Example Insurer/)).toBeInTheDocument();
-    expect(screen.getByTestId("headline-sum_insured")).toHaveTextContent("Rs 5,00,000");
+    expect(await screen.findByTestId("headline-sum_insured")).toHaveTextContent("Rs 5,00,000");
     expect(screen.getByTestId("headline-sum_insured")).toHaveTextContent("Read from your document");
     expect(screen.getByTestId("headline-policy_period")).toHaveTextContent("Two readings");
     expect(screen.getByTestId("headline-premium_total")).toHaveTextContent("Not found yet");
-    home.unmount();
-    render(<RealPolicyDetail id="h1" />);
-    expect(await screen.findByTestId("headline-sum_insured")).toHaveTextContent("Rs 5,00,000");
     expect(screen.getAllByRole("link", { name: "Review and decide" }).some((a) => a.getAttribute("href") === "/covers/review?holding=h1")).toBe(true);
   });
   it("before confirmation the choose-plan note shows and no headlines", async () => {
@@ -187,20 +188,17 @@ describe("screens", () => {
     expect(await screen.findByTestId("stage-note")).toHaveTextContent(/Tell us which plan this is/);
     expect(screen.queryByTestId("headlines")).toBeNull();
   });
-  it("home shows facts, status, citation and a link to the review screen", async () => {
+  it("home links the next step to the review screen when a detail is open", async () => {
     stub([holding("conflicts")]);
     render(<RealHome />);
-    expect(await screen.findByText("Room rent limit")).toBeInTheDocument();
-    expect(screen.getByText(/Page 2/)).toBeInTheDocument();
-    expect(screen.getAllByText("Read from your document").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "Review and decide" })).toHaveAttribute("href", "/covers/review?holding=h1");
+    expect(await screen.findByRole("link", { name: /Decide on open details/ })).toHaveAttribute("href", "/covers/review?holding=h1");
   });
   it("home shows a document that is still retrying as still being read, next to the ready policy", async () => {
     stub([holding("ready")], [{ documentId: "d2", state: "retrying", code: null }]);
     render(<RealHome />);
     expect(await screen.findByTestId("creation-retrying")).toHaveTextContent(/still being read/i);
     expect(screen.queryByTestId("creation-failed")).toBeNull();
-    expect(await screen.findByText("Room rent limit")).toBeInTheDocument();
+    expect(await screen.findByText("Policies")).toBeInTheDocument();
   });
   it("home shows a failed document with an add-again action, and no empty state", async () => {
     stub([], [{ documentId: "d2", state: "failed", code: "HOLDING_CREATE_FAILED" }]);
@@ -223,7 +221,7 @@ describe("screens", () => {
     stub([]);
     render(<RealHome />);
     expect(await screen.findByTestId("empty-state")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Add a cover" })).toHaveAttribute("href", "/covers/add");
+    expect(screen.getByRole("link", { name: "Add a policy" })).toHaveAttribute("href", "/covers/add");
   });
   it("policies list shows the coded error in plain words, never raw text", async () => {
     stub(new AdapterError("HOLDINGS_DISABLED"));
@@ -247,7 +245,7 @@ describe("screens", () => {
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByRole("heading", { name: "Waiting" })).toBeInTheDocument();
     expect(screen.getByText("You confirmed this")).toBeInTheDocument();
-    expect(screen.getByText("2 details were not found in your document.")).toBeInTheDocument();
+    expect(screen.getByText("Not found in this policy (2)")).toBeInTheDocument();
     cleanup();
     stub([holding("ready", "other")]);
     render(<RealPolicyDetail id="h1" />);
@@ -303,26 +301,22 @@ describe("screens", () => {
 
 describe("real home and list visual structure (#105)", () => {
   const headingLevels = (root: HTMLElement) => Array.from(root.querySelectorAll("h1,h2,h3,h4")).map((h) => `${h.tagName.toLowerCase()}:${h.textContent}`);
-  it("home: card titles are h3 under h2 sections, and the glance band shows real headline values only", async () => {
+  it("home: one h2 section holds the tiles, and only real headline values are shown", async () => {
     stub([{ ...holding("ready"), summary: SUMMARY }]);
     const { container } = render(<RealHome />);
-    expect(await screen.findByRole("heading", { level: 3, name: "Example Health Plan 01" })).toBeInTheDocument();
-    expect(headingLevels(container)).toEqual(["h2:Your cover at a glance", "h2:Your policies", "h3:Example Health Plan 01"]);
-    const glance = screen.getByTestId("glance");
-    expect(glance).toHaveTextContent("Rs 5,00,000");
-    expect(glance).toHaveTextContent("Sum insured");
+    const sumTile = (await screen.findByText("Sum insured")).closest("a");
+    expect(headingLevels(container)).toEqual(["h2:Your cover at a glance"]);
+    expect(sumTile).toHaveTextContent("Rs 5,00,000");
     // Conflicting period and unknown premium are not a number to headline: left out, not faked. The conflict goes to the next-step tile.
-    expect(glance).not.toHaveTextContent("Policy period");
-    expect(glance).not.toHaveTextContent("Premium");
-    expect(glance).not.toHaveTextContent("Not found yet");
+    expect(container).not.toHaveTextContent("Policy period");
+    expect(container).not.toHaveTextContent("Premium");
+    expect(container).not.toHaveTextContent("Not found yet");
     expect(screen.getByRole("link", { name: /Decide on open details/ })).toHaveAttribute("href", "/covers/review?holding=h1");
   });
-  it("home: nested notes are flat (no card class) so cards never double their border", async () => {
+  it("home: next step asks to pick the plan while the insurer is pending", async () => {
     stub([holding("insurer_pending")]);
     render(<RealHome />);
-    const note = await screen.findByTestId("stage-note");
-    expect(note.className).toMatch(/note/);
-    expect(note.className).not.toMatch(/\bcard\b/);
+    await screen.findByText("Next step");
     expect(screen.getByRole("link", { name: /Pick your plan/ })).toHaveAttribute("href", "/covers/add?resume=1");
   });
   it("policies: no repeated 'Your policies' h2; the page title is the h1 and the count stands in", async () => {

@@ -125,10 +125,10 @@ function AddStep({ way, onWay, status, onRetry }: { way: string; onWay: (w: "dl"
         ))}
       </div>
       <SaveState status={status} onRetry={onRetry} />
-      {/* The real upload lives on Add a cover (consent, type, schedule, plan). */}
+      {/* The real upload lives on Add a policy (consent, type, schedule, plan). */}
       <Link href="/covers/add" className={styles.drop} data-testid="welcome-upload">
         <span aria-hidden style={{ fontSize: "var(--fs-22)" }}>⇪</span>
-        <span>Upload your policy PDF</span>
+        <span>Add a policy PDF</span>
         <span className={styles.dropFmt}>PDF, up to 15 MB</span>
       </Link>
       <section aria-label="Can’t find your policy?">

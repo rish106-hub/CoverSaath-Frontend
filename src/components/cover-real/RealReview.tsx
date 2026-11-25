@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import s from "@/components/covers/covers.module.css";
 import { CreationIssues, ErrorBox, Loading } from "./parts";
@@ -15,13 +15,12 @@ export function RealReview() {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Things to check</Kicker>
         <PageTitle>{state.kind === "ready" ? (open.length ? `${open.length} thing${open.length === 1 ? "" : "s"} need${open.length === 1 ? "s" : ""} your decision` : "Nothing needs your decision") : "Things to check"}</PageTitle>
       </div>
       {state.kind === "loading" ? <Loading what="what to check" /> : null}
       {state.kind === "error" ? <ErrorBox code={state.code} onRetry={reload} /> : null}
       {state.kind === "empty" && issues.length > 0 ? <CreationIssues issues={issues} onRetry={reload} /> : null}
-      {state.kind === "empty" && issues.length === 0 ? <EmptyState title="Nothing to check yet" body="Upload your policy and Knowvia reads it for you. Anything that needs your decision shows up here." /> : null}
+      {state.kind === "empty" && issues.length === 0 ? <EmptyState title="Nothing to check yet" body="Anything that needs your decision shows up here." /> : null}
       {state.kind === "ready" ? (
         <>
           {open.length > 0 ? (
@@ -30,7 +29,7 @@ export function RealReview() {
                 {open.map((c) => (
                   <article key={c.id} className={s.card} aria-label={c.label}>
                     <p className={s.lead}><b>{c.label}</b> · {c.policy.title}{c.policy.insurer ? ` · ${c.policy.insurer}` : ""}</p>
-                    <div className={s.row}><Link className="k-btn k-btn--primary" href={`/covers/review?holding=${encodeURIComponent(c.policy.id)}`}>Settle it</Link></div>
+                    <div className={s.row}><Link className="k-btn k-btn--primary" href={`/covers/review?holding=${encodeURIComponent(c.policy.id)}`}>Decide</Link></div>
                   </article>
                 ))}
               </div>

@@ -8,11 +8,12 @@ import { backendUploads } from "@/adapters/uploads";
 import { pickFile, runTerms } from "@/components/covers/add-cover-flow";
 import type { CreationIssue } from "@/adapters/covers-contract";
 import { keyFacts, type FactLine, type HeadlineLine, type PolicyView, type Stage } from "@/adapters/real-policy";
+import { Skeleton } from "@/components/ui/Skeleton";
 import s from "@/components/covers/covers.module.css";
 
 /** What a person can do next, per stage of a holding that has no facts yet. */
 export const STAGE_NOTE: Record<Stage, { title: string; body: string; cta?: { label: string; href: string } } | null> = {
-  reading: { title: "Still being read", body: "We are reading this document. Check again in a moment. If nothing changes, add the document again.", cta: { label: "Add the document again", href: "/covers/add" } },
+  reading: { title: "Still being read", body: "We're reading this document. Check again in a moment.", cta: { label: "Add the document again", href: "/covers/add" } },
   choose_plan: { title: "Tell us which plan this is", body: "Pick your insurer and plan so we can read the right details.", cta: { label: "Choose your plan", href: "/covers/add?resume=1" } },
   needs_review: null,
   ready: null,
@@ -33,7 +34,8 @@ export function ErrorBox({ code, onRetry }: { code: string; onRetry?: () => void
 }
 
 export function Loading({ what }: { what: string }) {
-  return <p className={s.quiet} role="status">Loading {what}...</p>;
+  void what; // kept for call-site compatibility; the skeleton replaces the sentence.
+  return <Skeleton shape="bento" />;
 }
 
 export function StageBox({ p, onRetry }: { p: PolicyView; onRetry?: () => void }) {
@@ -55,9 +57,10 @@ export function FactItem({ f }: { f: FactLine }) {
     <li className={s.fact} data-open={f.open}>
       <span className={s.factName}>{f.label}</span>
       <span className={s.factValue}>{f.value}</span>
-      <span className={s.status}>{f.statusText}</span>
-      <span className={s.tag} data-testid="fact-source">{f.sourceText}</span>
-      {f.quote ? <p className={s.src}>&ldquo;{f.quote}&rdquo;{f.citation ? ` · ${f.citation}` : ""}</p> : f.citation ? <p className={s.src}>{f.citation}</p> : null}
+      {/* The plain "Read from your document" line is dropped as filler; any other status (not checked, conflicting, confirmed) is a trust signal and stays. */}
+      {f.statusText !== "Read from your document" ? <span className={s.status}>{f.statusText}</span> : null}
+      {f.sourceText !== f.statusText ? <span className={s.tag} data-testid="fact-source">{f.sourceText}</span> : null}
+      {f.citation ? <p className={s.src}>{f.citation}</p> : null}
     </li>
   );
 }

@@ -18,11 +18,11 @@ beforeEach(() => invalidateMe());
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("holding overview states", () => {
-  it("loading: policies list shows a loading line", () => {
+  it("loading: policies list shows the skeleton", () => {
     policyList.mockReturnValue(new Promise(() => undefined));
     household.mockReturnValue(new Promise(() => undefined));
     render(<PolicyList />);
-    expect(screen.getByText("Loading your policies...")).toBeTruthy();
+    expect(screen.getByRole("status").hasAttribute("data-skeleton")).toBe(true);
   });
 
   it("empty: no policies shows the upload prompt", async () => {

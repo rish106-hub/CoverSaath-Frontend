@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BackendDown, useMe } from "@/components/shell";
 import { Kicker, PageTitle } from "@/components/type";
 import { WELCOME_STEPS as STEPS } from "./steps";
+import styles from "./welcome.module.css";
 
 
 export function WelcomeIntro() {
@@ -16,10 +17,11 @@ export function WelcomeIntro() {
         <Kicker>Welcome</Kicker>
         <PageTitle>{first ? `You’re in, ${first}.` : "You’re in."}</PageTitle>
       </div>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Link href="/covers/add" className="k-btn k-btn--primary">Add your first policy</Link>
-        <Link href="/home" className="k-btn">Go to home</Link>
-      </div>
+      <ol className={styles.steps}>
+        <li><Link href="/covers/add" className={styles.step}>1. Add your policy</Link></li>
+        <li><Link href="/family" className={styles.step}>2. Add your family</Link></li>
+        <li><Link href="/stress-test" className={styles.step}>3. See what you&apos;d pay</Link></li>
+      </ol>
     </>
   );
 }

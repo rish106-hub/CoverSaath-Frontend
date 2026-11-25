@@ -23,7 +23,7 @@ describe("family members are stored", () => {
     fireEvent.change(screen.getByLabelText(/^Mobile number/), { target: { value: "98220 11223" } });
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: "Send invite" }));
-    await screen.findByText("Could not add them. Try again.");
+    await screen.findByText("Couldn't add them. Try again.");
     fireEvent.click(screen.getByRole("button", { name: "Send invite" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(add).toHaveBeenCalledTimes(1);
@@ -41,7 +41,7 @@ describe("family members are stored", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await screen.findByText(/Could not save/);
     expect(screen.getByLabelText(/^Name/)).toHaveValue("Rohan K");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(update).toHaveBeenLastCalledWith("b1", { name: "Rohan K", relation: "Spouse" });
   });

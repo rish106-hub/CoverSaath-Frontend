@@ -29,23 +29,23 @@ import { PageSkeleton } from "@/components/shell/ErrorPanel";
 afterEach(() => { cleanup(); h.holdings = () => Promise.resolve([]); h.members = () => Promise.resolve([]); h.me = { status: "down" }; });
 
 describe("chat with no cover (row 7)", () => {
-  it("shows a loading line while holdings load, then No cover yet with an Add a cover link", async () => {
+  it("shows a loading line while holdings load, then No policy yet with an Add a policy link", async () => {
     let release!: (v: unknown[]) => void;
     h.holdings = () => new Promise((r) => { release = r; });
     render(<ChatView />);
-    expect(await screen.findByText("Loading your covers…")).toBeTruthy();
-    expect(screen.queryByText("No cover yet")).toBeNull();
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.queryByText("No policy yet")).toBeNull();
     release([]);
-    expect(await screen.findByText("No cover yet")).toBeTruthy();
-    expect(screen.queryByText("Loading your covers…")).toBeNull();
-    expect(screen.getByRole("link", { name: "Add a cover" }).getAttribute("href")).toBe("/covers/add");
+    expect(await screen.findByText("No policy yet")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("link", { name: "Add a policy" }).getAttribute("href")).toBe("/covers/add");
   });
 
-  it("does not show No cover yet when a cover exists", async () => {
+  it("does not show No policy yet when a cover exists", async () => {
     h.holdings = () => Promise.resolve([{ id: "h1", status: "ready" }]);
     render(<ChatView />);
-    await waitFor(() => expect(screen.queryByText("Loading your covers…")).toBeNull());
-    expect(screen.queryByText("No cover yet")).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+    expect(screen.queryByText("No policy yet")).toBeNull();
   });
 });
 

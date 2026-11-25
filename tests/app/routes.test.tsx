@@ -12,6 +12,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/home",
   useSearchParams: () => new URLSearchParams(),
   notFound: () => { throw new Error("notFound"); },
+  redirect: (to: string) => { throw Object.assign(new Error("redirect"), { digest: `NEXT_REDIRECT;${to}` }); },
 }));
 
 /** Route pattern -> loader of the Next page module. /status is server-only and covered by the curl check. */
@@ -81,6 +82,11 @@ describe("every route renders", () => {
   });
 
   it.each(targets.map((t) => [t.href, t] as const))("%s renders without throwing and shows no banned words", async (_href, t) => {
+    // /assistant is a redirect to /chat (T5): it renders nothing, so assert the redirect instead.
+    if (t.route === "/assistant") {
+      await expect(element(t)).rejects.toMatchObject({ digest: expect.stringContaining("/chat") });
+      return;
+    }
     const tree = await element(t);
     const { container } = render(<ThemeProvider><AgentProvider>{tree}</AgentProvider></ThemeProvider>);
     await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
@@ -122,7 +128,7 @@ describe("integration", () => {
   });
 
   it("the card opens and answers when a page broadcasts knowvia:ask", async () => {
-    const tree = await element({ href: "/assistant", route: "/assistant" });
+    const tree = await element({ href: "/chat", route: "/chat" });
     const { AgentLayer } = await import("@/components/agent");
     const { container } = render(<ThemeProvider><AgentProvider>{tree}<AgentLayer /></AgentProvider></ThemeProvider>);
     await act(async () => { window.dispatchEvent(new CustomEvent("knowvia:ask", { detail: { text: "Papa ko chest pain hai" } })); await new Promise((r) => setTimeout(r, 50)); });

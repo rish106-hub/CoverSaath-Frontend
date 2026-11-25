@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { adapters, features, type UiPrefs } from "@/adapters";
+import { SoonButton } from "@/components/ui/SoonButton";
 import { SaveState } from "@/components/ui/SaveState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAutosave } from "@/lib/use-autosave";
 import { SectionHeading } from "@/components/type";
 import { BrandLogo } from "@/components/logos";
@@ -110,7 +112,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
     { id: "calendar", name: "Calendar", detail: "Renewal and tax dates", logo: <BrandLogo id="google-calendar" size={40} /> },
   ];
   const people = [
-    { id: "rohan", name: "Rohan", detail: "Policies, claims and e-cards" },
+    { id: "rohan", name: "Family member", detail: "Policies, claims and e-cards" },
     { id: "mother", name: "Mother", detail: "Her policy and claims only" },
     { id: "father", name: "Father", detail: "Not shared yet" },
   ];
@@ -118,7 +120,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
   return (
     <div className={s.col}>
       <div className={ui.row} role="group" aria-label="Settings status">
-        {load === "loading" ? <span className={ui.small} role="status">Loading your settings</span> : null}
+        {load === "loading" ? <Skeleton shape="list" /> : null}
         {load === "failed" ? (
           <span className={ui.small} role="alert">
             Could not load your settings. <button type="button" className="k-btn k-btn--sm" onClick={loadPrefs}>Retry</button>
@@ -182,7 +184,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
             <div className={cx(s.row, s.plain)}>
               <span>
                 <span className={s.name}>Family view</span>
-                <span className={ui.small}>Rohan and Mother see your policies, claims and e-cards</span>
+                <span className={ui.small}>People you add can see what you share with them.</span>
               </span>
               <span className={s.hit}>
                 <Switch on={familyOn} label="Family view" disabled={locked} onChange={(v) => change({ ...cur, sharing: Object.fromEntries(Object.keys(cur.sharing).map((k) => [k, v ? (DEFAULTS.sharing[k] ?? true) : false])) })} />
@@ -198,7 +200,7 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
             <span><span className={s.name}>Voice language</span><span className={ui.small}>Language Ask Knowvia listens for</span></span>
             <span className={s.seg} role="group" aria-label="Voice language">
               {([["en", "English"], ["hi", "हिंदी"], ["both", "Both"]] as const).map(([id, l]) => (
-                <button key={id} type="button" aria-pressed={p.voice === id} disabled={locked} onClick={() => set("voice", id)}>{l}</button>
+                <SoonButton key={id}>{l}</SoonButton>
               ))}
             </span>
           </div>

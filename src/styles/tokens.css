@@ -124,6 +124,8 @@
   --t-slow: 240ms;
   --t-xslow: 420ms;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --bento-gap: 12px;
+  --tile-pad: 16px;
 
   --font-serif: var(--font-newsreader), Georgia, serif;
   --font-sans: var(--font-geist), system-ui, sans-serif;

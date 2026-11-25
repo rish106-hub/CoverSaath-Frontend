@@ -42,7 +42,7 @@ test("keyboard only: / to /signin to /welcome to /home to /emergency", async ({ 
   await expect(page).toHaveURL(/\/emergency$/);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.keyboard.press("2");
-  await expect(page.getByText("Call 112")).toBeVisible();
+  await expect(page.getByText("Call 112").first()).toBeVisible();
   await noHorizontalScroll(page);
 });
 
@@ -68,8 +68,8 @@ test("mouse only: sidebar to Emergency, Show QR", async ({ page }) => {
   await expect(page.getByRole("img", { name: /QR code/ })).toBeVisible();
 });
 
-test("voice path: Ask Knowvia card answers a typed phrase (no microphone in CI)", async ({ page }) => {
+// The /assistant demo page is gone (it redirects to /chat); the typed-question path is covered in chat.spec.ts.
+test("/assistant redirects to /chat", async ({ page }) => {
   await page.goto("/assistant");
-  await page.getByRole("button", { name: "How much tax can I save this year?" }).click();
-  await expect(page.getByText(/Rs 75,000/).first()).toBeVisible();
+  await expect(page).toHaveURL(/\/chat$/);
 });

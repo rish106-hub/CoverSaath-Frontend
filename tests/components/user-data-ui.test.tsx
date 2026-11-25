@@ -61,7 +61,21 @@ describe("Settings over the backend", () => {
     settings();
     const motion = await screen.findByRole("switch", { name: "Reduce motion" });
     await waitFor(() => expect(motion).toHaveAttribute("aria-checked", "true"));
-    expect(screen.getByRole("button", { name: "हिंदी" })).toHaveAttribute("aria-pressed", "true");
+    // Voice language is not live yet: the choices are inert "Soon" controls, not a saved setting.
+    expect(screen.getByRole("button", { name: /हिंदी/ })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("shows no sample names and marks the voice language choices as Soon", async () => {
+    settings();
+    await screen.findByRole("switch", { name: "Reduce motion" });
+    const text = document.body.textContent ?? "";
+    // The Account row's name comes from the identity adapter (src/adapters/mock), not from this screen, so Meera is not asserted here.
+    expect(text).not.toMatch(/Rohan|Kabir|Mumma|Papa/);
+    for (const label of ["English", "हिंदी", "Both"]) {
+      const btn = screen.getByRole("button", { name: new RegExp(label) });
+      expect(btn).toHaveAttribute("aria-disabled", "true");
+      expect(btn.textContent).toContain("Soon");
+    }
   });
 
   it("a switch saves through the BFF and shows Saved", async () => {
@@ -81,7 +95,7 @@ describe("Settings over the backend", () => {
     fireEvent.click(motion);
     expect(await screen.findByText(/Could not save/)).toBeInTheDocument();
     expect(motion).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect((prefsStore.prefs as { reducedMotion: boolean }).reducedMotion).toBe(true);
   });
@@ -144,7 +158,7 @@ describe("Emergency location", () => {
     render(<EmergencyView />);
     fireEvent.click(await screen.findByRole("button", { name: "Allow location" }));
     expect(await screen.findByText(/Could not save/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Saved")).toBeInTheDocument();
   });
 });

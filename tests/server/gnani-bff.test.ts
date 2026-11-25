@@ -81,6 +81,7 @@ describe("voice transcribe BFF", () => {
   it("refuses demo sessions, missing sessions and a missing app header", async () => {
     cookieValue = seal({ t: "", h: "demo", m: "m", exp: Date.now() + 60_000, demo: true }, SECRET);
     vi.stubEnv("DEMO_LOGIN_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_ADAPTERS", "mock");
     const d = await POST(req());
     expect(d.status).toBe(403);
     expect((await d.json()).code).toBe("DEMO_READ_ONLY");

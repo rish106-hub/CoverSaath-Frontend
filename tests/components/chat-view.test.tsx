@@ -96,7 +96,7 @@ describe("ChatView", () => {
     const { AdapterError } = await import("@/adapters/types");
     turn.mockRejectedValue(new AdapterError("MEMORY_DISABLED"));
     render(<ChatView />);
-    fireEvent.click(await screen.findByRole("button", { name: /Cashless hospitals near 400053/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Find a cashless hospital near me/ }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/not switched on/);
   });
 
@@ -113,12 +113,12 @@ describe("ChatView", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect((await screen.findByRole("alert")).textContent).toBe("That took too long. Try again.");
     expect(screen.queryByText(/Partial words/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await within(screen.getByRole("log")).findByText("Thirty days.")).toBeDefined();
     expect(turn).toHaveBeenCalledTimes(2);
     expect(turn.mock.calls[1]?.[1]).toEqual(turn.mock.calls[0]?.[1]);
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(screen.getAllByText("Is knee surgery covered?")).toHaveLength(1);
   });
 
@@ -128,7 +128,7 @@ describe("ChatView", () => {
     render(<ChatView />);
     fireEvent.click(await screen.findByRole("button", { name: /What are my waiting periods/ }));
     expect((await screen.findByRole("alert")).textContent).toBe("Something went wrong. Try again.");
-    expect(screen.getByRole("button", { name: "Retry" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
   });
 });
 
@@ -176,10 +176,10 @@ describe("ChatView pending states", () => {
       .mockImplementation((_i: string, _x: unknown, on: (e: TurnEvent) => void) => new Promise<void>((resolve) => { finish = () => { on(answer()); on({ type: "done", data: {} }); resolve(); }; }));
     await askTyped("Is knee surgery covered?");
     await waitFor(() => expect(state()).toBe("timed_out"));
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(state()).toBe("failed"));
     expect(screen.getByRole("alert").textContent).toBe("Something went wrong. Try again.");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(state()).toBe("retrying"));
     expect(screen.getByText("Trying again…")).toBeDefined();
     await act(async () => { finish(); });

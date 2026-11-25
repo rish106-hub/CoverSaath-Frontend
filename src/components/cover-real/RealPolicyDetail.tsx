@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
+import { labelOf } from "@/lib/fact-labels";
 import s from "@/components/covers/covers.module.css";
 import { MemoryDocument } from "./MemoryDocument";
 import { PassageSearch } from "./PassageSearch";
@@ -25,12 +26,11 @@ export function RealPolicyDetail({ id }: { id: string }) {
   if (state.kind === "loading") return <Loading what="your policy" />;
   if (state.kind === "error") return <ErrorBox code={state.code} onRetry={reload} />;
   const p = state.kind === "ready" ? state.policies.find((x) => x.id === id) : undefined;
-  if (!p) return <EmptyState title="Policy not found" body="This policy is not on your account. Add your policy to see it here." cta="Add a cover" href="/covers/add" />;
+  if (!p) return <EmptyState title="Policy not found" body="This policy isn't on your account." cta="Add a policy" href="/covers/add" />;
   const groups = GROUP_ORDER.map((label) => ({ label, facts: p.facts.filter((f) => groupOf(f.group) === label) })).filter((g) => g.facts.length > 0);
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>{p.title}</PageTitle>
         {p.insurer ? <p className={s.quiet}>{p.insurer}</p> : null}
       </div>
@@ -44,7 +44,7 @@ export function RealPolicyDetail({ id }: { id: string }) {
           <ul className={s.facts}>{g.facts.map((f) => <FactItem key={f.key} f={f} />)}</ul>
         </SectionHeading>
       ))}
-      {p.notFound > 0 ? <p className={s.quiet}>{p.notFound} {p.notFound === 1 ? "detail was" : "details were"} not found in your document.</p> : null}
+      {p.notFound > 0 ? <details className={s.quiet}><summary>Not found in this policy ({p.notFound})</summary><ul>{p.notFoundKeys.map((k) => <li key={k}>{labelOf(k)}</li>)}</ul></details> : null}
       {p.stage === "needs_review" || p.stage === "ready" ? <MemoryDocument holdingId={p.id} /> : null}
       {p.stage === "needs_review" || p.stage === "ready" ? <PassageSearch holdingId={p.id} /> : null}
       <div className={s.row}>

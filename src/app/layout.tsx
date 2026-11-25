@@ -3,6 +3,7 @@ import { Newsreader, Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider, themeInitScript, CapabilityInit } from "@/components/theme";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { MotionRoot } from "@/components/ui/MotionRoot";
 import "@/styles/globals.css";
 
 const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader", weight: ["400"], display: "swap" });
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider><MotionRoot>{children}</MotionRoot></ThemeProvider>
         <CapabilityInit />
         <SpeedInsights />
         <Analytics />

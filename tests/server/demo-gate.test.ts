@@ -35,10 +35,12 @@ describe("demo login", () => {
     expect(isDemoEmail(" Demo@Demo.com ")).toBe(true);
     expect(isDemoEmail("show@example.com")).toBe(false);
   });
-  it("is on by default and off only when DEMO_LOGIN_ENABLED=false", () => {
-    expect(demoEnabled({} as NodeJS.ProcessEnv)).toBe(true);
-    expect(demoEnabled({ DEMO_LOGIN_ENABLED: "true" } as unknown as NodeJS.ProcessEnv)).toBe(true);
-    expect(demoEnabled({ DEMO_LOGIN_ENABLED: "false" } as unknown as NodeJS.ProcessEnv)).toBe(false);
+  it("is on only in mock mode and off whenever DEMO_LOGIN_ENABLED=false", () => {
+    const env = (e: Record<string, string>) => e as unknown as NodeJS.ProcessEnv;
+    expect(demoEnabled({} as NodeJS.ProcessEnv)).toBe(false);
+    expect(demoEnabled(env({ NEXT_PUBLIC_ADAPTERS: "mock" }))).toBe(true);
+    expect(demoEnabled(env({ NEXT_PUBLIC_ADAPTERS: "mock", DEMO_LOGIN_ENABLED: "true" }))).toBe(true);
+    expect(demoEnabled(env({ NEXT_PUBLIC_ADAPTERS: "mock", DEMO_LOGIN_ENABLED: "false" }))).toBe(false);
   });
 });
 

@@ -42,7 +42,7 @@ describe("waiting for the insurer's wording", () => {
     expect(screen.getByTestId("terms-status")).toHaveAttribute("data-state", "waiting");
     state = "fss";
     await act(async () => { await vi.advanceTimersByTimeAsync(10_500); });
-    expect(await screen.findByText("Pre hospitalisation days")).toBeInTheDocument();
+    expect(await screen.findByText("Before admission cover")).toBeInTheDocument();
     expect(screen.queryByText(WAITING_TEXT)).toBeNull();
     expect(screen.getAllByText("From the insurer's wording, not checked").length).toBeGreaterThan(0);
   });

@@ -9,13 +9,14 @@ import { errorText } from "@/adapters/documents-contract";
 import { CHAT_MESSAGE_MAX, type TurnAnswer, type TurnEvent } from "@/adapters/chat-contract";
 import { MicGlyph } from "@/components/agent/VoiceIcons";
 import { voiceOnHold } from "@/components/agent/voice-hold";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { FALLBACK_NOTICE } from "@/agent/voice-gnani";
 import { ChatConsentCard, WithdrawConsent, useChatConsent } from "./ChatConsent";
 import { useHoldings } from "@/components/covers/use-holdings";
 import { statusText } from "@/components/covers/format";
 import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL, clipQuote, insurerLine, isInsurerUnchecked } from "@/adapters/insurer-tier";
 import { CoverOptions } from "@/components/covers/holding-label";
+import { Skeleton } from "@/components/ui/Skeleton";
 import s from "./chat.module.css";
 
 // Chat about the household's cover. The answer streams in; when it is complete it shows the facts it used, each with where it came from, and
@@ -23,7 +24,7 @@ import s from "./chat.module.css";
 // page shows its words. Voice reuses the existing speech adapter (the recording goes to the speech service through the BFF and is not kept here);
 // only the words come back, and they go to the chat as a voice turn.
 
-const PROMPTS = ["Planned knee surgery in Jan, is it covered?", "What are my waiting periods?", "Cashless hospitals near 400053"] as const;
+const PROMPTS = ["What are my waiting periods?", "What does my policy not cover?", "Find a cashless hospital near me"] as const;
 
 /** Where one assistant turn is: waiting, past SLOW_AFTER_MS, resent after a failure, answered, or ended by a timeout or another failure. */
 type TurnPhase = "pending" | "slow" | "retrying";
@@ -228,10 +229,21 @@ export function ChatView() {
 
   const announcement = announcementOf(msgs);
   const first = msgs.length === 0;
+  // While covers load, show only the heading and the skeleton. Rendering the conversation and composer under it would
+  // push them up the moment the skeleton goes, which is a visible layout shift on every chat open.
+  if (holdings === null) {
+    return (
+      <div className={s.stack}>
+        <div>
+          <PageTitle>Ask about your cover</PageTitle>
+        </div>
+        <Skeleton shape="chat" />
+      </div>
+    );
+  }
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Your family&rsquo;s cover</Kicker>
         <PageTitle>Ask about your cover</PageTitle>
       </div>
 
@@ -248,11 +260,10 @@ export function ChatView() {
         <SectionHeading title="Before we answer"><ChatConsentCard c={cc} /></SectionHeading>
       ) : null}
 
-      {holdings === null ? <p className={s.quiet} role="status">Loading your covers…</p> : null}
       {holdings && holdings.length === 0 && !listError ? (
-        <SectionHeading title="No cover yet">
+        <SectionHeading title="No policy yet">
           <p className={s.quiet}>Add your policy and you can ask about it here.</p>
-          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a cover</Link></div>
+          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a policy</Link></div>
         </SectionHeading>
       ) : null}
 
@@ -277,7 +288,7 @@ export function ChatView() {
                 {m.answer && m.answer.openConflicts.length > 0 ? <p className={s.quiet}>Some details in your cover are not settled. <Link href="/covers/review">Review them</Link>.</p> : null}
                 {m.answer?.intent === "network_hospitals" ? <p className={s.quiet}><Link href="/hospitals">Open network hospitals</Link></p> : null}
                 {m.error ? <p className={s.alert} role="alert">{turnErrorText(m.error)}</p> : null}
-                {m.error && m.retry ? <div className={s.row}><button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => retry(msgs[i - 1]?.id ?? 0, m.id, m.retry!)}>Retry</button></div> : null}
+                {m.error && m.retry ? <div className={s.row}><button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => retry(msgs[i - 1]?.id ?? 0, m.id, m.retry!)}>Try again</button></div> : null}
               </li>
             ))}
           </ol>

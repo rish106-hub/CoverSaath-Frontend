@@ -70,6 +70,7 @@ beforeEach(async () => {
   process.env.KNOWVIA_BOOTSTRAP_TOKEN = "boot";
   process.env.SESSION_COOKIE_SECRET = SECRET;
   process.env.BLOB_READ_WRITE_TOKEN = "vercel_blob_rw_test_token";
+  process.env.NEXT_PUBLIC_ADAPTERS = "mock";
   jar.clear();
   backendCalls = [];
   blob.get.mockReset();

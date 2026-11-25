@@ -41,9 +41,9 @@ export function SaveState({ status, onRetry }: { status: SaveStatus; onRetry?: (
         <>
           Could not save.{" "}
           {onRetry ? (
-            <button type="button" className={styles.retry} onClick={onRetry}>Retry</button>
+            <button type="button" className={styles.retry} onClick={onRetry}>Try again</button>
           ) : (
-            "Retry"
+            "Try again"
           )}
         </>
       ) : null}

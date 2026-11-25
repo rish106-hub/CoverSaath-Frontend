@@ -12,7 +12,11 @@ describe("money and tools render", () => {
     for (const h of ["Section 80D", "Top-up finder", "Advisors"]) expect(html).toContain(h);
     // Sample savings figures render only in a demo session, never for a signed-in person.
     expect(html).not.toContain("What these tools save");
-    expect(html).toContain("Rs 44,600");
+    // No sample figures: inputs start empty and results show a dash until a number is entered.
+    expect(html).toContain('placeholder="0"');
+    expect(html).not.toContain("Rs 44,600");
+    expect(html).toContain("—");
+    expect(html).toContain("Top-up plans matched to your policy.");
     expect(html.replace(/<[^>]+>/g, " ")).not.toMatch(BANNED);
   });
   it("planner defaults to 12% and reads the board headline", () => {

@@ -114,7 +114,7 @@ describe("useScenario", () => {
     expect(screen.getByText(/Could not save/)).toBeInTheDocument();
     expect(screen.getByLabelText("Self")).toHaveValue(8100);
     fail = false;
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await settle();
     expect(a.save).toHaveBeenCalledTimes(2);
     expect(a.save.mock.calls[1]![1]).toMatchObject({ premiumsPaid: 8100 });

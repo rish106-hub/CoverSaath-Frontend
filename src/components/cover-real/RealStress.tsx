@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Kicker, PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { copayPct, estimate, sumInsuredRs } from "@/lib/real-cover";
 import { inr } from "@/lib/stress";
@@ -19,12 +19,11 @@ export function RealStress() {
   return (
     <div className={s.stack}>
       <div>
-        <Kicker>Stress test</Kicker>
         <PageTitle>Who pays if a hospital bill comes?</PageTitle>
       </div>
       {state.kind === "loading" ? <Loading what="your policies" /> : null}
       {state.kind === "error" ? <ErrorBox code={state.code} onRetry={reload} /> : null}
-      {state.kind === "ready" && state.covers.length === 0 ? <EmptyState title="Stress test starts from your own policy" body="Upload your policy and Knowvia reads it for you." /> : null}
+      {state.kind === "ready" && state.covers.length === 0 ? <EmptyState title="Add a policy to run a stress test" body="Knowvia reads it, then shows who pays what." /> : null}
       {state.kind === "ready" && state.covers.length > 0 ? <Test covers={state.covers} /> : null}
     </div>
   );

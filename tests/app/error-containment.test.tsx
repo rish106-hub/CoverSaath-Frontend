@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import AppError from "@/app/(app)/error";
 import RootError from "@/app/error";
 import GlobalError from "@/app/global-error";
-import Loading from "@/app/(app)/loading";
+import Loading from "@/app/(app)/home/loading";
 import NotFound from "@/app/not-found";
 
 afterEach(cleanup);
@@ -40,7 +40,7 @@ describe("error containment", () => {
 
   it("loading and not-found render", () => {
     render(<><Loading /><NotFound /></>);
-    expect(screen.getByText("Loading")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/could not find/);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/couldn't find/);
   });
 });
