@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Kicker, PageTitle, SectionHeading } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
+import { labelOf } from "@/lib/fact-labels";
 import s from "@/components/covers/covers.module.css";
 import { MemoryDocument } from "./MemoryDocument";
 import { PassageSearch } from "./PassageSearch";
@@ -44,7 +45,7 @@ export function RealPolicyDetail({ id }: { id: string }) {
           <ul className={s.facts}>{g.facts.map((f) => <FactItem key={f.key} f={f} />)}</ul>
         </SectionHeading>
       ))}
-      {p.notFound > 0 ? <p className={s.quiet}>{p.notFound} {p.notFound === 1 ? "detail was" : "details were"} not found in your document.</p> : null}
+      {p.notFound > 0 ? <details className={s.quiet}><summary>Not found in this policy ({p.notFound})</summary><ul>{p.notFoundKeys.map((k) => <li key={k}>{labelOf(k)}</li>)}</ul></details> : null}
       {p.stage === "needs_review" || p.stage === "ready" ? <MemoryDocument holdingId={p.id} /> : null}
       {p.stage === "needs_review" || p.stage === "ready" ? <PassageSearch holdingId={p.id} /> : null}
       <div className={s.row}>

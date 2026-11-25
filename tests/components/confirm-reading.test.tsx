@@ -50,7 +50,7 @@ describe("confirm a printed reading", () => {
       fact({ factKey: "ped_waiting_months", unit: "months", valueType: "number", sourceTier: "ida_wording", sources: [ida("s-n", null)] }),
     );
     render(<CoverReviewView holding="h1" />);
-    expect(await screen.findByRole("button", { name: "Confirm Pre hospitalisation days" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Confirm Before admission cover" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /^Confirm / })).toHaveLength(1);
   });
   it("shows no Confirm once a current declaration stands, or for a conflicting fact", async () => {

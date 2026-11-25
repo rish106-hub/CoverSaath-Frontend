@@ -3,7 +3,8 @@ import type { Finding, Policy } from "./schemas";
 import { AdapterError, type PolicyAdapter, type ReadingAdapter } from "./types";
 import { backendCovers } from "./covers";
 import { isInsurerUnchecked } from "./insurer-tier";
-import { STATUS_TEXT, documentKindText, formatValue, isOpen, labelOf, pageText, rupees, sourceLabel, sourcePageNumber, sourceQuote, statusText, tierText } from "@/components/covers/format";
+import { FACT_LABELS, labelOf } from "@/lib/fact-labels";
+import { STATUS_TEXT, documentKindText, formatValue, isOpen, pageText, rupees, sourceLabel, sourcePageNumber, sourceQuote, statusText, tierText } from "@/components/covers/format";
 
 // Real-mode policy view: the household's stored holdings and their facts, mapped for /home, /policies and /policies/[id].
 // Nothing here decides anything. A status is shown as the backend gave it; a model-read value is never presented as verified.
@@ -55,6 +56,8 @@ export type PolicyView = {
   facts: FactLine[];
   pending: { id: string; label: string }[];
   notFound: number;
+  /** Keys the backend found nothing for, listed by label in one collapsed row. */
+  notFoundKeys: string[];
   /** Set when this holding's facts could not be loaded. A code, never raw text. */
   error: string | null;
 };
@@ -67,17 +70,21 @@ export function factLine(f: FactView): FactLine {
   // An insurer-tier reading shows the insurer's page; its source label already names the tier, so the citation is the page alone.
   const n = src ? sourcePageNumber(src) : null;
   const page = insurer ? (n ? `Page ${n}` : null) : src ? pageText(src.page) : null;
+  const value = f.status === "conflicting" ? "Two readings" : f.status === "unknown" ? "Not found" : formatValue(f.value, f.unit, f.valueType);
+  // Template text such as "Intermediary Name | Code | Phone" is a form header the reader picked up, not an answer.
+  const isTemplateJunk = (s: string | null | undefined): boolean => typeof s === "string" && s.split(" | ").length > 2;
+  const quote = sourceQuote(src, f.sourceTier);
   return {
     key: f.factKey,
     label: labelOf(f.factKey),
-    value: f.status === "conflicting" ? "Two readings" : f.status === "unknown" ? "Not found" : formatValue(f.value, f.unit, f.valueType),
+    value: isTemplateJunk(value) ? "Not found" : value,
     status: f.status,
     statusText: statusText(f.status, f.sourceTier ?? src?.tier),
     sourceText: sourceLabel(f.status, f.sourceTier ?? src?.tier),
     open: isOpen(f.status),
     citation: src ? (insurer ? page : [tierText(src.tier), documentKindText(src.page?.documentKind), page].filter(Boolean).join(", ")) : null,
-    quote: sourceQuote(src, f.sourceTier),
-    group: f.group ?? null,
+    quote: isTemplateJunk(quote) ? null : quote,
+    group: f.factKey in FACT_LABELS ? (f.group ?? null) : null,
     conflictId: f.openConflictId ?? null,
   };
 }
@@ -135,6 +142,7 @@ export function toPolicyView(h: HoldingView, loaded: { facts: FactView[]; unknow
     facts: facts.map(factLine),
     pending: (loaded?.conflicts ?? []).filter((c) => c.resolution === "pending").map((c) => ({ id: c.id, label: labelOf(c.factKey) })),
     notFound: loaded?.unknownKeys.length ?? 0,
+    notFoundKeys: loaded?.unknownKeys ?? [],
     error,
   };
 }
