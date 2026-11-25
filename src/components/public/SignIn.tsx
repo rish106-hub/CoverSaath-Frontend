@@ -257,8 +257,10 @@ function ShowcasePanel() {
   const [filter, setFilter] = useState<string>("all");
   const [pick, setPick] = useState<AuthCard | null>(null);
 
+  const [paused, setPaused] = useState(false);
   const reduce = useReducedMotion();
-  useTicker(() => setH((x) => (x + 1) % AUTH_HEADS.length), 3200, !reduce);
+  // WCAG 2.2.2: the lanes and the headline rotation run on their own for more than 5s, so visitors get a visible pause control (hover alone excludes keyboard and touch).
+  useTicker(() => setH((x) => (x + 1) % AUTH_HEADS.length), 3200, !reduce && !paused);
 
   const pool = filter === "all" ? AUTH_CARDS : AUTH_CARDS.filter((c) => c.tag === filter).concat(AUTH_CARDS.filter((c) => c.tag !== filter)).slice(0, 9);
   const lane = (off: number) => { const a = pool.filter((_, k) => k % 3 === off); return a.concat(a); };
@@ -267,10 +269,17 @@ function ShowcasePanel() {
     <div className={styles.right}>
       <div className={styles.rtop}>
         <span className={styles.rlab}>What you’ll see in a minute</span>
-        <div className={styles.heads}>
-          {AUTH_HEADS.map((x, k) => (
-            <button key={x[0]} type="button" aria-label={x[0]} onClick={() => setH(k)} style={{ width: k === h ? 28 : 8, background: k === h ? "var(--marker)" : "color-mix(in srgb, var(--paper-fixed) 35%, transparent)" }} />
-          ))}
+        <div className={styles.rctl}>
+          {reduce ? null : (
+            <button type="button" className={styles.pause} aria-pressed={paused} onClick={() => setPaused((x) => !x)}>{paused ? "Play animation" : "Pause animation"}</button>
+          )}
+          <div className={styles.heads}>
+            {AUTH_HEADS.map((x, k) => (
+              <button key={x[0]} type="button" className={styles.headBtn} aria-label={x[0]} aria-current={k === h ? "true" : undefined} onClick={() => setH(k)}>
+                <span className={`${styles.headDot} ${k === h ? styles.headDotOn : ""}`} />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className={styles.headline} key={h}>{a}<em>{b}</em></div>
@@ -279,7 +288,7 @@ function ShowcasePanel() {
           <button key={id} type="button" className={`${styles.filter} ${filter === id ? styles.filterOn : ""}`} onClick={() => { setFilter(id); setPick(null); }} aria-pressed={filter === id}>{label}</button>
         ))}
       </div>
-      <div className={styles.lanes}>
+      <div className={`${styles.lanes} ${paused ? styles.lanesPaused : ""}`}>
         {[0, 1, 2].map((off) => (
           <div key={`${filter}-${off}`} className={`${styles.lane} ${off === 1 ? styles.down : styles.up}`}>
             {lane(off).map((c, k) => (
