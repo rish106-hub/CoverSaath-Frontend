@@ -1,6 +1,7 @@
 import { AdapterError, type ChatAdapter } from "../types";
 import { containsUin } from "../covers-contract";
 import { INSURER_SOURCE, INSURER_UNCHECKED_LABEL } from "../insurer-tier";
+import { SLOW_AFTER_MS } from "../chat-timing";
 import { turnIn, type FactUsed, type TurnAnswer, type TurnInput } from "../chat-contract";
 
 // In-memory stand-in for the chat routes, with the BFF's rules: a message of 1 to 1000 characters, a thread must exist, the answer
@@ -65,8 +66,17 @@ const tick = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve) =
 let consented = false;
 // A message with "simulate timeout" in it runs like the backend's per-turn deadline: some words stream, then one CHAT_TURN_TIMEOUT error. Only the
 // first try times out, so Retry with the same message gets its answer. Reset with resetMockChatTimeouts() in tests.
+// Mock modes, chosen by a phrase in the message, mirror what the real chat can do:
+//   "simulate slow"    silent for MOCK_SLOW_MS (past the page's "Still working…" line), then a normal answer.
+//   "simulate timeout" some words, then CHAT_TURN_TIMEOUT. First try only.
+//   "simulate fail"    a dropped stream (CHAT_STREAM_FAILED) before any words. First try only.
+// "First try only" keeps Retry testable: the same message answers the second time.
 const timedOut = new Set<string>();
-export const resetMockChatTimeouts = () => timedOut.clear();
+const failedOnce = new Set<string>();
+export const resetMockChatTimeouts = () => { timedOut.clear(); failedOnce.clear(); };
+/** The silence of "simulate slow". Unlike the word pacing it is not zeroed under test, so fake timers can drive it. */
+export const MOCK_SLOW_MS = SLOW_AFTER_MS + 2_000;
+const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve) => { const t = setTimeout(resolve, ms); signal?.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true }); });
 
 export const mockChat: ChatAdapter = {
   async consent() { return consented; },
@@ -85,6 +95,14 @@ export const mockChat: ChatAdapter = {
     if (!threads.has(threadId)) throw new AdapterError("NOT_FOUND");
     const sc = scriptFor(p.data.message);
     if (containsUin(sc)) throw new AdapterError("BACKEND_BAD_RESPONSE");
+    if (/simulate fail/i.test(p.data.message) && !failedOnce.has(p.data.message)) {
+      failedOnce.add(p.data.message);
+      throw new AdapterError("CHAT_STREAM_FAILED", true);
+    }
+    if (/simulate slow/i.test(p.data.message)) {
+      await sleep(MOCK_SLOW_MS, signal);
+      if (signal?.aborted) return;
+    }
     onEvent({ type: "meta", data: { threadId, intent: sc.intent, retrievalMode: sc.retrieval, factsAvailable: Object.keys(FACTS).length, openConflicts: sc.openConflicts.length } });
     const words = sc.answer.split(" ");
     for (let i = 0; i < words.length; i += 4) {

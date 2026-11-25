@@ -3,6 +3,7 @@ import { AdapterError } from "./types";
 import { assistantReplySchema, type AssistantReply } from "./schemas";
 import { pageFor } from "@/lib/ia";
 import { z } from "zod";
+import { ASSISTANT_DEADLINE_MS } from "./chat-timing";
 
 // Browser client for the same-origin BFF chat route (/api/app/chat). The backend answers from stored evidence only (chat v0), so the
 // reply carries answerStatus and sources. The browser never sees the backend token.
@@ -35,17 +36,24 @@ export function knownRoute(route: string | undefined): string | undefined {
 
 export const backendAssistant: AssistantAdapter = {
   async ask(text, page) {
+    // Client deadline, a little past the BFF's own (CHAT_TIMEOUT_MS) so the BFF's coded BACKEND_TIMEOUT normally arrives first. It covers the
+    // body read too: a response that starts and then stalls would otherwise leave the panel on "replying" forever.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), ASSISTANT_DEADLINE_MS);
     let res: Response;
+    let body: unknown;
     try {
       res = await fetch("/api/app/chat", {
-        method: "POST", cache: "no-store",
+        method: "POST", cache: "no-store", signal: ctl.signal,
         headers: { "content-type": "application/json", "x-knowvia-app": "1" },
         body: JSON.stringify({ text, page: /^\/[a-z0-9/_-]{0,64}$/.test(page) ? page : undefined }),
       });
+      body = await res.json().catch(() => (ctl.signal.aborted ? Promise.reject(new Error("deadline")) : {}));
     } catch {
-      throw new AdapterError("BACKEND_UNREACHABLE", true);
+      throw new AdapterError(ctl.signal.aborted ? "BACKEND_TIMEOUT" : "BACKEND_UNREACHABLE", true);
+    } finally {
+      clearTimeout(timer);
     }
-    const body: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
       const b = body as { code?: unknown; retryable?: unknown };
       throw new AdapterError(typeof b.code === "string" ? b.code : "BACKEND_UNREACHABLE", b.retryable === true);

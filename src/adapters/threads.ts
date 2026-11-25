@@ -57,14 +57,22 @@ export const backendChat: ChatAdapter = {
   async grantConsent(requestId) { await consentCall("POST", { accept: true, requestId }); },
   async revokeConsent() { await consentCall("DELETE"); },
   async startThread(holdingId) {
+    // Opening a thread comes before every first question; without a deadline a stalled request would leave the page on "pending" for good.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), TURN_IDLE_MS);
     let res: Response;
+    let json: unknown;
     try {
-      res = await fetch("/api/app/chat/threads", { method: "POST", cache: "no-store", headers: { ...HEADERS, "content-type": "application/json" }, body: JSON.stringify(holdingId ? { holdingId } : {}) });
-    } catch {
-      throw new AdapterError("BACKEND_UNREACHABLE", true);
+      res = await fetch("/api/app/chat/threads", { method: "POST", cache: "no-store", signal: ctl.signal, headers: { ...HEADERS, "content-type": "application/json" }, body: JSON.stringify(holdingId ? { holdingId } : {}) });
+      if (!res.ok) throw await failedWith(res);
+      json = await res.json().catch(() => null);
+    } catch (e) {
+      if (e instanceof AdapterError) throw e;
+      throw new AdapterError(ctl.signal.aborted ? "BACKEND_TIMEOUT" : "BACKEND_UNREACHABLE", true);
+    } finally {
+      clearTimeout(timer);
     }
-    if (!res.ok) throw await failedWith(res);
-    const outer = coverOut.safeParse(await res.json().catch(() => null));
+    const outer = coverOut.safeParse(json);
     const t = threadIn.safeParse(outer.success ? outer.data.data : null);
     if (!t.success) throw new AdapterError("BACKEND_BAD_RESPONSE");
     return t.data;
