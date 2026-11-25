@@ -55,3 +55,30 @@
 @keyframes step-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--step-pulse-fixed) 45%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--step-pulse-fixed) 0%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .step[data-step="active"] .stepDot { animation: none; } }
 html[data-motion="reduced"] .step[data-step="active"] .stepDot { animation: none; }
+
+/* Real home and policy list: the demo HomeView patterns (glance band, visual policy cards) on real holdings. */
+.glance { border-radius: var(--r-xl); background: var(--harbour-fixed); color: var(--paper-fixed); padding: 22px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; align-content: start; }
+.tile { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--r-md); background: color-mix(in srgb, var(--paper-fixed) 8%, transparent); color: var(--paper-fixed); text-decoration: none; transition: transform var(--t-base) var(--ease); }
+.tile:hover { transform: translateY(-2px); }
+.tileLight { background: var(--paper-fixed); color: var(--ink-fixed); }
+.tileMarker { background: var(--marker); color: var(--ink-fixed); }
+.tileHead { font-size: var(--fs-14); }
+.tileHead b { font-weight: 600; }
+.tileValue { font: 400 var(--fs-34)/1 var(--font-serif); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tileValueSm { font: 400 var(--fs-20)/1.2 var(--font-serif); overflow-wrap: anywhere; }
+.tileDetail { font-size: var(--fs-13); opacity: 0.85; }
+.policyGrid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; }
+.policyCard { min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: var(--r-xl); background: var(--sheet); border: 1px solid var(--line); border-top: 4px solid var(--harbour); color: var(--ink); }
+.policyTop { display: flex; align-items: center; gap: 12px; }
+.policyName { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.policyTitle { margin: 0; font: 600 var(--fs-17)/1.3 var(--font-sans); color: var(--ink); overflow-wrap: anywhere; }
+.badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--harbour-fixed); color: var(--marker); font: 600 var(--fs-17) var(--font-sans); }
+.heads { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+.head { display: flex; flex-direction: column; gap: 4px; min-width: 0; align-items: flex-start; }
+.head[data-open="true"] .status { color: var(--g-money); }
+.headValue { font: 400 var(--fs-20)/1.2 var(--font-serif); color: var(--ink); overflow-wrap: anywhere; }
+/* Flat note nested in a card: tinted, no border, so a card in a card never draws a double border. */
+.note { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: var(--r-md); background: var(--mist); color: var(--ink); }
+.noteAlert { background: var(--signal-bg); color: var(--signal-ink); }
+.noteAlert .lead { color: inherit; }

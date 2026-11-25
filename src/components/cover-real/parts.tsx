@@ -7,7 +7,7 @@ import { backendCovers } from "@/adapters/covers";
 import { backendUploads } from "@/adapters/uploads";
 import { pickFile, runTerms } from "@/components/covers/add-cover-flow";
 import type { CreationIssue } from "@/adapters/covers-contract";
-import type { FactLine, HeadlineLine, PolicyView, Stage } from "@/adapters/real-policy";
+import { keyFacts, type FactLine, type HeadlineLine, type PolicyView, type Stage } from "@/adapters/real-policy";
 import s from "@/components/covers/covers.module.css";
 
 /** What a person can do next, per stage of a holding that has no facts yet. */
@@ -22,7 +22,7 @@ export const STAGE_NOTE: Record<Stage, { title: string; body: string; cta?: { la
 export function ErrorBox({ code, onRetry }: { code: string; onRetry?: () => void }) {
   const retryable = code !== "HOLDINGS_DISABLED" && code !== "UNAUTHENTICATED";
   return (
-    <div className={s.card} role="alert" data-testid="real-error">
+    <div className={`${s.note} ${s.noteAlert}`} role="alert" data-testid="real-error">
       <p className={s.lead}>{errorText(code)}</p>
       <div className={s.row}>
         {retryable && onRetry ? <button type="button" className="k-btn k-btn--secondary" onClick={onRetry}>Try again</button> : null}
@@ -40,7 +40,7 @@ export function StageBox({ p, onRetry }: { p: PolicyView; onRetry?: () => void }
   const note = STAGE_NOTE[p.stage];
   if (!note) return null;
   return (
-    <div className={s.card} data-testid="stage-note">
+    <div className={s.note} data-testid="stage-note">
       <p className={s.lead}><b>{note.title}.</b> {note.body}</p>
       <div className={s.row}>
         {p.stage === "reading" && onRetry ? <button type="button" className="k-btn k-btn--secondary" onClick={onRetry}>Check again</button> : null}
@@ -66,7 +66,7 @@ export function FactItem({ f }: { f: FactLine }) {
 export function Headlines({ p }: { p: PolicyView }) {
   if (p.headlines.length === 0) return null;
   return (
-    <ul className={s.facts} data-testid="headlines">
+    <ul className={s.heads} data-testid="headlines">
       {p.headlines.map((h) => <HeadlineItem key={h.key} h={h} holdingId={p.id} />)}
     </ul>
   );
@@ -74,9 +74,9 @@ export function Headlines({ p }: { p: PolicyView }) {
 
 function HeadlineItem({ h, holdingId }: { h: HeadlineLine; holdingId: string }) {
   return (
-    <li className={s.fact} data-open={h.tone === "review" || h.tone === "missing"} data-tone={h.tone} data-testid={`headline-${h.key}`}>
+    <li className={s.head} data-open={h.tone === "review" || h.tone === "missing"} data-tone={h.tone} data-testid={`headline-${h.key}`}>
       <span className={s.factName}>{h.label}</span>
-      <span className={s.factValue}>{h.value}</span>
+      <span className={s.headValue}>{h.value}</span>
       <span className={s.status}>{h.statusText}</span>
       {h.tone === "review" ? <Link className="k-btn k-btn--secondary k-btn--sm" href={`/covers/review?holding=${encodeURIComponent(holdingId)}`}>Review and decide</Link> : null}
     </li>
@@ -86,7 +86,7 @@ function HeadlineItem({ h, holdingId }: { h: HeadlineLine; holdingId: string }) 
 export function Pending({ p }: { p: PolicyView }): ReactNode {
   if (p.pending.length === 0) return null;
   return (
-    <div className={s.card} data-testid="pending-conflicts">
+    <div className={s.note} data-testid="pending-conflicts">
       <p className={s.lead}>{p.pending.length === 1 ? "One detail needs your decision" : `${p.pending.length} details need your decision`}: {p.pending.map((c) => c.label).join(", ")}.</p>
       <div className={s.row}><Link className="k-btn" href={`/covers/review?holding=${encodeURIComponent(p.id)}`}>Review and decide</Link></div>
     </div>
@@ -168,5 +168,79 @@ export function TermsStatus({ p, onAdded }: { p: PolicyView; onAdded?: () => voi
       ) : null}
       {code ? <p className={s.alert} role="alert">{errorText(code)}</p> : null}
     </div>
+  );
+}
+
+/** Accent colours for the top rule of each policy card, cycled in order. Group tokens only. */
+const CARD_ACCENTS = ["var(--harbour)", "var(--sea-glass)", "var(--ochre)"];
+
+/**
+ * One holding as a visual card: accent rule, insurer badge, product as a heading, the three headline values, then what needs doing.
+ * `withPending` shows the decision note on home; the list leaves it to the headline row link. Every value comes from the holding.
+ */
+export function PolicyCard({ p, index, onRetry, linkLabel, withPending = false }: { p: PolicyView; index: number; onRetry?: () => void; linkLabel: string; withPending?: boolean }) {
+  const facts = keyFacts(p);
+  const initial = (p.insurer ?? p.title).trim().charAt(0).toUpperCase();
+  return (
+    <article className={s.policyCard} style={{ borderTopColor: CARD_ACCENTS[index % CARD_ACCENTS.length] }} aria-label={p.title}>
+      <div className={s.policyTop}>
+        <span className={s.badge} aria-hidden>{initial}</span>
+        <div className={s.policyName}>
+          <h3 className={s.policyTitle}>{p.title}</h3>
+          {p.insurer ? <span className={s.quiet}>{p.insurer}</span> : null}
+        </div>
+      </div>
+      <Headlines p={p} />
+      {p.error ? <ErrorBox code={p.error} onRetry={onRetry} /> : <StageBox p={p} onRetry={onRetry} />}
+      {withPending ? <Pending p={p} /> : null}
+      {facts.length > 0 ? <ul className={s.facts}>{facts.map((f) => <FactItem key={f.key} f={f} />)}</ul> : null}
+      <div className={s.row}><Link className="k-btn k-btn--secondary" href={`/policies/${encodeURIComponent(p.id)}`}>{linkLabel}</Link></div>
+    </article>
+  );
+}
+
+/** The one thing to do next across the account, picked by urgency. Null when there is nothing to do but ask. */
+export type NextStep = { label: string; detail: string; href: string };
+export function nextStepOf(policies: PolicyView[]): NextStep {
+  const open = policies.find((x) => x.pending.length > 0);
+  if (open) return { label: "Decide on open details", detail: open.pending.length === 1 ? "One detail needs your decision" : `${open.pending.length} details need your decision`, href: `/covers/review?holding=${encodeURIComponent(open.id)}` };
+  const plan = policies.find((x) => x.stage === "choose_plan");
+  if (plan) return { label: "Pick your plan", detail: "So we read the right details", href: "/covers/add?resume=1" };
+  const first = policies[0];
+  return { label: "Ask about your cover", detail: "Questions answered from your policy", href: `/chat?holding=${encodeURIComponent(first.id)}` };
+}
+
+/**
+ * Dark band at the top of /home. Tiles are the first policy's headline values that were found (a missing or conflicting value is left out, never
+ * faked; the conflict is the next step), the policy count, and the next step. With several policies the tile detail names the policy so a value is never unplaced.
+ */
+export function GlanceBand({ policies }: { policies: PolicyView[] }) {
+  const first = policies[0];
+  const many = policies.length > 1;
+  const found = first.headlines.filter((h) => h.tone === "read" || h.tone === "confirmed");
+  const next = nextStepOf(policies);
+  const to = `/policies/${encodeURIComponent(first.id)}`;
+  return (
+    <section className={s.glance} aria-label="Your cover at a glance" data-testid="glance">
+      <div className={s.tiles}>
+        <Link href="/policies" className={s.tile}>
+          <span className={s.tileHead}><b>Policies</b></span>
+          <span className={s.tileValue}>{policies.length}</span>
+          <span className={s.tileDetail}>{many ? "on your account" : "on your account, read for you"}</span>
+        </Link>
+        {found.map((h) => (
+          <Link key={h.key} href={to} className={`${s.tile} ${s.tileLight}`}>
+            <span className={s.tileHead}><b>{h.label}</b></span>
+            <span className={`${s.tileValue} ${h.key === "policy_period" ? s.tileValueSm : ""}`}>{h.value}</span>
+            <span className={s.tileDetail}>{many ? `${h.statusText}, ${first.title}` : h.statusText}</span>
+          </Link>
+        ))}
+        <Link href={next.href} className={`${s.tile} ${s.tileMarker}`}>
+          <span className={s.tileHead}><b>Next step</b></span>
+          <span className={s.tileValueSm}>{next.label}</span>
+          <span className={s.tileDetail}>{next.detail}</span>
+        </Link>
+      </div>
+    </section>
   );
 }
