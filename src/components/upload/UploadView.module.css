@@ -10,7 +10,7 @@
 .drop[data-over="true"] { border-color: var(--harbour); background: var(--mist); }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .kind { display: flex; gap: 8px; align-items: center; font: 500 var(--fs-14) var(--font-sans); color: var(--graphite); }
-.kind select { min-height: var(--btn-h); padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 var(--fs-14) var(--font-sans); }
+.kind select { min-height: var(--btn-h); padding: 0 12px; border-radius: var(--r-btn); border: 1px solid var(--field-border); background: var(--sheet); color: var(--ink); font: 500 var(--fs-14) var(--font-sans); }
 .items { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
 .item { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 18px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); }
 .itemHead { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }

@@ -8,7 +8,7 @@
 .tabWhen { font: 600 var(--fs-13) var(--font-mono); letter-spacing: 0.04em; color: var(--graphite); }
 .tabT { font: 600 var(--fs-17) var(--font-sans); }
 .field { display: flex; flex-direction: column; gap: 6px; font: 400 var(--fs-14) var(--font-sans); color: var(--graphite); border: 0; padding: 0; margin: 0; }
-.field input { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); font: 500 var(--fs-16) var(--font-sans); color: var(--ink); }
+.field input { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--field-border); background: var(--paper); font: 500 var(--fs-16) var(--font-sans); color: var(--ink); }
 .field legend { padding: 0; margin-bottom: 6px; }
 .seg { display: inline-flex; padding: 3px; border-radius: var(--r-btn); background: var(--sunken); gap: 2px; align-self: flex-start; }
 .segBtn { min-height: 38px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: transparent; font: 500 var(--fs-14) var(--font-sans); color: var(--graphite); }

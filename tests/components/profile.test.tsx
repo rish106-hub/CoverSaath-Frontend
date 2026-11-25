@@ -108,6 +108,24 @@ describe("profile page", () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it("wires each address field error to its input with aria-invalid and aria-describedby", async () => {
+    view();
+    await ready();
+    fireEvent.click(screen.getByRole("button", { name: "Add it yourself" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save address" }));
+    await screen.findAllByText("Required");
+    for (const [label, id] of [["Address line 1", "ad-line1"], ["City", "ad-city"], ["State", "ad-state"], ["Pincode", "ad-pincode"]] as const) {
+      const input = screen.getByLabelText(label);
+      expect(input).toHaveAttribute("aria-invalid", "true");
+      const err = document.getElementById(input.getAttribute("aria-describedby")!);
+      expect(err).toHaveAttribute("id", `${id}-err`);
+      expect(err).toHaveTextContent(/\S/);
+    }
+    // A field without an error carries neither attribute.
+    expect(screen.getByLabelText("Landmark")).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByLabelText("Landmark")).not.toHaveAttribute("aria-describedby");
+  });
+
   it("manual save, then Edit and Remove", async () => {
     view();
     await ready();

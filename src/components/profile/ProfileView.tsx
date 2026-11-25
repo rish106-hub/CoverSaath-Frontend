@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, cloneElement, isValidElement, type FormEvent, type MouseEvent, type ReactElement, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adapters, features, addressSchema, mobileSchema, type Address, type PermissionState, type Profile, type SavedPlace, type UiPrefs } from "@/adapters";
@@ -20,10 +20,14 @@ const EMPTY: Form = { line1: "", line2: "", landmark: "", city: "", state: "", p
 const fromAddress = (a: Address): Form => ({ line1: a.line1, line2: a.line2, landmark: a.landmark, city: a.city, state: a.state, pincode: a.pincode });
 
 function Field({ id, label, error, children }: { id: string; label: string; error?: string; children: ReactNode }) {
+  // Wire the error to the control here so every field gets aria-invalid and aria-describedby the same way.
+  const control = error && isValidElement(children)
+    ? cloneElement(children as ReactElement<Record<string, unknown>>, { "aria-invalid": true, "aria-describedby": `${id}-err` })
+    : children;
   return (
     <div className={s.field}>
       <label htmlFor={id} className={s.label}>{label}</label>
-      {children}
+      {control}
       {error ? <span className={s.fieldError} id={`${id}-err`} role="alert">{error}</span> : null}
     </div>
   );
