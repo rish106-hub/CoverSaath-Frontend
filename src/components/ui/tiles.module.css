@@ -20,7 +20,7 @@
 .label { font: 600 var(--fs-13) var(--font-sans); display: inline-flex; align-items: center; gap: 6px; }
 .value { font: 400 var(--fs-28) / 1.15 var(--font-serif); font-variant-numeric: tabular-nums; }
 .caption { font: 400 var(--fs-13) var(--font-sans); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; }
-.source { margin-top: auto; padding: 1px 7px; border-radius: 999px; font: 600 var(--fs-12) var(--font-sans); background: color-mix(in srgb, currentColor 12%, transparent); }
+.source { margin-top: auto; padding: 1px 7px; border-radius: 999px; font: 600 var(--fs-13) var(--font-sans); background: color-mix(in srgb, currentColor 12%, transparent); }
 .muted { font: 400 var(--fs-18) var(--font-serif); opacity: 0.6; }
 
 /* Hover and press only on tiles that act. Lift is 2px; press is a quiet scale. */
@@ -42,7 +42,7 @@
 .soon:focus-visible { outline: 2px solid var(--harbour); outline-offset: 2px; }
 .soonBody { display: flex; flex-direction: column; gap: 6px; opacity: 0.6; max-width: 100%; min-width: 0; }
 .clock { flex: none; }
-.soonTag { margin-top: auto; padding: 1px 8px; border-radius: 999px; background: var(--sunken); color: var(--graphite); font: 600 var(--fs-12) var(--font-sans); }
+.soonTag { margin-top: auto; padding: 1px 8px; border-radius: 999px; background: var(--sunken); color: var(--graphite); font: 600 var(--fs-13) var(--font-sans); }
 
 .bars { display: flex; flex-direction: column; gap: 10px; }
 .bar { display: grid; grid-template-columns: 80px minmax(0, 1fr) 70px; align-items: center; gap: 10px; }
@@ -52,7 +52,7 @@
 .fillInk { background: var(--ink); }
 .fillMarker { background: var(--marker); }
 .fillSignal { background: var(--signal); }
-.barValue { font: 400 var(--fs-12) var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.barValue { font: 400 var(--fs-13) var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
 
 .ask { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; box-sizing: border-box; min-height: 132px; padding: var(--tile-pad); border-radius: 14px; background: var(--ink-fixed); color: var(--paper-fixed); }
 .orb { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--sea-on-ink), var(--harbour-fixed)); }

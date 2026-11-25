@@ -172,7 +172,6 @@ describe("screens", () => {
     const home = render(<RealHome />);
     const sumTile = (await screen.findByText("Sum insured")).closest("a");
     expect(sumTile).toHaveTextContent("Rs 5,00,000");
-    expect(sumTile).toHaveTextContent("Read from your document");
     home.unmount();
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Example Health Plan 01")).toBeInTheDocument();

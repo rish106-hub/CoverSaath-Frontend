@@ -8,7 +8,7 @@ import Link from "next/link";
 import { AccessCard } from "@/components/access/AccessCard";
 import { ThemeToggle } from "@/components/theme";
 import { Kicker } from "@/components/type";
-import { FAMILY_ALL_YEAR, FAMILY_STATS, LANDING_POINTS } from "@/data/mock";
+import { FAMILY_STATS, LANDING_POINTS } from "@/data/mock";
 import dynamic from "next/dynamic";
 
 // The scene player is below the fold on small screens and heavy on mobile CPUs: load it after first paint,
@@ -32,7 +32,6 @@ export function Landing() {
   const pick = (i: number) => {
     setPos({ scene: i, tick: 0 });
   };
-  const story = FAMILY_STATS.find((s) => s.scene === scene) ?? FAMILY_ALL_YEAR;
 
   return (
     <div className={styles.page}>
@@ -53,14 +52,14 @@ export function Landing() {
             {LANDING_POINTS.map((p) => (
               <div key={p.t} className={styles.point}>
                 <span className={styles.pointIcon} aria-hidden>{p.i}</span>
-                <span><span className={styles.pointT}>{p.t}</span><span className={styles.pointD}>{p.d}</span></span>
+                <span><span className={styles.pointT}>{p.t}</span></span>
               </div>
             ))}
           </div>
           <AccessCard />
         </div>
         <div className={styles.right}>
-          <div className={styles.rowHead}><span className={styles.rowT}>Inside Knowvia</span><span className={styles.rowS}>20-second tour</span></div>
+          <div className={styles.rowHead}><span className={styles.rowT}>Inside Knowvia</span></div>
           <Tour scene={scene} tick={tick} play={play} onPick={pick} onToggle={() => setWantPlay(!play)} />
           <section className={styles.stats} aria-label="What Knowvia did for Meera’s family">
             <div className={styles.statsHead}>
@@ -74,12 +73,10 @@ export function Landing() {
                   <button key={x.v} type="button" className={`${styles.stat} ${on ? styles.statOn : ""}`} style={{ borderTopColor: on ? x.accent : "transparent" }} onClick={() => pick(x.scene)} aria-pressed={on}>
                     <span className={styles.statV}>{x.v}</span>
                     <span className={styles.statT}>{x.t}</span>
-                    <span className={styles.statM} style={on ? { color: x.accent } : undefined}>{x.m}</span>
                   </button>
                 );
               })}
             </div>
-            <div className={styles.story} aria-live="polite"><span className={styles.dot} style={{ background: story.accent }} />{story.story}</div>
           </section>
         </div>
       </main>
