@@ -181,12 +181,12 @@ function DemoCard({ returnTo }: { returnTo: string | null }) {
     <form className={styles.form} style={{ marginTop: 8 }} onSubmit={(e) => { e.preventDefault(); void enter(); }} aria-label="Demo">
       <div>
         <h2 className={styles.sub} style={{ margin: 0, color: "var(--ink)", fontWeight: 600 }}>Demo</h2>
-        <p className={styles.small} style={{ margin: "4px 0 0" }}>Look around with sample data.</p>
+        <p className={styles.small} style={{ margin: "4px 0 0" }}>Look around the app.</p>
       </div>
-      <label className={styles.field}><input type="email" aria-label="Demo email" readOnly value="demo@demo.com" /></label>
-      <label className={styles.field}><input type="text" aria-label="Demo password" readOnly value="demo123" /></label>
+      <label className={styles.field}><input type="email" aria-label="Email" readOnly value="demo@demo.com" /></label>
+      <label className={styles.field}><input type="text" aria-label="Password" readOnly value="demo123" /></label>
       {error ? <p className={styles.err} role="alert">{error}</p> : null}
-      <button type="submit" className={styles.cta} disabled={busy}>Enter demo</button>
+      <button type="submit" className={styles.cta} disabled={busy}>Look around</button>
     </form>
   );
 }
@@ -258,7 +258,7 @@ function ShowcasePanel() {
         <span className={styles.rlab}>What you’ll see in a minute</span>
         <div className={styles.heads}>
           {AUTH_HEADS.map((x, k) => (
-            <button key={x[0]} type="button" aria-label={x[0]} onClick={() => setH(k)} style={{ width: k === h ? 28 : 8, background: k === h ? "#f4dc8a" : "rgba(247,245,240,.35)" }} />
+            <button key={x[0]} type="button" aria-label={x[0]} onClick={() => setH(k)} style={{ width: k === h ? 28 : 8, background: k === h ? "var(--marker)" : "color-mix(in srgb, var(--paper-fixed) 35%, transparent)" }} />
           ))}
         </div>
       </div>

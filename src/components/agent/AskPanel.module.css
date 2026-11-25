@@ -1,8 +1,8 @@
-.sheet { --spring: cubic-bezier(0.3, 1.12, 0.5, 1); position: fixed; z-index: 45; left: 50%; bottom: 86px; transform: translateX(-50%); width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 110px); display: flex; flex-direction: column; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-lg); overflow: hidden; font: 400 14px var(--font-sans); animation: sheet-in var(--t-slow) var(--ease) both; }
+.sheet { --spring: cubic-bezier(0.3, 1.12, 0.5, 1); position: fixed; z-index: 45; left: 50%; bottom: 86px; transform: translateX(-50%); width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 110px); display: flex; flex-direction: column; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-lg); overflow: hidden; font: 400 var(--fs-14) var(--font-sans); animation: sheet-in var(--t-slow) var(--ease) both; }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); min-width: 0; }
 .headText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.headText b { font-weight: 600; font-size: 16px; }
-.reads { font-size: 13px; color: var(--graphite); overflow-wrap: anywhere; }
+.headText b { font-weight: 600; font-size: var(--fs-16); }
+.reads { font-size: var(--fs-13); color: var(--graphite); overflow-wrap: anywhere; }
 
 /* Chat expands upward: the row grows from 0 to 1 while the mic row stays put underneath. */
 .chatWrap { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows var(--t-xslow, 420ms) var(--spring), opacity var(--t-base) var(--ease), visibility 0s linear var(--t-xslow, 420ms); }
@@ -12,19 +12,19 @@
 
 .voice { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 16px 16px; min-width: 0; }
 .status { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; }
-.label { font-size: 13px; font-weight: 600; color: var(--harbour); }
-.say { font-family: var(--font-serif); font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
-.reply { font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
-.note { font-size: 13px; color: var(--signal-ink); }
+.label { font-size: var(--fs-13); font-weight: 600; color: var(--harbour); }
+.say { font-family: var(--font-serif); font-size: var(--fs-22); line-height: 1.25; overflow-wrap: anywhere; }
+.reply { font-size: var(--fs-15); color: var(--ink); overflow-wrap: anywhere; }
+.note { font-size: var(--fs-13); color: var(--signal-ink); }
 .steps { width: 100%; display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; }
-.step { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--graphite); }
-.step i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; background: var(--sunken); color: var(--graphite); }
+.step { display: flex; align-items: center; gap: 10px; font-size: var(--fs-14); color: var(--graphite); }
+.step i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: var(--fs-13); background: var(--sunken); color: var(--graphite); }
 .stepDone { color: var(--ink); }
 .stepDone i { background: var(--harbour); color: var(--on-harbour); }
 .go { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-btn); background: var(--btn-accent); color: var(--btn-accent-ink); font-weight: 600; text-decoration: none; }
 
 .controls { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.mic { position: relative; width: 76px; height: 76px; border-radius: 22px; border: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--btn-accent); color: var(--btn-accent-ink); cursor: pointer; transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); box-shadow: 0 10px 24px -12px rgba(22, 19, 15, 0.5); }
+.mic { position: relative; width: 76px; height: 76px; border-radius: 22px; border: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--btn-accent); color: var(--btn-accent-ink); cursor: pointer; transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--ink-fixed) 50%, transparent); }
 .mic:hover { transform: translateY(-1px); }
 .mic:active { transform: scale(0.97); }
 .mic:focus-visible, .arrow:focus-visible { outline: 2px solid var(--btn-accent); outline-offset: 3px; }
@@ -39,8 +39,8 @@
 .arrow[aria-expanded="true"] { animation: none; }
 
 .examples { width: 100%; display: flex; flex-direction: column; gap: 6px; }
-.tryLabel { font-size: 13px; font-weight: 600; color: var(--graphite); }
-.ex { text-align: left; min-height: 36px; padding: 6px 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 14px var(--font-sans); cursor: pointer; overflow-wrap: anywhere; }
+.tryLabel { font-size: var(--fs-13); font-weight: 600; color: var(--graphite); }
+.ex { text-align: left; min-height: 36px; padding: 6px 12px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 var(--fs-14) var(--font-sans); cursor: pointer; overflow-wrap: anywhere; }
 .ex:hover { border-color: var(--btn-accent); }
 
 /* Chat view: the mic shrinks to a toolbar row beside the arrow. */
@@ -68,5 +68,5 @@
 html[data-motion="reduced"] .sheet, html[data-motion="reduced"] .micRing, html[data-motion="reduced"] .chev { animation: none !important; }
 html[data-motion="reduced"] .chatWrap, html[data-motion="reduced"] .chev, html[data-motion="reduced"] .mic { transition: none !important; }
 
-.holdHint { display: none; font-size: 13px; color: var(--graphite); }
+.holdHint { display: none; font-size: var(--fs-13); color: var(--graphite); }
 @media (hover: hover) and (pointer: fine) { .holdHint { display: block; } }

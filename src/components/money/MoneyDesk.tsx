@@ -191,7 +191,7 @@ export function MoneyDesk() {
         </SectionHeading>
         <SectionHeading title="Bill and amount paid">
           <div className={styles.card}>
-            <b style={{ font: "500 14px var(--font-sans)" }}>Father · Kothrud Care · Aug</b>
+            <b style={{ font: "500 var(--fs-14) var(--font-sans)" }}>Father · Kothrud Care · Aug</b>
             <div className={styles.split} role="img" aria-label="Paid 78 percent, gap 22 percent"><span style={{ width: "78%", background: "var(--harbour)" }} /><span style={{ width: "22%", background: "var(--signal)" }} /></div>
             <div className={styles.row2}><span>Paid Rs 1,48,200</span><span>Gap Rs 41,800</span></div>
             <Link href="/desk" className="k-btn k-btn--sm" style={{ alignSelf: "flex-start" }}>Track the gap in Desk</Link>

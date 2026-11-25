@@ -111,24 +111,41 @@ const guard = <T>(v: T): T => {
 /** policy.md as the backend renders it (ADR 0039), from the seeded facts. Insurer-tier lines carry the insurer label, page and quote. FOR LEGAL REVIEW: reader-facing wording is not final. */
 const label = (key: string): string => { const w = key.replace(/_/g, " "); return w.charAt(0).toUpperCase() + w.slice(1); };
 const plain = (v: unknown, unit?: string | null): string => (typeof v === "number" ? (unit === "paise" ? `Rs ${v / 100}` : unit === "days" ? `${v} days` : unit === "months" ? `${v} months` : String(v)) : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v ?? "Not found"));
+// Section names and order are the backend's MEMORY_DOCUMENT_SECTIONS. FOR LEGAL REVIEW: the reader-facing wording below mirrors the backend's draft wording.
+const INSURER_BLOCK = "Insurer terms your document doesn't state";
+const MEMORY_SECTIONS = ["Policy", "People covered", "Cover and limits", "Waiting periods", "Exclusions", INSURER_BLOCK, "Declared conditions", "Premiums and dues", "Conflicts to resolve", "Open questions"] as const;
+const SECTION_OF_GROUP: Record<string, (typeof MEMORY_SECTIONS)[number]> = { waiting: "Waiting periods", exclusions: "Exclusions", declarations: "Declared conditions", premium: "Premiums and dues", payment: "Premiums and dues" };
 function memoryMarkdown(state: State): string {
-  const line = (f: Facts["facts"][number]): string => {
+  const cite = (f: Facts["facts"][number]): { quote: string; tag: string } => {
     const src = f.sources.find((x) => x.tier === f.sourceTier) ?? f.sources[0];
-    const value = f.status === "conflicting" ? "two readings" : plain(f.value, f.unit);
     const quote = src?.quote ? ` Quote: "${src.quote}"` : "";
-    if (f.sourceTier === "ida_wording" && f.status === "extracted_unverified") return `- ${label(f.factKey)}: ${value} (insurer wording, not checked)${quote} [insurer_wording, p.${src?.reference?.pageNumber ?? 0}]`;
-    const tag = f.status === "conflicting" ? "[unknown]" : `[own_pdf, p.${src?.page?.pageNumber ?? Number(/\d+$/.exec(src?.page?.pageId ?? "")?.[0] ?? 0)}]`;
-    return `- ${label(f.factKey)}: ${value} (read from your document, not verified)${quote} ${tag}`;
+    if (f.sourceTier === "ida_wording" && src?.reference?.pageNumber) return { quote, tag: `[insurer_wording, p.${src.reference.pageNumber}, clause 4.2]` };
+    const pageNumber = src?.page?.pageNumber ?? Number(/\d+$/.exec(src?.page?.pageId ?? "")?.[0] ?? 0);
+    return { quote, tag: pageNumber ? `[${src?.page?.documentKind ?? "policy_schedule"}, p.${pageNumber}]` : "[unknown]" };
   };
-  const own = state.facts.filter((f) => f.sourceTier !== "ida_wording");
-  const insurer = state.facts.filter((f) => f.sourceTier === "ida_wording" && f.status === "extracted_unverified");
+  const line = (f: Facts["facts"][number]): string => {
+    if (f.status === "conflicting") return `- ${label(f.factKey)} Not settled: two readings disagree, see Conflicts to resolve. [unknown]`;
+    const { quote, tag } = cite(f);
+    const status = f.status === "reviewed_reference" ? " (insurer wording)" : f.status === "user_confirmed" ? " (you stated this)" : f.sourceTier === "ida_wording" ? " (From the insurer's wording, not checked)" : " (read from your document, not verified)";
+    return `- ${label(f.factKey)} ${plain(f.value, f.unit)}${status}${f.checkWithInsurer ? " Check with the insurer." : ""}${quote} ${tag}`;
+  };
+  const sections = new Map<string, string[]>(MEMORY_SECTIONS.map((name) => [name, []]));
+  for (const f of state.facts) {
+    const insurerOnly = f.sourceTier === "ida_wording" && f.status === "extracted_unverified" && !f.sources.some((x) => x.tier === "own_pdf");
+    sections.get(insurerOnly ? INSURER_BLOCK : SECTION_OF_GROUP[f.group ?? ""] ?? "Cover and limits")?.push(line(f));
+  }
+  sections.set("Policy", [`- Insurer: ${state.confirmed ? "Example Insurer" : "unknown"} ${state.confirmed ? "[owner statement]" : "[unknown]"}`, `- Product: ${state.confirmed ? "Example Health Plan" : "unknown"} ${state.confirmed ? "[owner statement]" : "[unknown]"}`, "- Policy number: XXXXXX1234 [policy record]"]);
+  sections.set("People covered", state.facts.length > 0 ? ["- Example Member (self), adult [policy_schedule, p.1]"] : []);
+  sections.set("Declared conditions", declarations.map((d) => `- Example Member: ${d.label} (${d.kind.replace(/_/g, " ")}) [owner statement]`));
+  sections.set("Premiums and dues", [...sections.get("Premiums and dues") ?? [], ...premiums.map((p) => `- Premium paid ${p.paidOn}: Rs ${p.amountPaise / 100} [owner statement]`)]);
+  sections.set("Conflicts to resolve", state.conflicts.filter((c) => c.resolution === "pending").map((c) => `- ${label(c.factKey)} Readings: ${c.candidates.map((x) => `${String(x.value)} [${x.tier === "ida_wording" ? "insurer_wording" : "policy_schedule"}, p.${"pageNumber" in x && x.pageNumber ? x.pageNumber : 3}]`).join("; ")} Check with the insurer. [unknown]`));
+  sections.set("Open questions", state.facts.length > 0 ? ["- Co-payment [unknown]"] : []);
   return [
     "# Memory", "",
-    "> Built from your own documents and answers, shown only to you. Values read from your documents are not verified. The insurer's wording governs; check with the insurer before relying on any line.", "",
-    "## Policy", "", `- Product: ${state.confirmed ? "Example Health Plan" : "unknown"} ${state.confirmed ? "[owner statement]" : "[unknown]"}`, "",
-    "## Cover and limits", "", ...(own.length > 0 ? own.map(line) : ["- None recorded. [unknown]"]), "",
-    "## Insurer terms your document doesn't state", "", ...(insurer.length > 0 ? insurer.map(line) : ["- None recorded. [unknown]"]), "",
-    "## Open questions", "", ...(state.facts.length > 0 ? ["- What does the policy cover for co-payment? [unknown]"] : ["- None recorded. [unknown]"]), "",
+    "> Built from your own documents and answers, shown only to you. Values read from your documents are not verified. The insurer's wording governs; check with the insurer before relying on any line. (Draft wording, FOR LEGAL REVIEW.)", "",
+    "Generated 2026-11-25. Policy number shown by its last 4 characters only.",
+    ...MEMORY_SECTIONS.flatMap((name) => ["", `## ${name}`, "", ...((sections.get(name)?.length ?? 0) > 0 ? sections.get(name) ?? [] : ["- None recorded. [unknown]"])]),
+    "",
   ].join("\n");
 }
 

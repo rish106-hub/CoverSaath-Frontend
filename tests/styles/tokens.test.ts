@@ -70,8 +70,10 @@ const rule = (sel: string) => {
   if (!m) throw new Error("rule missing " + sel);
   return m[1];
 };
+// Emergency colours are written as theme-invariant tokens (var(--ink-fixed)); resolve them from the light block.
 const prop = (body: string, name: string) => {
-  const h = body.match(new RegExp("(?:^|[; ])" + name + ":\\s*(#[0-9a-f]{3,6})\\b", "i"))?.[1];
+  const m = body.match(new RegExp("(?:^|[; ])" + name + ":\\s*(?:(#[0-9a-f]{3,6})\\b|var\\(--([a-z-]+)\\))", "i"));
+  const h = m?.[1] ?? (m?.[2] ? light[m[2]] : undefined);
   return h && h.length === 4 ? "#" + [...h.slice(1)].map((c) => c + c).join("") : h;
 };
 

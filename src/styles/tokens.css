@@ -35,6 +35,69 @@
   --g-money-bg: #f5ead0;
   --g-help-bg: #e1ecf6;
 
+  /* Theme-invariant palette. Unlike the tokens above, the dark block never overrides these.
+     They exist for surfaces and ink that stay the same in both themes (always-dark cards,
+     ink on --marker chips, wallet pass faces, tone swatches). Using --ink or --paper there
+     would flip the colour in dark mode. */
+  --ink-fixed: #16130f;
+  --paper-fixed: #f7f5f0;
+  --harbour-fixed: #0e4f4a;
+  --white-fixed: #ffffff;
+  --black-fixed: #000000;
+  --signal-fixed: #e9785d;
+  --coral-fixed: #f2b9a8;
+  --mist-fixed: #e3efec;
+  --line-fixed: #e6e1d7;
+  --line-strong-fixed: #d8d2c6;
+  --graphite-fixed: #5f5a52;
+  --sunken-fixed: #efebe3;
+  --tone-ochre-fixed: #f1e3b8;
+  --tone-violet-fixed: #e4dff0;
+  --tone-warm-fixed: #fbf5e6;
+  --tone-sand-fixed: #f4e6c4;
+  --tone-coral-soft-fixed: #f1e0da;
+  --tone-lilac-fixed: #eae6f2;
+  --step-pulse-fixed: #176f69;
+  /* Ink-on-dark-card palette: text and rules used on --ink-fixed surfaces. */
+  --line-on-ink: #3a352d;
+  --line-on-ink-soft: #2e2923;
+  --sunken-on-ink: #24201a;
+  --mist-on-ink: #bfd8d3;
+  --sea-on-ink: #8fc3ba;
+  --graphite-on-ink: #b9b2a5;
+  --graphite-on-ink-2: #b7b0a4;
+  --graphite-on-ink-3: #cfc9be;
+  --signal-on-ink: #f4a590;
+
+  /* Type scale: the sizes the app already used (px values), one token each. Merging steps
+     is a design follow-up; this change only removes raw values. */
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-15: 15px;
+  --fs-16: 16px;
+  --fs-17: 17px;
+  --fs-18: 18px;
+  --fs-20: 20px;
+  --fs-22: 22px;
+  --fs-24: 24px;
+  --fs-26: 26px;
+  --fs-28: 28px;
+  --fs-30: 30px;
+  --fs-32: 32px;
+  --fs-34: 34px;
+  --fs-38: 38px;
+  --fs-40: 40px;
+  --fs-44: 44px;
+  --fs-48: 48px;
+  --fs-52: 52px;
+  /* Fluid display sizes (previously inline clamp() values). */
+  --fs-fluid-page-title: clamp(44px, 4.2vw, 52px);
+  --fs-fluid-stat: clamp(26px, 3vw, 36px);
+  --fs-fluid-hero: clamp(40px, 4vw, 54px);
+  --fs-fluid-score: clamp(48px, 5vw, 68px);
+
   --r-sm: 10px;
   --r-md: 14px;
   --r-lg: 18px;

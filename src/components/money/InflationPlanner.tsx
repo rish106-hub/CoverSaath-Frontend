@@ -104,12 +104,12 @@ export function InflationPlanner() {
                 <g key={p.offset}>
                   <rect x={x - barW - 1} y={BASE_Y - h} width={barW} height={h} rx="4" style={{ fill: p.aboveCover ? "var(--signal)" : "var(--harbour)", transition: "all 400ms cubic-bezier(.2,.7,.2,1)" }} />
                   <rect x={x + 1} y={BASE_Y - ph} width={barW} height={ph} rx="4" style={{ fill: "var(--ochre)", transition: "all 400ms cubic-bezier(.2,.7,.2,1)" }} />
-                  <text x={x} y={BASE_Y + 20} textAnchor="middle" style={{ fill: "var(--graphite)", font: "500 13px var(--font-mono)" }}>{String(p.year).slice(2)}</text>
+                  <text x={x} y={BASE_Y + 20} textAnchor="middle" style={{ fill: "var(--graphite)", font: "500 var(--fs-13) var(--font-mono)" }}>{String(p.year).slice(2)}</text>
                 </g>
               );
             })}
             <line x1="0" x2={W} y1={coverY} y2={coverY} strokeDasharray="6 5" strokeWidth="2" style={{ stroke: "var(--harbour)" }} />
-            <text x={W - 4} y={coverY - 6} textAnchor="end" style={{ fill: "var(--harbour)", font: "600 13px var(--font-sans)", stroke: "var(--sheet)", strokeWidth: 4, paintOrder: "stroke" }}>
+            <text x={W - 4} y={coverY - 6} textAnchor="end" style={{ fill: "var(--harbour)", font: "600 var(--fs-13) var(--font-sans)", stroke: "var(--sheet)", strokeWidth: 4, paintOrder: "stroke" }}>
               Your cover {formatLakh(w.coverLakh)}
             </text>
           </svg>
@@ -120,7 +120,7 @@ export function InflationPlanner() {
           <span><span className={styles.sw} style={{ background: "var(--ochre)" }} />Premium that year (10x scale)</span>
         </div>
         <Recommended>
-          <span style={{ font: "400 15px var(--font-sans)" }}>{rec}</span>
+          <span style={{ font: "400 var(--fs-15) var(--font-sans)" }}>{rec}</span>
           <Link href="/tools#top-up-finder" className="k-btn k-btn--primary k-btn--sm">Top-up finder</Link>
         </Recommended>
       </div>
