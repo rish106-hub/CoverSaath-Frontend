@@ -57,7 +57,7 @@
 .tags { display: flex; gap: 6px; flex-wrap: wrap; font: 500 var(--fs-13) var(--font-sans); }
 .tag { padding: 2px 10px; border-radius: 999px; background: var(--sunken); }
 .tagOk { background: var(--mist); }
-.book { background: var(--ink-fixed); color: var(--paper-fixed); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--line); }
+.book { background: var(--panel-inverse-bg); color: var(--paper-fixed); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--panel-inverse-edge); }
 .bookWho { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: center; }
 .bookLbl { font: 600 var(--fs-13) var(--font-sans); color: var(--graphite-on-ink); }
 .bookChips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -86,6 +86,6 @@
 .readK { font: 500 var(--fs-13) var(--font-mono); color: var(--graphite); }
 .readT { font: 600 var(--fs-15)/1.35 var(--font-sans); }
 .link { font: 500 var(--fs-14) var(--font-sans); color: var(--harbour); }
-.darkCard { background: var(--ink-fixed); color: var(--paper-fixed); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--line); }
+.darkCard { background: var(--panel-inverse-bg); color: var(--paper-fixed); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--panel-inverse-edge); }
 .darkLink { color: var(--sea-on-ink); font: 500 var(--fs-14) var(--font-sans); }
 @media (max-width: 700px) { .barRow { grid-template-columns: 1fr; } }
