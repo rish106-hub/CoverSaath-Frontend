@@ -14,7 +14,7 @@ function Glance() {
   return (
     <section className={s.glance} aria-label="Your cover at a glance">
       <div className={s.health}>
-        <div className={s.ring} style={{ background: `conic-gradient(var(--marker) 0 ${d.healthScore}%, rgba(247,245,240,.14) ${d.healthScore}% 100%)` }}>
+        <div className={s.ring} style={{ background: `conic-gradient(var(--marker) 0 ${d.healthScore}%, color-mix(in srgb, var(--paper-fixed) 14%, transparent) ${d.healthScore}% 100%)` }}>
           <div className={s.ringIn}>
             <span className={s.ringNum}>{d.healthScore}</span>
             <span className={s.ringSub}>of 100</span>

@@ -78,7 +78,7 @@ export function WalletSheet({ onClose }: { onClose: () => void }) {
             <summary>Other wallets</summary>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>{others.map((p) => option(p, false))}</div>
           </details>
-          {error ? <p role="alert" style={{ color: "var(--signal-ink)", font: "500 14px var(--font-sans)", margin: 0 }}>{error}</p> : null}
+          {error ? <p role="alert" style={{ color: "var(--signal-ink)", font: "500 var(--fs-14) var(--font-sans)", margin: 0 }}>{error}</p> : null}
           <div className={styles.block}>
             <div className={styles.blockHead}><span className={styles.blockT}>Share with family</span></div>
             <div className={styles.row}>

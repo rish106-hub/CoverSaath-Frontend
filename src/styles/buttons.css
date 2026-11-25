@@ -12,7 +12,7 @@
   min-height: var(--btn-h); padding: 0 18px;
   border: 1px solid var(--line); border-radius: var(--r-btn);
   background: var(--sheet); color: var(--ink);
-  font: 500 14px var(--font-sans); cursor: pointer; text-decoration: none;
+  font: 500 var(--fs-14) var(--font-sans); cursor: pointer; text-decoration: none;
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 .k-btn:hover { background: var(--btn-tint); border-color: var(--btn-accent); }
@@ -28,7 +28,7 @@
 .k-btn--danger { background: var(--signal-ink); border-color: var(--signal-ink); color: var(--signal-bg); }
 .k-btn--danger:focus-visible { outline-color: var(--signal-ink); }
 .k-btn--danger:hover { background: var(--signal-ink); border-color: var(--signal-ink); filter: brightness(1.1); }
-.k-btn--sm { min-height: var(--btn-h-sm); padding: 0 14px; font-size: 13px; border-radius: var(--r-btn-sm); }
+.k-btn--sm { min-height: var(--btn-h-sm); padding: 0 14px; font-size: var(--fs-13); border-radius: var(--r-btn-sm); }
 
 /* Shared states for every module button class (they do not carry .k-btn). */
 button:not(:disabled):active, a[class*="cta"]:active, a[class*="btn"]:active { transform: translateY(1px); }

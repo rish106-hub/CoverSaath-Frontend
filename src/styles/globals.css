@@ -7,7 +7,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 400 15px/1.5 var(--font-sans);
+  font: 400 var(--fs-15)/1.5 var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }

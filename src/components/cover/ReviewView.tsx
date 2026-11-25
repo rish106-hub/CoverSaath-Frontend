@@ -49,7 +49,7 @@ export function ReviewView() {
           <SaveState status={status} onRetry={retry} />
         </div>
         <div className={s.panel}>
-          <div className={s.ring} style={{ background: `conic-gradient(#f4dc8a 0 ${sum.pct}%, rgba(247,245,240,.16) ${sum.pct}% 100%)` }}>
+          <div className={s.ring} style={{ background: `conic-gradient(var(--marker) 0 ${sum.pct}%, color-mix(in srgb, var(--paper-fixed) 16%, transparent) ${sum.pct}% 100%)` }}>
             <div className={s.ringIn}>
               <span>{sum.done}</span>
               <small>of {reviewTotal}</small>
