@@ -58,22 +58,32 @@ export async function getFacts(ctx: Ctx, holdingId: string): Promise<{ data: unk
   return out(shape(factsIn, r.body));
 }
 
+/**
+ * Cleans backend memory markdown before it reaches the browser. A UIN is service-only in this app, so a "- UIN:" line and an inline
+ * "UIN: value." segment are removed; a UIN anywhere else still refuses the body in shape(). The trailing "^holding:..." / "^fact:..."
+ * ids are backend line ids, not for the reader, so they are stripped too. Non-strings pass through for shape() to reject.
+ */
+function servableMarkdown(body: unknown): unknown {
+  if (typeof body !== "string") return body;
+  return body
+    .split("\n")
+    .filter((line) => !/^\s*-\s*UIN:/i.test(line))
+    .map((line) => line.replace(/\bUIN:\s*[^.\n]*\.\s*/gi, "").replace(/\s+\^\S+\s*$/, ""))
+    .join("\n");
+}
+
 /** The owner's memory document (policy.md) as markdown. Backend 503 MEMORY_DISABLED / 403 CONSENT_REQUIRED / 404 pass through as coded errors. Never cached. */
 export async function getMemoryDocument(ctx: Ctx, holdingId: string): Promise<{ data: unknown }> {
   need(ctx.session);
   const r = await ctx.client.send("GET", `/api/v1/holdings/${enc(holdingId)}/memory-document`, ctx.session.t, { text: true });
-  // The document has a "- UIN:" line for the owner. A UIN is service-only in this app, so that line is dropped here, and a UIN anywhere else refuses the body.
-  const markdown = typeof r.body === "string" ? r.body.split("\n").filter((line) => !/^\s*-\s*UIN:/i.test(line)).join("\n") : r.body;
-  return out(shape(memoryDocumentIn, { holdingId, markdown }));
+  return out(shape(memoryDocumentIn, { holdingId, markdown: servableMarkdown(r.body) }));
 }
 
 /** The household's cover memory (all 14 sections, every policy) as markdown. Backend 503 HOLDINGS_DISABLED / MEMORY_DISABLED and 404 for a non-owner pass through as coded errors. Never cached. */
 export async function getCoverMemory(ctx: Ctx): Promise<{ data: unknown }> {
   need(ctx.session);
   const r = await ctx.client.send("GET", `/api/v1/households/${enc(ctx.session.h)}/cover-memory`, ctx.session.t, { text: true });
-  // Same UIN rule as the per-holding document: the "- UIN:" line is dropped, a UIN anywhere else refuses the body.
-  const markdown = typeof r.body === "string" ? r.body.split("\n").filter((line) => !/^\s*-\s*UIN:/i.test(line)).join("\n") : r.body;
-  return out(shape(coverMemoryIn, { markdown }));
+  return out(shape(coverMemoryIn, { markdown: servableMarkdown(r.body) }));
 }
 
 /** Documents linked to one holding: the schedule that made it and any terms and conditions added after. */

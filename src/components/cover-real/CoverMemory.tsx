@@ -11,7 +11,7 @@ import { MemoryDocumentBody } from "./MemoryDocument";
 
 type Load = { phase: "ready"; markdown: string } | { phase: "error"; code: string };
 const OFF_CODES = ["MEMORY_DISABLED", "HOLDINGS_DISABLED"];
-const MISSING_CODES = ["NOT_FOUND", "HOUSEHOLD_NOT_FOUND"];
+const MISSING_CODES = ["NOT_FOUND"];
 
 /** Loads and shows the household cover memory: loading, calm not-on / not-ready states, retryable error, and the document. Raw error text is never shown. */
 export function CoverMemory() {

@@ -39,11 +39,18 @@ describe("CoverMemory", () => {
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Your cover memory is not switched on yet."));
     expect(screen.queryByRole("alert")).toBeNull();
   });
-  it.each(["NOT_FOUND", "HOUSEHOLD_NOT_FOUND"])("shows a calm not-ready state for %s, with no stack or raw text", async (code) => {
+  it.each(["NOT_FOUND"])("shows a calm not-ready state for %s, with no stack or raw text", async (code) => {
     coverMemory.mockRejectedValueOnce(new AdapterError(code));
     render(<CoverMemory />);
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Your cover memory is not ready yet."));
     expect(document.body.textContent).not.toMatch(new RegExp(`${code}|Error|\\bat \\w+ \\(`));
+  });
+  it("shows a cleaned fact line's citation as page 2, with no anchor text", async () => {
+    coverMemory.mockResolvedValue(["# Household Cover Memory", "", "## Cover and limits", "", "- [Policy A] Room rent limit: 1% of sum insured. [own_pdf, p.2]", ""].join("\n"));
+    render(<CoverMemory />);
+    await waitFor(() => expect(screen.getByTestId("memory-document")).toBeTruthy());
+    expect(screen.getByTestId("memory-citation").textContent).toMatch(/page 2/);
+    expect(document.body.textContent).not.toContain("^");
   });
   it("shows a retryable alert for any other failure, and retries", async () => {
     coverMemory.mockRejectedValueOnce(new Error("raw backend words with a stack")).mockResolvedValueOnce(SAMPLE);

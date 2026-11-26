@@ -14,6 +14,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
+import * as memoryDocument from "@/app/api/app/covers/holdings/[id]/memory-document/route";
 import * as coverMemory from "@/app/api/app/covers/cover-memory/route";
 import * as holdingsRoute from "@/app/api/app/covers/holdings/route";
 import * as candidates from "@/app/api/app/covers/holdings/[id]/candidates/route";
@@ -449,17 +450,43 @@ describe("cover memory", () => {
     expect(data.markdown).not.toMatch(/UIN/);
     expect(data.markdown).not.toContain(uin);
   });
+  // Lines copied from the backend's compose shape: inline UIN segment and trailing line anchors.
+  const identity = `- [Policy A] Insurer: Synthetic Health. Product: Family Shield. UIN: SYNHLIP00000V000000. Policy number: ****1234. Period: 2026-04-01 to 2027-03-31. Status: ready [owner statement] ^holding:h1.identity`;
+  const factLine = "- [Policy A] Room rent limit: 1% of sum insured. [own_pdf, p.2] ^fact:f1";
+  it("removes an inline UIN segment and the line anchors, and keeps the rest and the citation", async () => {
+    stubText(markdown([identity, factLine]));
+    const res = await coverMemory.GET(req("/api/app/covers/cover-memory"));
+    expect(res.status).toBe(200);
+    const text: string = (await res.json()).data.markdown;
+    expect(text).not.toContain("UIN");
+    expect(text).not.toContain("SYNHLIP");
+    expect(text).not.toContain("^holding:");
+    expect(text).not.toContain("^fact:");
+    expect(text).toContain("Insurer: Synthetic Health.");
+    expect(text).toContain("Policy number: ****1234.");
+    expect(text.split("\n").find((l) => l.includes("Room rent limit"))?.endsWith("[own_pdf, p.2]")).toBe(true);
+  });
+  it("strips the same anchors from the per-holding memory document", async () => {
+    stubText(markdown([identity, factLine]));
+    const res = await memoryDocument.GET(req("/api/app/covers/holdings/holding-1/memory-document"), H);
+    expect(res.status).toBe(200);
+    const text: string = (await res.json()).data.markdown;
+    expect(text).not.toMatch(/\^(holding|fact):|SYNHLIP|UIN/);
+    expect(text).toContain("Policy number: ****1234.");
+  });
   it("refuses a body that holds a UIN anywhere else", async () => {
     stubText(markdown([`- [Policy B] Note ${uin}`]));
     const res = await coverMemory.GET(req("/api/app/covers/cover-memory"));
     expect(res.status).toBe(502);
     expect(JSON.stringify(await res.json())).not.toContain(uin);
   });
-  it.each([[404, "HOUSEHOLD_NOT_FOUND"], [503, "HOLDINGS_DISABLED"], [503, "MEMORY_DISABLED"]])("turns backend %i %s into a coded error without its words", async (status, code) => {
+  it.each([[404, "NOT_FOUND"], [503, "MEMORY_DISABLED"], [503, "HOLDINGS_DISABLED"]])("turns backend %i %s into the same coded error without its words", async (status, code) => {
     stubText(JSON.stringify(bk(code)), status, "application/json");
     const res = await coverMemory.GET(req("/api/app/covers/cover-memory"));
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(JSON.stringify(await res.json())).not.toContain("must not leak");
+    expect(res.status).toBe(status);
+    const body = await res.json();
+    expect(body.code ?? body.error?.code).toBe(code);
+    expect(JSON.stringify(body)).not.toContain("must not leak");
   });
   it("needs a session", async () => {
     jar.delete("kv_session");
