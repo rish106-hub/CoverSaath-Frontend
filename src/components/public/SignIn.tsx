@@ -70,7 +70,7 @@ export function SignIn() {
   const at = step === "done" ? 1 : 0;
   return (
     <div className={styles.page}>
-      <div className={styles.left}>
+      <main className={styles.left}>
         <BrandMark href="/" size={32} />
         <ol className={styles.journey} style={{ listStyle: "none", padding: 0, marginBottom: 0 }} aria-label="Your first minutes">
           {JOURNEY.map((t, k) => (
@@ -159,7 +159,7 @@ export function SignIn() {
           ))}
         </div>
         <div className={styles.terms}>By continuing you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.</div>
-      </div>
+      </main>
       {wide ? <ShowcasePanel /> : null}
       <div className={styles.themeSlot}><ThemeToggle /></div>
     </div>
