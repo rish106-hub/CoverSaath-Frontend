@@ -20,7 +20,6 @@ import { ChatView } from "@/components/chat/ChatView";
 import { SoonButton } from "@/components/ui/SoonButton";
 import { PAGE_CONTEXT } from "@/agent/page-registry";
 import { VOICE_COMMANDS } from "@/agent/voice-commands";
-import { TOUR_SCENES } from "@/data/mock";
 
 const SAMPLE = /Meera|Rohan|Kabir|Mumma|Papa|Priya|Northstar|Kaveri|Meridian|Indus|400053|6200|38400/;
 const STANDARD = ["What are my waiting periods?", "What does my policy not cover?", "Find a cashless hospital near me"];
@@ -61,7 +60,3 @@ describe("T6 no sample data on screen", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
-
-function stubWide() {
-  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("min-width"), addEventListener: () => undefined, removeEventListener: () => undefined }));
-}

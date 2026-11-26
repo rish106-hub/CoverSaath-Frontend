@@ -35,15 +35,6 @@ function Seg({ label, options, value, onPick }: { label: string; options: { key:
     </fieldset>
   );
 }
-function Chips({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <fieldset className={styles.field}>
-      <legend>{label}</legend>
-      <div className={styles.chips}>{children}</div>
-    </fieldset>
-  );
-}
-
 function Tax() {
   const [regime, setRegime] = useState<Regime>("old");
   const [self, setSelf] = useState(0);

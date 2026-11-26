@@ -1,11 +1,11 @@
-test.use({ channel: "chrome" });
 import { expect, test, type Page } from "@playwright/test";
+
+test.use({ channel: "chrome" });
 
 // T8: the shell steps back. One navigation (sub-tabs only where the sidebar is not full), one Ask control that never covers a field,
 // and a compact trial pill that stays dismissed. Runs against the mock adapter server started by playwright.config.ts.
 
 type Box = { x: number; y: number; width: number; height: number };
-const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
 // One in-page pass, so a re-render between separate calls cannot make the Ask control look like another control.
 async function controlsOverlappingAsk(page: Page): Promise<string[]> {

@@ -270,7 +270,7 @@ export function ChatView() {
       <SectionHeading title="Conversation" description="Answers come from your own documents and the insurer's wording, with the facts shown.">
         {first ? (
           <div className={s.prompts} role="group" aria-label="Suggested questions">
-            {PROMPTS.map((p) => <button key={p} type="button" className="k-btn k-btn--secondary" disabled={busy || holdings === null || consent === false} onClick={() => void ask(p)}>{p}</button>)}
+            {PROMPTS.map((p) => <button key={p} type="button" className="k-btn k-btn--secondary" disabled={busy || consent === false} onClick={() => void ask(p)}>{p}</button>)}
           </div>
         ) : (
           <>
@@ -302,7 +302,7 @@ export function ChatView() {
           <textarea value={draft} maxLength={CHAT_MESSAGE_MAX} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void ask(draft); } }} />
         </label>
         <div className={s.row}>
-          <button type="submit" className="k-btn" disabled={busy || draft.trim() === "" || holdings === null || consent === false}>Ask</button>
+          <button type="submit" className="k-btn" disabled={busy || draft.trim() === "" || consent === false}>Ask</button>
           {canSpeak ? (
             <button type="button" className={`k-btn k-btn--secondary ${s.mic}`} data-on={listening} aria-pressed={listening} disabled={busy && !listening} onClick={speak}>
               <MicGlyph size={16} />{listening ? "Stop listening" : "Ask by voice"}
