@@ -1,5 +1,6 @@
-test.use({ channel: "chrome" });
 import { expect, test, type Page } from "@playwright/test";
+
+test.use({ channel: "chrome" });
 
 // T10 motion contract (spec 5b): every value below is measured from the browser's own animation timeline,
 // not from the CSS source, so a rule that stops applying fails here. Mock adapters, no backend.

@@ -1,5 +1,6 @@
-test.use({ channel: "chrome" });
 import { expect, test } from "@playwright/test";
+
+test.use({ channel: "chrome" });
 
 // T9: no dead-end routes. Runs against the mock-adapter dev server (playwright.config.ts).
 

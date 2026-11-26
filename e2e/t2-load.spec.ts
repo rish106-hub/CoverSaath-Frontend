@@ -1,5 +1,6 @@
-test.use({ channel: "chrome" });
 import { expect, test, type Page } from "@playwright/test";
+
+test.use({ channel: "chrome" });
 
 // T2: one calm load stage. Runs against the mock-adapter dev server (see playwright.config.ts); no sign-in step is needed with mock adapters.
 
