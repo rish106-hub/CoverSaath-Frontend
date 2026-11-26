@@ -3,7 +3,7 @@ import { AdapterError, type CoversAdapter, type UploadStage } from "./types";
 import type { DocView } from "./documents-contract";
 import { MAX_UPLOAD_BYTES } from "./documents-contract";
 import { backendUploads, precheck } from "./uploads";
-import { candidatesIn, confirmedIn, conflictsIn, coverOut, declarationView, deletedOut, declarationsIn, dueView, duesIn, factsIn, holdingDocumentsIn, holdingsIn, linkedIn, memoryDocumentIn, premiumsIn, premiumView, readingConfirmedIn, resolvedIn } from "./covers-contract";
+import { candidatesIn, confirmedIn, conflictsIn, coverOut, declarationView, deletedOut, declarationsIn, dueView, duesIn, factsIn, holdingDocumentsIn, holdingsIn, linkedIn, memoryDocumentIn, coverMemoryIn, premiumsIn, premiumView, readingConfirmedIn, resolvedIn } from "./covers-contract";
 import { hospitalsIn } from "./chat-contract";
 
 // Browser client for the same-origin cover BFF (/api/app/covers). It never sees the backend token or the backend: every call goes to
@@ -128,6 +128,9 @@ export const backendCovers: CoversAdapter = {
   },
   async memoryDocument(holdingId) {
     return parse(memoryDocumentIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/memory-document`)).markdown;
+  },
+  async coverMemory() {
+    return parse(coverMemoryIn, await call("/api/app/covers/cover-memory")).markdown;
   },
   async conflicts(holdingId) {
     return parse(conflictsIn, await call(`/api/app/covers/holdings/${enc(holdingId)}/conflicts`));
