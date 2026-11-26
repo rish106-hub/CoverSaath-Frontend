@@ -248,3 +248,6 @@ export const coverOut = z.object({ ok: z.literal(true).optional(), data: z.unkno
 export const MEMORY_DOCUMENT_MAX = 200_000;
 export const memoryDocumentIn = z.object({ holdingId: id, markdown: z.string().min(1).max(MEMORY_DOCUMENT_MAX) });
 export type MemoryDocument = z.infer<typeof memoryDocumentIn>;
+// The household-wide document covers several policies, so it may be longer than one holding's.
+export const coverMemoryIn = z.object({ markdown: z.string().min(1).max(MEMORY_DOCUMENT_MAX * 4) });
+export type CoverMemory = z.infer<typeof coverMemoryIn>;

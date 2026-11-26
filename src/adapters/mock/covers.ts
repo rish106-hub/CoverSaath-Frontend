@@ -149,7 +149,19 @@ function memoryMarkdown(state: State): string {
   ].join("\n");
 }
 
+const COVER_MEMORY_SECTIONS = ["At a glance", "Policies", "People covered", "Premiums and renewals", "Cover and limits", "Waiting periods", "Exclusions, terms and key clauses", "OPD, vaccination and wellness", "Claims, TPA and network hospitals", "Contacts and helplines", "Declarations and consistency", "Differences between policies", "Open questions and conflicts", "Where this comes from"];
+
+/** Synthetic household cover memory in the backend's order: a title, then 14 sections with one or two policy-tagged lines each. */
+function coverMemoryMarkdown(): string {
+  return [
+    "# Household Cover Memory", "",
+    ...COVER_MEMORY_SECTIONS.flatMap((name) => ["", `## ${name}`, "", name === "Contacts and helplines" ? "- [Policy A] Insurer helpline 1800-000-0001 [owner statement]" : "- [Policy A] Example Health Plan 01 entry for this section [owner statement]", "- [Policy B] Example Family Floater entry for this section [owner statement]"]),
+    "",
+  ].join("\n");
+}
+
 export const mockCovers: CoversAdapter = {
+  coverMemory: async () => delay(coverMemoryMarkdown()),
   memoryDocument: async (holdingId) => delay(memoryMarkdown(get(holdingId).state)),
   uploadDocument: async (file, key, kind, policyType, onStage) => {
     onStage?.("sending");

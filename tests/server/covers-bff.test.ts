@@ -14,6 +14,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
+import * as coverMemory from "@/app/api/app/covers/cover-memory/route";
 import * as holdingsRoute from "@/app/api/app/covers/holdings/route";
 import * as candidates from "@/app/api/app/covers/holdings/[id]/candidates/route";
 import * as confirm from "@/app/api/app/covers/holdings/[id]/confirm/route";
@@ -420,5 +421,49 @@ describe("no client component calls the backend", () => {
     for (const f of ["src/app/api/app/covers/holdings/route.ts", "src/app/api/app/covers/declarations/route.ts", "src/app/api/app/covers/premiums/route.ts", "src/app/api/app/covers/declarations/[did]/route.ts", "src/app/api/app/covers/premiums/[pid]/route.ts", "src/app/api/app/covers/premium-dues/route.ts", "src/app/api/app/covers/premium-dues/[did]/pay/route.ts", "src/server/backend/covers.ts"]) {
       expect(readFileSync(f, "utf8")).not.toMatch(/runtime\s*=\s*["']edge["']/);
     }
+  });
+});
+
+describe("cover memory", () => {
+  // Built at runtime so no registry-number-shaped literal sits in the source.
+  const uin = ["SYNTH", "00001", "V010101"].join("");
+  const markdown = (extra: string[]) => ["# Household Cover Memory", "", "## At a glance", "", "- [Policy A] Example Health Plan 01 [owner statement]", ...extra, ""].join("\n");
+  const stubText = (body: string, status = 200, type = "text/markdown; charset=utf-8") =>
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      const u = new URL(url);
+      calls.push({ url: u.pathname + u.search, method: init.method ?? "GET", headers: init.headers as Record<string, string>, body: undefined });
+      return new Response(body, { status, headers: { "content-type": type } });
+    });
+  it("calls the session household's cover-memory path as text, with the bearer token", async () => {
+    stubText(markdown([]));
+    const res = await coverMemory.GET(req("/api/app/covers/cover-memory"));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.markdown).toContain("## At a glance");
+    expect(calls.at(-1)).toMatchObject({ url: "/api/v1/households/h1/cover-memory", method: "GET" });
+    expect(calls.at(-1)?.headers.authorization).toMatch(/^Bearer tok-/);
+  });
+  it("drops a '- UIN:' line from the markdown", async () => {
+    stubText(markdown([`- UIN: ${uin} [owner statement]`]));
+    const { data } = await (await coverMemory.GET(req("/api/app/covers/cover-memory"))).json();
+    expect(data.markdown).toContain("Example Health Plan 01");
+    expect(data.markdown).not.toMatch(/UIN/);
+    expect(data.markdown).not.toContain(uin);
+  });
+  it("refuses a body that holds a UIN anywhere else", async () => {
+    stubText(markdown([`- [Policy B] Note ${uin}`]));
+    const res = await coverMemory.GET(req("/api/app/covers/cover-memory"));
+    expect(res.status).toBe(502);
+    expect(JSON.stringify(await res.json())).not.toContain(uin);
+  });
+  it.each([[404, "HOUSEHOLD_NOT_FOUND"], [503, "HOLDINGS_DISABLED"], [503, "MEMORY_DISABLED"]])("turns backend %i %s into a coded error without its words", async (status, code) => {
+    stubText(JSON.stringify(bk(code)), status, "application/json");
+    const res = await coverMemory.GET(req("/api/app/covers/cover-memory"));
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(JSON.stringify(await res.json())).not.toContain("must not leak");
+  });
+  it("needs a session", async () => {
+    jar.delete("kv_session");
+    expect((await coverMemory.GET(req("/api/app/covers/cover-memory"))).status).toBe(401);
+    expect(calls).toHaveLength(0);
   });
 });

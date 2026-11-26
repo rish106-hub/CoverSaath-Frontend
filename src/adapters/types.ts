@@ -204,6 +204,8 @@ export interface CoversAdapter {
   hospitals(holdingId: string, pincode: string): Promise<HospitalView[]>;
   /** The private memory document (policy.md) of one cover, as markdown. Owner only. Rejects with AdapterError (MEMORY_DISABLED, CONSENT_REQUIRED, NOT_FOUND). */
   memoryDocument(holdingId: string): Promise<string>;
+  /** The household's cover memory (14 sections across every policy), as markdown. Owner only. Rejects with AdapterError (MEMORY_DISABLED, HOLDINGS_DISABLED, NOT_FOUND). */
+  coverMemory(): Promise<string>;
 }
 
 /** Chat about the household's cover: a thread, then streamed turns. The browser never sees the backend token or calls the backend. */

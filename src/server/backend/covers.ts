@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { AppError } from "./errors";
 import { need, withDocuments, withReadGrant, type Ctx } from "./documents";
-import { containsUin, candidatesIn, confirmedIn, conflictsIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, memoryDocumentIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, readingConfirmedIn, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
+import { containsUin, candidatesIn, confirmedIn, conflictsIn, coverMemoryIn, declarationIn, holdingDocumentsIn, linkDocumentIn, linkedIn, declarationsIn, declarationUpdateIn, declarationView, deletedOut, DUE_STATES, dueIn, duesIn, dueView, factsIn, holdingsIn, memoryDocumentIn, PATH_ID, payDueIn, premiumIn, premiumsIn, premiumView, readingConfirmedIn, resolvedIn, type ConfirmProduct, type ResolveConflict } from "@/adapters/covers-contract";
 
 // BFF for the cover screens: holdings, product candidates, confirm product, facts, conflicts and their resolution, declarations,
 // premiums and dues and dues (CoverSaath /api/v1/holdings and /api/v1/households/{id}/...). Server only. The backend token stays in the sealed
@@ -65,6 +65,15 @@ export async function getMemoryDocument(ctx: Ctx, holdingId: string): Promise<{ 
   // The document has a "- UIN:" line for the owner. A UIN is service-only in this app, so that line is dropped here, and a UIN anywhere else refuses the body.
   const markdown = typeof r.body === "string" ? r.body.split("\n").filter((line) => !/^\s*-\s*UIN:/i.test(line)).join("\n") : r.body;
   return out(shape(memoryDocumentIn, { holdingId, markdown }));
+}
+
+/** The household's cover memory (all 14 sections, every policy) as markdown. Backend 503 HOLDINGS_DISABLED / MEMORY_DISABLED and 404 for a non-owner pass through as coded errors. Never cached. */
+export async function getCoverMemory(ctx: Ctx): Promise<{ data: unknown }> {
+  need(ctx.session);
+  const r = await ctx.client.send("GET", `/api/v1/households/${enc(ctx.session.h)}/cover-memory`, ctx.session.t, { text: true });
+  // Same UIN rule as the per-holding document: the "- UIN:" line is dropped, a UIN anywhere else refuses the body.
+  const markdown = typeof r.body === "string" ? r.body.split("\n").filter((line) => !/^\s*-\s*UIN:/i.test(line)).join("\n") : r.body;
+  return out(shape(coverMemoryIn, { markdown }));
 }
 
 /** Documents linked to one holding: the schedule that made it and any terms and conditions added after. */
