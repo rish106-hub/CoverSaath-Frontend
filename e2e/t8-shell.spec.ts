@@ -106,10 +106,10 @@ test("E9 bottom padding", async ({ page }) => {
   await page.goto("/home");
   const main = page.locator("#main-content");
   await expect(main).toBeVisible();
-  // Only the page scrolls. Scroll it to its end until the height settles, then the last block must clear the ask bar.
-  await expect.poll(async () => main.evaluate((el) => { el.scrollTop = el.scrollHeight; return Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 1; })).toBe(true);
   const r = await shellRegions(page);
-  const lastBottom = await main.evaluate((el) => ((el.lastElementChild as HTMLElement | null) ?? el).getBoundingClientRect().bottom);
-  expect(lastBottom).toBeLessThanOrEqual(r.bar.top);
+  // Only the page scrolls. Content keeps arriving after first paint, so scroll to the end on every poll: once the page has settled, its last block must clear the ask bar.
+  await expect
+    .poll(async () => main.evaluate((el) => { el.scrollTop = el.scrollHeight; return ((el.lastElementChild as HTMLElement | null) ?? el).getBoundingClientRect().bottom; }))
+    .toBeLessThanOrEqual(r.bar.top);
   expect(r.bar.bottom).toBeLessThanOrEqual(r.viewport.height);
 });
