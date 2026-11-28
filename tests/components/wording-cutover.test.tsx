@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
 import { factsIn, holdingsIn, type HoldingView } from "@/adapters/covers-contract";
 import { mockCovers, setMockHandoff } from "@/adapters/mock/covers";
@@ -69,6 +69,7 @@ describe("waiting for the insurer's wording", () => {
     expect(await screen.findByText(WAITING_TEXT)).toBeInTheDocument();
     expect(screen.getByTestId("terms-status")).toHaveAttribute("data-state", "waiting");
     expect(screen.queryByText(/not attached/i)).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
     expect(screen.queryByRole("button", { name: "Add the terms yourself" })).toBeNull();
     state = "fss";
     await act(async () => { await vi.advanceTimersByTimeAsync(10_500); });
@@ -81,6 +82,7 @@ describe("waiting for the insurer's wording", () => {
     vi.spyOn(backendCovers, "facts").mockResolvedValue(factsIn.parse({ holdingId: "h1", status: "ready", unknownKeys: [], facts: [] }));
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Insurer terms not attached yet")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
     expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
   });
   it("not_checked (open handoff, can last hours) shows waiting but keeps the manual button", async () => {
@@ -90,6 +92,7 @@ describe("waiting for the insurer's wording", () => {
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText(WAITING_TEXT)).toBeInTheDocument();
     expect(screen.queryByText(/not attached/i)).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
     expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
   });
   it("the mock passes through missing + pending, then flips to fss", async () => {

@@ -184,7 +184,7 @@ describe("screens", () => {
   it("before confirmation the choose-plan note shows and no headlines", async () => {
     stub([{ ...holding("insurer_pending"), summary: { insurerName: null, productName: null, sumInsured: null, policyPeriod: null, premium: null } }]);
     render(<RealPolicies />);
-    expect(await screen.findByTestId("stage-note")).toHaveTextContent(/Tell us which plan this is/);
+    expect(await screen.findByTestId("policy-card")).toHaveTextContent(/Tell us which plan this is/);
     expect(screen.queryByTestId("headlines")).toBeNull();
   });
   it("home links the next step to the review screen when a detail is open", async () => {
@@ -237,14 +237,14 @@ describe("screens", () => {
     stub([holding("uploaded")]);
     render(<RealPolicies />);
     expect(await screen.findByText(/Still being read/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Add the document again" })).toHaveAttribute("href", "/covers/add");
+    expect(screen.getByRole("link", { name: "Health policy" })).toHaveAttribute("href", "/policies/h1");
   });
   it("detail shows grouped facts, not-found count and unknown id as not found", async () => {
     stub([holding("conflicts")]);
     render(<RealPolicyDetail id="h1" />);
-    expect(await screen.findByRole("heading", { name: "Waiting" })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("tab", { name: "Waiting" }));
     expect(screen.getByText("You confirmed this")).toBeInTheDocument();
-    expect(screen.getByText("Not found in this policy (2)")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Not found (2)" })).toBeInTheDocument();
     cleanup();
     stub([holding("ready", "other")]);
     render(<RealPolicyDetail id="h1" />);
@@ -269,7 +269,7 @@ describe("screens", () => {
   it("detail shows a source label on each fact", async () => {
     stub([holding("conflicts")]);
     render(<RealPolicyDetail id="h1" />);
-    await screen.findByRole("heading", { name: "Waiting" });
+    await screen.findByRole("tab", { name: "Waiting" });
     expect(screen.getAllByTestId("fact-source").map((n) => n.textContent)).toEqual(expect.arrayContaining(["Your schedule", "Confirmed by you", "Conflicting"]));
   });
   it.each([
@@ -279,6 +279,7 @@ describe("screens", () => {
   ] as const)("detail shows the terms line for %s", async (state, text) => {
     stub([{ ...holding("ready"), summary: { ...SUMMARY, wordingState: state } }]);
     const { container } = render(<RealPolicyDetail id="h1" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Insurer terms" }));
     expect(await screen.findByTestId("terms-status")).toHaveTextContent(text);
     expect(screen.queryByRole("button", { name: "Add the terms yourself" }) !== null).toBe(state === "missing");
     expect(container.textContent).not.toMatch(/sample|draft|disclaimer|inaccurate|\bUIN\b/i);

@@ -1,0 +1,46 @@
+/* My policies grid and policy detail tabs (spec R3e). Theme tokens only; one gap value (24px) on the list. */
+.page { display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.count { margin: 0; font-size: 18px; font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 24px; flex: 1; min-height: 0; }
+.card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-width: 0; overflow: hidden; color: inherit; text-decoration: none; padding: 24px; }
+.top { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.badge { flex: none; width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--tide); color: var(--on-harbour); font-size: 24px; font-weight: 700; }
+.names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.insurer { margin: 0; font-size: 16px; font-weight: 600; color: var(--muted); }
+.cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cellLabel { font-size: 16px; font-weight: 600; color: var(--graphite); }
+.cellValue { font-family: var(--font-serif); font-size: 28px; font-weight: 500; line-height: 1.15; overflow-wrap: anywhere; }
+.state { font-size: 18px; font-weight: 600; }
+
+.pager { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.pageText { margin: 0; font-size: 18px; font-weight: 600; }
+
+/* Same boxes as the Button primary and outline md, but real links so navigation works without script. */
+.cta, .outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 24px;
+  border-radius: 14px; font-family: inherit; font-size: 18px; font-weight: 600; line-height: 1.2; text-decoration: none; cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out), background var(--t-in) var(--ease-out);
+}
+.cta { background: var(--forest); color: var(--on-harbour); border: 0; }
+.cta:hover { background: var(--harbour); }
+.outline { background: var(--sheet); color: var(--ink); border: 2px solid var(--ink); }
+.outline:disabled { opacity: 0.5; cursor: default; }
+.cta:active, .outline:active { transform: translateY(1px) scale(0.98); }
+.cta:focus-visible, .outline:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+
+.detail { display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.headText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.headLinks { display: flex; align-items: center; gap: 12px; flex: none; }
+.sub { margin: 0; font-size: 18px; font-weight: 500; }
+
+.panel { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 16px; }
+.panel[hidden] { display: none; }
+.terms { overflow-y: auto; }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.missing { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 24px; font-size: 18px; font-weight: 500; }
+.note { margin: 0; font-size: 18px; font-weight: 500; }
