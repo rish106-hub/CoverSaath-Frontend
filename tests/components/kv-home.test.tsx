@@ -32,7 +32,6 @@ function stub(holdings: HoldingView[], facts: FactView[] = [OTHER]) {
   vi.spyOn(backendCovers, "facts").mockResolvedValue({ holdingId: "h1", status: "ready", facts, unknownKeys: [] });
   vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "ready", conflicts: [] });
 }
-const cardOf = (label: string) => screen.getByText(label).closest("a, div") as HTMLElement;
 
 describe("Home (R3d)", () => {
   it("one policy with a sum insured reads as one sentence", async () => {
@@ -69,43 +68,48 @@ describe("Home (R3d)", () => {
     expect(container.querySelectorAll("button")).toHaveLength(0);
   });
 
-  it("the policies card links to My policies and lists at most two titles", async () => {
+  it("each of the first two policies is a card that links to its page", async () => {
     stub([holding("h1"), holding("h2")]);
     render(<RealHome />);
-    await screen.findByTestId("home-cover");
-    const card = cardOf("Policies");
-    expect(card).toHaveAttribute("href", "/policies");
-    expect(card).toHaveTextContent("2");
-    expect(card.querySelectorAll("span")).toHaveLength(2);
-    expect(card).not.toHaveTextContent("more");
+    const cards = await screen.findAllByTestId("home-policy");
+    expect(cards).toHaveLength(2);
+    expect(cards.map((c) => c.getAttribute("href"))).toEqual(["/policies/h1", "/policies/h2"]);
+    expect(cards[0]).toHaveAttribute("aria-label", "Example Health Plan 01");
+    expect(cards[0]).toHaveTextContent("Example Insurer");
+    expect(cards[0]).toHaveTextContent("Rs 10,00,000");
+    expect(cards[0].querySelector('[data-kind="ok"]')).toHaveTextContent("Read and ready");
+    expect(cards[0]).not.toHaveTextContent("more");
+    // Two policies leave no room for the Ask card: its prompts are not on the page, and the next-step card is the third.
+    expect(screen.queryByRole("link", { name: "What are my waiting periods?" })).toBeNull();
   });
 
-  it("a third policy shows and 1 more", async () => {
+  it("a third policy shows and 1 more on the second card", async () => {
     stub([holding("h1"), holding("h2"), holding("h3")]);
     render(<RealHome />);
-    await screen.findByTestId("home-cover");
-    const card = cardOf("Policies");
-    expect(card).toHaveTextContent("and 1 more");
-    expect(card.querySelectorAll("span")).toHaveLength(3);
+    const cards = await screen.findAllByTestId("home-policy");
+    expect(cards).toHaveLength(2);
+    expect(cards[1]).toHaveTextContent("and 1 more");
+    expect(cards[0]).not.toHaveTextContent("and 1 more");
   });
 
   it("renewal found shows the date with a green signal", async () => {
     stub([holding("h1")], [RENEWAL]);
     render(<RealHome />);
     await screen.findByTestId("home-cover");
-    const card = cardOf("Next renewal");
-    expect(card.textContent).toContain("2027");
-    expect(card).toHaveAttribute("href", "/policies/h1");
-    expect(card.querySelector('[data-kind="ok"]')).toHaveTextContent("On your policy");
+    const panel = screen.getByTestId("home-renewal");
+    expect(panel.textContent).toContain("2027");
+    expect(panel).toHaveTextContent("Your next renewal.");
+    expect(panel).toHaveTextContent("Example Health Plan 01");
+    expect(panel).toHaveAttribute("href", "/policies/h1");
   });
 
   it("renewal missing shows Not in your policy with a yellow signal", async () => {
     stub([holding("h1")], [OTHER]);
     const { container } = render(<RealHome />);
     await screen.findByTestId("home-cover");
-    const card = cardOf("Next renewal");
-    expect(card).toHaveTextContent("Not in your policy");
-    expect(card.querySelector('[data-kind="warn"]')).toHaveTextContent("Add it from your policy page");
+    const panel = screen.getByTestId("home-renewal");
+    expect(panel).toHaveTextContent("No renewal date yet");
+    expect(panel).toHaveTextContent("Open your policy to check its dates.");
     expect(container.textContent).not.toMatch(/Invalid Date|undefined|null/);
   });
 
@@ -147,5 +151,29 @@ describe("Home (R3d)", () => {
     expect(h1).toHaveTextContent(/^Good (morning|afternoon|evening), Asha\.$/);
     expect(container.textContent).not.toMatch(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
     expect(container.querySelector(".k-no-fade")).not.toBeNull();
+  });
+
+  it("the next-step button text follows where it leads", async () => {
+    // Nothing open: the next step is to ask, so the button says "Ask now".
+    stub([holding("h1")]);
+    const ask = render(<RealHome />);
+    expect(await screen.findByTestId("home-next")).toHaveTextContent("Ask now");
+    ask.unmount();
+    vi.restoreAllMocks();
+    // A policy that still needs its plan chosen: the step leads to /covers/add.
+    stub([{ ...holding("h1"), status: "insurer_pending" }]);
+    const plan = render(<RealHome />);
+    const choose = await screen.findByTestId("home-next");
+    expect(choose).toHaveAttribute("href", "/covers/add?resume=1");
+    expect(choose).toHaveTextContent("Choose your plan");
+    plan.unmount();
+    vi.restoreAllMocks();
+    // An open detail: the step leads to /covers/review.
+    stub([{ ...holding("h1"), status: "conflicts" }]);
+    vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "conflicts", conflicts: [{ id: "c1", factKey: "copay_percent", reason: "tier_mismatch", resolution: "pending", checkWithInsurer: false, candidates: [] }] });
+    render(<RealHome />);
+    const decide = await screen.findByTestId("home-next");
+    expect(decide).toHaveAttribute("href", "/covers/review?holding=h1");
+    expect(decide).toHaveTextContent("Decide now");
   });
 });

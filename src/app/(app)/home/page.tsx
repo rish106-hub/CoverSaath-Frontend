@@ -7,9 +7,6 @@ export const metadata = { title: "Overview" };
 
 export default function Page() {
   return (
-    <>
-      <HomeGreeting />
-      <DemoGate empty={<RealHome />}><HomeView /></DemoGate>
-    </>
+    <DemoGate empty={<RealHome />}><><HomeGreeting /><HomeView /></></DemoGate>
   );
 }

@@ -1,38 +1,76 @@
-/* Home body: two equal halves. Left holds the cover sentence and the one next step; right holds three equal cards (spec R3d.2). */
+/* Home body for a real account (spec R5b.2, R5b.7): row A holds the cover sentence and the renewal panel, row B holds three equal cards.
+   Both rows share the page height; on a short laptop the type steps down, and under 640px tall the page takes its natural height and scrolls. */
 .page { display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0; }
-.home { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex: 1; min-height: 0; }
+.halves { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex: 1 1 0; min-height: 0; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex: 1 1 0; min-height: 0; }
 
-.home .left { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 32px; min-height: 0; overflow: hidden; }
-.home .right { display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 24px; min-height: 0; }
-.home .right > * { padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; color: inherit; text-decoration: none; min-height: 0; overflow: hidden; }
+.left { display: flex; flex-direction: column; justify-content: center; gap: 12px; min-width: 0; min-height: 0; }
+.sentence { font-family: var(--font-serif); font-size: 56px; line-height: 1.04; font-weight: 500; margin: 0; }
 
-.sentence { font-family: var(--font-serif); font-size: 44px; line-height: 1.1; font-weight: 500; margin: 0; }
-.value { font-family: var(--font-serif); font-size: 32px; font-weight: 500; line-height: 1.15; margin: 0; }
+/* Renewal panel: the Card primitive is a block with its own hover colour, so both are set again here with a stronger selector. */
+.halves .renewal { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 36px 40px; min-width: 0; min-height: 0; overflow: hidden; }
+.halves .renewal:hover { background: var(--tide); border: 0; }
+.big { font-family: var(--font-serif); font-size: 56px; font-weight: 600; line-height: 1.1; margin: 0; color: var(--lime); }
+.halves .bigQuiet { font-size: 40px; }
+.renewLabel { font-size: 22px; font-weight: 500; margin: 0; }
+.renewName { font-size: 18px; font-weight: 600; margin: 0; }
+
+/* A long name is one line with an ellipsis; the element also carries a title with the full text. */
+.clip { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Row B cards: a column whose last item sits at the bottom. */
+.cards .tile { display: flex; flex-direction: column; gap: 12px; padding: 28px; min-width: 0; min-height: 0; overflow: hidden; color: inherit; text-decoration: none; }
+.top { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.badge { flex: none; width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--tide); color: var(--on-harbour); font-size: 24px; font-weight: 700; }
+.names { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.name { font-size: 18px; font-weight: 600; margin: 0; }
+.insurer { font-size: 18px; font-weight: 500; margin: 0; }
+.amount { font-family: var(--font-sans); font-size: 30px; font-weight: 700; line-height: 1.15; margin: 0; }
+.foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: auto; min-width: 0; }
+.footText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.more { font-size: 18px; font-weight: 600; margin: 0; }
+.arrow { flex: none; color: var(--harbour); font-size: 26px; font-weight: 700; line-height: 1; }
+
 .label { font-size: 18px; font-weight: 600; margin: 0; }
 .detail { font-size: 18px; font-weight: 500; margin: 0; }
-.next { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
-.titles { display: flex; flex-direction: column; gap: 4px; font-size: 18px; font-weight: 500; }
+.step { font-family: var(--font-serif); font-size: 28px; font-weight: 500; line-height: 1.15; margin: 0; }
+.ask .asks { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+.nextCard .cta { margin-top: auto; }
 
-/* Same box as the Button primary lg, but a real link so the next step is reachable without script. */
+/* Same box as the Button primary lg and outline, but real links so the next step is reachable without script. */
 .cta, .prompt {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: center;
   border-radius: 14px; font-family: inherit; font-size: 18px; font-weight: 600; line-height: 1.2; text-decoration: none;
   transition: transform var(--t-press) var(--ease-out), background var(--t-in) var(--ease-out);
 }
-.cta { min-height: 60px; padding: 0 32px; background: var(--forest); color: var(--on-harbour); }
+.cta { min-height: 60px; padding: 0 24px; background: var(--forest); color: var(--on-harbour); }
 .cta:hover { background: var(--harbour); }
-.prompt { min-height: 50px; padding: 0 24px; background: var(--sheet); color: var(--ink); border: 2px solid var(--ink); }
+.prompt { min-height: 50px; padding: 8px 20px; background: var(--sheet); color: var(--ink); border: 2px solid var(--ink); }
 .cta:active, .prompt:active { transform: translateY(1px) scale(0.98); }
 .cta:focus-visible, .prompt:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
-.asks { display: flex; flex-wrap: wrap; gap: 12px; }
 
-/* Short laptop screens: smaller type steps and tighter boxes so nothing scrolls; no font goes under 16px (spec R5a.4). */
+/* Short laptop screens: smaller type steps and tighter boxes (spec R5b.2). No font goes under 16px. */
 @media (max-height: 860px) {
-  .sentence { font-size: 36px; }
-  .value { font-size: 26px; }
-  .home { gap: 16px; }
-  .home .left { padding: 20px; gap: 16px; }
-  .home .right { gap: 16px; }
-  .home .right > * { padding: 12px 20px; gap: 8px; }
-  .asks { gap: 4px; }
+  .page, .halves, .cards { gap: 16px; }
+  .halves { gap: 16px; }
+  .sentence { font-size: 44px; }
+  .big { font-size: 44px; }
+  .halves .bigQuiet { font-size: 32px; }
+  .step { font-size: 24px; }
+  .halves .renewal { padding: 20px 24px; }
+  .cards .tile { padding: 20px; gap: 8px; }
+}
+
+/* Under 721px tall (a 13-inch laptop with browser toolbars) the fit is tighter again (spec R5b.7 rule 6). */
+@media (max-height: 720px) {
+  .page, .halves, .cards { gap: 12px; }
+  .sentence, .big { font-size: 36px; }
+  .step { font-size: 22px; }
+  .halves .renewal { padding: 16px 20px; }
+  .cards .tile { padding: 16px; gap: 8px; }
+}
+
+/* Under 640px tall nothing fits without cutting, so the rows take their natural height and the page scrolls (spec R5b.7 rule 5). */
+@media (max-height: 639px) {
+  .page, .halves, .cards { flex: none; min-height: auto; }
 }

@@ -44,7 +44,8 @@ describe("waiting for the insurer's wording", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(10_500); });
     expect(await screen.findByText("Before admission cover")).toBeInTheDocument();
     expect(screen.queryByText(WAITING_TEXT)).toBeNull();
-    expect(screen.getAllByText("From the insurer's wording, not checked").length).toBeGreaterThan(0);
+    // The row names the insurer's wording as the source, with its page.
+    expect(screen.getAllByTestId("fact-source").map((n) => n.textContent)).toContain("From the insurer's wording, not checked, Page 9");
   });
   it("the mock has a not_checked state that flips to fss with insurer facts", async () => {
     const id = (await mockCovers.upload(new File([new Uint8Array(64)], "p.pdf", { type: "application/pdf" }), "k-c6-1", { kind: "policy_schedule", policyType: "personal_health" })).holdingId as string;

@@ -37,8 +37,11 @@ describe("policy detail facts", () => {
     const tab = await screen.findByRole("tab", { name: "Not found (64)" });
     expect(screen.getAllByText("Not found (64)")).toHaveLength(1);
     const panel = container.querySelector('[data-panel="not-found"]') as HTMLElement;
-    expect(panel.hidden).toBe(true);
+    // The first tab starts selected (R5b.3), and Not found is the only group-like tab here, so it is the first.
+    expect(panel.hidden).toBe(false);
     expect(panel.querySelectorAll("li")).toHaveLength(64);
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
+    expect(panel.hidden).toBe(true);
     fireEvent.click(tab);
     expect(panel.hidden).toBe(false);
     expect(container.textContent).not.toContain("Coming soon");

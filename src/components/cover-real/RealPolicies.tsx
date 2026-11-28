@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PageTitle } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { Card, Signal } from "@/components/ui";
@@ -9,8 +9,9 @@ import type { HeadlineLine, PolicyView } from "@/adapters/real-policy";
 import p from "./policies.module.css";
 import { CreationIssues, ErrorBox, Loading } from "./parts";
 import { usePolicies } from "./use-policies";
+import { useFit } from "./use-fit";
 
-/** Four cards fill a 2 x 2 grid on a 1440x900 screen without scrolling; more policies go to the next page. */
+/** Four cards fill a 2 x 2 grid on a 1440x900 screen without scrolling; more policies go to the next page. This is the maximum: a shorter grid shows one row of two (useFit, spec R5b.7). */
 const PAGE_SIZE = 4;
 
 /** One stacked row per headline: dot colour says found or needs you, label left, value right. Review and missing show their state as the value, so no second status text is needed. */
@@ -26,7 +27,7 @@ function HeadlineRow({ h }: { h: HeadlineLine }) {
 }
 
 /** One state signal per card, first match wins: a load error outranks reading, reading outranks plan choice, then open decisions, then ready. */
-function StateSignal({ policy }: { policy: PolicyView }) {
+export function StateSignal({ policy }: { policy: PolicyView }) {
   if (policy.error) return <Signal kind="bad">Could not load. Open to try again.</Signal>;
   if (policy.stage === "reading") return <Signal kind="warn">Still being read</Signal>;
   if (policy.stage === "choose_plan") return <Signal kind="warn">Tell us which plan this is</Signal>;
@@ -42,8 +43,9 @@ function PolicyGridCard({ policy }: { policy: PolicyView }) {
       <div className={p.top}>
         <span className={p.badge} aria-hidden>{initial}</span>
         <div className={p.names}>
-          <h3 className={p.title}>{policy.title}</h3>
-          {policy.insurer ? <span className={p.insurer}>{policy.insurer}</span> : null}
+          {/* One line with an ellipsis; the title attribute holds the full name so nothing is lost, only shortened (spec R5b.7 rule 3). */}
+          <h3 className={p.title} data-truncate title={policy.title}>{policy.title}</h3>
+          {policy.insurer ? <span className={p.insurer} data-truncate title={policy.insurer}>{policy.insurer}</span> : null}
         </div>
       </div>
       {policy.headlines.length > 0 ? (
@@ -60,6 +62,9 @@ function PolicyGridCard({ policy }: { policy: PolicyView }) {
 export function RealPolicies() {
   const { state, issues, reload } = usePolicies();
   const [page, setPage] = useState(0);
+  const gridRef = useRef<HTMLDivElement>(null);
+  // Two cards per row; as many rows as the grid is tall enough for (204px each), between one and two.
+  const pageSize = useFit(gridRef, 204, 1, PAGE_SIZE / 2) * 2;
   return (
     <div className={p.page}>
       <div className={p.titleRow}>
@@ -77,16 +82,16 @@ export function RealPolicies() {
       {state.kind === "empty" && issues.length === 0 ? <EmptyState title="No policies yet" body="Add a policy and what Knowvia finds in it shows here." cta="Add a policy" href="/covers/add" /> : null}
       {state.kind === "ready" ? (() => {
         const all = state.policies;
-        const pages = Math.ceil(all.length / PAGE_SIZE);
+        const pages = Math.ceil(all.length / pageSize);
         // A reload can shrink the list under the current page; clamp instead of showing an empty grid.
         const at = Math.min(page, pages - 1);
         return (
           <>
             <CreationIssues issues={issues} onRetry={reload} />
-            <div className={p.grid}>
-              {all.slice(at * PAGE_SIZE, at * PAGE_SIZE + PAGE_SIZE).map((x) => <PolicyGridCard key={x.id} policy={x} />)}
+            <div className={p.grid} ref={gridRef}>
+              {all.slice(at * pageSize, at * pageSize + pageSize).map((x) => <PolicyGridCard key={x.id} policy={x} />)}
             </div>
-            {all.length > PAGE_SIZE ? (
+            {all.length > pageSize ? (
               <div className={p.pager}>
                 <button type="button" className={p.outline} disabled={at === 0} onClick={() => setPage(at - 1)}>Back</button>
                 <p className={p.pageText} role="status">Page {at + 1} of {pages}</p>

@@ -1,68 +1,86 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { PageTitle } from "@/components/type";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { Card, Signal, Tabs } from "@/components/ui";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
 import { labelOf } from "@/lib/fact-labels";
 import { MemoryDocument } from "./MemoryDocument";
 import { PassageSearch } from "./PassageSearch";
-import { isWaitingForWording, ErrorBox, FactItem, Loading, Pending, StageBox, TermsStatus } from "./parts";
-import type { HeadlineLine, PolicyView } from "@/adapters/real-policy";
+import { isWaitingForWording, ErrorBox, Loading, Pending, StageBox, TermsStatus } from "./parts";
+import type { FactLine, PolicyView } from "@/adapters/real-policy";
 import { usePolicies } from "./use-policies";
+import { useFit } from "./use-fit";
 import p from "./policies.module.css";
 
-/** Six facts (three rows of two) fit the panel on a 1280x800 screen without scrolling; a longer group is paged. */
+/** Six rows is the most a group panel shows on one page; a shorter panel shows fewer (useFit, spec R5b.7) and the rest go to the next page. */
 const FACT_PAGE = 6;
 
 const tabIdOf = (label: string) => label.toLowerCase().replace(/ /g, "-");
 
-/** Facts of one group, two columns, six to a page. Keyed by group so each group keeps its own page. */
-function GroupPanel({ facts }: { facts: Parameters<typeof FactItem>[0]["f"][] }) {
-  const [page, setPage] = useState(0);
-  const pages = Math.ceil(facts.length / FACT_PAGE);
+/** One fact as a row of three: what it is, what was read (a yellow dot and the status while it still needs the person), and where it was read. */
+function FactRow({ f }: { f: FactLine }) {
+  // An insurer-tier citation is the page alone (real-policy.ts), so the tier label goes in front: a reading from the insurer's wording
+  // must never look like one from the person's own document (ADR 0036).
+  const source = f.citation ? (f.citation.startsWith("Page ") ? `${f.sourceText}, ${f.citation}` : f.citation) : f.sourceText;
   return (
-    <>
-      <ul className={p.facts}>{facts.slice(page * FACT_PAGE, page * FACT_PAGE + FACT_PAGE).map((f) => <FactItem key={f.key} f={f} />)}</ul>
-      {facts.length > FACT_PAGE ? (
-        <div className={p.pager}>
-          <button type="button" className={p.outline} disabled={page === 0} onClick={() => setPage(page - 1)}>Back</button>
-          <p className={p.pageText} role="status">Page {page + 1} of {pages}</p>
-          <button type="button" className={p.outline} disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>Next</button>
-        </div>
-      ) : null}
-    </>
+    <li className={p.factRow} data-open={f.open}>
+      <span className={p.factLabel}>{f.label}</span>
+      <span className={p.factValue}>
+        {f.open ? <Signal kind="warn"><span className={p.factValueText}>{f.value}</span></Signal> : f.value}
+        {f.open ? <span className={p.factStatus}>{f.statusText}</span> : null}
+      </span>
+      <span className={p.factSource} data-testid="fact-source">{source}</span>
+    </li>
   );
 }
 
-/** The three headline values as equal cards. Review and missing carry a yellow dot and a plain-words state; found values carry a green dot and their status. */
-function HeadlineCards({ policy }: { policy: PolicyView }) {
-  const signalOf = (h: HeadlineLine) =>
-    h.tone === "review" ? <Signal kind="warn">Needs your decision</Signal>
-    : h.tone === "missing" ? <Signal kind="warn">Not found yet</Signal>
-    : <Signal kind="ok">{h.statusText}</Signal>;
+/**
+ * Facts of one group as rows, as many to a page as the panel is tall enough for. The panel is the tab panel itself so that its height is measured
+ * where the rows live; a hidden panel measures 0 and shows the maximum until it is opened. Keyed by group so each group keeps its own page.
+ */
+function GroupPanel({ id, hidden, facts }: { id: string; hidden: boolean; facts: FactLine[] }) {
+  const [page, setPage] = useState(0);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const perPage = useFit(panelRef, 58, 2, FACT_PAGE);
+  const pages = Math.ceil(facts.length / perPage);
+  // A taller or shorter panel changes the page size under the current page; clamp instead of showing an empty page.
+  const at = Math.min(page, pages - 1);
+  return (
+    <div ref={panelRef} role="tabpanel" data-panel={id} className={`${p.panel} ${p.groupPanel}`} hidden={hidden}>
+      <ul className={p.rows}>{facts.slice(at * perPage, at * perPage + perPage).map((f) => <FactRow key={f.key} f={f} />)}</ul>
+      {facts.length > perPage ? (
+        <div className={p.pager}>
+          <button type="button" className={p.outline} disabled={at === 0} onClick={() => setPage(at - 1)}>Back</button>
+          <p className={p.pageText} role="status">Page {at + 1} of {pages}</p>
+          <button type="button" className={p.outline} disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>Next</button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The three headline values in one row inside the header card. A reading that conflicts links to the decision; a missing one says so beside its value. */
+function HeadlineRow({ policy }: { policy: PolicyView }) {
   return (
     <ul className={p.headlines} data-testid="headlines">
       {policy.headlines.map((h) => (
         <li key={h.key} className={p.headItem} data-testid={`headline-${h.key}`} data-tone={h.tone}>
-          <Card className={p.headCard}>
-            <span className={p.headLabel}>{h.label}</span>
-            <span className={p.headValue}>{h.value}</span>
-            {signalOf(h)}
-            {h.tone === "review" ? <Link className={p.outline} href={`/covers/review?holding=${encodeURIComponent(policy.id)}`}>Review and decide</Link> : null}
-          </Card>
+          <span className={p.headLabel}>{h.label}</span>
+          <span className={p.headValue} style={h.tone === "review" ? { color: "var(--warn-ink, var(--ink))" } : undefined}>{h.value}</span>
+          {h.tone === "review" ? <Link className={p.inlineLink} href={`/covers/review?holding=${encodeURIComponent(policy.id)}`}>Review and decide</Link> : null}
+          {h.tone === "missing" ? <Signal kind="warn">Not found yet</Signal> : null}
         </li>
       ))}
     </ul>
   );
 }
 
-/** /policies/[id] for a real account: the holding's facts, each with its status and where it was read, one group per tab. */
+/** /policies/[id] for a real account: a header card with the three main numbers, then one group of facts at a time, with where each was read. */
 export function RealPolicyDetail({ id }: { id: string }) {
   const { state, reload, refresh } = usePolicies();
-  const [selected, setSelected] = useState("glance");
+  const [selected, setSelected] = useState("");
   const waiting = state.kind === "ready" && state.policies.some((x) => x.id === id && isWaitingForWording(x));
   // While the insurer's wording is awaited, ask again now and then (quietly) so the insurer facts appear when the state turns to fss. Stops after about 3 minutes.
   useEffect(() => {
@@ -78,49 +96,47 @@ export function RealPolicyDetail({ id }: { id: string }) {
   const groups = GROUP_ORDER.map((label) => ({ label, facts: policy.facts.filter((f) => groupOf(f.group) === label) })).filter((g) => g.facts.length > 0);
   const hasTerms = policy.stage === "needs_review" || policy.stage === "ready";
   const tabs = [
-    { id: "glance", label: "At a glance" },
     ...groups.map((g) => ({ id: tabIdOf(g.label), label: g.label })),
     ...(policy.notFound > 0 ? [{ id: "not-found", label: `Not found (${policy.notFound})` }] : []),
     ...(hasTerms ? [{ id: "terms", label: "Insurer terms" }] : []),
   ];
-  // A refresh can drop the tab the person is on (for example a group that no longer has facts); fall back to the first tab.
-  const active = tabs.some((t) => t.id === selected) ? selected : "glance";
+  // The first tab starts selected. A refresh can drop the tab the person is on (for example a group that no longer has facts); fall back to the first tab.
+  const active = tabs.some((t) => t.id === selected) ? selected : (tabs[0]?.id ?? "");
   return (
     <div className={p.detail}>
-      <div className={p.head}>
-        <div className={p.headText}>
-          <PageTitle>{policy.title}</PageTitle>
-          {policy.insurer ? <p className={p.sub}>{policy.insurer}</p> : null}
-        </div>
-        <div className={p.headLinks}>
-          <Link className={p.outline} href="/policies">All policies</Link>
-          <Link className={p.cta} href={`/chat?holding=${encodeURIComponent(policy.id)}`}>Ask about this policy</Link>
-        </div>
-      </div>
-      <Tabs label="Policy sections" tabs={tabs} value={active} onChange={setSelected} />
-      <div role="tabpanel" data-panel="glance" className={p.panel} hidden={active !== "glance"}>
+      <div className={p.leftCol}>
         {policy.error ? <ErrorBox code={policy.error} onRetry={reload} /> : <StageBox p={policy} onRetry={reload} />}
         <Pending p={policy} />
-        {policy.headlines.length > 0 ? <HeadlineCards policy={policy} /> : null}
-        {policy.stage !== "reading" && policy.stage !== "choose_plan" && !policy.error && policy.facts.length === 0 ? <p className={p.note}>Nothing has been read from this policy yet.</p> : null}
+        <Card className={p.headerCard}>
+          {policy.insurer ? <Signal kind="ok">{policy.insurer}</Signal> : null}
+          <h1 className={p.name}>{policy.title}</h1>
+          {policy.headlines.length > 0 ? <HeadlineRow policy={policy} /> : null}
+        </Card>
+        {tabs.length > 0 ? (
+          <>
+            <Tabs label="Policy sections" tabs={tabs} value={active} onChange={setSelected} />
+            {groups.map((g) => <GroupPanel key={g.label} id={tabIdOf(g.label)} hidden={active !== tabIdOf(g.label)} facts={g.facts} />)}
+            {policy.notFound > 0 ? (
+              <div role="tabpanel" data-panel="not-found" className={p.panel} hidden={active !== "not-found"}>
+                <ul className={p.missing}>{policy.notFoundKeys.map((k) => <li key={k}>{labelOf(k)}</li>)}</ul>
+              </div>
+            ) : null}
+            {hasTerms ? (
+              <div role="tabpanel" data-panel="terms" className={`${p.panel} ${p.terms}`} hidden={active !== "terms"}>
+                <MemoryDocument holdingId={policy.id} />
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <p className={p.note}>Nothing has been read from this policy yet.</p>
+        )}
       </div>
-      {groups.map((g) => (
-        <div key={g.label} role="tabpanel" data-panel={tabIdOf(g.label)} className={p.panel} hidden={active !== tabIdOf(g.label)}>
-          <GroupPanel facts={g.facts} />
-        </div>
-      ))}
-      {policy.notFound > 0 ? (
-        <div role="tabpanel" data-panel="not-found" className={p.panel} hidden={active !== "not-found"}>
-          <ul className={p.missing}>{policy.notFoundKeys.map((k) => <li key={k}>{labelOf(k)}</li>)}</ul>
-        </div>
-      ) : null}
-      {hasTerms ? (
-        <div role="tabpanel" data-panel="terms" className={`${p.panel} ${p.terms}`} hidden={active !== "terms"}>
-          <TermsStatus p={policy} onAdded={reload} />
-          <MemoryDocument holdingId={policy.id} />
-          <PassageSearch holdingId={policy.id} />
-        </div>
-      ) : null}
+      <div className={p.rightCol}>
+        {hasTerms ? <PassageSearch holdingId={policy.id} /> : null}
+        {hasTerms ? <TermsStatus p={policy} onAdded={reload} /> : null}
+        <Link className={`${p.cta} ${p.wide}`} href={`/chat?holding=${encodeURIComponent(policy.id)}`}>Ask about this policy</Link>
+        <Link className={`${p.outline} ${p.wide}`} href="/policies">All policies</Link>
+      </div>
     </div>
   );
 }

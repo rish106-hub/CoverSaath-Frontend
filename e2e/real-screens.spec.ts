@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { asRealAccount } from "./real-account";
+import { expectCalm, expectNoFindings, expectNothingCutOff, shot, SIZES, type Sink } from "./real-calm";
 
 // The real-account screens (home, my policies, policy detail, add-a-policy wizard) in a real browser, on a dev server in backend mode with
 // no backend behind it: the browser's own /api/app/* calls are answered with synthetic data by asRealAccount. This proves what unit tests
@@ -8,114 +9,10 @@ import { asRealAccount } from "./real-account";
 // Sign-in: there is no form. The beta access card ("Get access", then /welcome) is not used here; asRealAccount sets the plain session
 // cookie the proxy looks for, and the session itself is read from /api/app/me. A rule the product breaks is a finding, never loosened here.
 
-const SHOTS = "test-results/real/";
-
-type Sink = string[];
-
-type Rules = { fonts: boolean; scroll: boolean; cutOff: boolean };
-
-/**
- * Measures one screen and reports every broken rule. Font rules: no visible element that directly holds text may be under 16px or under
- * weight 500. Scroll rules: the document and `main` must not scroll (text inside [data-panel="terms"] is skipped for these only, that
- * panel is hidden while they are measured). Cut-off rules, for text inside `main`: (1) the element's box must lie inside the box of every
- * ancestor up to `main` that hides its overflow (overflow hidden or clip), 1px tolerance; (2) an element that hides its own overflow must
- * not hold more content than it shows. A cut-off rule is measured with the terms panel as it is, never exempted. With a `sink` the broken
- * rules are collected under `label`; without one they fail the test at once.
- */
-async function measure(page: Page, label: string, rules: Rules, sink?: Sink): Promise<void> {
-  const found = await page.evaluate((on) => {
-    const out: string[] = [];
-    const small = new Map<string, string>();
-    const thin = new Map<string, string>();
-    const byContainer = new Map<string, string>();
-    const bySelf = new Map<string, string>();
-    const main = document.querySelector("main");
-    const hides = (css: CSSStyleDeclaration) => ["hidden", "clip"].includes(css.overflowX) || ["hidden", "clip"].includes(css.overflowY);
-    const round = (n: number) => Math.round(n * 10) / 10;
-    for (const el of Array.from(document.body.querySelectorAll("*"))) {
-      if (["SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE"].includes(el.tagName)) continue;
-      const own = Array.from(el.childNodes).filter((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim() !== "").map((n) => (n.textContent ?? "").trim()).join(" ");
-      if (!own) continue;
-      const box = el.getBoundingClientRect();
-      const css = getComputedStyle(el);
-      // An element is visible when it has a real box and is not hidden; 1px boxes are screen-reader-only text.
-      if (box.width <= 1 || box.height <= 1 || css.display === "none" || css.visibility === "hidden" || Number(css.opacity) === 0) continue;
-      const fontSize = parseFloat(css.fontSize);
-      const fontWeight = parseInt(css.fontWeight, 10);
-      const tag = `<${el.tagName.toLowerCase()}> "${own.slice(0, 40)}"`;
-      if (on.fonts && fontSize < 16) small.set(tag, `font size ${fontSize}px (under 16)`);
-      if (on.fonts && fontWeight < 500) thin.set(tag, `font weight ${fontWeight} (under 500)`);
-      if (on.cutOff && main && main.contains(el)) {
-        // Per axis: an ancestor only cuts content off on an axis it clips (hidden or clip). Once an ancestor scrolls on an axis
-        // (auto or scroll), content beyond it on that axis is reachable, so that axis is no longer checked further up.
-        // A name deliberately shortened with an ellipsis (data-truncate plus a title holding the full text) is not a finding.
-        const clips = (v: string) => v === "hidden" || v === "clip";
-        const scrolls = (v: string) => v === "auto" || v === "scroll";
-        const truncated = el.closest("[data-truncate][title]");
-        let checkX = !truncated, checkY = !truncated;
-        for (let up = el.parentElement; up && (checkX || checkY); up = up.parentElement) {
-          const upCss = getComputedStyle(up);
-          const ub = up.getBoundingClientRect();
-          const outX = box.left < ub.left - 1 || box.right > ub.right + 1;
-          const outY = box.top < ub.top - 1 || box.bottom > ub.bottom + 1;
-          if ((checkX && clips(upCss.overflowX) && outX) || (checkY && clips(upCss.overflowY) && outY)) {
-            byContainer.set(tag, `element box l${round(box.left)} t${round(box.top)} r${round(box.right)} b${round(box.bottom)} lies outside <${up.tagName.toLowerCase()}> box l${round(ub.left)} t${round(ub.top)} r${round(ub.right)} b${round(ub.bottom)} (overflow ${upCss.overflowX}/${upCss.overflowY})`);
-            break;
-          }
-          if (scrolls(upCss.overflowX)) checkX = false;
-          if (scrolls(upCss.overflowY)) checkY = false;
-          if (up === main) break;
-        }
-        if (hides(css) && !(el.hasAttribute("data-truncate") && (el.getAttribute("title") ?? "").trim() === (el.textContent ?? "").trim())) {
-          const h = el as HTMLElement;
-          if (h.scrollHeight > h.clientHeight + 1 || h.scrollWidth > h.clientWidth + 1) {
-            bySelf.set(tag, `scrollHeight ${h.scrollHeight} vs clientHeight ${h.clientHeight}, scrollWidth ${h.scrollWidth} vs clientWidth ${h.clientWidth} (overflow ${css.overflowX}/${css.overflowY})`);
-          }
-        }
-      }
-    }
-    for (const [tag, why] of byContainer) out.push(`not cut off by a container: ${tag}: ${why}`);
-    for (const [tag, why] of bySelf) out.push(`not cut off by itself: ${tag}: ${why}`);
-    for (const [tag, why] of small) out.push(`${tag}: ${why}`);
-    for (const [tag, why] of thin) out.push(`${tag}: ${why}`);
-    if (on.scroll) {
-      const terms = Array.from(document.querySelectorAll<HTMLElement>('[data-panel="terms"]'));
-      const shown = terms.map((t) => t.style.display);
-      terms.forEach((t) => { t.style.display = "none"; });
-      const doc = document.documentElement;
-      if (doc.scrollHeight > window.innerHeight + 1) out.push(`scroll: document scrollHeight ${doc.scrollHeight} > innerHeight ${window.innerHeight} + 1`);
-      if (main && main.scrollHeight > main.clientHeight + 1) out.push(`scroll: main scrollHeight ${main.scrollHeight} > clientHeight ${main.clientHeight} + 1`);
-      terms.forEach((t, i) => { t.style.display = shown[i] ?? ""; });
-    }
-    return out;
-  }, rules);
-  const viewport = page.viewportSize();
-  const tagged = found.map((f) => `${label} @ ${viewport?.width}x${viewport?.height}: ${f}`);
-  if (sink) sink.push(...tagged);
-  else expectNoFindings(tagged, "calm rules (cut off, font size, font weight, scroll)");
-}
-
-/** Fails with one finding per line (screen, size, rule, element text, numbers) instead of a diff, so a report can be copied from the output. */
-function expectNoFindings(found: Sink, what: string): void {
-  expect(found.length, `${what}: ${found.length} finding(s)\n${found.map((f) => `finding: ${f}`).join("\n")}`).toBe(0);
-}
-
-/** Every rule: scroll, font size, font weight and both cut-off rules. */
-const expectCalm = (page: Page, label: string, sink?: Sink): Promise<void> => measure(page, label, { fonts: true, scroll: true, cutOff: true }, sink);
-
-/** For screens that may scroll (short laptops): the two cut-off rules and the two font rules, no scroll rules. */
-const expectNothingCutOff = (page: Page, label: string, sink?: Sink): Promise<void> => measure(page, label, { fonts: true, scroll: false, cutOff: true }, sink);
-
-const shot = async (page: Page, screen: string): Promise<void> => {
-  const size = page.viewportSize();
-  await page.screenshot({ path: `${SHOTS}${screen}-${size?.width}x${size?.height}.png`, animations: "disabled" });
-};
-
-const SIZES = [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 1366, height: 650 }] as const;
 // A 13-inch laptop with browser toolbars leaves about this much page height; the page may scroll here.
 const SHORT_VIEWPORT = { width: 1280, height: 560 } as const;
 const LONG_PRODUCT_NAME = "Example Comprehensive Family Health Protection Plan Platinum 2026";
-const POLICY_TABS = ["At a glance", "Limits", "Waiting", "Exclusions", /Not found/, "Insurer terms"] as const;
+const POLICY_TABS = ["Limits", "Waiting", "Exclusions", /Not found/, "Insurer terms"] as const;
 
 type PaymentWindow = "pay" | "close";
 
@@ -156,7 +53,9 @@ test("home shows the cover sentence and one next step for a real account", async
   await expect(page.getByTestId("home-cover")).toHaveText("2");
   await expect(page.getByText(/policies on Knowvia/)).toBeVisible();
   await expect(page.getByTestId("home-next")).toBeVisible();
-  await expect(page.getByTestId("home-next")).toContainText("Ask about your cover");
+  await expect(page.getByTestId("home-next")).toContainText("Ask now");
+  await expect(page.getByTestId("home-renewal")).toBeVisible();
+  await expect(page.getByTestId("home-policy")).toHaveCount(2);
   await shot(page, "home");
 });
 
@@ -202,23 +101,25 @@ test("my policies is calm at every laptop size", async ({ page }) => {
   for (const size of SIZES) {
     await page.setViewportSize(size);
     await page.goto("/policies");
-    await expect(page.getByTestId("policy-card")).toHaveCount(4);
+    // Fit rule (spec R5b.7): the grid shows two cards per row for as many rows as it is tall enough for, so the 650px laptop shows one row of two.
+    await expect(page.getByTestId("policy-card")).toHaveCount(size.height < 700 ? 2 : 4);
     await expectCalm(page, "my policies", found);
     await shot(page, "policies");
   }
   expectNoFindings(found, "my policies breaks calm rules");
 });
 
-test("policy detail opens on At a glance and switches to a fact group", async ({ page }) => {
+test("policy page shows the header card and switches fact groups", async ({ page }) => {
   await asRealAccount(page);
   await page.goto("/policies/h1");
   await expect(page.getByRole("heading", { name: "Example Health Plan 01", level: 1 })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "At a glance" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator('[data-panel="glance"]')).toBeVisible();
+  await expect(page.getByTestId("headlines").locator("li")).toHaveCount(3);
+  await expect(page.getByRole("tab", { name: "Limits" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator('[data-panel="limits"]')).toBeVisible();
   await page.getByRole("tab", { name: "Waiting" }).click();
   await expect(page.getByRole("tab", { name: "Waiting" })).toHaveAttribute("aria-selected", "true");
   await expect(page.locator('[data-panel="waiting"]')).toBeVisible();
-  await expect(page.locator('[data-panel="glance"]')).toBeHidden();
+  await expect(page.locator('[data-panel="limits"]')).toBeHidden();
   await expect(page.locator('[data-panel="waiting"] li')).toHaveCount(4);
   await shot(page, "policy-detail-waiting");
 });
@@ -256,7 +157,7 @@ async function walkPolicyTabs(page: Page, prefix: string, screenName: string, ch
   await shot(page, `${prefix}policy-detail-limits-page-2`);
 }
 
-test("policy detail is calm on every tab at every laptop size", async ({ page }) => {
+test("policy page is calm on every tab at every laptop size", async ({ page }) => {
   test.setTimeout(90_000);
   await asRealAccount(page);
   const found: Sink = [];
@@ -441,4 +342,17 @@ test("an unconfirmed payment offers Check again and no Pay button", async ({ pag
   await expect(page.getByRole("button", { name: /^Pay Rs/ })).toHaveCount(0);
   await shot(page, "pay-unconfirmed");
   expect(unhandled, "no call without a fixture or to the real checkout").toEqual([]);
+});
+
+test("home with one policy shows the policy, ask and next-step cards", async ({ page }) => {
+  await asRealAccount(page, { policies: 1 });
+  await page.goto("/home");
+  await expect(page.getByTestId("home-cover")).toHaveText("Rs 5,00,000");
+  await expect(page.getByTestId("home-policy")).toHaveCount(1);
+  await expect(page.getByText("Ask about your cover").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "What are my waiting periods?" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "What does my policy not cover?" })).toBeVisible();
+  await expect(page.getByText("Your next step")).toBeVisible();
+  await expect(page.getByTestId("home-next")).toBeVisible();
+  await shot(page, "home-one-policy");
 });

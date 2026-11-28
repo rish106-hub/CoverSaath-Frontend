@@ -1,0 +1,2 @@
+/* Home greeting as one plain line above the cover sentence (spec R5b.1). Same face as the sidebar text, so it reads as a greeting, not a page title. */
+h1.line { font-family: var(--font-sans); font-size: 22px; font-weight: 500; line-height: 1.25; margin: 0; letter-spacing: 0; text-wrap: auto; }

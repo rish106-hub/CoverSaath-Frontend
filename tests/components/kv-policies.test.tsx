@@ -152,28 +152,29 @@ describe("My policies list (R3e.2)", () => {
 });
 
 describe("Policy detail (R3e.3)", () => {
-  it("detail starts on At a glance with the stage note, pending note and headlines", async () => {
+  it("detail shows the notices and the header card with three headlines", async () => {
     stub([holding("h1", "conflicts")], { conflicts: [conflict(1)] });
-    const { container } = render(<RealPolicyDetail id="h1" />);
+    render(<RealPolicyDetail id="h1" />);
     await screen.findByRole("tablist", { name: "Policy sections" });
-    expect(screen.getByRole("tab", { name: "At a glance" })).toHaveAttribute("aria-selected", "true");
-    const glance = panel(container, "glance");
-    expect(glance.hidden).toBe(false);
-    expect(within(glance).getByTestId("pending-conflicts")).toHaveTextContent("One detail needs your decision");
-    expect(within(glance).getByTestId("headlines")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "At a glance" })).toBeNull();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Example Health Plan 01");
+    expect(screen.getByTestId("pending-conflicts")).toHaveTextContent("One detail needs your decision");
+    const headlines = screen.getByTestId("headlines");
+    expect(within(headlines).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(screen.getByTestId("headline-policy_period")).getByRole("link", { name: "Review and decide" })).toHaveAttribute("href", "/covers/review?holding=h1");
     cleanup();
     vi.restoreAllMocks();
     stub([holding("h1", "insurer_pending", { ...SUMMARY, insurerName: null, productName: null } as HoldingView["summary"])]);
-    const second = render(<RealPolicyDetail id="h1" />);
-    await screen.findByRole("tablist", { name: "Policy sections" });
-    expect(within(panel(second.container, "glance")).getByTestId("stage-note")).toHaveTextContent("Tell us which plan this is");
+    render(<RealPolicyDetail id="h1" />);
+    expect(await screen.findByTestId("stage-note")).toHaveTextContent("Tell us which plan this is");
+    expect(screen.getByText("Nothing has been read from this policy yet.")).toBeInTheDocument();
   });
 
   it("detail has one tab per fact group that has facts, in the fixed order", async () => {
     stub([holding("h1")], { facts: [fact("sum_insured", "money"), fact("room_rent_limit", "limits"), fact("waiting_initial", "waiting")], unknownKeys: ["waiting_specific_0"] });
     render(<RealPolicyDetail id="h1" />);
     await screen.findByRole("tablist", { name: "Policy sections" });
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["At a glance", "Limits", "Waiting", "Money", "Not found (1)", "Insurer terms"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Limits", "Waiting", "Money", "Not found (1)", "Insurer terms"]);
   });
 
   it("choosing a group tab shows its facts and hides the others", async () => {
@@ -182,7 +183,7 @@ describe("Policy detail (R3e.3)", () => {
     fireEvent.click(await screen.findByRole("tab", { name: "Waiting" }));
     expect(screen.getByRole("tab", { name: "Waiting" })).toHaveAttribute("aria-selected", "true");
     expect(panel(container, "waiting").hidden).toBe(false);
-    expect(panel(container, "glance").hidden).toBe(true);
+    expect(screen.getByRole("tab", { name: "Limits" })).toHaveAttribute("aria-selected", "false");
     expect(panel(container, "limits").hidden).toBe(true);
     expect(within(panel(container, "waiting")).getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
@@ -217,7 +218,8 @@ describe("Policy detail (R3e.3)", () => {
     for (const [status, shown] of cases) {
       stub([holding("h1", status)]);
       render(<RealPolicyDetail id="h1" />);
-      await screen.findByRole("tablist", { name: "Policy sections" });
+      // Without facts a policy that is still being read has no tab at all, so wait for the page itself.
+      await screen.findByRole("heading", { level: 1 });
       expect(screen.queryByRole("tab", { name: "Insurer terms" }) !== null, status).toBe(shown);
       cleanup();
       vi.restoreAllMocks();
@@ -225,7 +227,20 @@ describe("Policy detail (R3e.3)", () => {
     stub([holding("h1")]);
     const { container } = render(<RealPolicyDetail id="h1" />);
     fireEvent.click(await screen.findByRole("tab", { name: "Insurer terms" }));
-    expect(within(panel(container, "terms")).getByTestId("terms-status")).toHaveTextContent("Insurer terms attached (verified)");
+    // The terms line sits in the right column now; the terms panel holds the document alone.
+    expect(screen.getByTestId("terms-status")).toHaveTextContent("Insurer terms attached (verified)");
+    expect(within(panel(container, "terms")).queryByTestId("terms-status")).toBeNull();
+  });
+
+  it("a fact row shows its label, value and where it was read", async () => {
+    stub([holding("h1")], { facts: [fact("room_rent_limit", "limits")] });
+    const { container } = render(<RealPolicyDetail id="h1" />);
+    await screen.findByRole("tablist", { name: "Policy sections" });
+    const row = within(panel(container, "limits")).getByRole("listitem");
+    expect(row).toHaveTextContent(labelOf("room_rent_limit"));
+    expect(row).toHaveTextContent("Covered");
+    expect(within(row).getByTestId("fact-source")).toHaveTextContent("Your document, Policy schedule, Page 4");
+    expect(row).toHaveAttribute("data-open", "false");
   });
 
   it("detail header links to all policies and to ask about this policy", async () => {

@@ -8,7 +8,7 @@ const port = process.env.KV_E2E_PORT ?? "3312";
 
 export default defineConfig({
   testDir: "e2e",
-  testMatch: "real-screens.spec.ts",
+  testMatch: /real-.*\.spec\.ts$/,
   // Screenshots go to test-results/real; Playwright empties its output directory at the start of every run, so keep it apart.
   outputDir: "test-results/real-output",
   use: { baseURL: `http://localhost:${port}`, viewport: { width: 1440, height: 900 } },

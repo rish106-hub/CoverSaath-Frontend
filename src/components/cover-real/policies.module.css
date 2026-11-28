@@ -1,4 +1,4 @@
-/* My policies grid and policy detail tabs (spec R3e). Theme tokens only; one gap value (24px) on the list. */
+/* My policies grid and policy page (spec R3e, R5a.5, R5b.3, R5b.7). Theme tokens only; one gap value (16px) on the list. */
 .page { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; }
 .titleRow { display: flex; align-items: center; gap: 24px; }
 .count { margin: 0 0 0 auto; font-size: 18px; font-weight: 600; }
@@ -7,16 +7,17 @@
 .card { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; min-width: 0; overflow: hidden; color: inherit; text-decoration: none; padding: 20px; }
 .top { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .badge { flex: none; width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--tide); color: var(--on-harbour); font-size: 24px; font-weight: 700; }
-.names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
-.insurer { margin: 0; font-size: 16px; font-weight: 600; color: var(--muted); }
+.names { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+/* Names are one line with an ellipsis; the element holds the full text in its title attribute (spec R5b.7 rule 3). */
+.title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.25; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.insurer { display: block; margin: 0; font-size: 16px; font-weight: 600; color: var(--muted); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rows { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
 .rowLabel { font-size: 18px; font-weight: 600; }
 .rowValue { font-family: var(--font-serif); font-size: 22px; font-weight: 500; line-height: 1.15; text-align: right; min-width: 0; overflow-wrap: anywhere; }
 .state { font-size: 18px; font-weight: 600; }
 
-.pager { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 24px; flex: none; }
 .pageText { margin: 0; font-size: 18px; font-weight: 600; }
 
 /* Same boxes as the Button primary and outline md, but real links so navigation works without script. */
@@ -31,25 +32,56 @@
 .outline:disabled { opacity: 0.5; cursor: default; }
 .cta:active, .outline:active { transform: translateY(1px) scale(0.98); }
 .cta:focus-visible, .outline:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+.wide { width: 100%; box-sizing: border-box; }
 
-.detail { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.headText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.headLinks { display: flex; align-items: center; gap: 12px; flex: none; }
-.sub { margin: 0; font-size: 18px; font-weight: 500; }
+/* Policy page: a wide left column (header card, tabs, one panel) and a narrow right column (search, terms, links). */
+.detail { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; flex: 1; min-height: 0; }
+.leftCol, .rightCol { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
 
-.panel { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
+.leftCol .headerCard { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 28px; flex: none; width: 100%; }
+h1.name { font-family: var(--font-serif); font-size: 44px; line-height: 1.05; font-weight: 500; margin: 0; overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
+.headlines { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; width: 100%; }
+.headItem { display: flex; flex-direction: column; gap: 4px; min-width: 0; align-items: flex-start; }
+.headLabel { font-size: 18px; font-weight: 500; }
+.headValue { font-family: var(--font-sans); font-size: 26px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.inlineLink { font-size: 18px; font-weight: 600; color: var(--harbour); text-decoration: underline; }
+.inlineLink:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+
+/* Panels scroll inside themselves when their rows need more room than the panel has; the page itself does not scroll (spec R5b.7 rule 4). */
+.panel { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 .panel[hidden] { display: none; }
+.groupPanel .rows { flex: none; gap: 0; }
+/* When the rows are taller than the panel (a long source wraps to two lines) the pager stays in view at the bottom of the panel instead of below the fold. */
+.groupPanel .pager { position: sticky; bottom: 0; background: var(--paper); }
 .terms { overflow-y: auto; }
-.facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 8px; flex: 1; min-height: 0; }
-/* Each fact keeps its lines at full height; a clamped value (overflow: hidden) would otherwise shrink to nothing inside the fixed-height cell. */
-.facts > li { min-height: 0; overflow: hidden; padding: 8px 14px; gap: 2px; justify-content: center; }
-.facts > li > * { flex: none; }
+
+.rows { list-style: none; margin: 0; padding: 0; }
+.factRow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: center; min-height: 54px; padding: 6px 0; box-sizing: border-box; border-bottom: 1.5px solid var(--line); }
+.factLabel { font-size: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.factValue { display: flex; align-items: center; flex-wrap: wrap; column-gap: 12px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.factValueText { font-size: 18px; font-weight: 600; }
+.factStatus { font-size: 16px; font-weight: 600; color: var(--graphite); }
+.factSource { line-height: 1.25; font-size: 16px; font-weight: 600; color: var(--graphite); text-align: right; overflow-wrap: anywhere; }
+
 .missing { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 24px; font-size: 18px; font-weight: 500; }
 .note { margin: 0; font-size: 18px; font-weight: 500; }
 
-.headlines { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0; }
-.headItem { display: flex; min-width: 0; min-height: 0; }
-.headCard { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; min-width: 0; min-height: 0; overflow: hidden; padding: 24px; }
-.headLabel { font-size: 18px; font-weight: 600; }
-.headValue { font-family: var(--font-serif); font-size: 32px; font-weight: 500; line-height: 1.15; overflow-wrap: anywhere; }
+/* Short laptop screens: smaller name, tighter boxes (spec R5b.3). */
+@media (max-height: 860px) {
+  .detail, .leftCol, .rightCol { gap: 12px; }
+  h1.name { font-size: 36px; }
+  .leftCol .headerCard { padding: 20px; gap: 8px; }
+  .factRow { min-height: 46px; padding: 4px 0; }
+}
+
+/* Under 721px tall (spec R5b.7 rule 6). */
+@media (max-height: 720px) {
+  h1.name { font-size: 28px; }
+  .leftCol .headerCard { padding: 16px; }
+  .card { padding: 16px; }
+}
+
+/* Under 640px tall nothing fits without cutting, so every screen takes its natural height and the page scrolls (spec R5b.7 rule 5). */
+@media (max-height: 639px) {
+  .page, .grid, .detail, .leftCol, .rightCol, .panel { flex: none; min-height: auto; }
+}
