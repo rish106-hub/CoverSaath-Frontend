@@ -5,9 +5,21 @@ import type { Page, Route } from "@playwright/test";
 // contract the browser adapter parses (src/adapters/covers-contract.ts, documents-contract.ts, user-data-contract.ts, scenarios.ts,
 // payments.ts, evidence-contract.ts, schemas.ts) and from the BFF envelope of its route: cover and evidence routes answer
 // `{ ok: true, data }`, documents and user-data routes answer `{ ok: true, ... }`, /me answers the bare session object.
-// Synthetic data only. Nothing here is served for /api/v1, and a request to any host other than the dev server is aborted and recorded.
+// Synthetic data only. The backend's own API is never answered here (a browser call to it is aborted and recorded), and a request to any
+// host other than the dev server is aborted and recorded too.
+//
+// Options: `long` gives holding h1 a very long product and insurer name, three open conflicts and one 120-character fact (to catch text
+// cut off inside a card); `canAdd: false` makes the payment slots answer "pay first" so the wizard shows the pay screen; `verify: "down"`
+// makes the payment verify call fail with a retryable 502 so the payment stays unconfirmed.
 
-export type RealAccountOptions = { policies?: 1 | 2 | 5 };
+export type RealAccountOptions = { policies?: 1 | 2 | 5; long?: boolean; canAdd?: boolean; verify?: "ok" | "down" };
+
+const LONG_PRODUCT_NAME = "Example Comprehensive Family Health Protection Plan Platinum 2026";
+const LONG_INSURER_NAME = "Example General Insurance Company Limited";
+// Exactly 120 characters; it replaces the value of one Limits fact when `long` is set.
+const LONG_FACT_VALUE = "Cataract surgery is covered up to Rs 40,000 per eye, and every other day-care procedure up to the sum insured each year.";
+// Facts that carry an open conflict when `long` is set. All three are known labels, so each keeps its group.
+const LONG_CONFLICT_KEYS = ["deductible", "copay_percent", "waiting_ped"] as const;
 
 const PRODUCT_NAMES = ["Example Health Plan 01", "Example Family Floater 02", "Example Senior Care 03", "Example Top-up Plan 04", "Example Care Plus 05"];
 const INSURER_NAMES = ["Example Insurer", "Example Insurer", "Example Insurer", "Example Insurer", "Example Insurer"];
@@ -36,10 +48,28 @@ const FACT_SPECS: FactSpec[] = [
 ];
 const UNKNOWN_KEYS = ["seller_irdai_registration", "tpa_name"];
 
-const factView = (f: FactSpec) => ({
-  factKey: f.key, factClass: "term", valueType: f.type ?? "number", unit: f.unit ?? null, group: f.group,
-  status: f.status ?? "extracted_unverified", value: f.value, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false, openConflictId: null,
-  sources: sourceOf(f.page, f.quote),
+const factView = (f: FactSpec, long: boolean) => {
+  const conflictIndex = long ? LONG_CONFLICT_KEYS.indexOf(f.key as (typeof LONG_CONFLICT_KEYS)[number]) : -1;
+  const value = long && f.key === "sub_limit" ? LONG_FACT_VALUE : f.value;
+  return {
+    factKey: f.key, factClass: "term", valueType: f.type ?? "number", unit: f.unit ?? null, group: f.group,
+    status: conflictIndex >= 0 ? "conflicting" : f.status ?? "extracted_unverified", value: conflictIndex >= 0 ? null : value, sourceTier: "own_pdf", alternatives: [], checkWithInsurer: false,
+    openConflictId: conflictIndex >= 0 ? `conflict-${conflictIndex + 1}` : null,
+    sources: sourceOf(f.page, f.quote),
+  };
+};
+
+// One open conflict per key in LONG_CONFLICT_KEYS: the schedule says one thing and the insurer's wording another (two candidate readings).
+const conflictViews = () => LONG_CONFLICT_KEYS.map((key, i) => {
+  const spec = FACT_SPECS.find((f) => f.key === key) as FactSpec;
+  return {
+    id: `conflict-${i + 1}`, factKey: key, factClass: "term", valueType: spec.type ?? "number", reason: "value_mismatch", kind: "own_vs_insurer", resolution: "pending",
+    checkWithInsurer: false,
+    candidates: [
+      { id: `cs-${i + 1}-a`, tier: "own_pdf", status: "extracted_unverified", value: spec.value, page: { pageId: `p${spec.page}`, documentKind: "policy_schedule", pageNumber: spec.page }, quote: spec.quote, current: true, source: "own_document" },
+      { id: `cs-${i + 1}-b`, tier: "ida_wording", status: "extracted_unverified", value: spec.value, page: { pageId: `p${spec.page + 10}`, documentKind: "policy_wording", pageNumber: spec.page + 10 }, quote: spec.quote, current: true, source: "reviewed_reference" },
+    ],
+  };
 });
 
 const MEMORY_MARKDOWN = [
@@ -56,6 +86,9 @@ const WIZARD_DOCUMENT_ID = "doc-new";
 
 export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): Promise<{ unhandled: string[] }> {
   const count = opts.policies ?? 2;
+  const long = opts.long === true;
+  const canAdd = opts.canAdd !== false;
+  const verifyDown = opts.verify === "down";
   const unhandled: string[] = [];
   const port = process.env.KV_E2E_PORT ?? "3312";
   const baseUrl = `http://localhost:${port}`;
@@ -66,13 +99,16 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
 
   // State of the add-a-policy wizard: consent, then an uploaded schedule that is read over two progress checks, then a holding awaiting its plan.
   const wizard = { consent: false, uploaded: false, advances: 0, confirmed: false };
+  // Payment: `paid` flips when the verify call is answered "ok"; only then do the slots say another policy can be added.
+  const payment = { paid: false };
+  const slotsView = () => ({ enabled: !canAdd, used: count, allowed: payment.paid ? 2 : 1, canAdd: canAdd || payment.paid, pricePaise: 19900, currency: "INR" });
 
   const holdings = () => {
     const list = Array.from({ length: count }, (_, i) => {
       const n = i + 1;
       const first = n === 1;
       const summary: Record<string, unknown> = {
-        insurerName: INSURER_NAMES[i], productName: PRODUCT_NAMES[i],
+        insurerName: first && long ? LONG_INSURER_NAME : INSURER_NAMES[i], productName: first && long ? LONG_PRODUCT_NAME : PRODUCT_NAMES[i],
         sumInsured: { factKey: "sum_insured", value: money(first ? 500000 : 300000 + n * 100000), status: "user_confirmed" },
         wordingState: "fss",
       };
@@ -80,7 +116,7 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
         summary.policyPeriod = { factKey: "policy_period", value: { startIso: "2026-04-01", endIso: "2027-03-31", days: 365 }, status: "extracted_unverified" };
         summary.premium = { factKey: "premium_total", value: money(18500), status: "extracted_unverified" };
       }
-      return { id: `h${n}`, documentId: `doc-h${n}`, kind: "policy_schedule", status: "ready", summary };
+      return { id: `h${n}`, documentId: `doc-h${n}`, kind: "policy_schedule", status: first && long ? "conflicts" : "ready", summary };
     });
     if (wizard.uploaded) {
       list.push({ id: WIZARD_HOLDING_ID, documentId: WIZARD_DOCUMENT_ID, kind: "policy_schedule", status: wizard.confirmed ? "ready" : "insurer_pending", summary: { insurerName: null, productName: null, wordingState: "missing" } } as never);
@@ -101,7 +137,13 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
     if (get && path === "/api/app/places") return { json: { ok: true, places: [] } };
     if (get && path === "/api/app/members") return { json: { members: [{ id: "u-asha", displayName: "Asha Rao", relationshipLabel: null, ageYears: null, isOwner: true, isYou: true }] } };
     if (get && path === "/api/app/scenarios") return { json: { scenario: { inputs: null, revision: 0 } } };
-    if (get && path === "/api/app/payments/slots") return { json: { ok: true, data: { enabled: false, used: count, allowed: 1, canAdd: true, pricePaise: 19900, currency: "INR" } } };
+    if (get && path === "/api/app/payments/slots") return data(slotsView());
+    if (method === "POST" && path === "/api/app/payments/order") return { status: 201, json: { ok: true, data: { orderId: "order_e2e_0001", amountPaise: 19900, currency: "INR", keyId: "rzp_test_e2e" } } };
+    if (method === "POST" && path === "/api/app/payments/verify") {
+      if (verifyDown) return { status: 502, json: { code: "BACKEND_UNREACHABLE", retryable: true } };
+      payment.paid = true;
+      return data({ ...slotsView(), paid: true });
+    }
     if (get && path === "/api/app/integrations") return data({});
     if (get && path === "/api/app/documents") return { json: { ok: true, consent: wizard.consent, documents: [], policyType: null, largeUpload: false } };
     if (method === "POST" && path === "/api/app/documents/consent") { wizard.consent = true; return { json: { ok: true, consent: true } }; }
@@ -119,8 +161,9 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
     const m = /^\/api\/app\/covers\/holdings\/([^/]+)\/([a-z-]+)$/.exec(path);
     if (m) {
       const [, id, what] = m as unknown as [string, string, string];
-      if (get && what === "facts") return data({ holdingId: id, status: "ready", facts: id === "h1" ? FACT_SPECS.map(factView) : [], unknownKeys: id === "h1" ? UNKNOWN_KEYS : [] });
-      if (get && what === "conflicts") return data({ holdingId: id, status: "ready", conflicts: [] });
+      const holdingStatus = id === "h1" && long ? "conflicts" : "ready";
+      if (get && what === "facts") return data({ holdingId: id, status: holdingStatus, facts: id === "h1" ? FACT_SPECS.map((f) => factView(f, long)) : [], unknownKeys: id === "h1" ? UNKNOWN_KEYS : [] });
+      if (get && what === "conflicts") return data({ holdingId: id, status: holdingStatus, conflicts: id === "h1" && long ? conflictViews() : [] });
       if (get && what === "memory-document") return data({ holdingId: id, markdown: MEMORY_MARKDOWN });
       if (get && what === "documents") return data({ holdingId: id, documents: [{ documentId: `doc-${id}`, kind: "policy_schedule", factsState: "included" }] });
       if (get && what === "passages") return data({ passages: [], insurerPassages: [] });
@@ -138,6 +181,12 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
   await page.route((url) => url.host !== baseHost && !/^(data|blob):/.test(url.protocol), async (route: Route) => {
     const u = new URL(route.request().url());
     unhandled.push(`EXTERNAL ${route.request().method()} ${u.host}${u.pathname}`);
+    await route.abort();
+  });
+
+  // The backend's own API is never fulfilled: any browser call to it is refused and recorded, so it shows up in `unhandled`.
+  await page.route("**/api/v1/**", async (route: Route) => {
+    unhandled.push(`BACKEND ${route.request().method()} ${new URL(route.request().url()).pathname}`);
     await route.abort();
   });
 
