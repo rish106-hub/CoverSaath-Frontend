@@ -680,3 +680,89 @@ Titles:
 ### R3d.7 Out of scope
 
 Insurer logos. Any statistic about the population. Cover per person. Days-to-renewal arithmetic. `/chat` reading `?q=`. Mock `HomeView`. New dependencies.
+
+## R3e My policies and policy detail
+
+Scope: `/policies` and `/policies/[id]` for a real account. The list becomes a symmetric grid of policy cards, four to a page. The detail becomes a header plus tabs, so one group of facts shows at a time and the page does not scroll. Data, loading logic and the shared pieces in `parts.tsx` are unchanged. Canvas reference: `design/canvas-v6/screens-b.js`.
+
+Persona served: a 25 to 35 year old tech worker with one or two health policies who wants to see each policy's main numbers at a glance and open one to read a group of details at a time. Colour tells them what is fine and what needs them.
+
+### R3e.1 Files
+
+| File | Change |
+|---|---|
+| `src/components/cover-real/RealPolicies.tsx` | `ready` state rewritten (R3e.2). Other states keep their logic. |
+| `src/components/cover-real/RealPolicyDetail.tsx` | Layout rewritten as header plus tabs (R3e.3). The refresh effect and all conditions stay. |
+| `src/components/cover-real/policies.module.css` | New. Styles for both screens. |
+| `tests/components/kv-policies.test.tsx` | New (R3e.5). |
+| `tests/adapters/real-policy.test.tsx`, `tests/components/real-policy-detail.test.tsx`, `tests/components/wording-cutover.test.tsx`, `tests/components/t12-numbers-first.test.tsx` | Only assertions that depend on removed list markup or on a fact being visible without choosing its tab are updated (R3e.6). Every title is kept. |
+
+Not edited: `parts.tsx`, `MemoryDocument.tsx`, `PassageSearch.tsx`, `use-policies.ts`, `covers.module.css`, `src/components/covers/format.ts`, adapters, `src/components/ui/*`, `src/app`.
+
+### R3e.2 `/policies`
+
+Loading, error and both empty branches render what they render today, in the same order. `PageTitle` "My policies" stays the only `h1`.
+
+`ready`:
+
+- `<CreationIssues issues={issues} onRetry={reload} />` first (as today).
+- A header row: left `<p data-testid="policy-count">` with `1 policy` or `{n} policies` (18px, weight 600); right a link `Add a policy` to `/covers/add` styled as the primary button (`.cta`).
+- `PAGE_SIZE = 4`. The grid `.grid` shows `policies.slice(page * 4, page * 4 + 4)` in two equal columns (`grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px`), rows of equal height.
+- More than four policies: a pager row under the grid with outline buttons `Back` and `Next` (disabled at the ends) and the text `Page {page + 1} of {pages}` in a `role="status"` element. Four or fewer: no pager.
+- Each policy is a `Card as="a"` linking to `/policies/{encodeURIComponent(p.id)}`, `aria-label={p.title}`, `data-testid="policy-card"`, containing in order:
+  1. Top row: a square badge with the first letter of `p.insurer ?? p.title` (upper case, `aria-hidden`), then `<h3>` `p.title` and, when set, `p.insurer`.
+  2. Headline row: one cell per entry of `p.headlines` (up to three, equal columns). Each cell: label (16px, weight 600), value (Newsreader, 28px, weight 500) and a `Signal` chosen by `tone`: `read` or `confirmed` gives `<Signal kind="ok">{h.statusText}</Signal>`; `review` gives `<Signal kind="warn">Needs your decision</Signal>`; `missing` gives `<Signal kind="warn">Not found yet</Signal>`. With no headlines the row is omitted.
+  3. State row, one `Signal`, first match: `p.error` set: `<Signal kind="bad">Could not load. Open to try again.</Signal>`; `p.stage === "reading"`: `<Signal kind="warn">Still being read</Signal>`; `p.stage === "choose_plan"`: `<Signal kind="warn">Tell us which plan this is</Signal>`; `p.pending.length > 0`: `<Signal kind="warn">{n === 1 ? "One detail needs your decision" : `${n} details need your decision`}</Signal>`; otherwise `<Signal kind="ok">Read and ready</Signal>`.
+- `PolicyCard` from `parts.tsx` is no longer used on this page.
+
+### R3e.3 `/policies/[id]`
+
+Loading, error and not-found branches are unchanged. The wording refresh effect is unchanged.
+
+Root `.detail`: `display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0`.
+
+1. Header row (`.head`, space between): left `PageTitle` `{p.title}` and, when set, `p.insurer` (18px); right two links: `All policies` to `/policies` (outline) and `Ask about this policy` to `/chat?holding={encodeURIComponent(p.id)}` (primary, `.cta`).
+2. `Tabs` (`label="Policy sections"`), tab ids and labels in this order, each only when its condition holds:
+   - `glance` "At a glance": always.
+   - one tab per group in `GROUP_ORDER` that has facts (id is the group label lower-cased with spaces replaced by `-`, label is the group label): as today's `groups`.
+   - `not-found` "Not found": when `p.notFound > 0`.
+   - `terms` "Insurer terms": when `p.stage` is `needs_review` or `ready`.
+   The selected tab starts as `glance`.
+3. Panels. Every panel is rendered in the DOM as `<div role="tabpanel" data-panel={id} hidden={id !== selected}>`; only the selected one is visible. Panel content:
+   - `glance`: `p.error ? <ErrorBox code={p.error} onRetry={reload} /> : <StageBox p={p} onRetry={reload} />`, `<Pending p={p} />`, `<Headlines p={p} />` when there are headlines, and the line `Nothing has been read from this policy yet.` under today's condition.
+   - a group: `<ul>` of that group's facts through `FactItem`, laid out in two equal columns, eight to a page (`FACT_PAGE = 8`), with the same `Back` / `Next` / `Page x of y` pager as the list when the group has more than eight.
+   - `not-found`: a heading-less list of `labelOf(k)` for `p.notFoundKeys`, in three equal columns, and the count in the tab label as `Not found ({p.notFound})`.
+   - `terms`: `<TermsStatus p={p} onAdded={reload} />`, `<MemoryDocument holdingId={p.id} />`, `<PassageSearch holdingId={p.id} />`. This panel alone may scroll inside itself (`overflow-y: auto`).
+4. Removed from this page: `SectionHeading`, the `<details>` element, the bottom link row, `k-btn` classes.
+
+### R3e.4 Styles
+
+`policies.module.css`: theme tokens only; no hex colours, shadows, gradients, blur or `@keyframes`; font sizes in px, none under 16px; no weight under 500. `.cta` and `.outline` match the `Button` primary and outline `md` boxes. Panels other than `terms` have `overflow: hidden`.
+
+### R3e.5 New tests: `tests/components/kv-policies.test.tsx`
+
+Titles:
+
+1. `the list shows the count and an Add a policy link`
+2. `each policy is one card that links to its page`
+3. `headline tones map to green and yellow signals`
+4. `the state signal follows error, reading, choose plan, pending, ready in that order`
+5. `four or fewer policies show no pager`
+6. `a fifth policy moves to page two and Back returns`
+7. `loading, error and empty list states are unchanged`
+8. `detail starts on At a glance with the stage note, pending note and headlines`
+9. `detail has one tab per fact group that has facts, in the fixed order`
+10. `choosing a group tab shows its facts and hides the others`
+11. `a group with nine facts pages at eight`
+12. `Not found tab shows the count and the labels`
+13. `Insurer terms tab appears only when the policy is ready or needs review`
+14. `detail header links to all policies and to ask about this policy`
+15. `policy not found and detail error states are unchanged`
+
+### R3e.6 Existing tests
+
+Every title in the four listed files is kept and must pass. Allowed edits: a query that relied on `PolicyCard` markup on the list (the `Open policy` link, key facts on the card) is rewritten against the new card; a `role`-based query for content inside a non-selected panel first clicks that tab; the `<details>` summary query for not-found keys becomes a click on the `Not found` tab. Text queries that still find their text need no change.
+
+### R3e.7 Out of scope
+
+Insurer logos. Compare, stress test, hospitals, review screens. Restyling `parts.tsx`, `MemoryDocument`, `PassageSearch`. Adapters. New dependencies.
