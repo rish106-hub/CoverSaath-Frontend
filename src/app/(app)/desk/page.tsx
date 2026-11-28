@@ -1,5 +1,4 @@
-import { SoonBento } from "@/components/soon/SoonBento";
-import { DemoGate } from "@/components/shell/EmptyState";
+import { EmptyState, DemoGate } from "@/components/shell/EmptyState";
 import { HelpHead } from "@/components/help/HelpHead";
 import { DeskView } from "@/components/help/DeskView";
 
@@ -9,7 +8,7 @@ export default function Page() {
   return (
     <>
       <HelpHead route="/desk" />
-      <DemoGate empty={<SoonBento tiles={[{ label: "Open claims" }, { label: "Insurer conversations" }, { label: "Documents to sign" }]} />}><DeskView /></DemoGate>
+      <DemoGate empty={<EmptyState title="This page is not available." cta="Go to Home" href="/home" />}><DeskView /></DemoGate>
     </>
   );
 }
