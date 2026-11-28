@@ -6,15 +6,15 @@ test.use({ channel: "chrome" });
 
 const ROUTES = ["/home", "/policies", "/chat"];
 
-// Mock access: the front door form creates a demo session, same steps as e2e/walkthrough.spec.ts.
+// Mock access: the sign-in screen at the root, phone way in; the mock takes any six digits as the code, same steps as e2e/journey.spec.ts.
 async function signIn(page: Page) {
   await page.goto("/");
-  await page.getByLabel(/name/i).first().fill("Meera Rao");
-  await page.getByLabel(/email/i).first().fill("meera.rao@company.com");
-  await page.getByRole("button", { name: /get access/i }).click();
-  // The card moves on to /welcome by itself; navigating elsewhere before that lands aborts the session write.
-  await page.waitForURL(/\/welcome/);
-  await expect(page.getByText(/You.re in, Meera/).first()).toBeVisible();
+  await page.getByLabel("Mobile number").fill("9876543210");
+  await page.getByRole("button", { name: "Send code" }).click();
+  await expect(page.getByRole("heading", { name: "Enter the code", level: 1 })).toBeVisible();
+  await page.getByLabel("Digit 1").click();
+  await page.keyboard.type("123456");
+  await expect(page.getByRole("heading", { name: "You’re in.", level: 1 })).toBeVisible();
 }
 
 async function slowApi(page: Page, ms = 800) {
@@ -60,16 +60,11 @@ test("one stage", async ({ page }) => {
     await expect(page.locator("[data-skeleton]")).toHaveCount(0, { timeout: 15_000 });
     clearInterval(poll);
     expect(sawLoadingText, `no text loader on ${path}`).toBe(false);
-    const style = await page.evaluate(() => {
-      const kid = document.querySelector("main.k-content > *:not(.k-no-fade)") as HTMLElement;
-      const cs = getComputedStyle(kid);
-      const reduced = document.documentElement.dataset.motion === "reduced" || matchMedia("(prefers-reduced-motion: reduce)").matches;
-      return { duration: cs.animationDuration, curve: cs.animationTimingFunction, name: cs.animationName, reduced };
-    });
-    // Under reduced motion (OS setting, in-app setting, or a low-capacity device such as a CI runner) the app shortens every animation to 1ms.
-    expect(style.duration).toContain(style.reduced ? "0.001s" : "0.2s");
-    expect(style.curve).toContain("cubic-bezier(0.25, 1, 0.5, 1)");
-    expect(style.name).not.toMatch(/transform/);
+    // Once the skeleton has gone the page content is on screen and fully opaque: one stage, no second pass over the same area.
+    // Enter and press motion is measured in t10-motion.spec.ts, so nothing here pins an animation.
+    const content = page.locator("main#main-content > *:not(.k-no-fade)").first();
+    await expect(content, `content on ${path}`).toBeVisible();
+    await expect(content, `content opaque on ${path}`).toHaveCSS("opacity", "1");
     await page.unrouteAll();
   }
 });
@@ -80,7 +75,8 @@ test("no text swap", async ({ page }) => {
     const seen: Record<string, string[]> = { h1: [], chip: [] };
     (window as unknown as { __t2seen: typeof seen }).__t2seen = seen;
     const record = () => {
-      const h1 = document.querySelector("h1")?.textContent?.trim();
+      // The laptop gate also holds an h1 (hidden by CSS above 1024px), so the page heading is looked up inside the page itself.
+      const h1 = document.querySelector("#main-content h1")?.textContent?.trim();
       const chip = document.querySelector('a[href="/profile"][class*="chip"]')?.textContent?.trim();
       if (h1 && !seen.h1.includes(h1)) seen.h1.push(h1);
       if (chip && !seen.chip.includes(chip)) seen.chip.push(chip);

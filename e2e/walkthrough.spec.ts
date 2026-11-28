@@ -9,14 +9,14 @@ async function noHorizontalScroll(page: Page) {
 
 test("keyboard only: / to /signin to /welcome to /home to /emergency", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: /get access/i })).toBeVisible();
-  await page.getByLabel(/name/i).first().focus();
-  await page.keyboard.type("Meera Rao");
-  await page.keyboard.press("Tab");
-  await page.keyboard.type("meera.rao@company.com");
-  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Send code" })).toBeVisible();
+  // The root path renders the sign-in screen itself. Phone is the default way in; Enter sends the code, six typed digits verify it.
+  await page.getByLabel("Mobile number").focus();
+  await page.keyboard.type("9876543210");
   await page.keyboard.press("Enter");
-  await expect(page.getByText(/You.re in, Meera/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Enter the code", level: 1 })).toBeVisible();
+  await page.keyboard.type("123456");
+  await expect(page.getByRole("heading", { name: "You’re in.", level: 1 })).toBeVisible();
   await noHorizontalScroll(page);
 
   await page.goto("/signin");

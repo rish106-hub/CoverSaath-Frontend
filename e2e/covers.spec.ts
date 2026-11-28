@@ -11,7 +11,7 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
 
   await addSchedule(page, { name: "policy.pdf", buffer: SYNTHETIC_PDF });
-  await expect(page.getByRole("heading", { name: "Add a policy" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Which plan is this?", level: 1 })).toBeVisible();
 
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await expect(page.getByText("Example Insurer – Example Health Plan 01")).toBeVisible();
@@ -19,6 +19,8 @@ test("add a cover, pick the plan, confirm, review facts and settle a conflict", 
   await expect(page.locator("body")).not.toContainText(/SYNTH|\bUIN\b/);
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
+  // The family step comes before the result screen; skipping keeps the journey on the cover.
+  await page.getByRole("button", { name: "Skip for now" }).click();
   await expect(page.getByText("Your cover is saved.")).toBeVisible();
   await expect(page.getByTestId("terms-input")).toHaveCount(0);
 

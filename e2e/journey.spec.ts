@@ -11,17 +11,18 @@ test("profile, one schedule PDF, go-ahead, clause question with citation", async
   const backendCalls: string[] = [];
   page.on("request", (r) => { if (/\/api\/v1\//.test(r.url())) backendCalls.push(r.url()); });
 
-  // Profile.
+  // Sign in with a phone number: the mock accepts any six digits as the code. The page moves on by its own link, not by a reload (mock state lives in the page).
   await page.goto("/");
-  await page.getByLabel(/name/i).first().fill("Meera Rao");
-  await page.getByLabel(/email/i).first().fill("meera.rao@company.com");
-  await page.getByRole("button", { name: /get access/i }).click();
-  // The card moves on to /welcome by itself; going elsewhere before that lands aborts the navigation.
-  await page.waitForURL(/\/welcome/);
-  await expect(page.getByText(/You.re in, Meera/).first()).toBeVisible();
+  await page.getByRole("tab", { name: "Phone" }).click();
+  await page.getByLabel("Mobile number").fill("9876543210");
+  await page.getByRole("button", { name: "Send code" }).click();
+  await expect(page.getByRole("heading", { name: "Enter the code", level: 1 })).toBeVisible();
+  await page.getByLabel("Digit 1").click();
+  await page.keyboard.type("123456");
+  await expect(page.getByRole("heading", { name: "You’re in.", level: 1 })).toBeVisible();
 
   // One upload: the schedule makes the cover. There is no second slot.
-  await page.goto("/upload");
+  await page.getByRole("link", { name: "Add my policy" }).click();
   await page.waitForURL(/\/covers\/add/);
   await expect(page.getByRole("heading", { name: "Can Knowvia read your policy?" })).toBeVisible();
   await page.getByRole("button", { name: "Yes, read my policy" }).click();
@@ -34,9 +35,14 @@ test("profile, one schedule PDF, go-ahead, clause question with citation", async
   await add("policy_schedule", "schedule.pdf");
   await expect(page.getByRole("heading", { name: "Which plan is this?" })).toBeVisible();
   await expect(page.locator('[data-slot="policy_wording"]')).toHaveCount(0);
+  await page.getByRole("radio").first().check();
+  await page.getByRole("button", { name: /Yes, it is/ }).click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await expect(page.getByText("Your cover is saved.")).toBeVisible();
 
-  // Chat: go-ahead, then a clause question.
-  await page.getByRole("link", { name: "Ask about your cover" }).first().click();
+  // Chat: leave the wizard by its own link, then take the rail to Ask. Go-ahead first, then a clause question.
+  await page.getByRole("link", { name: "Close" }).click();
+  await page.getByRole("navigation", { name: "Knowvia sections" }).getByRole("link", { name: "Ask", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Ask about your cover", level: 1 })).toBeVisible();
   await expect(page.getByText("Before we answer")).toBeVisible();
   await expect(page.getByRole("button", { name: "Ask", exact: true })).toBeDisabled();

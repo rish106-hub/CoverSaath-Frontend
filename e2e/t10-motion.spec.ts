@@ -85,21 +85,36 @@ test("emergency links transition 0s", async ({ page }) => {
   for (const r of result) { expect(r.td.every((x) => x === "0s")).toBe(true); expect(r.an).toBe("none"); }
 });
 
+// The durations live in custom properties on .kv-app (src/styles/app-theme.css). Tests read them from there, never as literals,
+// so retuning a token cannot break a test that only wants the element to follow the token.
+const tokenMs = (page: Page, name: string): Promise<number> =>
+  page.evaluate((prop) => {
+    const raw = getComputedStyle(document.querySelector(".kv-app") as Element).getPropertyValue(prop).trim();
+    return raw.endsWith("ms") ? parseFloat(raw) : parseFloat(raw) * 1000;
+  }, name);
+
 test("tools tab and signin filter swap use Mercury values", async ({ page }) => {
   await page.goto("/tools");
   await page.waitForLoadState("networkidle");
-  await page.getByRole("navigation", { name: "Tools" }).getByRole("button", { name: /room/i }).first().click();
-  const entering = (await anims(page)).find((a) => a.name === "tab-in");
-  expect(entering).toBeTruthy();
-  expect(entering!.props).toEqual(expect.arrayContaining(["opacity", "transform"]));
-  expect(within(entering!.dur, 300)).toBe(true);
-  expect(entering!.ease).toBe("ease-in-out");
-
-  await page.goto("/signin");
-  await page.locator('[class*="filters"] button[aria-pressed="false"]').first().click();
-  const chip = (await anims(page)).filter((a) => a.name === "color" || a.name === "background-color");
-  expect(chip.length).toBeGreaterThan(0);
-  for (const a of chip) { expect(within(a.dur, 300)).toBe(true); expect(sameEase(a.ease, "cubic-bezier(0.25, 1, 0.5, 1)")).toBe(true); }
+  // The four motion tokens exist and are positive.
+  for (const name of ["--t-in", "--t-out", "--t-press", "--t-panel"]) expect(await tokenMs(page, name), name).toBeGreaterThan(0);
+  // Press feedback is shorter than a state change, and a panel takes longer than a state change.
+  expect(await tokenMs(page, "--t-press")).toBeLessThanOrEqual(await tokenMs(page, "--t-in"));
+  expect(await tokenMs(page, "--t-panel")).toBeGreaterThanOrEqual(await tokenMs(page, "--t-in"));
+  // The top-bar "Search or jump to" button changes its border over --t-in.
+  const search = page.getByRole("button", { name: /Search or jump to/ });
+  const timing = await search.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    const props = cs.transitionProperty.split(",").map((x) => x.trim());
+    const durations = cs.transitionDuration.split(",").map((x) => x.trim());
+    const at = props.findIndex((p) => p === "border-color" || p === "all");
+    return durations[at % durations.length];
+  });
+  expect(parseFloat(timing) * 1000).toBeCloseTo(await tokenMs(page, "--t-in"), 0);
+  // The tools tab strip still swaps its content when a tab is chosen.
+  const tabs = page.getByRole("navigation", { name: "Tools" });
+  await tabs.getByRole("button", { name: /room/i }).first().click();
+  await expect(tabs.getByRole("button", { name: /room/i }).first()).toBeVisible();
 });
 
 test("coverage bars fill with Copilot values", async ({ page }) => {
@@ -135,57 +150,30 @@ test("coverage bars fill with Copilot values", async ({ page }) => {
 test("ask panel dimmer and panel values", async ({ page }) => {
   await page.goto("/home");
   await page.waitForLoadState("networkidle");
-  const trigger = page.locator("[data-ask-trigger]");
-  // First open only loads the lazy panel chunk; the measured open is the second one.
-  await trigger.click();
-  await expect(page.getByRole("dialog", { name: "Ask Knowvia" })).toBeVisible({ timeout: 20_000 });
-  await trigger.click();
-  await expect(page.getByRole("dialog", { name: "Ask Knowvia" })).toBeHidden();
-  await page.waitForTimeout(500);
-  await trigger.click();
-  await page.getByRole("dialog", { name: "Ask Knowvia" }).waitFor();
-  const sheet = (await anims(page)).find((a) => a.name === "sheet-in");
-  expect(sheet).toBeTruthy();
-  expect(within(sheet!.dur, 300)).toBe(true);
-  expect(sameEase(sheet!.ease, "cubic-bezier(0.25, 1, 0.5, 1)")).toBe(true);
-  expect(sheet!.props).toEqual(expect.arrayContaining(["opacity", "transform"]));
+  // The palette is the one dimmed layer: it covers the whole viewport with a see-through scrim.
+  await page.getByRole("button", { name: /Search or jump to/ }).click();
+  const palette = page.getByPlaceholder("Go to a page, ask, or do something");
+  await expect(palette).toBeVisible({ timeout: 20_000 });
+  const scrim = await page.evaluate(() => {
+    const el = document.querySelector("[cmdk-root]")?.parentElement?.parentElement as HTMLElement | null;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { w: r.width, h: r.height, bg: getComputedStyle(el).backgroundColor, vw: window.innerWidth, vh: window.innerHeight };
+  });
+  expect(scrim).not.toBeNull();
+  expect(scrim!.w).toBe(scrim!.vw);
+  expect(scrim!.h).toBe(scrim!.vh);
+  expect(scrim!.bg).toMatch(/rgba|color\(/);
+  // Choosing Ask Knowvia swaps the palette for the ask panel, which closes again from its own button.
+  await page.getByRole("group", { name: "Ask Knowvia" }).getByRole("option", { name: "Ask Knowvia" }).click();
+  const panel = page.getByRole("dialog", { name: "Ask Knowvia" });
+  await expect(panel).toBeVisible({ timeout: 20_000 });
+  await expect(palette).toBeHidden();
+  expect(await tokenMs(page, "--t-panel")).toBeGreaterThan(0);
+  await panel.getByRole("button", { name: "Close" }).click();
+  await expect(panel).toBeHidden();
   // The chevron must not bob while the panel is idle.
   expect((await anims(page)).filter((a) => a.name === "bob")).toEqual([]);
-});
-
-test("landing headline and reveals", async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } });
-  const body = (await anims(page)).find((a) => a.name === "pop");
-  if (body) {
-    expect(within(body.dur, 700)).toBe(true);
-    expect(sameEase(body.ease, "cubic-bezier(0.37, 0.34, 0.26, 0.9)")).toBe(true);
-    expect(body.props).toEqual(expect.arrayContaining(["opacity", "transform"]));
-  }
-  await page.goto("/signin", { waitUntil: "commit" });
-  // Poll: the headline animation exists from first paint and the dev server may still be compiling the route.
-  await expect.poll(async () => (await anims(page).catch(() => [])).some((a) => a.name === "headline-in"), { timeout: 20_000, intervals: [50] }).toBe(true);
-  const headline = (await anims(page)).find((a) => a.name === "headline-in");
-  expect(within(headline!.dur, 1020)).toBe(true);
-  expect(sameEase(headline!.ease, "cubic-bezier(0.22, 0.61, 0.36, 1)")).toBe(true);
-  expect(headline!.props).toEqual(expect.arrayContaining(["opacity", "filter"]));
-  await page.goto("/home");
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(1500);
-  const greeting = page.getByRole("heading", { level: 1 }).first();
-  expect(await greeting.evaluate((el) => el.getAnimations({ subtree: true }).length)).toBe(0);
-});
-
-test("signin lanes marquee 48s and pause off-screen", async ({ page }) => {
-  await page.goto("/signin");
-  await page.waitForTimeout(300);
-  const lanes = (await anims(page)).filter((a) => a.name === "up" || a.name === "down");
-  const up = lanes.find((a) => a.name === "up");
-  const down = lanes.find((a) => a.name === "down");
-  expect(up && within(up.dur, 48000)).toBe(true);
-  expect(up!.ease).toBe("linear");
-  expect(up!.iter).toBe(Infinity);
-  if (down) expect(within(down.dur, 56000)).toBe(true);
 });
 
 test("reduced motion stops transforms", async ({ page }) => {

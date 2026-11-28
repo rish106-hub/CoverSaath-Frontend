@@ -70,6 +70,7 @@ test("hospital list renders for a seeded pincode", async ({ page }) => {
   await expect(page.getByText(/We think this is/)).toBeVisible();
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
   await page.getByRole("link", { name: "See what we found" }).click();
   await page.locator("a.k-btn", { hasText: "Network hospitals" }).press("Enter");
 
