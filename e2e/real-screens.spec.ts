@@ -46,18 +46,27 @@ async function measure(page: Page, label: string, rules: Rules, sink?: Sink): Pr
       if (on.fonts && fontSize < 16) small.set(tag, `font size ${fontSize}px (under 16)`);
       if (on.fonts && fontWeight < 500) thin.set(tag, `font weight ${fontWeight} (under 500)`);
       if (on.cutOff && main && main.contains(el)) {
-        for (let up = el.parentElement; up; up = up.parentElement) {
+        // Per axis: an ancestor only cuts content off on an axis it clips (hidden or clip). Once an ancestor scrolls on an axis
+        // (auto or scroll), content beyond it on that axis is reachable, so that axis is no longer checked further up.
+        // A name deliberately shortened with an ellipsis (data-truncate plus a title holding the full text) is not a finding.
+        const clips = (v: string) => v === "hidden" || v === "clip";
+        const scrolls = (v: string) => v === "auto" || v === "scroll";
+        const truncated = el.closest("[data-truncate][title]");
+        let checkX = !truncated, checkY = !truncated;
+        for (let up = el.parentElement; up && (checkX || checkY); up = up.parentElement) {
           const upCss = getComputedStyle(up);
-          if (hides(upCss)) {
-            const ub = up.getBoundingClientRect();
-            if (box.left < ub.left - 1 || box.top < ub.top - 1 || box.right > ub.right + 1 || box.bottom > ub.bottom + 1) {
-              byContainer.set(tag, `element box l${round(box.left)} t${round(box.top)} r${round(box.right)} b${round(box.bottom)} lies outside <${up.tagName.toLowerCase()}> box l${round(ub.left)} t${round(ub.top)} r${round(ub.right)} b${round(ub.bottom)} (overflow ${upCss.overflowX}/${upCss.overflowY})`);
-              break;
-            }
+          const ub = up.getBoundingClientRect();
+          const outX = box.left < ub.left - 1 || box.right > ub.right + 1;
+          const outY = box.top < ub.top - 1 || box.bottom > ub.bottom + 1;
+          if ((checkX && clips(upCss.overflowX) && outX) || (checkY && clips(upCss.overflowY) && outY)) {
+            byContainer.set(tag, `element box l${round(box.left)} t${round(box.top)} r${round(box.right)} b${round(box.bottom)} lies outside <${up.tagName.toLowerCase()}> box l${round(ub.left)} t${round(ub.top)} r${round(ub.right)} b${round(ub.bottom)} (overflow ${upCss.overflowX}/${upCss.overflowY})`);
+            break;
           }
+          if (scrolls(upCss.overflowX)) checkX = false;
+          if (scrolls(upCss.overflowY)) checkY = false;
           if (up === main) break;
         }
-        if (hides(css)) {
+        if (hides(css) && !(el.hasAttribute("data-truncate") && (el.getAttribute("title") ?? "").trim() === (el.textContent ?? "").trim())) {
           const h = el as HTMLElement;
           if (h.scrollHeight > h.clientHeight + 1 || h.scrollWidth > h.clientWidth + 1) {
             bySelf.set(tag, `scrollHeight ${h.scrollHeight} vs clientHeight ${h.clientHeight}, scrollWidth ${h.scrollWidth} vs clientWidth ${h.clientWidth} (overflow ${css.overflowX}/${css.overflowY})`);
