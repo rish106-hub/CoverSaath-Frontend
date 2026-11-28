@@ -769,7 +769,7 @@ Insurer logos. Compare, stress test, hospitals, review screens. Restyling `parts
 
 ## R4a Real-account screens in the browser (test harness)
 
-Scope: a Playwright harness that renders the real-account screens (the ones a signed-in person sees) on the mock dev server by answering the browser's own `/api/app/*` calls with synthetic data. It proves in a real browser what unit tests cannot: nothing scrolls, no small or thin text, the laptop gate works. No product code changes.
+Scope: a Playwright harness that renders the real-account screens (the ones a signed-in person sees) on a dev server in backend mode, with no backend behind it, by answering the browser's own `/api/app/*` calls with synthetic data. It proves in a real browser what unit tests cannot: nothing scrolls, no small or thin text, the laptop gate works. No product code changes.
 
 Persona served: the owner and reviewers, who judge the product by what the screen looks like for a real account, and the end user (a 25 to 35 year old tech worker on a laptop) who must never scroll or squint.
 
@@ -777,7 +777,8 @@ Persona served: the owner and reviewers, who judge the product by what the scree
 
 | File | Change |
 |---|---|
-| `playwright.config.ts` | Port from `process.env.KV_E2E_PORT` (default `3201`) in `baseURL`, the server command and `url`; `reuseExistingServer` is `false` when `KV_E2E_PORT` is set, `true` otherwise. Nothing else changes. |
+| `playwright.real.config.ts` | New. `testDir: "e2e"`, `testMatch: "real-screens.spec.ts"`, port from `process.env.KV_E2E_PORT` (default `3312`), viewport 1440x900, web server command `NEXT_PUBLIC_ADAPTERS=backend npx next dev -p <port>` (any value other than `mock` puts the browser adapters in backend mode, so they call `/api/app/*`), `reuseExistingServer: false`. |
+| `playwright.config.ts` | One added line: `testIgnore: "real-screens.spec.ts"`, so the mock suite never runs the real-account spec. Nothing else changes. |
 | `e2e/real-account.ts` | New. `export async function asRealAccount(page: Page, opts?: { policies?: 1 | 2 | 5 }): Promise<{ unhandled: string[] }>`. |
 | `e2e/real-screens.spec.ts` | New (R4a.3). |
 
@@ -785,7 +786,7 @@ Not edited: everything under `src/`, `tests/`, other `e2e/` files, `package.json
 
 ### R4a.2 `asRealAccount`
 
-- Registers `page.route("**/api/app/**", ...)` before any navigation and fulfils each request the real screens make with JSON that passes the same zod contract the browser adapter parses (`src/adapters/covers-contract.ts`, `src/adapters/documents-contract.ts`, `src/adapters/scenarios.ts`, `src/adapters/payments.ts`, and the session shape read by `src/components/shell/useMe.ts`). Shapes are copied from those files, never guessed.
+- Registers `page.route("**/api/app/**", ...)` before any navigation and fulfils each request the shell and the real screens make (session, preferences, onboarding, members, payment slots, document list and consent, holdings, facts, conflicts, memory document, passages, scenarios and any other path they call) with JSON that passes the same zod contract the browser adapter parses (`src/adapters/covers-contract.ts`, `src/adapters/documents-contract.ts`, `src/adapters/scenarios.ts`, `src/adapters/payments.ts`, and the session shape read by `src/components/shell/useMe.ts`). Shapes are copied from those files, never guessed.
 - The session answer makes `me.source` equal `"backend"`, so `DemoGate` shows the real screens. The owner is `Asha Rao`.
 - Holdings: `opts.policies` (default 2) holdings with ids `h1`, `h2`, ... Holding `h1`: insurer `Example Insurer`, product `Example Health Plan 01`, stage ready, a confirmed sum insured of 500000 rupees, a policy period, a premium, and at least nine facts spread over the groups Limits, Waiting and Exclusions (so one group pages), one of them `renewal_date`, plus two not-found keys. Other holdings: a different product name each, ready, sum insured only.
 - Any `/api/app/*` request with no fixture is fulfilled with status 404 and body `{"code":"NOT_FOUND"}` and its method and path are pushed to the returned `unhandled` array.
@@ -793,7 +794,9 @@ Not edited: everything under `src/`, `tests/`, other `e2e/` files, `package.json
 
 ### R4a.3 `e2e/real-screens.spec.ts`
 
-Sign-in for every test: the existing beta-access steps used at the top of `e2e/journey.spec.ts` (name, email, `Get access`, wait for `/welcome`), then `asRealAccount(page)` routes are already in place before the first navigation.
+Sign-in for every test: no form. Before the first navigation the test calls `asRealAccount(page)`, which itself adds the plain session cookie the proxy looks for (`kv_session`, any value, for the base URL) with `page.context().addCookies`. The proxy only checks that the cookie exists; every session read after that is a browser call to `/api/app/me`, which the harness answers.
+
+Safety: the dev server is started with no backend address (the worktree has no local env file), and `asRealAccount` aborts and records any browser request to a host other than the base URL's.
 
 A helper `expectCalm(page)` asserts, in the page:
 - `document.documentElement.scrollHeight <= window.innerHeight + 1`;
