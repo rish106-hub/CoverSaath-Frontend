@@ -4,6 +4,7 @@ import { defineConfig } from "@playwright/test";
 // Starts its own mock-adapter dev server on 3201, so it never touches a real session on 3200.
 export default defineConfig({
   testDir: "e2e",
+  testIgnore: "real-screens.spec.ts",
   use: { baseURL: "http://localhost:3201", viewport: { width: 1280, height: 800 } },
   webServer: {
     command: "NEXT_PUBLIC_ADAPTERS=mock npx next dev -p 3201",
