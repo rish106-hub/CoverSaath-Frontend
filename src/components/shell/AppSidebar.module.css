@@ -1,6 +1,8 @@
 /* Flat side rail (spec R2.2). Theme variables only; the single literal colour is the Emergency tint. */
 .aside { width: 236px; margin: 14px 0 14px 14px; padding: 24px 14px 18px; border-radius: 26px; background: var(--tide); color: var(--on-harbour); display: flex; flex-direction: column; gap: 20px; position: sticky; top: 14px; height: calc(100dvh - 28px); overflow-y: auto; overflow-x: hidden; min-width: 0; }
 .brand { padding: 0 8px; display: inline-flex; min-width: 0; color: var(--on-harbour); }
+/* The brand word carries its own ink colour; on the tide rail it must be light. */
+.brand span, .brand a { color: var(--on-harbour); }
 .add { display: flex; align-items: center; justify-content: center; height: 50px; border-radius: 14px; background: var(--lime); color: var(--tide); font-size: 18px; font-weight: 700; transition: transform var(--t-press) var(--ease-out); }
 .add:hover { background: var(--mint); }
 .add:active { transform: translateY(1px) scale(0.98); }

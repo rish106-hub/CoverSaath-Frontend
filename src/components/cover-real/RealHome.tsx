@@ -42,7 +42,7 @@ export function RealHome() {
             )}
           </h2>
           <div className={rows.next}>
-            <p className={rows.label}>{next.label}</p>
+            <p className={rows.label}>Your next step</p>
             <p className={rows.detail}>{next.detail}</p>
             <Link href={next.href} className={rows.cta} data-testid="home-next">{next.label} →</Link>
           </div>
