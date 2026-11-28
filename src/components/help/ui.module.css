@@ -2,8 +2,8 @@
 .card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
 .row { display: flex; align-items: center; gap: 12px; }
 .wrap { flex-wrap: wrap; }
-.small { font: 400 var(--fs-13)/1.4 var(--font-sans); color: var(--graphite); }
-.body { font: 400 var(--fs-15)/1.5 var(--font-sans); color: var(--ink); }
+.small { font: 500 var(--fs-13)/1.4 var(--font-sans); color: var(--graphite); }
+.body { font: 500 var(--fs-15)/1.5 var(--font-sans); color: var(--ink); }
 .strong { font-weight: 600; color: var(--ink); }
 .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--sheet); color: var(--ink); font: 500 var(--fs-15) var(--font-sans); }
 .pill:hover { border-color: var(--ink); }

@@ -79,3 +79,5 @@ html[data-theme="dark"]:has(.kv-app),
   font-weight: 500;
   min-height: 100vh;
 }
+/* Page titles are h1 and type.module.css sets them thin; this one scoped rule raises them without touching the shared file (spec R5a.2). */
+.kv-app h1 { font-weight: 500; }

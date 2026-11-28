@@ -68,18 +68,19 @@ describe("My policies list (R3e.2)", () => {
     stub([holding("h1")]);
     render(<RealPolicies />);
     const card = await screen.findByTestId("policy-card");
-    // The value cell can repeat the signal text ("Not found yet"), so look at the signal elements only.
-    const kindOf = (text: string) => [...card.querySelectorAll("[data-kind]")].find((e) => e.textContent === text)?.getAttribute("data-kind");
-    expect(kindOf("Read from your document")).toBe("ok");
-    expect(kindOf("Needs your decision")).toBe("warn");
-    expect(kindOf("Not found yet")).toBe("warn");
+    // R5a.5: the signal text is the row's label; review and missing show their state as the value on the right.
+    const kindOf = (label: string) => [...card.querySelectorAll("[data-kind]")].find((e) => e.textContent === label)?.getAttribute("data-kind");
+    expect(kindOf("Sum insured")).toBe("ok");
+    expect(kindOf("Policy period")).toBe("warn");
+    expect(kindOf("Premium")).toBe("warn");
+    expect(within(card).getByText("Needs your decision")).toBeInTheDocument();
+    expect(within(card).getByText("Not found yet")).toBeInTheDocument();
     cleanup();
     vi.restoreAllMocks();
     stub([holding("h1", "ready", { ...SUMMARY, sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "user_confirmed" } } as HoldingView["summary"])]);
     render(<RealPolicies />);
     const confirmed = await screen.findByTestId("policy-card");
-    const sum = within(confirmed).getByText("Sum insured").parentElement as HTMLElement;
-    expect(sum.querySelector('[data-kind="ok"]')).not.toBeNull();
+    expect(within(confirmed).getByText("Sum insured").closest("[data-kind]")).toHaveAttribute("data-kind", "ok");
   });
 
   it("the state signal follows error, reading, choose plan, pending, ready in that order", async () => {
@@ -187,17 +188,17 @@ describe("Policy detail (R3e.3)", () => {
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
   });
 
-  it("a group with nine facts pages at eight", async () => {
+  it("a group with nine facts pages at six", async () => {
     const keys = ["room_rent_limit", "copay_percent", "sum_insured", "pre_hospitalisation_days", "post_hospitalisation_days", "clause_ayush", "deductible", "ambulance_limit", "sub_limit"];
     stub([holding("h1")], { facts: keys.map((k) => fact(k, "limits")) });
     const { container } = render(<RealPolicyDetail id="h1" />);
     fireEvent.click(await screen.findByRole("tab", { name: "Limits" }));
     const limits = panel(container, "limits");
-    expect(within(limits).getAllByRole("listitem")).toHaveLength(8);
+    expect(within(limits).getAllByRole("listitem")).toHaveLength(6);
     expect(within(limits).getByRole("status")).toHaveTextContent("Page 1 of 2");
     expect(within(limits).getByRole("button", { name: "Back" })).toBeDisabled();
     fireEvent.click(within(limits).getByRole("button", { name: "Next" }));
-    expect(within(limits).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(limits).getAllByRole("listitem")).toHaveLength(3);
     expect(within(limits).getByRole("status")).toHaveTextContent("Page 2 of 2");
   });
 

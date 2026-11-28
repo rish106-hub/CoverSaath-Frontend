@@ -55,7 +55,7 @@ async function expectCalm(page: Page, label: string, sink?: Sink): Promise<void>
 }
 
 const shot = async (page: Page, screen: string): Promise<void> => {
-  await page.screenshot({ path: `${SHOTS}${screen}-${page.viewportSize()?.width}.png` });
+  await page.screenshot({ path: `${SHOTS}${screen}-${page.viewportSize()?.width}.png`, animations: "disabled" });
 };
 
 const SIZES = [{ width: 1440, height: 900 }, { width: 1280, height: 800 }] as const;
@@ -133,17 +133,17 @@ test("policy detail opens on At a glance and switches to a fact group", async ({
   await shot(page, "policy-detail-waiting");
 });
 
-test("a group of nine facts pages at eight", async ({ page }) => {
+test("a group of nine facts pages at six", async ({ page }) => {
   await asRealAccount(page);
   await page.goto("/policies/h1");
   await page.getByRole("tab", { name: "Limits" }).click();
   const panel = page.locator('[data-panel="limits"]');
-  await expect(panel.locator("ul li")).toHaveCount(8);
+  await expect(panel.locator("ul li")).toHaveCount(6);
   await expect(panel.getByText("Page 1 of 2")).toBeVisible();
   await expect(panel.getByText("Next renewal")).toBeVisible();
   await shot(page, "policy-detail-limits-page-1");
   await panel.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(panel.locator("ul li")).toHaveCount(1);
+  await expect(panel.locator("ul li")).toHaveCount(3);
   await expect(panel.getByText("Page 2 of 2")).toBeVisible();
 });
 

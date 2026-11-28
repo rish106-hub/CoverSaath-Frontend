@@ -4,21 +4,22 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PageTitle } from "@/components/type";
 import { EmptyState } from "@/components/shell/EmptyState";
-import { Tabs } from "@/components/ui";
+import { Card, Signal, Tabs } from "@/components/ui";
 import { GROUP_ORDER, groupOf } from "@/components/covers/format";
 import { labelOf } from "@/lib/fact-labels";
 import { MemoryDocument } from "./MemoryDocument";
 import { PassageSearch } from "./PassageSearch";
-import { isWaitingForWording, ErrorBox, FactItem, Headlines, Loading, Pending, StageBox, TermsStatus } from "./parts";
+import { isWaitingForWording, ErrorBox, FactItem, Loading, Pending, StageBox, TermsStatus } from "./parts";
+import type { HeadlineLine, PolicyView } from "@/adapters/real-policy";
 import { usePolicies } from "./use-policies";
 import p from "./policies.module.css";
 
-/** Eight facts in two columns fit the panel on a 1440x900 screen without scrolling; a longer group is paged. */
-const FACT_PAGE = 8;
+/** Six facts (three rows of two) fit the panel on a 1280x800 screen without scrolling; a longer group is paged. */
+const FACT_PAGE = 6;
 
 const tabIdOf = (label: string) => label.toLowerCase().replace(/ /g, "-");
 
-/** Facts of one group, two columns, eight to a page. Keyed by group so each group keeps its own page. */
+/** Facts of one group, two columns, six to a page. Keyed by group so each group keeps its own page. */
 function GroupPanel({ facts }: { facts: Parameters<typeof FactItem>[0]["f"][] }) {
   const [page, setPage] = useState(0);
   const pages = Math.ceil(facts.length / FACT_PAGE);
@@ -33,6 +34,28 @@ function GroupPanel({ facts }: { facts: Parameters<typeof FactItem>[0]["f"][] })
         </div>
       ) : null}
     </>
+  );
+}
+
+/** The three headline values as equal cards. Review and missing carry a yellow dot and a plain-words state; found values carry a green dot and their status. */
+function HeadlineCards({ policy }: { policy: PolicyView }) {
+  const signalOf = (h: HeadlineLine) =>
+    h.tone === "review" ? <Signal kind="warn">Needs your decision</Signal>
+    : h.tone === "missing" ? <Signal kind="warn">Not found yet</Signal>
+    : <Signal kind="ok">{h.statusText}</Signal>;
+  return (
+    <ul className={p.headlines} data-testid="headlines">
+      {policy.headlines.map((h) => (
+        <li key={h.key} className={p.headItem} data-testid={`headline-${h.key}`} data-tone={h.tone}>
+          <Card className={p.headCard}>
+            <span className={p.headLabel}>{h.label}</span>
+            <span className={p.headValue}>{h.value}</span>
+            {signalOf(h)}
+            {h.tone === "review" ? <Link className={p.outline} href={`/covers/review?holding=${encodeURIComponent(policy.id)}`}>Review and decide</Link> : null}
+          </Card>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -78,7 +101,7 @@ export function RealPolicyDetail({ id }: { id: string }) {
       <div role="tabpanel" data-panel="glance" className={p.panel} hidden={active !== "glance"}>
         {policy.error ? <ErrorBox code={policy.error} onRetry={reload} /> : <StageBox p={policy} onRetry={reload} />}
         <Pending p={policy} />
-        {policy.headlines.length > 0 ? <Headlines p={policy} /> : null}
+        {policy.headlines.length > 0 ? <HeadlineCards policy={policy} /> : null}
         {policy.stage !== "reading" && policy.stage !== "choose_plan" && !policy.error && policy.facts.length === 0 ? <p className={p.note}>Nothing has been read from this policy yet.</p> : null}
       </div>
       {groups.map((g) => (

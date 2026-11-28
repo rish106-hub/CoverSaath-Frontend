@@ -3,5 +3,5 @@
 .head, .foot { max-width: 1184px; width: 100%; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
 .foot { border-top: 1px solid var(--line); font-size: var(--fs-13); color: var(--graphite); margin-top: auto; }
 .foot nav { display: flex; gap: 20px; }
-.brand { font: 400 var(--fs-24) var(--font-serif); color: var(--ink); text-decoration: none; }
+.brand { font: 500 var(--fs-24) var(--font-serif); color: var(--ink); text-decoration: none; }
 .main { max-width: 720px; width: 100%; margin: 0 auto; padding: 32px 24px 64px; display: flex; flex-direction: column; gap: 16px; line-height: 1.6; }

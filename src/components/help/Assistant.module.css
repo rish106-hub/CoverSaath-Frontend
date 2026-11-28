@@ -1,8 +1,8 @@
 .layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start; }
 .col { display: flex; flex-direction: column; gap: 24px; }
-.say { font: 400 var(--fs-32)/1.2 var(--font-serif); letter-spacing: -0.02em; text-align: center; max-width: 620px; margin: 0 auto; }
+.say { font: 500 var(--fs-32)/1.2 var(--font-serif); letter-spacing: -0.02em; text-align: center; max-width: 620px; margin: 0 auto; }
 .facts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.fact { font: 400 var(--fs-13) var(--font-sans); padding: 6px 14px; border-radius: 999px; background: var(--sunken); color: var(--ink); }
+.fact { font: 500 var(--fs-13) var(--font-sans); padding: 6px 14px; border-radius: 999px; background: var(--sunken); color: var(--ink); }
 .factUrgent { background: var(--signal-bg); color: var(--signal-ink); }
 .factCover { background: var(--mist); color: var(--ink); }
 .factNumber { background: var(--marker); color: var(--ink-fixed); }
@@ -11,8 +11,8 @@
 .answerUrgent { background: var(--ink-fixed); color: var(--paper-fixed); border-color: var(--ink-fixed); }
 .answerUrgent .kick { color: var(--signal-on-ink); }
 .kick { font: 600 var(--fs-14) var(--font-sans); color: var(--graphite); }
-.answerText { font: 400 var(--fs-28)/1.2 var(--font-serif); letter-spacing: -0.02em; }
-.ref { align-self: flex-start; background: var(--marker); color: var(--ink-fixed); padding: 2px 8px; border-radius: 4px; font: 400 var(--fs-14) var(--font-sans); }
+.answerText { font: 500 var(--fs-28)/1.2 var(--font-serif); letter-spacing: -0.02em; }
+.ref { align-self: flex-start; background: var(--marker); color: var(--ink-fixed); padding: 2px 8px; border-radius: 4px; font: 500 var(--fs-14) var(--font-sans); }
 .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .tries { display: flex; gap: 8px; flex-wrap: wrap; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

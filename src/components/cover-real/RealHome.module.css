@@ -1,9 +1,10 @@
 /* Home body: two equal halves. Left holds the cover sentence and the one next step; right holds three equal cards (spec R3d.2). */
+.page { display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0; }
 .home { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex: 1; min-height: 0; }
 
-.home .left { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 32px; }
+.home .left { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 32px; min-height: 0; overflow: hidden; }
 .home .right { display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 24px; min-height: 0; }
-.home .right > * { padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; color: inherit; text-decoration: none; }
+.home .right > * { padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; color: inherit; text-decoration: none; min-height: 0; overflow: hidden; }
 
 .sentence { font-family: var(--font-serif); font-size: 44px; line-height: 1.1; font-weight: 500; margin: 0; }
 .value { font-family: var(--font-serif); font-size: 32px; font-weight: 500; line-height: 1.15; margin: 0; }
@@ -24,3 +25,14 @@
 .cta:active, .prompt:active { transform: translateY(1px) scale(0.98); }
 .cta:focus-visible, .prompt:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
 .asks { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* Short laptop screens: smaller type steps and tighter boxes so nothing scrolls; no font goes under 16px (spec R5a.4). */
+@media (max-height: 860px) {
+  .sentence { font-size: 36px; }
+  .value { font-size: 26px; }
+  .home { gap: 16px; }
+  .home .left { padding: 20px; gap: 16px; }
+  .home .right { gap: 16px; }
+  .home .right > * { padding: 12px 20px; gap: 8px; }
+  .asks { gap: 4px; }
+}

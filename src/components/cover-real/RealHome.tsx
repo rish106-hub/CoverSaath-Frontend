@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { Card, Signal } from "@/components/ui";
-import s from "@/components/covers/covers.module.css";
 import { CreationIssues, ErrorBox, Loading, nextStepOf } from "./parts";
 import { usePolicies } from "./use-policies";
 import rows from "./RealHome.module.css";
@@ -15,7 +14,7 @@ export function RealHome() {
   const { state, issues, reload } = usePolicies();
   if (state.kind === "loading") return <Loading what="your cover" />;
   if (state.kind === "error") return <ErrorBox code={state.code} onRetry={reload} />;
-  if (state.kind === "empty" && issues.length > 0) return <div className={s.stack}><CreationIssues issues={issues} onRetry={reload} /></div>;
+  if (state.kind === "empty" && issues.length > 0) return <div className={rows.page}><CreationIssues issues={issues} onRetry={reload} /></div>;
   if (state.kind === "empty") return <EmptyState title="Add your first policy" body="Knowvia reads it and shows what it found here." cta="Add a policy" href="/covers/add" />;
 
   const policies = state.policies;
@@ -28,7 +27,7 @@ export function RealHome() {
   const extra = policies.length - 2;
 
   return (
-    <div className={s.stack}>
+    <div className={rows.page}>
       <CreationIssues issues={issues} onRetry={reload} />
       <div className={rows.home}>
         <Card className={rows.left}>

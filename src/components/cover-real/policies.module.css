@@ -1,19 +1,19 @@
 /* My policies grid and policy detail tabs (spec R3e). Theme tokens only; one gap value (24px) on the list. */
-.page { display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0; }
-.bar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.count { margin: 0; font-size: 18px; font-weight: 600; }
+.page { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; }
+.titleRow { display: flex; align-items: center; gap: 24px; }
+.count { margin: 0 0 0 auto; font-size: 18px; font-weight: 600; }
 
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 24px; flex: 1; min-height: 0; }
-.card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-width: 0; overflow: hidden; color: inherit; text-decoration: none; padding: 24px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 16px; flex: 1; min-height: 0; }
+.card { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; min-width: 0; overflow: hidden; color: inherit; text-decoration: none; padding: 20px; }
 .top { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .badge { flex: none; width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--tide); color: var(--on-harbour); font-size: 24px; font-weight: 700; }
 .names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 .insurer { margin: 0; font-size: 16px; font-weight: 600; color: var(--muted); }
-.cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.cellLabel { font-size: 16px; font-weight: 600; color: var(--graphite); }
-.cellValue { font-family: var(--font-serif); font-size: 28px; font-weight: 500; line-height: 1.15; overflow-wrap: anywhere; }
+.rows { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
+.rowLabel { font-size: 18px; font-weight: 600; }
+.rowValue { font-family: var(--font-serif); font-size: 22px; font-weight: 500; line-height: 1.15; text-align: right; min-width: 0; overflow-wrap: anywhere; }
 .state { font-size: 18px; font-weight: 600; }
 
 .pager { display: flex; align-items: center; justify-content: center; gap: 24px; }
@@ -32,15 +32,24 @@
 .cta:active, .outline:active { transform: translateY(1px) scale(0.98); }
 .cta:focus-visible, .outline:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
 
-.detail { display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0; }
+.detail { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .headText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .headLinks { display: flex; align-items: center; gap: 12px; flex: none; }
 .sub { margin: 0; font-size: 18px; font-weight: 500; }
 
-.panel { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 16px; }
+.panel { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
 .panel[hidden] { display: none; }
 .terms { overflow-y: auto; }
-.facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 8px; flex: 1; min-height: 0; }
+/* Each fact keeps its lines at full height; a clamped value (overflow: hidden) would otherwise shrink to nothing inside the fixed-height cell. */
+.facts > li { min-height: 0; overflow: hidden; padding: 8px 14px; gap: 2px; justify-content: center; }
+.facts > li > * { flex: none; }
 .missing { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 24px; font-size: 18px; font-weight: 500; }
 .note { margin: 0; font-size: 18px; font-weight: 500; }
+
+.headlines { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0; }
+.headItem { display: flex; min-width: 0; min-height: 0; }
+.headCard { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; min-width: 0; min-height: 0; overflow: hidden; padding: 24px; }
+.headLabel { font-size: 18px; font-weight: 600; }
+.headValue { font-family: var(--font-serif); font-size: 32px; font-weight: 500; line-height: 1.15; overflow-wrap: anywhere; }

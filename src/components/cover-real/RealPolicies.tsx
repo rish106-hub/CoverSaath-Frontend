@@ -13,10 +13,16 @@ import { usePolicies } from "./use-policies";
 /** Four cards fill a 2 x 2 grid on a 1440x900 screen without scrolling; more policies go to the next page. */
 const PAGE_SIZE = 4;
 
-function HeadlineSignal({ h }: { h: HeadlineLine }) {
-  if (h.tone === "review") return <Signal kind="warn">Needs your decision</Signal>;
-  if (h.tone === "missing") return <Signal kind="warn">Not found yet</Signal>;
-  return <Signal kind="ok">{h.statusText}</Signal>;
+/** One stacked row per headline: dot colour says found or needs you, label left, value right. Review and missing show their state as the value, so no second status text is needed. */
+function HeadlineRow({ h }: { h: HeadlineLine }) {
+  const found = h.tone === "read" || h.tone === "confirmed";
+  const value = h.tone === "review" ? "Needs your decision" : h.tone === "missing" ? "Not found yet" : h.value;
+  return (
+    <div className={p.row}>
+      <Signal kind={found ? "ok" : "warn"}><span className={p.rowLabel}>{h.label}</span></Signal>
+      <span className={p.rowValue}>{value}</span>
+    </div>
+  );
 }
 
 /** One state signal per card, first match wins: a load error outranks reading, reading outranks plan choice, then open decisions, then ready. */
@@ -41,14 +47,8 @@ function PolicyGridCard({ policy }: { policy: PolicyView }) {
         </div>
       </div>
       {policy.headlines.length > 0 ? (
-        <div className={p.cells}>
-          {policy.headlines.slice(0, 3).map((h) => (
-            <div key={h.key} className={p.cell}>
-              <span className={p.cellLabel}>{h.label}</span>
-              <span className={p.cellValue}>{h.value}</span>
-              <HeadlineSignal h={h} />
-            </div>
-          ))}
+        <div className={p.rows}>
+          {policy.headlines.slice(0, 3).map((h) => <HeadlineRow key={h.key} h={h} />)}
         </div>
       ) : null}
       <div className={p.state}><StateSignal policy={policy} /></div>
@@ -62,8 +62,14 @@ export function RealPolicies() {
   const [page, setPage] = useState(0);
   return (
     <div className={p.page}>
-      <div>
+      <div className={p.titleRow}>
         <PageTitle>My policies</PageTitle>
+        {state.kind === "ready" ? (
+          <>
+            <p className={p.count} data-testid="policy-count">{state.policies.length === 1 ? "1 policy" : `${state.policies.length} policies`}</p>
+            <Link className={p.cta} href="/covers/add">Add a policy</Link>
+          </>
+        ) : null}
       </div>
       {state.kind === "loading" ? <Loading what="your policies" /> : null}
       {state.kind === "error" ? <ErrorBox code={state.code} onRetry={reload} /> : null}
@@ -77,10 +83,6 @@ export function RealPolicies() {
         return (
           <>
             <CreationIssues issues={issues} onRetry={reload} />
-            <div className={p.bar}>
-              <p className={p.count} data-testid="policy-count">{all.length === 1 ? "1 policy" : `${all.length} policies`}</p>
-              <Link className={p.cta} href="/covers/add">Add a policy</Link>
-            </div>
             <div className={p.grid}>
               {all.slice(at * PAGE_SIZE, at * PAGE_SIZE + PAGE_SIZE).map((x) => <PolicyGridCard key={x.id} policy={x} />)}
             </div>

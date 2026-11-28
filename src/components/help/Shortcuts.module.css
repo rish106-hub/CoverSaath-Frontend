@@ -5,7 +5,7 @@
 .modeOn { border-color: var(--harbour); background: var(--mist); box-shadow: 0 0 0 1px var(--harbour); }
 .path { display: flex; flex-direction: column; gap: 6px; }
 .step { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: var(--fs-14); }
-.n { width: 20px; font: 400 var(--fs-13) var(--font-mono); color: var(--graphite); }
+.n { width: 20px; font: 500 var(--fs-13) var(--font-mono); color: var(--graphite); }
 .how { font: 500 var(--fs-13) var(--font-mono); color: var(--harbour); text-align: right; }
 .palette { border-radius: var(--r-lg); background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-md); overflow: hidden; }
 .search { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: var(--fs-16); }
