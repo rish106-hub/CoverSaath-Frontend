@@ -104,3 +104,82 @@ All are client components unless they have no state. No new dependencies. Every 
 ### R1.5 Out of scope for R1
 
 Deleting old components, touching any screen, the shell, the landing page, `tokens.css`, dark theme code, tests other than the new ones, dependencies.
+
+## R2 Shell: side rail, sub-tabs, ask bar, laptop gate
+
+Applies to every page under `src/app/(app)/`, for demo and real audiences alike. `GroupId`, `GROUPS` and `PAGES` in `src/lib/ia.ts` are closed registries used by voice navigation, return paths and page context: R2 adds to `ia.ts`, it removes and renames nothing there.
+
+### R2.1 `src/lib/ia.ts` additions
+
+```ts
+export type RailId = "home" | "policies" | "ask" | "family" | "money";
+export type RailPlace = { id: RailId; label: string; href: string; tabs: { route: string; label: string }[] };
+export const RAIL: readonly RailPlace[] = [
+  { id: "home", label: "Home", href: "/home", tabs: [] },
+  { id: "policies", label: "My policies", href: "/policies", tabs: [
+    { route: "/policies", label: "All policies" }, { route: "/compare", label: "Compare" },
+    { route: "/stress-test", label: "Stress test" }, { route: "/hospitals", label: "Hospitals" } ] },
+  { id: "ask", label: "Ask", href: "/chat", tabs: [] },
+  { id: "family", label: "Family", href: "/family", tabs: [
+    { route: "/family", label: "People" }, { route: "/family/memory", label: "Cover memory" },
+    { route: "/covers/declarations", label: "Health details" } ] },
+  { id: "money", label: "Money", href: "/money", tabs: [
+    { route: "/money", label: "Premiums" }, { route: "/tools", label: "Calculators" } ] },
+];
+export function railFor(pathname: string): RailPlace | undefined
+```
+
+`railFor` strips a trailing slash, then returns the place whose `href` equals the path or one of whose `tabs[].route` equals the path; any path starting with `/policies/` or `/covers/` (other than `/covers/declarations`) returns the `policies` place; everything else (`/emergency`, `/settings`, `/profile`, unknown) returns `undefined`.
+
+### R2.2 `AppSidebar`
+
+Markup order inside `<aside id="app-sidebar" aria-label="Knowvia">`: brand mark; a link "Add a policy" to `/covers/add` (`data-testid="rail-add"`); `<nav aria-label="Knowvia sections">` with one link per `RAIL` place, text = `label`, `aria-current="page"` on the place returned by `railFor(pathname)`; then a bottom block with a link "Emergency" (target `navHref` of the `/emergency` page for the audience, `aria-current` on `/emergency`), a link "Settings" to `/settings` (`aria-current` on `/settings`) and `<UserChip />`.
+
+Removed from the sidebar: group headings and collapse buttons, `GroupIcon`, the "Today" and "Reading list" blocks, the mobile top bar, menu button, scrim and drawer logic. `NAV_CLOSED_KEY` stays exported (unused).
+
+Style (`AppSidebar.module.css` rewritten): background `--tide`, text white, width 236px, radius 26px, margin 14px 0 14px 14px, rail links 46px high at 19px weight 600, current link colour `--lime` with a 3px `--lime` bar on its left, "Add a policy" is a `--lime` filled button with `--tide` text, Emergency text colour `#ffb4a6` is the single literal colour allowed in this file.
+
+### R2.3 `PageHeader`
+
+Renders `<nav aria-label={place.label} data-testid="page-subtabs">` with one link per tab of `railFor(pathname)` when that place has tabs; the current tab (`route === pathname`, or `/policies` for any `/policies/...` path) has `aria-current="page"`. Renders nothing when there is no place or the place has no tabs. The breadcrumb (`data-testid="page-breadcrumb"`) is removed. Tab style: pills 42px high, 17px weight 600, current pill `--tide` background with white text.
+
+### R2.4 `AppShell`
+
+- Top bar: `<PageHeader>` on the left (also on `/home`, where it renders nothing), on the right `<HeaderMic />` and a button "Search or jump to" with a `<kbd>⌘K</kbd>` that opens the command palette through the same `useAgent()` action the existing shortcut uses.
+- `ThemeButton` and `TrialNotice` are no longer rendered by the shell.
+- Below `<main>`: `<AskBar />`.
+- A sibling `<ViewportGate />` and CSS so that under 1024px wide the shell is `display: none` and the gate is shown; at 1024px and wider the gate is `display: none`. Media queries only, no JavaScript.
+- Layout: the shell is a two-column grid (`236px + 14px` rail column, then the main column), `height: 100dvh`, no page-level scroll; `<main>` is the only scrolling element (`overflow-y: auto`) and has padding `8px 40px 20px 34px`.
+- The `dock` prop and `.dock` slot are removed.
+
+### R2.5 New `src/components/agent/AskBar.tsx` (+ `AskBar.module.css`)
+
+A `<form role="search" aria-label="Ask about your cover">` with a text input (placeholder "Ask about your cover", `aria-label` same) and a primary `Button` "Ask" with `arrow`. Submitting an empty value focuses the input and does nothing else. Submitting text navigates with `router.push("/chat?q=" + encodeURIComponent(text))` and clears the input. Renders nothing when the pathname starts with `/chat` or equals `/emergency`. `AgentLayer` no longer renders `AskDock` (the `VoiceCoach` line stays); `AskDock.tsx` itself is not deleted.
+
+### R2.6 New `src/components/shell/ViewportGate.tsx`
+
+`<div data-testid="viewport-gate">` with the brand mark, an `<h1>` "Open Knowvia on a laptop." and a paragraph "Sign in there with the same account. Your cover is waiting." Exported from `src/components/shell/index.ts`.
+
+### R2.7 `CommandPalette`
+
+Page entries skip `demoOnly` pages unless `useNavAudience()` is `"demo"`. The "Switch light and dark" action is removed.
+
+### R2.8 Copy in shell states
+
+| File | Title | Body |
+|---|---|---|
+| `shell/BackendDown.tsx` | Knowvia is not answering. | This page will load when the service is back. |
+| `shell/ErrorPanel.tsx` (default title) | This page did not load. | The rest of Knowvia is working. |
+| `shell/EmptyState.tsx` unreachable state | Knowvia is not answering. | This page will load when the service is back. |
+| `shell/EmptyState.tsx` account-has-a-policy state | Your policy is on Knowvia. | (no second line) |
+| `src/app/global-error.tsx` | This page did not load. | Try again in a moment. |
+
+Button labels stay as they are. No string in these files contains "safe" or "coming soon".
+
+### R2.9 Tests
+
+Every test file that imports a changed module is run and brought in line with this spec. A test may be deleted only when its whole subject was removed from the shell by R2 (trial notice in the shell, theme button in the shell, breadcrumb, group collapse, mobile drawer); otherwise its assertions are updated. New test file `tests/components/kv-shell.test.tsx` covers R2.1 to R2.8.
+
+### R2.10 Out of scope for R2
+
+Screens inside `<main>`, the add-a-policy wizard layout, sign-in, welcome, the landing page, `ThemeProvider` itself, `SettingsView`, deleting `AskDock`, `TrialNotice` or `DemoBadge` files, Playwright specs, dependencies.
