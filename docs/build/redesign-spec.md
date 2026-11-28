@@ -826,3 +826,70 @@ A test that fails because the product breaks a rule (for example Home scrolls at
 ### R4a.4 Out of scope
 
 Any change under `src/`. Other screens (compare, stress test, hospitals, Ask, family, money, settings). Visual snapshot comparison. CI wiring. New dependencies.
+
+## R5a Calm fixes found in the browser
+
+Scope: fix what the browser harness (R4a) measured on Home, My policies and policy detail: thin text, small text, a scrolling Home, clipped policy cards and clipped fact rows. The judge is the harness: tests 2, 5 and 8 of `e2e/real-screens.spec.ts` must pass. This section replaces R3e where they differ (fact page size, card headline layout, At a glance).
+
+Persona served: a 25 to 35 year old tech worker on a laptop. Every number is readable at a glance, nothing is cut off, nothing scrolls, no thin or small text.
+
+### R5a.1 Findings being fixed (measured at 1440x900 and 1280x800)
+
+1. Home: `main` scrolls (content 889px in 748px and 648px).
+2. Text at weight 400: page titles, headline values, fact values, citation lines.
+3. Insurer terms tab: text at 12px, 13px and 14px (inline styles in `MemoryDocument.tsx`).
+4. My policies: card content is cut off (a long policy period wraps and hides the state row); "Not found yet" shows twice in a cell.
+5. Policy detail: the fourth row of facts is cut off; At a glance shows three small values and an empty page.
+
+### R5a.2 Files
+
+| File | Change |
+|---|---|
+| `src/styles/app-theme.css` | Add, inside the app scope only: `.kv-app h1, .kv-app h2, .kv-app h3 { font-weight: 500; }` and `.kv-app p { font-weight: 500; }`. Nothing else. |
+| App-only CSS modules (R5a.3 list) | Weight literals 300, 400 and `normal` become 500. |
+| `src/components/cover-real/MemoryDocument.tsx` | Inline `fontSize` values under 16 become 16; inline `fontWeight` under 500 becomes 500. Nothing else. |
+| `src/components/cover-real/RealHome.tsx`, `RealHome.module.css` | Home fits (R5a.4). |
+| `src/components/cover-real/RealPolicies.tsx`, `RealPolicyDetail.tsx`, `policies.module.css` | Card and detail fixes (R5a.5, R5a.6). |
+| `e2e/real-screens.spec.ts`, `e2e/real-account.ts` | Title 7 becomes `a group of nine facts pages at six`; its assertions follow; every `page.screenshot` call passes `animations: "disabled"`. No rule in `expectCalm` changes. |
+| `tests/components/kv-policies.test.tsx`, `tests/components/kv-home.test.tsx`, other unit tests that fail only because of a change pinned here | Updated to the pinned markup. Title `a group with nine facts pages at eight` becomes `a group with nine facts pages at six`. |
+
+Not edited: `src/styles/tokens.css`, `src/styles/globals.css`, `src/components/type/type.module.css`, `src/components/public/landing.module.css`, `src/components/public/tones.module.css`, `src/components/public/Landing.tsx`, `src/components/public/Tour.tsx`, `src/components/cover-real/parts.tsx`, adapters, `src/app`, `package.json`.
+
+### R5a.3 Weights
+
+In every `*.module.css` under these folders: `src/components/{access,agent,chat,cover,cover-real,covers,family,help,money,onboarding,palette,profile,shell,tools,ui,upload,wallet}` and in `src/components/public/signin.module.css` and `src/components/public/legal.module.css`:
+
+- `font: 300 ` and `font: 400 ` become `font: 500 `;
+- `font-weight: 300`, `font-weight: 400` and `font-weight: normal` become `font-weight: 500`.
+
+Nothing else in those files changes. The shared `type.module.css` title is covered by the new `.kv-app h1, .kv-app h2, .kv-app h3 { font-weight: 500; }` rule in `app-theme.css`, plus `.kv-app p { font-weight: 500; }` for its description line.
+
+### R5a.4 Home
+
+- `RealHome` no longer uses the `.stack` wrapper from `covers.module.css`. Its root is `<div className={rows.page}>`: `display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0;`.
+- `.home` keeps two equal columns and `flex: 1; min-height: 0`. The left card and the three right cards shrink to the space there is: `.left` and `.right > *` get `min-height: 0; overflow: hidden`.
+- Under `@media (max-height: 860px)`: `.sentence` is 36px, `.value` is 26px, card paddings are 20px and the gaps 16px. No font goes under 16px.
+- Content, copy, test ids and order do not change.
+
+### R5a.5 My policies
+
+- The count and the `Add a policy` link move onto the title row: `PageTitle` on the left, then `<p data-testid="policy-count">`, and the link on the right, in one flex row. There is no separate header row.
+- The grid fills the rest of the page: `flex: 1; min-height: 0; grid-auto-rows: minmax(0, 1fr)`; cards have `overflow: hidden`.
+- Headline cells inside a card become stacked rows (one per headline), each row: a `Signal` dot (same kind as R3e.2: `ok` for `read` and `confirmed`, `warn` for `review` and `missing`), the label on the left (18px, weight 600) and the value on the right (Newsreader, 22px, weight 500, `text-align: right`). The Signal's text is the label itself; no second status text is shown. For `missing` the value is `Not found yet`; for `review` the value is `Needs your decision`.
+- The state row (R3e.2 item 3) stays as the last row of the card and is always visible.
+- `PAGE_SIZE` stays 4. The pager stays.
+
+### R5a.6 Policy detail
+
+- `FACT_PAGE` becomes 6 (three rows of two).
+- Group panels: `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 16px`, filling the panel height; the pager sits under the grid.
+- At a glance: the headlines are no longer rendered through `Headlines` from `parts.tsx`. They render as three equal `Card`s in one row inside `<ul data-testid="headlines">`, each `<li data-testid={`headline-${h.key}`} data-tone={h.tone}>` holding the label (18px, weight 600), the value (Newsreader, 32px, weight 500) and one `Signal` (`ok` with `h.statusText` for `read` and `confirmed`; `warn` with `Needs your decision` for `review`; `warn` with `Not found yet` for `missing`). A `review` headline also has the link `Review and decide` to `/covers/review?holding={id}`.
+- `StageBox`/`ErrorBox` and `Pending` stay above the headline row, unchanged.
+
+### R5a.7 Done means
+
+`KV_E2E_PORT=3312 npx playwright test -c playwright.real.config.ts e2e/real-screens.spec.ts` passes all 11 tests, and the whole unit suite passes. If a calm test still fails after the pinned changes, the builder may reduce paddings and gaps in the three screen CSS modules (never a font under 16px, never weight under 500, never removing content) and reports what it changed.
+
+### R5a.8 Out of scope
+
+New content, logos or illustrations. Other screens' layout. `parts.tsx`. Shared type or global styles. The landing page. New dependencies.
