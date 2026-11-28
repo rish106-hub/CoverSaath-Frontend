@@ -893,3 +893,43 @@ Nothing else in those files changes. The shared `type.module.css` page title (al
 ### R5a.8 Out of scope
 
 New content, logos or illustrations. Other screens' layout. `parts.tsx`. Shared type or global styles. The landing page. New dependencies.
+## R3s No "Coming soon" and no eyebrow captions for real accounts
+
+Scope: remove every "Coming soon" tile block and every eyebrow caption (`Kicker`) from the pages a real account sees. Unbuilt features are hidden, not announced. No layout work.
+
+Persona served: a 25 to 35 year old tech worker using the app for real. They only see things that work. They never see a tile for a feature that does not exist, or a small caption above a page title.
+
+### R3s.1 Files and changes
+
+| File | Change |
+|---|---|
+| `src/app/(app)/family/page.tsx` | `DemoGate` `empty` becomes `<RealFamily />`. `Kicker` line and import removed. `SoonBento` import removed. |
+| `src/app/(app)/money/page.tsx` | `empty` becomes `<RealMoney />`. `Kicker` line and import removed. `SoonBento` import removed. |
+| `src/app/(app)/tools/page.tsx` | `Kicker` line and import removed. |
+| `src/app/(app)/stress-test/page.tsx` | `empty` becomes `<RealStress />`. `SoonBento` import removed. |
+| `src/app/(app)/compare/page.tsx` | `empty` becomes `<RealCompare />`. `SoonBento` import removed. |
+| `src/app/(app)/emergency/page.tsx` | `empty` becomes `null`. `SoonBento` import removed. `<EmergencyLive />` stays. |
+| `src/app/(app)/desk/page.tsx`, `src/app/(app)/cards/page.tsx` | `empty` becomes `<EmptyState title="This page is not available." cta="Go to Home" href="/home" />` (from `@/components/shell/EmptyState`). `SoonBento` import removed. |
+| `src/components/help/HelpHead.tsx`, `src/components/shell/PagePlaceholder.tsx` | `Kicker` line and import removed. |
+| `src/components/help/SettingsView.tsx` | The whole "Voice language" row (the `div` holding the three `SoonButton`s) is removed, with the `SoonButton` import if it is then unused. Nothing else in the file changes. |
+| `tests/components/kv-no-soon.test.tsx` | New (R3s.2). |
+| `tests/components/t5-soon-pages.test.tsx`, `tests/components/t6-no-sample-data.test.tsx`, `tests/components/soon-controls.test.tsx`, any other test file that fails only because it expects a removed Soon block, kicker or the Voice language row | Assertions on removed elements are deleted or inverted (now expect absence). Each change is listed in the report with one reason. |
+
+Not edited: `src/components/soon/*`, `src/components/ui/*`, `src/components/type/*`, `src/lib/ia.ts` (the `kicker` fields stay in the registry), `src/components/tools/ToolsPage.tsx`, demo-only views, `src/app/dev`, `src/app/status`, `src/app/not-found.tsx`, `Welcome.tsx`, `Landing.tsx`, `EmergencyView.tsx`.
+
+`DemoGate`'s `empty` prop type must accept the new values without changing `EmptyState.tsx`; if `null` is not accepted for the emergency page, use an empty fragment `<></>`.
+
+### R3s.2 New tests: `tests/components/kv-no-soon.test.tsx`
+
+A source-level test (reads the files with `node:fs`) plus render tests. Titles:
+
+1. `no page under src/app/(app) imports SoonBento`
+2. `no page under src/app/(app) renders a Kicker`
+3. `HelpHead and PagePlaceholder render the title without a kicker`
+4. `desk and cards show This page is not available with a link to Home for a real account`
+5. `settings has no Voice language row and no Soon button`
+6. `the ia registry still carries its kicker fields`
+
+### R3s.3 Out of scope
+
+Deleting `SoonBento`, `SoonTile`, `SoonButton` or `Kicker` themselves. `ToolsPage` Soon buttons (handled with the calculators screen). Any layout or copy change beyond the pinned text. Demo-only views.
