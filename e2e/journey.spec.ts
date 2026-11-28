@@ -23,9 +23,8 @@ test("profile, one schedule PDF, go-ahead, clause question with citation", async
   // One upload: the schedule makes the cover. There is no second slot.
   await page.goto("/upload");
   await page.waitForURL(/\/covers\/add/);
-  await expect(page.getByText("Before we start")).toBeVisible();
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Can Knowvia read your policy?" })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, read my policy" }).click();
   await page.getByTestId("policy-type").selectOption("personal_health");
 
   const add = async (slot: string, name: string) => {
@@ -33,7 +32,7 @@ test("profile, one schedule PDF, go-ahead, clause question with citation", async
     await chooser.setFiles({ name, mimeType: "application/pdf", buffer: PDF(name) });
   };
   await add("policy_schedule", "schedule.pdf");
-  await expect(page.getByText("schedule.pdf: added.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Which plan is this?" })).toBeVisible();
   await expect(page.locator('[data-slot="policy_wording"]')).toHaveCount(0);
 
   // Chat: go-ahead, then a clause question.

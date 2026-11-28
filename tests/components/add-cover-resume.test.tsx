@@ -24,6 +24,7 @@ vi.mock("@/adapters", () => ({
       candidates: async () => ({ candidates: [], profileVersion: 0 }),
     },
     reference: { products: async () => ({ products: []  }) },
+    members: { list: async () => [], add: async (input: { name: string; relation: string }) => ({ id: "member-1", name: input.name, relation: input.relation, ageYears: null, isOwner: false, isYou: false }) },
   },
 }));
 

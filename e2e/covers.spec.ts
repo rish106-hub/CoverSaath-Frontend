@@ -46,7 +46,8 @@ test("declarations and money saves a premium", async ({ page }) => {
   await page.getByRole("radio").first().check();
   await page.getByRole("button", { name: /Yes, it is/ }).click();
   // A link, not a reload: the mock keeps its holdings in memory for the page's lifetime.
-  await page.getByRole("link", { name: "Add declarations and premium" }).click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await page.getByRole("link", { name: "Add health details" }).click();
   await expect(page.getByRole("heading", { name: "Declarations and money" })).toBeVisible();
   await page.getByLabel("Amount in rupees").fill("18,500");
   await page.getByRole("button", { name: "Save premium" }).click();

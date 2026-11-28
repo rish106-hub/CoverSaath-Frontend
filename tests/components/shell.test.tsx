@@ -17,7 +17,8 @@ const shell = (pathname: string) =>
   render(<ThemeProvider><AppShell pathname={pathname}><p>body</p></AppShell></ThemeProvider>);
 
 describe("app shell sidebar", () => {
-  it.each(PAGES.map((p) => [p.href, p] as const))("%s keeps one sidebar and marks the current page", async (href, p) => {
+  // /covers/add is the wizard: the shell renders it bare (no rail), covered in kv-wizard.test.tsx.
+  it.each(PAGES.filter((p) => p.href !== "/covers/add").map((p) => [p.href, p] as const))("%s keeps one sidebar and marks the current page", async (href, p) => {
     const { container } = shell(href);
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
     expect(container.querySelectorAll("aside")).toHaveLength(1);

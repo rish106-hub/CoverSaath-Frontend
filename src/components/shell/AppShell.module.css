@@ -13,7 +13,10 @@
 .skip:focus { top: 8px; }
 /* The gate wrapper is hidden from 1024px up; the viewport gate itself only draws the message. */
 .gateWrap { display: none; }
+/* Bare mode (the add-a-policy wizard): the page draws its own frame and never scrolls. */
+.bare { height: 100dvh; overflow: hidden; }
 @media (max-width: 1023px) {
   .shell { display: none; }
+  .bare { display:none; }
   .gateWrap { display: block; }
 }

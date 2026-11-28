@@ -41,6 +41,18 @@ export function AppShell({ pathname: given, children }: { pathname?: string; chi
     // Keep the page the person was on, so signing in again brings them back to it (the helper drops any unsafe path).
     if (signedOut) router.replace(signInUrl({ path: pathname }));
   }, [signedOut, router, pathname]);
+  // The add-a-policy wizard owns the whole screen: no rail, top bar or ask bar. The sign-in redirect above and the laptop gate still apply.
+  const bare = pathname === "/covers/add";
+  if (bare) {
+    return (
+      <AgentProvider>
+        <div className={styles.bare} data-shell="bare">
+          <main id="main-content" tabIndex={-1}>{children}</main>
+        </div>
+        <div className={styles.gateWrap}><ViewportGate /></div>
+      </AgentProvider>
+    );
+  }
   return (
     <AgentProvider>
       <div className={styles.shell} data-group={groupOf(pathname)}>
