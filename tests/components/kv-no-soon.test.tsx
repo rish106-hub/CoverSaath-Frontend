@@ -2,7 +2,7 @@
 // R3s: a real account never sees a "Coming soon" tile, a Soon button or an eyebrow caption above a page title.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { adapters } from "@/adapters";
 import { backendCovers } from "@/adapters/covers";
@@ -22,9 +22,9 @@ const ME = { householdId: "h", householdName: "H", owner: { id: "o", displayName
 
 /** Every source file under the app route group, so a new page cannot bring a Soon block back unnoticed. */
 function pageSources(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    return statSync(path).isDirectory() ? pageSources(path) : /\.(ts|tsx)$/.test(name) ? [readFileSync(path, "utf8")] : [];
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    return entry.isDirectory() ? pageSources(path) : /\.(ts|tsx)$/.test(entry.name) ? [readFileSync(path, "utf8")] : [];
   });
 }
 

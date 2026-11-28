@@ -45,7 +45,7 @@ import { CommandPalette } from "@/components/palette/CommandPalette";
 beforeAll(() => {
   // cmdk (the palette) needs these browser APIs, which jsdom does not provide.
   Element.prototype.scrollIntoView = () => {};
-  globalThis.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+  globalThis.ResizeObserver = class { constructor(_onResize: ResizeObserverCallback) {} observe() {} unobserve() {} disconnect() {} };
 });
 beforeEach(() => {
   nav.path = "/home";
@@ -61,7 +61,6 @@ const sidebarAt = async (path: string) => {
   await flush();
   return screen.getByRole("complementary", { name: "Knowvia" });
 };
-const railLink = (name: string) => within(screen.getByRole("navigation", { name: "Knowvia sections" })).getByRole("link", { name });
 const currentLabels = (root: HTMLElement) => Array.from(root.querySelectorAll('[aria-current="page"]')).map((e) => e.textContent);
 
 describe("AppSidebar", () => {
