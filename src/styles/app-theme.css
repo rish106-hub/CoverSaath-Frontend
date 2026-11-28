@@ -1,0 +1,81 @@
+/*
+ * Flat signed-in app theme, scoped to the .kv-app wrapper.
+ * Why it exists: the public landing page keeps the shared global theme untouched,
+ * while the signed-in app gets the flat redesign (spec R1.1). The html:has() selectors let
+ * portals under <body> inherit the theme; the plain .kv-app selectors cover browsers without :has.
+ * The dark selectors repeat the same values so a stored dark preference cannot change the app look.
+ */
+html:has(.kv-app),
+.kv-app,
+html[data-theme="dark"]:has(.kv-app),
+[data-theme="dark"] .kv-app {
+  color-scheme: light;
+  --paper: #f3f7f6;
+  --sheet: #ffffff;
+  --sunken: #e6efec;
+  --ink: #1a3034;
+  --graphite: #33494d;
+  --muted: #55696d;
+  --line: #cfdcda;
+  --field-border: #7b918e;
+  --harbour: #176f69;
+  --on-harbour: #ffffff;
+  --sea-glass: #a8dccb;
+  --mist: #e3f0ee;
+  --marker: #f6d38a;
+  --ochre: #e0a02b;
+  --signal: #e2702a;
+  --signal-ink: #c8372d;
+  --signal-bg: #fbe4e1;
+  --g-cover: #163f42;
+  --g-family: #163f42;
+  --g-money: #163f42;
+  --g-help: #163f42;
+  --g-cover-bg: #e3f0ee;
+  --g-family-bg: #e3f0ee;
+  --g-money-bg: #e3f0ee;
+  --g-help-bg: #e3f0ee;
+  --on-g: #ffffff;
+  --panel-inverse-bg: #163f42;
+  --panel-inverse-edge: #163f42;
+  --ink-fixed: #1a3034;
+  --paper-fixed: #f3f7f6;
+  --harbour-fixed: #176f69;
+  --tide: #163f42;
+  --forest: #0f4a3a;
+  --lime: #c8e6a0;
+  --mint: #a8dccb;
+  --fog: #cfdcda;
+  --gold-tint: #fbf1dd;
+  --ok: #2f9e5b;
+  --warn: #e0a02b;
+  --orange: #e2702a;
+  --bad: #c8372d;
+  --fs-11: 16px;
+  --fs-12: 16px;
+  --fs-13: 16px;
+  --fs-14: 16px;
+  --fs-15: 16px;
+  --fs-16: 18px;
+  --fs-17: 18px;
+  --shadow-sm: 0 0 0 transparent;
+  --shadow-md: 0 0 0 transparent;
+  --shadow-lg: 0 0 0 transparent;
+  --t-in: 150ms;
+  --t-out: 120ms;
+  --t-press: 90ms;
+  --t-panel: 200ms;
+  --t-slide: 240ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-sans: var(--font-source-sans), system-ui, sans-serif;
+}
+
+.kv-app {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  min-height: 100vh;
+}
