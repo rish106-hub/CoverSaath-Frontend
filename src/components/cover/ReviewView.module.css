@@ -3,7 +3,7 @@
 .panel { min-width: 0; border-radius: 22px; background: var(--harbour-fixed); color: var(--paper-fixed); padding: 22px; display: flex; gap: 20px; align-items: center; }
 .ring { flex: none; width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .ringIn { width: 92px; height: 92px; border-radius: 50%; background: var(--harbour-fixed); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.ringIn span { font: 400 var(--fs-34)/1 var(--font-serif); }
+.ringIn span { font: 500 var(--fs-34)/1 var(--font-serif); }
 .ringIn small { font-size: var(--fs-13); color: var(--mist-on-ink); }
 .panelText { display: flex; flex-direction: column; gap: 8px; }
 .panelText b { font-size: var(--fs-18); font-weight: 600; }
@@ -27,7 +27,7 @@
 .item .cur { color: var(--graphite); }
 .where { font-size: var(--fs-13); color: var(--graphite); }
 .opts { display: flex; flex-direction: column; gap: 6px; padding-left: 46px; }
-.opt, .optOn { display: flex; justify-content: space-between; gap: 10px; text-align: left; padding: 10px 12px; min-height: 44px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 400 var(--fs-13) var(--font-sans); }
+.opt, .optOn { display: flex; justify-content: space-between; gap: 10px; text-align: left; padding: 10px 12px; min-height: 44px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: 500 var(--fs-13) var(--font-sans); }
 .optOn { background: var(--rec-bg); border-color: var(--rec-ink); }
 .recTag { font: 600 var(--fs-13) var(--font-sans); color: var(--rec-ink); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
 .look { min-width: 0; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px 14px; border-radius: var(--r-lg); background: var(--sheet); border: 1px solid var(--line); }

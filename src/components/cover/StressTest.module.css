@@ -10,36 +10,36 @@
 .scenario[aria-pressed="true"] { border: 2px solid var(--ink); background: var(--ink); color: var(--paper); padding: 15px; }
 .scenario[aria-pressed="true"] .ic { background: var(--marker); color: var(--ink-fixed); }
 .scTitle { font: 600 var(--fs-15)/1.25 var(--font-sans); }
-.scBill { font: 400 var(--fs-13) var(--font-mono); opacity: 0.85; }
+.scBill { font: 500 var(--fs-13) var(--font-mono); opacity: 0.85; }
 .ic { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--sunken); color: var(--ink); font-size: var(--fs-15); }
 .icCut { background: var(--signal-bg); color: var(--signal-ink); }
 .icPay { background: var(--mist); color: var(--harbour); }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start; }
 .right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 24px; }
-.policy { display: inline-flex; gap: 10px; align-items: center; font: 400 var(--fs-13) var(--font-sans); color: var(--graphite); }
+.policy { display: inline-flex; gap: 10px; align-items: center; font: 500 var(--fs-13) var(--font-sans); color: var(--graphite); }
 .steps { display: flex; flex-direction: column; gap: 14px; }
 .step { display: grid; grid-template-columns: 34px minmax(110px, 170px) minmax(0, 1fr) minmax(84px, auto); gap: 12px; align-items: center; }
 .step .ic { width: 34px; height: 34px; font-size: var(--fs-13); }
 .stepTitle { display: block; overflow-wrap: anywhere; font: 600 var(--fs-14) var(--font-sans); color: var(--ink); }
-.stepRef { display: block; overflow-wrap: anywhere; font: 400 var(--fs-13) var(--font-sans); color: var(--graphite); }
+.stepRef { display: block; overflow-wrap: anywhere; font: 500 var(--fs-13) var(--font-sans); color: var(--graphite); }
 .track { position: relative; height: 26px; border-radius: 7px; background: var(--sunken); overflow: hidden; }
 .fill { position: absolute; top: 0; bottom: 0; border-radius: 7px; transition: width var(--t-xslow) var(--ease), left var(--t-xslow) var(--ease), background-color var(--t-xslow) var(--ease); }
-.stepVal { font: 400 var(--fs-13) var(--font-mono); text-align: right; }
+.stepVal { font: 500 var(--fs-13) var(--font-mono); text-align: right; }
 .pays { border-radius: var(--r-xl); background: var(--ink); color: var(--paper); padding: 26px; display: flex; flex-direction: column; gap: 14px; }
-.paysTop { display: flex; justify-content: space-between; align-items: center; font: 400 var(--fs-14) var(--font-sans); }
+.paysTop { display: flex; justify-content: space-between; align-items: center; font: 500 var(--fs-14) var(--font-sans); }
 .verdict { font: 600 var(--fs-13) var(--font-sans); padding: 4px 10px; border-radius: 999px; color: var(--ink-fixed); }
 .good { background: var(--mist-on-ink); } .warn { background: var(--marker); } .bad { background: var(--signal-fixed); }
-.big { font: 400 var(--fs-fluid-score)/1 var(--font-serif); }
+.big { font: 500 var(--fs-fluid-score)/1 var(--font-serif); }
 .split { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--sunken); }
 .split span { transition: width var(--t-xslow) var(--ease); }
-.note { font: 400 var(--fs-14)/1.45 var(--font-sans); opacity: 0.9; }
+.note { font: 500 var(--fs-14)/1.45 var(--font-sans); opacity: 0.9; }
 .levers { display: flex; flex-direction: column; gap: 10px; }
 .lever { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px; border-radius: var(--r-md); background: var(--paper); }
 .leverOn { background: var(--mist); }
 .lever .ic { background: var(--sheet); }
 .leverText { flex: 1 1 160px; min-width: 0; }
-.save { font: 400 var(--fs-13) var(--font-mono); color: var(--harbour); min-width: 84px; text-align: right; margin-left: auto; }
+.save { font: 500 var(--fs-13) var(--font-mono); color: var(--harbour); min-width: 84px; text-align: right; margin-left: auto; }
 .sw { position: relative; flex: none; width: 44px; height: 26px; border-radius: 999px; border: 0; cursor: pointer; background: var(--muted); transition: background var(--t-base); }
 .sw[aria-checked="true"] { background: var(--harbour); }
 .sw span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--white-fixed); transition: left var(--t-base) var(--ease); }
@@ -49,9 +49,9 @@
 .fcard { min-width: 0; display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 16px; border-radius: var(--r-btn); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; font-family: var(--font-sans); }
 .fcard[aria-pressed="true"] { border: 2px solid var(--harbour); background: var(--mist); padding: 15px; }
 .fname { display: flex; gap: 10px; align-items: center; font: 600 var(--fs-14) var(--font-sans); }
-.fval { font: 400 var(--fs-28) var(--font-serif); }
+.fval { font: 500 var(--fs-28) var(--font-serif); }
 .mini { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--sunken); }
-.score { font: 400 var(--fs-28) var(--font-serif); }
+.score { font: 500 var(--fs-28) var(--font-serif); }
 .score small { font-size: var(--fs-16); color: var(--graphite); }
 .bars { display: flex; flex-direction: column; gap: 14px; }
 .bar { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 64px; gap: 16px; align-items: center; font: 500 var(--fs-14) var(--font-sans); }
@@ -59,7 +59,7 @@
 .barTrack span { display: block; height: 10px; border-radius: 999px; transition: width var(--t-xslow) var(--ease); }
 .rating { font: 600 var(--fs-13) var(--font-sans); text-align: right; }
 .list { list-style: none; margin: 0; padding: 12px 20px; border-radius: var(--r-xl); border: 1px solid var(--line); display: flex; flex-direction: column; }
-.list li { display: flex; gap: 10px; align-items: center; overflow-wrap: anywhere; padding: 8px 0; font: 400 var(--fs-15) var(--font-sans); color: var(--ink); }
+.list li { display: flex; gap: 10px; align-items: center; overflow-wrap: anywhere; padding: 8px 0; font: 500 var(--fs-15) var(--font-sans); color: var(--ink); }
 .list li + li { border-top: 1px solid var(--line); }
 .list.good { background: var(--mist); }
 .list.watch { background: var(--signal-bg); }

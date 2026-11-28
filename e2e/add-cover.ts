@@ -4,12 +4,11 @@ import { expect, type Page } from "@playwright/test";
 export async function addSchedule(page: Page, file: { name: string; buffer: Buffer }): Promise<void> {
   await page.goto("/covers/add");
   // The page shows "Loading..." until it knows whether consent was given: wait for whichever step comes up, never test once.
-  const agree = page.getByRole("checkbox");
+  const agree = page.getByRole("button", { name: "Yes, read my policy" });
   const type = page.getByTestId("policy-type");
   await expect(agree.or(type)).toBeVisible();
   if (await agree.isVisible()) {
-    await agree.check();
-    await page.getByRole("button", { name: "Continue" }).click();
+    await agree.click();
   }
   await expect(type).toBeEnabled();
   await type.selectOption("personal_health");

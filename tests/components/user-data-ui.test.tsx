@@ -61,21 +61,18 @@ describe("Settings over the backend", () => {
     settings();
     const motion = await screen.findByRole("switch", { name: "Reduce motion" });
     await waitFor(() => expect(motion).toHaveAttribute("aria-checked", "true"));
-    // Voice language is not live yet: the choices are inert "Soon" controls, not a saved setting.
-    expect(screen.getByRole("button", { name: /हिंदी/ })).toHaveAttribute("aria-disabled", "true");
+    // Voice language is not built, so the row is not shown at all.
+    expect(screen.queryByRole("button", { name: /हिंदी/ })).toBeNull();
   });
 
-  it("shows no sample names and marks the voice language choices as Soon", async () => {
+  it("shows no sample names and no voice language choices", async () => {
     settings();
     await screen.findByRole("switch", { name: "Reduce motion" });
     const text = document.body.textContent ?? "";
     // The Account row's name comes from the identity adapter (src/adapters/mock), not from this screen, so Meera is not asserted here.
     expect(text).not.toMatch(/Rohan|Kabir|Mumma|Papa/);
-    for (const label of ["English", "हिंदी", "Both"]) {
-      const btn = screen.getByRole("button", { name: new RegExp(label) });
-      expect(btn).toHaveAttribute("aria-disabled", "true");
-      expect(btn.textContent).toContain("Soon");
-    }
+    for (const label of ["English", "हिंदी", "Both"]) expect(screen.queryByRole("button", { name: new RegExp(label) })).toBeNull();
+    expect(text).not.toContain("Voice language");
   });
 
   it("a switch saves through the BFF and shows Saved", async () => {

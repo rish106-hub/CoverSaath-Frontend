@@ -7,7 +7,7 @@ import type { DocumentKind, PolicyType } from "./documents-contract";
 import type { AskQuestion, CatalogueReview, ConfirmPolicyProfile, CoveragePreview, HandoffQuery, PassThrough, Passages } from "./evidence-contract";
 
 export class AdapterError extends Error {
-  constructor(public code: string, public retryable = false) {
+  constructor(public code: string, public retryable = false, public reason: string | null = null) {
     super(code);
     this.name = "AdapterError";
   }

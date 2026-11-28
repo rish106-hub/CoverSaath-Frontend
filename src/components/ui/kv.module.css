@@ -1,0 +1,117 @@
+/* Flat app primitives (spec R1.4). Colours come from the scoped app theme variables only. */
+
+.focusable:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+.pressable { transition: transform var(--t-press) var(--ease-out), background var(--t-in) var(--ease-out), border-color var(--t-in) var(--ease-out); }
+.pressable:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+
+/* Button */
+.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 50px; padding: 0 24px; border-radius: 14px; border: 0;
+  font-family: inherit; font-size: 18px; font-weight: 600; line-height: 1.2; cursor: pointer;
+}
+.button:disabled { cursor: default; }
+.lg { min-height: 60px; padding: 0 32px; }
+.primary { background: var(--forest); color: var(--on-harbour); }
+.primary:hover:not(:disabled) { background: var(--harbour); }
+.outline { background: var(--sheet); color: var(--ink); border: 2px solid var(--ink); }
+.quiet { background: var(--mist); color: var(--harbour); }
+.spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid currentColor; border-right-color: transparent;
+  animation: kv-spin 700ms linear infinite;
+}
+.tick { width: 20px; height: 20px; flex: none; }
+@keyframes kv-spin { to { transform: rotate(360deg); } }
+
+/* Signal */
+.signal { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; color: var(--ink); }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--ok); }
+.signal[data-kind="ok"] .dot { background: var(--ok); }
+.signal[data-kind="warn"] .dot { background: var(--warn); }
+.signal[data-kind="orange"] .dot { background: var(--orange); }
+.signal[data-kind="bad"] .dot { background: var(--bad); }
+.signalTag { padding: 6px 14px; border-radius: 999px; font-size: 16px; font-weight: 700; background: var(--sheet); }
+.signalTag[data-kind="ok"] { background: color-mix(in srgb, var(--ok) 20%, var(--sheet)); }
+.signalTag[data-kind="warn"] { background: color-mix(in srgb, var(--warn) 20%, var(--sheet)); }
+.signalTag[data-kind="orange"] { background: color-mix(in srgb, var(--orange) 20%, var(--sheet)); }
+.signalTag[data-kind="bad"] { background: color-mix(in srgb, var(--bad) 20%, var(--sheet)); }
+
+/* Field */
+.field { display: flex; flex-direction: column; gap: 8px; font-size: 18px; font-weight: 500; }
+.fieldLabel { font-size: 16px; font-weight: 600; color: var(--graphite); }
+.field input, .field select, .field textarea {
+  min-height: 50px; padding: 0 16px; border-radius: 12px; border: 2px solid var(--field-border);
+  background: var(--sheet); color: var(--ink); font-family: inherit; font-size: 18px; font-weight: 500;
+}
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+.field[data-invalid] input, .field[data-invalid] select, .field[data-invalid] textarea { border-color: var(--bad); }
+.fieldError { font-size: 16px; font-weight: 600; color: var(--bad); }
+
+/* Segmented */
+.segmented { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--sunken); }
+.segment {
+  min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: transparent;
+  color: var(--ink); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.segment[aria-pressed="true"] { background: var(--tide); color: var(--on-harbour); }
+
+/* Switch */
+.switch {
+  position: relative; width: 56px; height: 32px; padding: 0; border: 0; border-radius: 999px;
+  background: var(--field-border); cursor: pointer;
+}
+.switch[aria-checked="true"] { background: var(--ok); }
+.switchKnob {
+  position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--sheet); transition: transform var(--t-in) var(--ease-out);
+}
+.switch[aria-checked="true"] .switchKnob { transform: translateX(24px); }
+
+/* Card */
+.card {
+  display: block; box-sizing: border-box; padding: 28px; border-radius: 22px; text-align: left;
+  border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink);
+  font-family: inherit; font-size: 18px; font-weight: 500; text-decoration: none;
+}
+.next { background: var(--gold-tint); border-color: var(--warn); }
+.inverse { background: var(--tide); color: var(--on-harbour); border: 0; }
+.clickable { cursor: pointer; }
+.clickable:hover { border-color: var(--harbour); background: var(--mist); }
+
+/* Ring */
+.ring { position: relative; display: inline-block; width: 112px; height: 112px; }
+.ringSvg { display: block; }
+.ringTrack { stroke: var(--line); }
+.ringFill { transition: stroke-dashoffset var(--t-slide) var(--ease-out); }
+.ring[data-kind="ok"] .ringFill { stroke: var(--ok); }
+.ring[data-kind="warn"] .ringFill { stroke: var(--warn); }
+.ring[data-kind="orange"] .ringFill { stroke: var(--orange); }
+.ring[data-kind="bad"] .ringFill { stroke: var(--bad); }
+.ringText { fill: var(--ink); font-size: 18px; font-weight: 700; }
+
+/* Bar */
+.bar { height: 12px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+.barFill { height: 100%; width: 100%; transform-origin: left center; transition: transform var(--t-slide) var(--ease-out); background: var(--ok); }
+.bar[data-kind="ok"] .barFill { background: var(--ok); }
+.bar[data-kind="warn"] .barFill { background: var(--warn); }
+.bar[data-kind="orange"] .barFill { background: var(--orange); }
+.bar[data-kind="bad"] .barFill { background: var(--bad); }
+
+/* InlineStatus */
+.status { display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 16px; font-weight: 600; color: var(--graphite); }
+.status[data-kind="ok"] { color: var(--ok); }
+.status[data-kind="error"] { color: var(--bad); }
+
+/* Tabs */
+.tabs { display: flex; gap: 8px; border-bottom: 1.5px solid var(--line); }
+.tab {
+  min-height: 48px; padding: 0 18px; border: 0; border-bottom: 3px solid transparent; background: transparent;
+  color: var(--graphite); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--harbour); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable, .switchKnob, .ringFill, .barFill { transition: opacity var(--t-in) linear; }
+  .spinner { animation-duration: 1800ms; }
+}

@@ -25,19 +25,19 @@
 .rowBetween { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; min-width: 0; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 220px; }
 .label { font: 500 var(--fs-14) var(--font-sans); color: var(--ink); }
-.input { min-height: 44px; padding: 0 12px; border: 1px solid var(--field-border); border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); font: 400 var(--fs-15) var(--font-sans); width: 100%; box-sizing: border-box; min-width: 0; }
+.input { min-height: 44px; padding: 0 12px; border: 1px solid var(--field-border); border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); font: 500 var(--fs-15) var(--font-sans); width: 100%; box-sizing: border-box; min-width: 0; }
 .input:focus-visible { outline: 2px solid var(--harbour); outline-offset: 1px; }
-.fieldError { font: 400 var(--fs-13) var(--font-sans); color: var(--coral-ink); }
+.fieldError { font: 500 var(--fs-13) var(--font-sans); color: var(--coral-ink); }
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .full { grid-column: 1 / -1; }
 .card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .addressText { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.cardText { font: 400 var(--fs-15)/1.5 var(--font-sans); color: var(--ink); }
-.small { font: 400 var(--fs-13)/1.4 var(--font-sans); color: var(--graphite); }
+.cardText { font: 500 var(--fs-15)/1.5 var(--font-sans); color: var(--ink); }
+.small { font: 500 var(--fs-13)/1.4 var(--font-sans); color: var(--graphite); }
 .strong { font: 600 var(--fs-15) var(--font-sans); color: var(--ink); }
 .wrap { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
 .clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.notice { font: 400 var(--fs-14)/1.45 var(--font-sans); color: var(--ink); background: var(--sunken); border-radius: var(--r-sm); padding: 10px 12px; margin: 0; }
+.notice { font: 500 var(--fs-14)/1.45 var(--font-sans); color: var(--ink); background: var(--sunken); border-radius: var(--r-sm); padding: 10px 12px; margin: 0; }
 .status { font: 500 var(--fs-13) var(--font-sans); color: var(--graphite); }
 .statusOn { color: var(--harbour); }
 

@@ -10,7 +10,10 @@ describe("touch targets and mobile layout (#84)", () => {
     expect(tokens).toMatch(/@media \(pointer: coarse\) \{\s*:root \{ --btn-h-sm: 44px; \}/);
   });
   it("gives sidebar links, header icon buttons, dismiss and tool chips 44px on coarse pointers", () => {
-    expect(read("src/components/shell/AppSidebar.module.css")).toMatch(/pointer: coarse\) \{[^}]*\.item, \.on \{ min-height: 44px; \}[^}]*\.emergency \{ min-height: 44px; \}/);
+    // The rail is laptop-only (R2) and its links are 46px high on every pointer, so no coarse-pointer override is needed.
+    const rail = read("src/components/shell/AppSidebar.module.css");
+    expect(rail).toMatch(/\.item, \.on \{[^}]*height: 46px/);
+    expect(rail).toMatch(/\.emergency, \.settings \{[^}]*height: 46px/);
     expect(read("src/components/agent/agent.module.css")).toMatch(/pointer: coarse\) \{ \.headMic \{ width: 44px; height: 44px; \}/);
     expect(read("src/components/theme/ThemeButton.module.css")).toMatch(/pointer: coarse\) \{ \.btn \{ width: 44px; height: 44px; \}/);
     expect(read("src/components/shell/TrialNotice.module.css")).toMatch(/pointer: coarse\) \{ \.x \{[^}]*min-height: 44px/);
@@ -24,8 +27,8 @@ describe("touch targets and mobile layout (#84)", () => {
     expect(read("src/styles/globals.css")).toMatch(/\.k-content > \.k-no-fade \{ animation: none; \}/);
     expect(read("src/components/shell/HomeGreeting.tsx")).toMatch(/className="k-no-fade"/);
   });
-  it("stacks sign-in tiles under 560px and moves the welcome padding to a module", () => {
-    expect(read("src/components/public/signin.module.css")).toMatch(/max-width: 559px\) \{ \.whys \{ grid-template-columns: 1fr; \}/);
+  it("drops the sign-in photograph to one column under 900px and moves the welcome padding to a module", () => {
+    expect(read("src/components/public/signin.module.css")).toMatch(/max-width: 900px\) \{[\s\S]*grid-template-columns: minmax\(0, 1fr\)[\s\S]*\.photo \{ display: none; \}/);
     expect(read("src/app/welcome/page.tsx")).not.toMatch(/padding: "72px 48px"/);
     expect(read("src/app/welcome/welcome.module.css")).toMatch(/padding: 32px 16px/);
   });

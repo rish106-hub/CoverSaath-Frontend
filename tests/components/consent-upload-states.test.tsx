@@ -6,7 +6,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => "/covers/add" }));
 vi.mock("@/adapters", async () => {
   const { mockCovers } = await import("@/adapters/mock/covers");
-  return { adapters: { covers: mockCovers, reference: { products: async () => ({ products: [] }) } } };
+  return { adapters: { covers: mockCovers, reference: { products: async () => ({ products: [] }) }, members: { list: async () => [], add: async (input: { name: string; relation: string }) => ({ id: "member-1", name: input.name, relation: input.relation, ageYears: null, isOwner: false, isYou: false }) } } };
 });
 vi.hoisted(() => { process.env.NEXT_PUBLIC_ADAPTERS = "mock"; });
 
@@ -34,7 +34,7 @@ describe("consent and upload states", () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
     list.mockRestore();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("checkbox")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Yes, read my policy" })).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -48,8 +48,7 @@ describe("consent and upload states", () => {
   it("plan lookup failure after upload offers Try again", async () => {
     const cands = vi.spyOn(mockCovers, "candidates").mockRejectedValueOnce(new Error("boom"));
     render(<AddCoverView />);
-    fireEvent.click(await screen.findByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Yes, read my policy" }));
     await screen.findByTestId("policy-type");
     fireEvent.change(screen.getByTestId("schedule-input"), { target: { files: [new File([new Uint8Array(8)], "schedule.pdf", { type: "application/pdf" })] } });
     const retry = await screen.findByRole("button", { name: "Try again" });

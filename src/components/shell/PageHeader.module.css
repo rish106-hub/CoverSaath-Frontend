@@ -1,19 +1,7 @@
-.phead { display: flex; flex-direction: column; gap: 14px; }
-.prow { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.crumbs { display: flex; align-items: center; gap: 8px; font: 500 var(--fs-14) var(--font-sans); color: var(--graphite); }
-.crumbs a:hover { color: var(--ink); }
-.crumbs b { color: var(--ink); font-weight: 600; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.ptabs { display: flex; overflow-x: auto; max-width: 100%; align-items: flex-end; gap: 28px; border-bottom: 1px solid var(--line); }
-.ptabs a { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; margin-bottom: -1px; border-bottom: 2px solid transparent; font: 500 var(--fs-15) var(--font-sans); color: var(--graphite); }
-.ptabs a:hover { color: var(--ink); }
-/* From 1100px the sidebar is the navigation, so the tab strip would repeat it. Narrower screens have no full sidebar and keep the tabs. */
-@media (min-width: 1100px) { .ptabs { display: none; } }
-.ptabs a.tabOn { color: var(--ink); font-weight: 600; }
-
-/* Phones: the page title is what people came for, so the breadcrumb row goes and the tab strip snaps and fades at its right edge to show it scrolls. */
-@media (max-width: 599px) {
-  .prow { display: none; }
-  .ptabs { scroll-snap-type: x proximity; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 28px; }
-  .ptabs a { scroll-snap-align: start; }
-}
+/* Sub-tab pills (spec R2.3): 42px high, 17px at weight 600, current pill on --tide. */
+.tabs { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-x: auto; }
+.tab, .on { flex: none; white-space: nowrap; display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 12px; font-size: 17px; font-weight: 600; transition: background var(--t-in) var(--ease-out); }
+.tab { color: var(--tide); background: var(--sheet); border: 1.5px solid var(--line); }
+.tab:hover { background: var(--mist); }
+.on { background: var(--tide); color: var(--on-harbour); border: 1.5px solid var(--tide); }
+.tab:focus-visible, .on:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }

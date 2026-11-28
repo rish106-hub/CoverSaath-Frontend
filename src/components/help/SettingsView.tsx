@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { adapters, features, type UiPrefs } from "@/adapters";
-import { SoonButton } from "@/components/ui/SoonButton";
 import { SaveState } from "@/components/ui/SaveState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAutosave } from "@/lib/use-autosave";
@@ -196,14 +195,6 @@ export function SettingsView({ logos }: { logos: { digilocker: ReactNode; abha: 
 
       <SectionHeading title="Voice and display">
         <div className={s.rows}>
-          <div className={cx(s.row, s.plain)}>
-            <span><span className={s.name}>Voice language</span><span className={ui.small}>Language Ask Knowvia listens for</span></span>
-            <span className={s.seg} role="group" aria-label="Voice language">
-              {([["en", "English"], ["hi", "हिंदी"], ["both", "Both"]] as const).map(([id, l]) => (
-                <SoonButton key={id}>{l}</SoonButton>
-              ))}
-            </span>
-          </div>
           <div className={cx(s.row, s.plain)}>
             <span><span className={s.name}>Reduce motion</span><span className={ui.small}>Fades only, no movement</span></span>
             <span className={s.hit}><Switch on={p.reduced} label="Reduce motion" disabled={locked} onChange={(v) => set("reduced", v)} /></span>

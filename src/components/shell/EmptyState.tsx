@@ -12,11 +12,11 @@ import styles from "./EmptyState.module.css";
 export const UPLOAD_HREF = "/covers/add";
 
 /** An honest empty page: what is missing and the one next action. */
-export function EmptyState({ title, body, cta = "Add a policy", href = UPLOAD_HREF, children }: { title: string; body: string; cta?: string; href?: string; children?: ReactNode }) {
+export function EmptyState({ title, body, cta = "Add a policy", href = UPLOAD_HREF, children }: { title: string; body?: string; cta?: string; href?: string; children?: ReactNode }) {
   return (
     <section className={styles.box} aria-label={title} data-testid="empty-state">
       <h2 className={styles.h}>{title}</h2>
-      <p className={styles.p}>{body}</p>
+      {body ? <p className={styles.p}>{body}</p> : null}
       <Link href={href} className={styles.cta}>{cta}</Link>
       {children ? <div className={styles.extra}>{children}</div> : null}
     </section>
@@ -26,9 +26,9 @@ export function EmptyState({ title, body, cta = "Add a policy", href = UPLOAD_HR
 /** A page that cannot tell empty from unreachable says so and offers one retry, instead of telling the person they have nothing. */
 function Unreachable({ onRetry }: { onRetry: () => void }) {
   return (
-    <section className={styles.box} aria-label="Can’t reach Knowvia" data-testid="unreachable-state">
-      <h2 className={styles.h}>Can’t reach Knowvia right now</h2>
-      <p className={styles.p}>Your covers are safe. Try again in a moment.</p>
+    <section className={styles.box} aria-label="Knowvia is not answering." data-testid="unreachable-state">
+      <h2 className={styles.h}>Knowvia is not answering.</h2>
+      <p className={styles.p}>This page will load when the service is back.</p>
       <button type="button" className={styles.cta} style={{ border: 0, cursor: "pointer" }} onClick={onRetry}>Try again</button>
     </section>
   );
@@ -57,7 +57,7 @@ function WithHoldings({ empty }: { empty: ReactElement<{ title: string }> }) {
   if (seen === "loading") return <PageSkeleton />;
   if (seen === "failed") return <Unreachable onRetry={retry} />;
   if (seen === "none") return <>{empty}</>;
-  return <EmptyState title={empty.props.title} body="Your policy is on Knowvia. This page is coming soon." cta="View your policies" href="/policies" />;
+  return <EmptyState title="Your policy is on Knowvia." cta="View your policies" href="/policies" />;
 }
 
 /**

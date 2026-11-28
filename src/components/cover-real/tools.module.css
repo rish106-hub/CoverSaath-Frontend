@@ -1,0 +1,94 @@
+/* Compare, stress test and hospitals for a real account (spec R5d.2 to R5d.5). Theme tokens only, flat and still.
+   Fit rules follow R5b.7: nothing is cut by a fixed-height box, and on a very short screen the page scrolls instead. */
+.page { display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0; }
+.line { margin: 0; font-size: 18px; font-weight: 500; }
+
+/* The same boxes as the Button primary and outline md, but real links so navigation works without script. */
+.cta, .outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 24px; box-sizing: border-box;
+  border-radius: 14px; font-family: inherit; font-size: 18px; font-weight: 600; line-height: 1.2; text-decoration: none; cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out), background var(--t-in) var(--ease-out);
+}
+.cta { background: var(--forest); color: var(--on-harbour); border: 0; }
+.cta:hover { background: var(--harbour); }
+.outline { background: var(--sheet); color: var(--ink); border: 2px solid var(--ink); }
+.outline:disabled { opacity: 0.5; cursor: default; }
+.cta:active, .outline:active { transform: translateY(1px) scale(0.98); }
+.cta:focus-visible, .outline:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+
+/* Inputs and selects inside a Field: one notch above the primitive's own rule so these win regardless of stylesheet order. */
+.page label input, .page label select {
+  height: 52px; padding: 0 16px; box-sizing: border-box; border: 1.5px solid var(--field-border); border-radius: var(--r-btn);
+  background: var(--sheet); color: var(--ink); font-family: inherit; font-size: 18px; font-weight: 500; min-width: 0;
+}
+.page label input.bigin { height: 64px; font-family: var(--font-sans); font-size: 30px; font-weight: 600; }
+
+.pager { display: flex; align-items: center; gap: 24px; flex: none; }
+.pagerEnd { justify-content: flex-end; }
+.pageText { margin: 0; font-size: 18px; font-weight: 600; }
+
+/* Compare */
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex: none; }
+.table { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.trow { display: grid; grid-template-columns: minmax(0, 26fr) repeat(var(--cols, 2), minmax(0, 37fr)); gap: 24px; align-items: center; min-width: 0; }
+.thead { align-items: end; padding-bottom: 12px; }
+.policyHead { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.policyName, .policyInsurer { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.policyName { font-family: var(--font-serif); font-size: 28px; font-weight: 500; line-height: 1.2; }
+.policyInsurer { font-size: 18px; font-weight: 500; }
+.body { flex: 1; min-height: 0; overflow: hidden; }
+.brow { min-height: 50px; border-top: 1.5px solid var(--line); box-sizing: border-box; }
+.rowLabel { font-size: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.cell { font-size: 18px; font-weight: 500; overflow-wrap: anywhere; min-width: 0; }
+.brow[data-same="false"] .cell { font-weight: 600; }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex: none; }
+.textLink { font-size: 18px; font-weight: 600; color: var(--harbour); text-decoration: underline; }
+.textLink:focus-visible { outline: 2px solid var(--harbour); outline-offset: 3px; }
+
+/* Stress test */
+.two { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: start; flex: 1; min-height: 0; }
+.left { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.coverName { margin: 0; font-size: 18px; font-weight: 600; }
+.quick { display: flex; flex-wrap: wrap; gap: 12px; }
+.result { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.sentence { margin: 0; font-size: 22px; font-weight: 500; }
+.youLabel { margin: 0; font-size: 18px; font-weight: 600; }
+.you { margin: 0; font-family: var(--font-sans); font-size: 64px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); overflow-wrap: anywhere; }
+.you[data-over="true"] { color: var(--bad); }
+.reason { margin: 0; font-size: 18px; font-weight: 500; }
+.split { height: 14px; border-radius: 7px; background: var(--fog); overflow: hidden; flex: none; }
+.split[data-pay="true"] { background: var(--bad); }
+.split i { display: block; height: 100%; background: var(--ok); }
+.lines { display: flex; flex-direction: column; }
+.lineRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; border-bottom: 1.5px solid var(--line); box-sizing: border-box; font-size: 18px; }
+.lineRow span:first-child { font-weight: 500; }
+.lineRow span:last-child { font-weight: 600; }
+.lineRow[data-pay="true"] span:first-child { font-weight: 600; }
+.note { margin: 0; font-size: 18px; font-weight: 500; color: var(--graphite); }
+
+/* Hospitals */
+.find { display: flex; align-items: flex-end; gap: 20px; }
+.pincode { width: 240px; flex: none; }
+.cover { flex: 1; min-width: 0; }
+.cover label { width: 100%; }
+.alert { margin: 0; font-size: 18px; font-weight: 600; color: var(--bad); }
+.lead { margin: 0; max-width: 24ch; font-family: var(--font-serif); font-size: 28px; font-weight: 500; line-height: 1.2; }
+.count { margin: 0; font-size: 18px; font-weight: 600; flex: none; }
+.hlist { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow: hidden; }
+.hrow { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) max-content; gap: 24px; align-items: center; min-height: 62px; border-bottom: 1.5px solid var(--line); box-sizing: border-box; }
+.hname, .haddress { display: block; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 18px; }
+.hname { font-weight: 600; }
+.haddress { font-weight: 500; }
+
+/* Short laptop screens (spec R5d.5). */
+@media (max-height: 720px) {
+  .page, .left, .result { gap: 12px; }
+  .two { gap: 32px; }
+  .page label input.bigin { height: 52px; }
+  .you { font-size: 44px; }
+}
+
+/* Under 640px tall nothing fits without cutting, so every screen takes its natural height and the page scrolls (R5b.7). */
+@media (max-height: 639px) {
+  .page, .two, .table, .body, .hlist { flex: none; min-height: auto; overflow: visible; }
+}

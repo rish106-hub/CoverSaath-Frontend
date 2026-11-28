@@ -1,6 +1,6 @@
 .scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-start; justify-content: center; padding-top: 14vh; background: color-mix(in srgb, var(--ink-fixed) 40%, transparent); }
 .panel { width: 560px; max-width: calc(100vw - 32px); background: var(--sheet); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-lg); overflow: hidden; }
-.input { width: 100%; box-sizing: border-box; min-height: 52px; padding: 0 18px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: 400 var(--fs-16) var(--font-sans); outline: none; }
+.input { width: 100%; box-sizing: border-box; min-height: 52px; padding: 0 18px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 var(--fs-16) var(--font-sans); outline: none; }
 .list { max-height: 55vh; overflow: auto; padding: 8px; }
 .empty { padding: 16px; font-size: var(--fs-14); color: var(--graphite); }
 .panel [cmdk-group-heading] { padding: 10px 10px 4px; font-size: var(--fs-13); font-weight: 600; color: var(--graphite); }

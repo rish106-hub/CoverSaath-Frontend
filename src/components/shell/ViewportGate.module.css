@@ -1,0 +1,3 @@
+.gate { display: flex; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 40px; text-align: center; background: var(--paper); color: var(--ink); }
+.title { margin: 0; font-size: 32px; font-weight: 700; line-height: 1.2; color: var(--tide); }
+.text { margin: 0; max-width: 420px; font-size: 18px; font-weight: 500; line-height: 1.5; color: var(--graphite); }

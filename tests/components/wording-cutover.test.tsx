@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
 import { factsIn, holdingsIn, type HoldingView } from "@/adapters/covers-contract";
 import { mockCovers, setMockHandoff } from "@/adapters/mock/covers";
@@ -44,7 +44,8 @@ describe("waiting for the insurer's wording", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(10_500); });
     expect(await screen.findByText("Before admission cover")).toBeInTheDocument();
     expect(screen.queryByText(WAITING_TEXT)).toBeNull();
-    expect(screen.getAllByText("From the insurer's wording, not checked").length).toBeGreaterThan(0);
+    // The row names the insurer's wording as the source, with its page.
+    expect(screen.getAllByTestId("fact-source").map((n) => n.textContent)).toContain("From the insurer's wording, not checked, Page 9");
   });
   it("the mock has a not_checked state that flips to fss with insurer facts", async () => {
     const id = (await mockCovers.upload(new File([new Uint8Array(64)], "p.pdf", { type: "application/pdf" }), "k-c6-1", { kind: "policy_schedule", policyType: "personal_health" })).holdingId as string;
@@ -69,6 +70,7 @@ describe("waiting for the insurer's wording", () => {
     expect(await screen.findByText(WAITING_TEXT)).toBeInTheDocument();
     expect(screen.getByTestId("terms-status")).toHaveAttribute("data-state", "waiting");
     expect(screen.queryByText(/not attached/i)).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
     expect(screen.queryByRole("button", { name: "Add the terms yourself" })).toBeNull();
     state = "fss";
     await act(async () => { await vi.advanceTimersByTimeAsync(10_500); });
@@ -81,6 +83,7 @@ describe("waiting for the insurer's wording", () => {
     vi.spyOn(backendCovers, "facts").mockResolvedValue(factsIn.parse({ holdingId: "h1", status: "ready", unknownKeys: [], facts: [] }));
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Insurer terms not attached yet")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
     expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
   });
   it("not_checked (open handoff, can last hours) shows waiting but keeps the manual button", async () => {
@@ -90,6 +93,7 @@ describe("waiting for the insurer's wording", () => {
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText(WAITING_TEXT)).toBeInTheDocument();
     expect(screen.queryByText(/not attached/i)).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
     expect(screen.getByRole("button", { name: "Add the terms yourself" })).toBeInTheDocument();
   });
   it("the mock passes through missing + pending, then flips to fss", async () => {

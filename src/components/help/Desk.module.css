@@ -3,7 +3,7 @@
 .statDark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .statWarn { background: var(--signal-bg); color: var(--signal-ink); border-color: var(--coral); }
 .statOk { background: var(--mist); }
-.statLabel { font: 400 var(--fs-13) var(--font-sans); opacity: 0.85; }
+.statLabel { font: 500 var(--fs-13) var(--font-sans); opacity: 0.85; }
 .statValue { font: 600 var(--fs-28)/1.2 var(--font-sans); letter-spacing: -0.03em; }
 .layout { display: grid; grid-template-columns: minmax(300px, 400px) 1fr; gap: 20px; align-items: start; }
 .list { display: flex; flex-direction: column; gap: 10px; }
@@ -18,13 +18,13 @@
 .need { display: flex; gap: 12px; align-items: center; padding: 16px; border-radius: var(--r-lg); background: var(--signal-bg); border: 1px solid var(--coral); color: var(--ink); }
 .needIcon { flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--signal-ink); color: var(--signal-bg); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
 .raise { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: var(--r-lg); background: var(--sheet); border: 1px solid var(--line); }
-.say { text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 400 var(--fs-14) var(--font-sans); }
+.say { text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 500 var(--fs-14) var(--font-sans); }
 .sayOn { border-color: var(--harbour); background: var(--mist); }
 .orb { flex: none; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--sea-glass), var(--harbour) 70%); }
 .reply { font-size: var(--fs-14); padding: 10px 12px; border-radius: 12px; background: var(--harbour); color: var(--on-harbour); }
 .detail { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
 .detailHead { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-.big { font: 400 var(--fs-34)/1.1 var(--font-serif); letter-spacing: -0.02em; }
+.big { font: 500 var(--fs-34)/1.1 var(--font-serif); letter-spacing: -0.02em; }
 .steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 .step { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--r-md); background: var(--paper); }
 .stepOn { background: var(--mist); }

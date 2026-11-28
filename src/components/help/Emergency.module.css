@@ -3,7 +3,7 @@
 .people { display: flex; gap: 8px; flex-wrap: wrap; }
 .calls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .big { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 96px; padding: 0 24px; border-radius: var(--r-btn); font-family: var(--font-sans); border: 1px solid transparent; text-align: left; }
-.bigT { font: 400 var(--fs-32)/1.1 var(--font-serif); letter-spacing: -0.02em; }
+.bigT { font: 500 var(--fs-32)/1.1 var(--font-serif); letter-spacing: -0.02em; }
 .bigS { font-size: var(--fs-14); }
 .c112 { background: var(--signal-fixed); color: var(--ink-fixed); }
 .c108 { background: var(--coral-fixed); color: var(--ink-fixed); }
@@ -13,7 +13,7 @@
 .col { display: flex; flex-direction: column; gap: 24px; }
 .ecard { background: var(--white-fixed); color: var(--ink-fixed); border: 1px solid var(--line-fixed); border-top: 6px solid var(--harbour-fixed); border-radius: var(--r-xl); padding: 26px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--shadow-md); }
 .ecardTop { display: flex; justify-content: space-between; align-items: center; }
-.ecardName { font: 400 var(--fs-34)/1.1 var(--font-serif); letter-spacing: -0.02em; }
+.ecardName { font: 500 var(--fs-34)/1.1 var(--font-serif); letter-spacing: -0.02em; }
 .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0; font-size: var(--fs-14); }
 .facts dt { color: var(--graphite-fixed); font-size: var(--fs-13); }
 .facts dd { margin: 0; font: 500 var(--fs-14) var(--font-mono); }
@@ -26,7 +26,7 @@
 .chk { display: grid; grid-template-columns: 28px 1fr; gap: 12px; text-align: left; padding: 12px 0; border-top: 1px solid var(--line); background: none; border-left: 0; border-right: 0; border-bottom: 0; color: var(--ink); width: 100%; }
 .box { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--graphite); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: var(--fs-14); }
 .boxOn { background: var(--harbour); border-color: var(--harbour); color: var(--on-harbour); }
-.ref { font: 400 var(--fs-13) var(--font-sans); color: var(--rec-ink); }
+.ref { font: 500 var(--fs-13) var(--font-sans); color: var(--rec-ink); }
 .refWarn { color: var(--coral-ink); }
 .panel { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
 .loc { display: flex; gap: 16px; align-items: center; padding: 18px; border-radius: var(--r-md); background: var(--paper); border: 1px solid var(--line); }

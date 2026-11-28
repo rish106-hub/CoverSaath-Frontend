@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
 import { factsIn, type HoldingView } from "@/adapters/covers-contract";
 import { RealPolicyDetail } from "@/components/cover-real/RealPolicyDetail";
@@ -33,20 +33,25 @@ const keys = (n: number) => Array.from({ length: n }, (_, i) => `waiting_specifi
 
 describe("policy detail facts", () => {
   it("unknownKeys one row", async () => {
-    const { container, rerender } = setup([], keys(64));
-    expect(await screen.findAllByText("Not found in this policy (64)")).toHaveLength(1);
-    const details = container.querySelector("details") as HTMLDetailsElement;
-    expect(details.open).toBe(false);
-    expect(details.querySelectorAll("li")).toHaveLength(64);
+    const { container } = setup([], keys(64));
+    const tab = await screen.findByRole("tab", { name: "Not found (64)" });
+    expect(screen.getAllByText("Not found (64)")).toHaveLength(1);
+    const panel = container.querySelector('[data-panel="not-found"]') as HTMLElement;
+    // The first tab starts selected (R5b.3), and Not found is the only group-like tab here, so it is the first.
+    expect(panel.hidden).toBe(false);
+    expect(panel.querySelectorAll("li")).toHaveLength(64);
+    fireEvent.click(screen.getByRole("tab", { name: "Insurer terms" }));
+    expect(panel.hidden).toBe(true);
+    fireEvent.click(tab);
+    expect(panel.hidden).toBe(false);
     expect(container.textContent).not.toContain("Coming soon");
     cleanup(); vi.restoreAllMocks();
     setup([], keys(3));
-    expect(await screen.findByText("Not found in this policy (3)")).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Not found (3)" })).toBeInTheDocument();
     cleanup(); vi.restoreAllMocks();
     setup([], []);
     await screen.findByText("Example Health Plan 01");
-    expect(screen.queryByText(/Not found in this policy/)).toBeNull();
-    void rerender;
+    expect(screen.queryByText(/Not found \(/)).toBeNull();
   });
   it("provenance once per fact", async () => {
     const { container } = setup(SEVEN, []);

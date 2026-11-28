@@ -1,4 +1,4 @@
-import { PageTitle, Kicker } from "@/components/type";
+import { PageTitle } from "@/components/type";
 import { ToolsPage } from "@/components/tools/ToolsPage";
 import { pageFor } from "@/lib/ia";
 
@@ -9,7 +9,6 @@ export default function Page() {
   return (
     <>
       <div>
-        {page?.kicker ? <Kicker>{page.kicker}</Kicker> : null}
         <PageTitle>{page?.title ?? "Calculators"}</PageTitle>
       </div>
       <ToolsPage />

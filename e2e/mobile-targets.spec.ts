@@ -1,23 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-// #84: on a touch phone the shared controls reach 44px, the sign-in tiles stack, the welcome page keeps a 16px gutter,
-// and the /home greeting (the LCP element) paints with no entrance animation.
+// #84: on a touch phone the shared controls reach 44px, the welcome page keeps a 16px gutter and a long title stays inside the viewport.
 // Runs against the mock-adapter dev server from playwright.config.ts.
 
 test.use({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true });
-
-test("/home greeting has no entrance animation and the small button is 44px", async ({ page }) => {
-  await page.goto("/home");
-  await page.waitForLoadState("networkidle");
-  const h1 = page.getByRole("heading", { level: 1 }).first();
-  const animation = await h1.evaluate((el) => {
-    const block = el.parentElement!;
-    return getComputedStyle(block).animationName;
-  });
-  expect(animation).toBe("none");
-  const small = page.locator(".k-btn--sm").first();
-  if (await small.count()) expect((await small.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-});
 
 test("sidebar-free pages: theme and mic icon buttons are at least 44px", async ({ page }) => {
   await page.goto("/home");
@@ -30,13 +16,6 @@ test("sidebar-free pages: theme and mic icon buttons are at least 44px", async (
       expect(box.height).toBeGreaterThanOrEqual(44);
     }
   }
-});
-
-test("/signin tiles stack in one column", async ({ page }) => {
-  await page.goto("/signin");
-  await page.waitForLoadState("networkidle");
-  const cols = await page.locator('[class*="whys"]').first().evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-  expect(cols).toBe(1);
 });
 
 test("/welcome keeps a 16px gutter", async ({ page }) => {

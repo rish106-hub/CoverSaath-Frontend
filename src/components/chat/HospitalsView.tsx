@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { adapters } from "@/adapters";
 import { errorText } from "@/adapters/documents-contract";
 import { PINCODE, type HospitalView } from "@/adapters/chat-contract";
-import { PageTitle, SectionHeading } from "@/components/type";
+import { PageTitle } from "@/components/type";
+import { EmptyState } from "@/components/shell/EmptyState";
+import { Button, Card, Field, Signal } from "@/components/ui";
+import { useFit } from "@/components/cover-real/use-fit";
 import { codeOf, useHoldings } from "@/components/covers/use-holdings";
 import { CoverOptions } from "@/components/covers/holding-label";
-import s from "./chat.module.css";
+import t from "@/components/cover-real/tools.module.css";
 
 /** Network hospitals of one cover, by pincode. The list is the insurer's network as the backend gives it; nothing here ranks or recommends. */
 export function HospitalsView({ holding, pincode }: { holding?: string; pincode?: string }) {
@@ -17,6 +19,10 @@ export function HospitalsView({ holding, pincode }: { holding?: string; pincode?
   const [found, setFound] = useState<{ pincode: string; list: HospitalView[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [page, setPage] = useState(0);
+  const listRef = useRef<HTMLUListElement>(null);
+  // Each row is 62px; as many as the list is tall enough for, between two and eight, so no row is cut by the box.
+  const perPage = useFit(listRef, 62, 2, 8);
   const id = current?.id;
   const valid = PINCODE.test(pin);
 
@@ -25,6 +31,7 @@ export function HospitalsView({ holding, pincode }: { holding?: string; pincode?
     if (!id || !valid || busy) return;
     setBusy(true);
     setError(null);
+    setPage(0);
     try {
       setFound({ pincode: pin, list: await adapters.covers.hospitals(id, pin) });
     } catch (err) {
@@ -35,61 +42,72 @@ export function HospitalsView({ holding, pincode }: { holding?: string; pincode?
     }
   }
 
+  const noPolicy = holdings !== null && holdings.length === 0 && !listError;
+  const hospitals = found?.list ?? [];
+  const pages = Math.max(1, Math.ceil(hospitals.length / perPage));
+  // A resize can make pages fewer than the current one; clamp instead of showing an empty list.
+  const at = Math.min(page, pages - 1);
+  const cashlessCount = hospitals.filter((h) => h.cashless).length;
   return (
-    <div className={s.stack}>
-      <div>
-        <PageTitle>Network hospitals</PageTitle>
-      </div>
+    <div className={t.page}>
+      <PageTitle>Network hospitals</PageTitle>
 
-      {holdings && holdings.length > 1 ? (
-        <label className={s.field}>Cover
-          <select value={id} onChange={(e) => { setFound(null); select(e.target.value); }}>
-            <CoverOptions holdings={holdings} />
-          </select>
-        </label>
-      ) : null}
-      {listError || error ? <p className={s.alert} role="alert">{errorText(error ?? listError ?? "")}</p> : null}
+      {noPolicy ? <EmptyState title="No policy yet" body="Add your policy and we can show the hospitals in its network." cta="Add a policy" href="/covers/add" /> : null}
 
-      {holdings && holdings.length === 0 && !listError ? (
-        <SectionHeading title="No policy yet">
-          <p className={s.quiet}>Add your policy and we can show the hospitals in its network.</p>
-          <div className={s.row}><Link className="k-btn" href="/covers/add">Add a policy</Link></div>
-        </SectionHeading>
-      ) : null}
-
-      {id ? (
-        <SectionHeading title="Search by pincode" description="Six digits, as on a postal address.">
-          <form className={s.search} onSubmit={(e) => void search(e)}>
-            <label className={s.field}>Pincode
-              <input inputMode="numeric" autoComplete="postal-code" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} aria-invalid={pin.length > 0 && !valid} />
-            </label>
-            <button type="submit" className="k-btn" disabled={!valid || busy}>{busy ? "Searching" : "Find hospitals"}</button>
+      {!noPolicy && id ? (
+        <Card style={{ padding: 24 }}>
+          <form className={t.find} onSubmit={(e) => void search(e)}>
+            <div className={t.pincode}>
+              <Field label="Pincode">
+                <input inputMode="numeric" autoComplete="postal-code" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} aria-invalid={pin.length > 0 && !valid} />
+              </Field>
+            </div>
+            {holdings && holdings.length > 1 ? (
+              <div className={t.cover}>
+                <Field label="Cover">
+                  <select value={id} onChange={(e) => { setFound(null); select(e.target.value); }}>
+                    <CoverOptions holdings={holdings} />
+                  </select>
+                </Field>
+              </div>
+            ) : null}
+            <Button type="submit" state={busy ? "busy" : "idle"} busyLabel="Searching" disabled={!valid || busy}>Find hospitals</Button>
           </form>
-        </SectionHeading>
+        </Card>
       ) : null}
 
-      {found ? (
-        <SectionHeading title={`Hospitals near ${found.pincode}`}>
-          {found.list.length === 0 ? (
-            <p className={s.quiet}>No network hospital is listed for this pincode. Try a nearby one.</p>
-          ) : (
-            <ul className={s.hospitals} aria-label="Hospitals">
-              {found.list.map((h) => (
-                <li key={h.id} className={s.hospital}>
-                  <b>{h.name}</b>
-                  {h.address ? <span>{h.address}</span> : null}
-                  {h.city || h.pincode ? <span>{[h.city, h.pincode].filter(Boolean).join(" ")}</span> : null}
-                  <span data-cashless={h.cashless}>{h.cashless ? "Cashless" : "Cashless not listed"}</span>
+      {listError || error ? <p className={t.alert} role="alert">{errorText(error ?? listError ?? "")}</p> : null}
+
+      {!noPolicy && !found && !error && !listError ? <p className={t.lead}>Type a pincode to see which hospitals take your policy without cash.</p> : null}
+
+      {found && hospitals.length === 0 ? <p className={t.line}>No network hospital is listed for this pincode. Try a nearby one.</p> : null}
+
+      {found && hospitals.length > 0 ? (
+        <>
+          <p className={t.count} data-testid="hospital-count">
+            {hospitals.length === 1 ? "1 hospital" : `${hospitals.length} hospitals`} near {found.pincode} · {cashlessCount} cashless
+          </p>
+          <ul ref={listRef} aria-label="Hospitals" className={t.hlist}>
+            {hospitals.slice(at * perPage, at * perPage + perPage).map((h) => {
+              const address = [h.address, h.city, h.pincode].filter(Boolean).join(", ");
+              return (
+                <li key={h.id} className={t.hrow}>
+                  <b className={t.hname} data-truncate title={h.name}>{h.name}</b>
+                  <span className={t.haddress} data-truncate title={address}>{address}</span>
+                  <span data-cashless={h.cashless}>{h.cashless ? <Signal kind="ok">Cashless</Signal> : <Signal kind="warn">Cashless not listed</Signal>}</span>
                 </li>
-              ))}
-            </ul>
-          )}
-        </SectionHeading>
+              );
+            })}
+          </ul>
+          {hospitals.length > perPage ? (
+            <div className={`${t.pager} ${t.pagerEnd}`}>
+              <button type="button" className={t.outline} disabled={at === 0} onClick={() => setPage(at - 1)}>Back</button>
+              <p className={t.pageText} role="status">Page {at + 1} of {pages}</p>
+              <button type="button" className={t.outline} disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>Next</button>
+            </div>
+          ) : null}
+        </>
       ) : null}
-
-      <div className={s.row}>
-        <Link className="k-btn k-btn--secondary" href="/chat">Ask about your cover</Link>
-      </div>
     </div>
   );
 }

@@ -1,64 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { adapters } from "@/adapters";
 import { MAX_UPLOAD_BYTES, POLICY_TYPES, POLICY_TYPE_LABEL, errorText, type PolicyType } from "@/adapters/documents-contract";
 import { makeRequestKey, uploads } from "@/adapters/uploads";
 import { stageOf } from "@/adapters/covers";
 import type { CandidateView, Candidates } from "@/adapters/covers-contract";
-import { PageTitle, SectionHeading } from "@/components/type";
 import { PageSkeleton } from "@/components/shell/ErrorPanel";
 import { ErrorBox } from "@/components/cover-real/parts";
+import { BrandMark } from "@/components/brand/BrandMark";
+import { Bar, Button, Card, Field, InlineStatus, Signal } from "@/components/ui";
 import { codeOf } from "./use-holdings";
 import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, type Slot } from "./add-cover-flow";
 import { payments, type PolicySlots } from "@/adapters/payments";
-import { payWithRazorpay } from "@/lib/razorpay";
-import s from "./covers.module.css";
+import { confirmPay, payCopy, realPayDeps, runPay, type PayState } from "./pay-flow";
+import { POLL_MAX, POLL_MS, STAGE_COPY, STAGE_ORDER, WIZARD_STEPS, guideFor, screenOf, stepOf, type ReadingStage } from "./wizard-copy";
+import { PeopleStep } from "./PeopleStep";
+import { WizardArt } from "./WizardArt";
+import { toPolicyView, type HeadlineLine } from "@/adapters/real-policy";
+import s from "./wizard.module.css";
 
 const MB = MAX_UPLOAD_BYTES / 1024 / 1024;
 type Pick = { candidateId: string; label: string } | null;
 
-const UPLOAD_STEPS = [
-  { key: "sending", label: "Sending your PDF" },
-  { key: "checking", label: "Safety check" },
-  { key: "reading", label: "Reading the pages" },
-  { key: "details", label: "Pulling out cover details" },
-  { key: "matching", label: "Finding your plan" },
-] as const;
-
-/** The real upload steps from the backend: done ones ticked, only the current one moves. */
-function UploadSteps({ stage }: { stage: NonNullable<Slot["stage"]> }) {
-  const at = UPLOAD_STEPS.findIndex((x) => x.key === stage);
-  return (
-    <ol className={s.steps} role="status" aria-live="polite" data-state="working" data-stage={stage}>
-      {UPLOAD_STEPS.map((x, i) => (
-        <li key={x.key} className={s.step} data-step={i < at ? "done" : i === at ? "active" : "todo"}>
-          <span className={s.stepDot} aria-hidden>{i < at ? "✓" : ""}</span>
-          {x.label}
-          {i === at ? <span className={s.srOnly}> (in progress)</span> : null}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-/** One slot's progress line: what it is doing, or why it stopped. */
-function SlotStatus({ slot, name }: { slot: Slot; name: string }) {
-  if (slot.status === "empty") return <p className={s.quiet}>Drop the PDF here, or choose it from your device.</p>;
-  const file = slot.file?.name ?? name;
-  if (slot.status === "working") return <UploadSteps stage={slot.stage ?? "sending"} />;
-  if (slot.status === "waiting") return <><UploadSteps stage={slot.stage ?? "sending"} /><p className={s.quiet}>Still working on it. A long policy can take a minute or two.</p></>;
-  if (slot.status === "done") return <p className={s.lead} role="status" data-state="done">{file}: added.</p>;
-  return <p className={s.alert} role="alert" data-state="failed">{file}: {errorText(slot.code ?? "")}</p>;
-}
-
-/** Add cover: pick the cover type, add the policy schedule (the one upload; the insurer's terms are attached by the system), say which plan it is (up to three guesses, or search), confirm. Insurer and plan names only; never a UIN. */
+/**
+ * Add a policy as a guided journey, one screen per step (screenOf says which): find the PDF, watch it being read, say which plan it is,
+ * add the family, done. The view owns the state and calls the adapters through the add-cover and pay helpers; the copy and the screen
+ * rules live in wizard-copy.ts. Insurer and plan names only; no registry number is ever shown.
+ */
 export function AddCoverView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState<boolean | null>(null);
-  const [agreed, setAgreed] = useState(false);
   const [policyType, setPolicyType] = useState<PolicyType | "">("personal_health");
   const [typeLocked, setTypeLocked] = useState(false);
   const [schedule, setSchedule] = useState<Slot>(emptySlot);
@@ -69,15 +43,20 @@ export function AddCoverView() {
   const [q, setQ] = useState("");
   const [found, setFound] = useState<{ productId: string; productName: string }[] | null>(null);
   const [done, setDone] = useState(false);
+  const [peopleDone, setPeopleDone] = useState(false);
   const [over, setOver] = useState(false);
   const [checking, setChecking] = useState(false);
   const [slots, setSlots] = useState<PolicySlots | null>(null);
-  // The first read of the person's consent and uploads failed. Kept apart from `error` so the page never falls through to the consent form on a failed read.
+  const [pay, setPay] = useState<PayState>({ kind: "idle" });
+  // The first read of the person's consent and uploads failed. Kept apart from `error` so the page never falls through to the consent screen on a failed read.
   const [loadFailure, setLoadFailure] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const scheduleInput = useRef<HTMLInputElement>(null);
   const consentKey = useRef(makeRequestKey());
   const confirmKey = useRef(makeRequestKey());
+  // Automatic re-checks already made for the document now being read; counted per document so a new upload starts fresh.
+  const polled = useRef<{ documentId: string; count: number }>({ documentId: "", count: 0 });
+  const latestCheckAgain = useRef<() => Promise<void>>(async () => undefined);
 
   const fail = (e: unknown) => setError(codeOf(e));
 
@@ -106,32 +85,13 @@ export function AddCoverView() {
   }, []);
   const mustPay = !resumed && ((slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED");
 
-  async function pay() {
-    setBusy(true);
-    setError(null);
-    try {
-      const order = await payments.order();
-      const proof = await payWithRazorpay(order);
-      setSlots(await payments.verify(proof));
-      // The file the person already chose goes up now, with the same request key (the refused try stored nothing).
-      if (schedule.file && schedule.code === "PAYMENT_REQUIRED" && policyType !== "") {
-        setSchedule({ ...schedule, status: "working", code: null });
-        await afterSchedule(await runSchedule(adapters.covers, schedule, policyType, (stage) => setSchedule((cur) => (cur.status === "working" ? { ...cur, stage } : cur))));
-      } else if (schedule.code === "PAYMENT_REQUIRED") setSchedule(emptySlot());
-    } catch (e) {
-      fail(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   useEffect(() => {
     let live = true;
     uploads.list().then((r) => {
       if (!live) return;
       setConsent(r.consent);
       if (r.policyType) { setPolicyType(r.policyType); setTypeLocked(true); }
-      // A schedule still being checked or read when the page was left or reloaded comes back here, ahead of the payment card:
+      // A schedule still being checked or read when the page was left or reloaded comes back here, ahead of the payment screen:
       // it already holds its slot. "?resume=1" has its own path above.
       if (!r.consent || new URLSearchParams(window.location.search).get("resume") === "1") return;
       const open = r.documents.find((d) => d.busy && d.kind === "policy_schedule" && d.note !== "DELETING" && d.note !== "QUARANTINED");
@@ -151,7 +111,7 @@ export function AddCoverView() {
       }).catch(() => undefined);
     }).catch((e) => {
       if (!live) return;
-      // Consent stays unknown (null): showing the consent form after a failed read would ask for a go-ahead already given.
+      // Consent stays unknown (null): showing the consent screen after a failed read would ask for a go-ahead already given.
       setLoadFailure(codeOf(e));
     });
     return () => { live = false; };
@@ -172,9 +132,12 @@ export function AddCoverView() {
       setError(null);
     } catch (e) {
       fail(e);
-    } finally {
       setBusy(false);
+      return;
     }
+    setBusy(false);
+    // A file refused for want of the go-ahead goes up again at once, in the same slot with the same request key.
+    if (schedule.code === "CONSENT_REQUIRED" && schedule.file) await retrySchedule();
   }
 
   async function loadCandidates(id: string) {
@@ -189,6 +152,8 @@ export function AddCoverView() {
   async function afterSchedule(r: { slot: Slot; holdingId: string | null }) {
     setSchedule(r.slot);
     if (r.slot.code === "CONSENT_REQUIRED") setConsent(false);
+    // The price is needed for the pay screen; if the first read of the slots failed, ask again now that the backend asked for payment.
+    if (r.slot.code === "PAYMENT_REQUIRED" && slots === null) payments.slots().then(setSlots).catch(() => undefined);
     if (r.holdingId) {
       setHoldingId(r.holdingId);
       await loadCandidates(r.holdingId);
@@ -199,6 +164,7 @@ export function AddCoverView() {
     if (!file || busy || policyType === "") return;
     setBusy(true);
     setError(null);
+    setPay({ kind: "idle" });
     try {
       const picked = pickFile(file);
       setSchedule(picked);
@@ -229,6 +195,23 @@ export function AddCoverView() {
       setBusy(false);
     }
   }
+  useEffect(() => { latestCheckAgain.current = checkAgain; });
+
+  // What happens once a payment is confirmed. The result comes from the pay helpers' return value, not from an effect, so it runs once.
+  async function afterPay(result: PayState) {
+    if (result.kind !== "paid") return;
+    setSlots(result.slots);
+    // The file the person already chose goes up now, with the same request key (the refused try stored nothing).
+    if (schedule.file && schedule.code === "PAYMENT_REQUIRED" && policyType !== "") await retrySchedule();
+    else if (schedule.code === "PAYMENT_REQUIRED") setSchedule(emptySlot());
+  }
+  async function startPay() {
+    setError(null);
+    await afterPay(await runPay(realPayDeps(), setPay));
+  }
+  async function recheckPay(proof: NonNullable<Extract<PayState, { kind: "stopped" }>["proof"]>) {
+    await afterPay(await confirmPay(realPayDeps(), proof, setPay));
+  }
 
   async function search() {
     const term = q.trim();
@@ -237,7 +220,7 @@ export function AddCoverView() {
     try {
       const r = await adapters.reference.products({ q: term });
       // Plan names only. The reference row also carries a registry number; it is never shown or kept.
-      setFound(r.products.slice(0, 8).map((p) => ({ productId: p.productId, productName: p.productName })));
+      setFound(r.products.slice(0, 4).map((p) => ({ productId: p.productId, productName: p.productName })));
       setError(null);
     } catch (e) {
       fail(e);
@@ -264,153 +247,330 @@ export function AddCoverView() {
     }
   }
 
-  const top = cands?.candidates[0];
+  const screen = screenOf({
+    consent,
+    loadFailed: loadFailure !== null,
+    done,
+    peopleDone,
+    hasCandidates: cands !== null,
+    slotStatus: schedule.status,
+    slotCode: schedule.code,
+    // The pay screen needs the price. If the slots read failed there is nothing to show, so the person stays on the find screen.
+    mustPay: mustPay && slots !== null,
+    hasHolding: holdingId !== null,
+  });
+  const step = stepOf(screen);
+
+  // The result screen shows the headline values that were read. One call on arrival; a failed call or a missing holding shows no cards.
+  const [coverFacts, setCoverFacts] = useState<HeadlineLine[]>([]);
+  useEffect(() => {
+    if (screen !== "cover" || holdingId === null) return;
+    let live = true;
+    adapters.covers.holdingsView().then((view) => {
+      const holding = view.holdings.find((hd) => hd.id === holdingId);
+      if (!live || !holding) return;
+      setCoverFacts(toPolicyView(holding, null).headlines.filter((line) => line.tone === "read" || line.tone === "confirmed").slice(0, 3));
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [screen, holdingId]);
+
+  // While a document is still being read, look again every POLL_MS on its own; stop on unmount, when the status changes, or after POLL_MAX tries.
+  useEffect(() => {
+    if (screen !== "reading" || schedule.status !== "waiting" || busy) return;
+    const documentId = schedule.documentId ?? "";
+    if (polled.current.documentId !== documentId) polled.current = { documentId, count: 0 };
+    if (polled.current.count >= POLL_MAX) return;
+    const timer = setTimeout(() => {
+      polled.current.count += 1;
+      void latestCheckAgain.current();
+    }, POLL_MS);
+    return () => clearTimeout(timer);
+  }, [screen, schedule.status, schedule.documentId, busy]);
+
   const label = (c: CandidateView) => `${c.insurerName} – ${c.productName}`;
+  const chooseFile = () => scheduleInput.current?.click();
+  const signInLink = <Link className={s.link} href="/signin">Sign in</Link>;
+  const errorLine = error ? <InlineStatus kind="error">{errorText(error)} {error === "UNAUTHENTICATED" ? signInLink : null}</InlineStatus> : null;
+  const heading = (text: string) => <h1 className={s.h1}>{text}</h1>;
+
+  // The picture on the left of the two-column screens; the people screen draws its own in PeopleStep.
+  const artKind = screen === "consent" || screen === "find" || screen === "reading" ? "doc" : screen === "pay" ? "pay" : null;
+
+  let content: ReactNode = null;
+  let secondary: ReactNode = null;
+  let main: ReactNode = null;
+
+  switch (screen) {
+    case "loading":
+      content = <div role="status" aria-label="Loading your upload page"><PageSkeleton height={160} /></div>;
+      break;
+    case "load-failed":
+      content = <ErrorBox code={loadFailure ?? ""} onRetry={retryLoad} />;
+      break;
+    case "consent":
+      // FOR LEGAL REVIEW: the wording below is not final.
+      content = (
+        <>
+          {heading("Can Knowvia read your policy?")}
+          <ul className={s.list}>
+            <li>Keep it in your account, in encrypted storage.</li>
+            <li>Check it for harmful content.</li>
+            <li>Read its text and pull out the cover details, such as sum insured and waiting periods.</li>
+          </ul>
+          <div><Link className={s.link} href="/privacy">Privacy</Link></div>
+          {errorLine}
+        </>
+      );
+      main = <Button size="lg" state={busy ? "busy" : "idle"} busyLabel="Saving" onClick={() => void accept()}>Yes, read my policy</Button>;
+      break;
+    case "pay": {
+      const price = slots ? (slots.pricePaise / 100).toLocaleString("en-IN") : "";
+      const running = pay.kind === "opening" || pay.kind === "confirming";
+      const stopped = pay.kind === "stopped" ? pay : null;
+      // FOR LEGAL REVIEW: price and payment wording.
+      content = (
+        <div className={s.stack} data-testid="pay-card">
+          {heading(`Add another policy for Rs ${price}.`)}
+          <p className={s.lead}>Your first policy is free. Each one after that is Rs {price}, paid once.</p>
+          {stopped ? (
+            <InlineStatus kind="error">{payCopy(pay)} {stopped.code === "UNAUTHENTICATED" ? signInLink : null}</InlineStatus>
+          ) : null}
+        </div>
+      );
+      if (running) main = <Button size="lg" state="busy" busyLabel={payCopy(pay)}>Pay Rs {price}</Button>;
+      else if (stopped?.proof) { const proof = stopped.proof; main = <Button size="lg" onClick={() => void recheckPay(proof)}>Check again</Button>; }
+      else if (!(stopped && !stopped.canPayAgain)) main = <Button size="lg" onClick={() => void startPay()}>Pay Rs {price}</Button>;
+      break;
+    }
+    case "find":
+      content = (
+        <>
+          {heading("Drop your policy PDF here.")}
+          <p className={s.lead}>PDF, up to {MB} MB. The schedule page is enough: who is covered, the sum insured and the dates.</p>
+          <Field label="Type of policy">
+            <select value={policyType} disabled={typeLocked || schedule.status !== "empty"} onChange={(e) => { setPolicyType(e.target.value as PolicyType | ""); setError(null); }} data-testid="policy-type">
+              <option value="" disabled>Choose one</option>
+              {POLICY_TYPES.map((t) => <option key={t} value={t}>{POLICY_TYPE_LABEL[t]}</option>)}
+            </select>
+          </Field>
+          {pay.kind === "paid" ? <InlineStatus kind="ok">Paid. You can add your policy now.</InlineStatus> : null}
+        </>
+      );
+      main = <Button size="lg" disabled={busy || policyType === ""} data-slot="policy_schedule" onClick={chooseFile}>Choose PDF</Button>;
+      break;
+    case "reading": {
+      const stage: ReadingStage = schedule.stage ?? "sending";
+      const at = STAGE_ORDER.indexOf(stage);
+      content = (
+        <div className={s.stack} role="status" aria-live="polite" data-state="working" data-stage={stage}>
+          <p className={s.percent}>{STAGE_COPY[stage].percent}%</p>
+          {heading(STAGE_COPY[stage].h1)}
+          <div className={s.bar10}><Bar value={STAGE_COPY[stage].percent / 100} label="Reading your policy" /></div>
+          <ol className={s.stages}>
+            {STAGE_ORDER.map((key, i) => {
+              const state = i < at ? "done" : i === at ? "active" : "todo";
+              return (
+                <li key={key} className={s.stage} data-step={state}>
+                  {state === "done" ? <Signal kind="ok">{STAGE_COPY[key].label}</Signal> : <><span className={s.stageDot} aria-hidden /><span>{STAGE_COPY[key].label}</span></>}
+                  {state === "active" ? <span className={s.srOnly}> (in progress)</span> : null}
+                </li>
+              );
+            })}
+          </ol>
+          {schedule.status === "waiting" ? <p className={s.note}>Still working on it. A long policy can take a minute or two.</p> : null}
+          {pay.kind === "paid" ? <InlineStatus kind="ok">Paid. You can add your policy now.</InlineStatus> : null}
+        </div>
+      );
+      if (schedule.status === "waiting") secondary = <Button variant="outline" size="lg" disabled={busy} onClick={() => void checkAgain()}>Check again</Button>;
+      break;
+    }
+    case "guide": {
+      const guide = guideFor(schedule.code ?? "");
+      content = (
+        <div className={s.stack} role="alert" data-state="failed">
+          <div className={s.pillRow}><Signal kind="warn" variant="pill">One quick fix</Signal></div>
+          {heading(guide.title)}
+          {guide.steps.length > 0 ? (
+            <ol className={s.fixCards}>
+              {guide.steps.slice(0, 3).map((fixStep, i) => (
+                <li key={fixStep.title}>
+                  <Card>
+                    <span className={s.fixNum} aria-hidden="true">{i + 1}</span>
+                    <p className={s.fixTitle}>{fixStep.title}</p>
+                    <p className={s.fixText}>{fixStep.text}</p>
+                  </Card>
+                </li>
+              ))}
+            </ol>
+          ) : <p className={s.lead}>{guide.fix}</p>}
+          {schedule.file ? <p className={s.note}>{schedule.file.name}</p> : null}
+        </div>
+      );
+      if (guide.action === "another") main = <Button size="lg" disabled={busy} onClick={chooseFile}>Choose another PDF</Button>;
+      else if (guide.action === "retry") {
+        if (canRetry(schedule)) {
+          main = <Button size="lg" disabled={busy} onClick={() => void retrySchedule()}>Try again</Button>;
+          secondary = <Button variant="outline" size="lg" disabled={busy} onClick={chooseFile}>Choose another PDF</Button>;
+        } else main = <Button size="lg" disabled={busy} onClick={chooseFile}>Choose another PDF</Button>;
+      } else if (guide.action === "policies") main = <Link className={s.linkPrimary} href="/policies">Open my policies</Link>;
+      else if (guide.action === "signin") main = <Link className={s.linkPrimary} href="/signin">Sign in</Link>;
+      else main = <Link className={s.linkPrimary} href="/home">Go to Home</Link>;
+      break;
+    }
+    case "plan": {
+      const guesses = cands?.candidates.slice(0, 3) ?? [];
+      const top = guesses[0];
+      const searchOpen = else_ || guesses.length === 0;
+      content = (
+        <>
+          {heading("Which plan is this?")}
+          {top && !else_ ? <p className={s.lead}>We think this is <b>{label(top)}</b>.</p> : <p className={s.lead}>Tell us which plan this is.</p>}
+          {guesses.length > 0 && !else_ ? (
+            <ul className={s.choices} role="radiogroup" aria-label="Plan choices">
+              {guesses.map((c) => (
+                <li key={c.candidateId}>
+                  <label className={s.choice} data-on={pick?.candidateId === c.candidateId}>
+                    <input type="radio" name="plan" checked={pick?.candidateId === c.candidateId} onChange={() => setPick({ candidateId: c.candidateId, label: label(c) })} />
+                    <span className={s.choiceText}><b>{c.productName}</b><span>{c.insurerName}</span></span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {guesses.length === 0 && !else_ ? <p className={s.note}>We could not tell from the first pages. Search for it below.</p> : null}
+          {searchOpen ? (
+            <>
+              <div className={s.searchRow}>
+                <Field label="Insurer or plan name">
+                  <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void search(); }} maxLength={100} autoComplete="off" />
+                </Field>
+                <Button variant="outline" size="lg" onClick={() => void search()} disabled={busy || !q.trim()}>Search</Button>
+              </div>
+              {found?.length === 0 ? <p className={s.note}>Nothing matched. Try fewer words.</p> : null}
+              {found && found.length > 0 ? (
+                <ul className={s.choices} role="radiogroup" aria-label="Search results">
+                  {found.slice(0, 4).map((p) => (
+                    <li key={p.productId}>
+                      <label className={s.choice} data-on={pick?.candidateId === p.productId}>
+                        <input type="radio" name="plan" checked={pick?.candidateId === p.productId} onChange={() => setPick({ candidateId: p.productId, label: p.productName })} />
+                        <span className={s.choiceText}><b>{p.productName}</b></span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
+          ) : null}
+          {errorLine}
+        </>
+      );
+      secondary = (
+        <Button variant="outline" size="lg" aria-expanded={searchOpen} onClick={() => { setElse((v) => !v || guesses.length === 0); setPick(null); }}>
+          {else_ ? "Back to our guesses" : "Something else"}
+        </Button>
+      );
+      main = (
+        <Button size="lg" disabled={busy || !pick} state={checking ? "busy" : "idle"} busyLabel="Checking your insurer's terms" onClick={() => void confirm()}>
+          {pick ? `Yes, it is ${pick.label}` : "Choose a plan"}
+        </Button>
+      );
+      break;
+    }
+    case "plan-retry":
+      content = (
+        <>
+          {heading("Finding your plan.")}
+          {errorLine}
+        </>
+      );
+      main = error === "UNAUTHENTICATED"
+        ? <Link className={s.linkPrimary} href="/signin">Sign in</Link>
+        : <Button size="lg" onClick={() => void (holdingId ? loadCandidates(holdingId) : undefined)}>Try again</Button>;
+      break;
+    case "cover": {
+      const id = encodeURIComponent(holdingId ?? "");
+      content = (
+        <>
+          <div className={s.pillRow}><Signal kind="ok">Added</Signal></div>
+          {heading(`${pick?.label ?? ""} is in.`)}
+          {coverFacts.length > 0 ? (
+            <ul className={s.facts} data-testid="cover-facts">
+              {coverFacts.map((line) => (
+                <li key={line.key}>
+                  <Card>
+                    <p className={s.factLabel}>{line.label}</p>
+                    <p className={s.factValue}>{line.value}</p>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div role="status"><p className={s.lead}>Your cover is saved.</p></div>
+        </>
+      );
+      secondary = (
+        <div className={s.bottomEnd}>
+          <Link className={s.linkOutline} href={`/covers/review?holding=${id}`}>See what we found</Link>
+          <Link className={s.linkOutline} href={`/covers/declarations?holding=${id}`}>Add health details</Link>
+        </div>
+      );
+      main = <Link className={s.linkPrimary} href={`/policies/${id}`}>Open my policy</Link>;
+      break;
+    }
+    case "people":
+      break;
+  }
 
   return (
-    <div className={s.stack}>
-      <div>
-        <PageTitle>Add a policy</PageTitle>
-      </div>
-
-      {consent === null && !loadFailure ? <div role="status" aria-label="Loading your upload page"><PageSkeleton height={160} /></div> : null}
-      {consent === null && loadFailure ? <ErrorBox code={loadFailure} onRetry={retryLoad} /> : null}
-
-      {error ? (
-        <p className={s.alert} role="alert">
-          {errorText(error)} {error === "UNAUTHENTICATED" ? <Link href="/signin">Sign in</Link> : null}
-          {holdingId && !cands && !done && error !== "UNAUTHENTICATED" ? <> <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void loadCandidates(holdingId)}>Try again</button></> : null}
-        </p>
-      ) : null}
-
-      {consent === false ? (
-        // FOR LEGAL REVIEW: the wording below is not final.
-        <SectionHeading title="Before we start">
-          <div className={s.card}>
-            <p className={s.lead}>To read your policy we need to do three things with the files you add.</p>
-            <ul className={s.choices}>
-              <li>Keep them in your account, in encrypted storage.</li>
-              <li>Check them for harmful content.</li>
-              <li>Read their text with our reading service and pull out the cover details, such as sum insured and waiting periods.</li>
-            </ul>
-            <p className={s.lead}>Nothing is read until you say yes. You can delete a document or withdraw this at any time, and what we read from it is erased.</p>
-            <label className={s.choice}>
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-              <span>Yes, you can do this with the documents I add.</span>
-            </label>
-            <div className={s.row}><button type="button" className="k-btn" disabled={!agreed || busy} onClick={() => void accept()}>{busy ? "Saving..." : "Continue"}</button></div>
-          </div>
-        </SectionHeading>
-      ) : null}
-
-      {consent ? (
-        <SectionHeading title="Type of cover">
-          <div className={s.card}>
-            <label className={s.field}>
-              Type of policy
-              <select value={policyType} disabled={typeLocked || schedule.status !== "empty"} onChange={(e) => { setPolicyType(e.target.value as PolicyType | ""); setError(null); }} data-testid="policy-type">
-                <option value="" disabled>Choose one</option>
-                {POLICY_TYPES.map((t) => <option key={t} value={t}>{POLICY_TYPE_LABEL[t]}</option>)}
-              </select>
-            </label>
-          </div>
-        </SectionHeading>
-      ) : null}
-
-      {consent && mustPay && slots ? (
-        // FOR LEGAL REVIEW: price and payment wording.
-        <SectionHeading title="Add another policy">
-          <div className={s.card} data-testid="pay-card">
-            <p className={s.lead}>Your first policy is free. Adding another policy costs <b>Rs {(slots.pricePaise / 100).toLocaleString("en-IN")}</b>, paid once through Razorpay.</p>
-            <div className={s.row}>
-              <button type="button" className="k-btn" disabled={busy} onClick={() => void pay()}>{busy ? "Opening payment..." : `Pay Rs ${(slots.pricePaise / 100).toLocaleString("en-IN")}`}</button>
-            </div>
-          </div>
-        </SectionHeading>
-      ) : null}
-
-      {consent && !mustPay ? (
-        <SectionHeading title="Your policy schedule" description={`PDF only, up to ${MB} MB. The schedule lists who is covered, the sum insured and the dates.`}>
-          <div className={s.drop} data-over={over} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); void takeSchedule(e.dataTransfer.files[0]); }}>
-            <SlotStatus slot={schedule} name="Your policy schedule" />
-            <input ref={scheduleInput} aria-label="Policy schedule PDF" data-testid="schedule-input" type="file" accept="application/pdf,.pdf" hidden onChange={(e) => void takeSchedule(e.target.files?.[0])} />
-            <div className={s.row}>
-              {schedule.status === "empty" || schedule.status === "failed" ? (
-                <button type="button" className="k-btn" disabled={busy || policyType === ""} data-slot="policy_schedule" onClick={() => scheduleInput.current?.click()}>
-                  {policyType === "" ? "Choose the type of cover first" : schedule.status === "failed" ? "Choose another PDF" : "Choose the schedule PDF"}
-                </button>
-              ) : null}
-              {canRetry(schedule) ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void retrySchedule()}>Try again</button> : null}
-              {schedule.status === "waiting" ? <button type="button" className="k-btn k-btn--secondary" disabled={busy} onClick={() => void checkAgain()}>Check again</button> : null}
-            </div>
-          </div>
-        </SectionHeading>
-      ) : null}
-
-      {cands && !done ? (
-        <SectionHeading title="Which plan is this?">
-          <div className={s.card}>
-            {top && !else_ ? <p className={s.lead}>We think this is <b>{label(top)}</b>. Is that right?</p> : <p className={s.lead}>Tell us which plan this is.</p>}
-            {cands.candidates.length > 0 && !else_ ? (
-              <ul className={s.choices} role="radiogroup" aria-label="Plan choices">
-                {cands.candidates.map((c) => (
-                  <li key={c.candidateId}>
-                    <label className={s.choice} data-on={pick?.candidateId === c.candidateId}>
-                      <input type="radio" name="plan" checked={pick?.candidateId === c.candidateId} onChange={() => setPick({ candidateId: c.candidateId, label: label(c) })} />
-                      <div><b>{c.productName}</b><span>{c.insurerName}</span></div>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {cands.candidates.length === 0 && !else_ ? <p className={s.quiet}>We could not tell from the first pages. Search for it below.</p> : null}
-            <div className={s.row}>
-              <button type="button" className="k-btn k-btn--secondary" onClick={() => { setElse((v) => !v || cands.candidates.length === 0); setPick(null); }} aria-expanded={else_ || cands.candidates.length === 0}>
-                {else_ ? "Back to our guesses" : "Something else"}
-              </button>
-            </div>
-            {else_ || cands.candidates.length === 0 ? (
-              <div className={s.stack}>
-                <label className={s.field}>
-                  Insurer or plan name
-                  <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void search(); }} maxLength={100} autoComplete="off" />
-                </label>
-                <div className={s.row}><button type="button" className="k-btn k-btn--secondary" onClick={() => void search()} disabled={busy || !q.trim()}>Search</button></div>
-                {found?.length === 0 ? <p className={s.quiet}>Nothing matched. Try fewer words.</p> : null}
-                {found && found.length > 0 ? (
-                  <ul className={s.choices} role="radiogroup" aria-label="Search results">
-                    {found.map((p) => (
-                      <li key={p.productId}>
-                        <label className={s.choice} data-on={pick?.candidateId === p.productId}>
-                          <input type="radio" name="plan" checked={pick?.candidateId === p.productId} onChange={() => setPick({ candidateId: p.productId, label: p.productName })} />
-                          <div><b>{p.productName}</b></div>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+    <div className={s.frame} data-screen={screen}>
+      <header className={s.top}>
+        <BrandMark size={28} />
+        <ol className={s.steps} aria-label="Steps">
+          {WIZARD_STEPS.map((name, i) => (
+            <li key={name} className={s.step} aria-current={i + 1 === step ? "step" : undefined} data-done={i + 1 < step ? "true" : undefined}>
+              <span className={s.stepNum}>
+                {i + 1 < step ? (
+                  <>
+                    <svg className={s.stepTick} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M4 10.5l4 4 8-9" /></svg>
+                    <span className={s.srOnly}>{i + 1}</span>
+                  </>
+                ) : i + 1}
+              </span>
+              {name}
+              {i < WIZARD_STEPS.length - 1 ? <span className={s.stepLine} data-reached={i + 1 < step ? "true" : undefined} aria-hidden="true" /> : null}
+            </li>
+          ))}
+        </ol>
+        <Link className={`${s.linkOutline} ${s.close}`} href="/home">Close</Link>
+      </header>
+      {screen === "people" ? (
+        <PeopleStep onDone={() => setPeopleDone(true)} />
+      ) : (
+        <>
+          <div
+            className={s.middle}
+            onDragOver={screen === "find" ? (e) => { e.preventDefault(); setOver(true); } : undefined}
+            onDragLeave={screen === "find" ? () => setOver(false) : undefined}
+            onDrop={screen === "find" ? (e) => { e.preventDefault(); setOver(false); void takeSchedule(e.dataTransfer.files[0]); } : undefined}
+          >
+            {artKind ? (
+              <div className={s.split}>
+                <WizardArt kind={artKind} />
+                {/* Only the right column is drawn as the dashed drop area on the find screen; a file dropped anywhere on the row is still taken. */}
+                <div className={screen === "find" ? `${s.splitRight} ${s.drop}` : s.splitRight} data-over={screen === "find" ? over : undefined}>
+                  {content}
+                </div>
               </div>
-            ) : null}
-            <div className={s.row}>
-              <button type="button" className="k-btn" onClick={() => void confirm()} disabled={busy || !pick}>{pick ? `Yes, it is ${pick.label}` : "Choose a plan"}</button>
-            </div>
+            ) : content}
           </div>
-        </SectionHeading>
-      ) : null}
-
-      {checking ? <p className={s.quiet} role="status" data-state="checking">Checking your insurer&rsquo;s terms&hellip;</p> : null}
-
-      {done && holdingId ? (
-        <SectionHeading title="What's next">
-          <div className={s.done} role="status">
-            <span>Your cover is saved.</span>
-            <div className={s.row}>
-              <Link className="k-btn" href={`/policies/${encodeURIComponent(holdingId)}`}>Open my policy</Link>
-              <Link className="k-btn k-btn--secondary" href={`/covers/review?holding=${encodeURIComponent(holdingId)}`}>See what we found</Link>
-              <Link className="k-btn k-btn--secondary" href={`/covers/declarations?holding=${encodeURIComponent(holdingId)}`}>Add declarations and premium</Link>
-            </div>
+          <div className={s.bottom}>
+            <div>{secondary}</div>
+            <div>{main}</div>
           </div>
-        </SectionHeading>
+        </>
+      )}
+      {screen === "find" || screen === "guide" ? (
+        <input ref={scheduleInput} aria-label="Policy schedule PDF" data-testid="schedule-input" type="file" accept="application/pdf,.pdf" hidden onChange={(e) => void takeSchedule(e.target.files?.[0])} />
       ) : null}
     </div>
   );

@@ -167,17 +167,17 @@ const SUMMARY: HoldingView["summary"] = {
 };
 
 describe("screens", () => {
-  it("home shows the sum insured tile; detail shows insurer, product and honest headlines", async () => {
+  it("home shows the sum insured in the cover sentence; detail shows insurer, product and honest headlines", async () => {
     stub([{ ...holding("ready"), summary: SUMMARY }]);
     const home = render(<RealHome />);
-    const sumTile = (await screen.findByText("Sum insured")).closest("a");
-    expect(sumTile).toHaveTextContent("Rs 5,00,000");
+    expect(await screen.findByTestId("home-cover")).toHaveTextContent("Rs 5,00,000");
     home.unmount();
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Example Health Plan 01")).toBeInTheDocument();
     expect(screen.getByText(/Example Insurer/)).toBeInTheDocument();
     expect(await screen.findByTestId("headline-sum_insured")).toHaveTextContent("Rs 5,00,000");
-    expect(screen.getByTestId("headline-sum_insured")).toHaveTextContent("Read from your document");
+    // The header card shows a found value on its own (R5b.3); the status text stays on the list and on rows that still need a decision.
+    expect(screen.getByTestId("headline-sum_insured")).not.toHaveTextContent("Read from your document");
     expect(screen.getByTestId("headline-policy_period")).toHaveTextContent("Two readings");
     expect(screen.getByTestId("headline-premium_total")).toHaveTextContent("Not found yet");
     expect(screen.getAllByRole("link", { name: "Review and decide" }).some((a) => a.getAttribute("href") === "/covers/review?holding=h1")).toBe(true);
@@ -185,20 +185,21 @@ describe("screens", () => {
   it("before confirmation the choose-plan note shows and no headlines", async () => {
     stub([{ ...holding("insurer_pending"), summary: { insurerName: null, productName: null, sumInsured: null, policyPeriod: null, premium: null } }]);
     render(<RealPolicies />);
-    expect(await screen.findByTestId("stage-note")).toHaveTextContent(/Tell us which plan this is/);
+    expect(await screen.findByTestId("policy-card")).toHaveTextContent(/Tell us which plan this is/);
     expect(screen.queryByTestId("headlines")).toBeNull();
   });
   it("home links the next step to the review screen when a detail is open", async () => {
     stub([holding("conflicts")]);
     render(<RealHome />);
-    expect(await screen.findByRole("link", { name: /Decide on open details/ })).toHaveAttribute("href", "/covers/review?holding=h1");
+    expect(await screen.findByRole("link", { name: "Decide now" })).toHaveAttribute("href", "/covers/review?holding=h1");
+    expect(screen.getByText("Decide on open details")).toBeInTheDocument();
   });
   it("home shows a document that is still retrying as still being read, next to the ready policy", async () => {
     stub([holding("ready")], [{ documentId: "d2", state: "retrying", code: null }]);
     render(<RealHome />);
     expect(await screen.findByTestId("creation-retrying")).toHaveTextContent(/still being read/i);
     expect(screen.queryByTestId("creation-failed")).toBeNull();
-    expect(await screen.findByText("Policies")).toBeInTheDocument();
+    expect((await screen.findAllByTestId("home-policy")).length).toBe(1);
   });
   it("home shows a failed document with an add-again action, and no empty state", async () => {
     stub([], [{ documentId: "d2", state: "failed", code: "HOLDING_CREATE_FAILED" }]);
@@ -238,14 +239,14 @@ describe("screens", () => {
     stub([holding("uploaded")]);
     render(<RealPolicies />);
     expect(await screen.findByText(/Still being read/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Add the document again" })).toHaveAttribute("href", "/covers/add");
+    expect(screen.getByRole("link", { name: "Health policy" })).toHaveAttribute("href", "/policies/h1");
   });
   it("detail shows grouped facts, not-found count and unknown id as not found", async () => {
     stub([holding("conflicts")]);
     render(<RealPolicyDetail id="h1" />);
-    expect(await screen.findByRole("heading", { name: "Waiting" })).toBeInTheDocument();
-    expect(screen.getByText("You confirmed this")).toBeInTheDocument();
-    expect(screen.getByText("Not found in this policy (2)")).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("tab", { name: "Waiting" }));
+    expect(screen.getByText("Initial waiting period")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Not found (2)" })).toBeInTheDocument();
     cleanup();
     stub([holding("ready", "other")]);
     render(<RealPolicyDetail id="h1" />);
@@ -270,8 +271,10 @@ describe("screens", () => {
   it("detail shows a source label on each fact", async () => {
     stub([holding("conflicts")]);
     render(<RealPolicyDetail id="h1" />);
-    await screen.findByRole("heading", { name: "Waiting" });
-    expect(screen.getAllByTestId("fact-source").map((n) => n.textContent)).toEqual(expect.arrayContaining(["Your schedule", "Confirmed by you", "Conflicting"]));
+    await screen.findByRole("tab", { name: "Waiting" });
+    // A row shows where the fact was read (the citation); a fact with no citation shows its source label instead (R5b.3).
+    const shown = (key: string) => { const l = factLine(FACTS.find((f) => f.factKey === key) as FactView); return l.citation ?? l.sourceText; };
+    expect(screen.getAllByTestId("fact-source").map((n) => n.textContent)).toEqual(expect.arrayContaining([shown("room_rent_limit"), shown("waiting_initial"), shown("copay_percent")]));
   });
   it.each([
     ["fss", "Insurer terms attached (verified)"],
@@ -280,6 +283,7 @@ describe("screens", () => {
   ] as const)("detail shows the terms line for %s", async (state, text) => {
     stub([{ ...holding("ready"), summary: { ...SUMMARY, wordingState: state } }]);
     const { container } = render(<RealPolicyDetail id="h1" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Insurer terms" }));
     expect(await screen.findByTestId("terms-status")).toHaveTextContent(text);
     expect(screen.queryByRole("button", { name: "Add the terms yourself" }) !== null).toBe(state === "missing");
     expect(container.textContent).not.toMatch(/sample|draft|disclaimer|inaccurate|\bUIN\b/i);
@@ -301,23 +305,24 @@ describe("screens", () => {
 
 describe("real home and list visual structure (#105)", () => {
   const headingLevels = (root: HTMLElement) => Array.from(root.querySelectorAll("h1,h2,h3,h4")).map((h) => `${h.tagName.toLowerCase()}:${h.textContent}`);
-  it("home: one h2 section holds the tiles, and only real headline values are shown", async () => {
+  it("home: one h2 holds the cover sentence, and only real headline values are shown", async () => {
     stub([{ ...holding("ready"), summary: SUMMARY }]);
     const { container } = render(<RealHome />);
-    const sumTile = (await screen.findByText("Sum insured")).closest("a");
-    expect(headingLevels(container)).toEqual(["h2:Your cover at a glance"]);
-    expect(sumTile).toHaveTextContent("Rs 5,00,000");
+    expect(await screen.findByTestId("home-cover")).toHaveTextContent("Rs 5,00,000");
+    // The greeting line above it is its own h1 (R5b.2); the cover sentence is the only h2.
+    expect(headingLevels(container).filter((h) => h.startsWith("h2"))).toEqual(["h2:You have Rs 5,00,000 of health cover."]);
     // Conflicting period and unknown premium are not a number to headline: left out, not faked. The conflict goes to the next-step tile.
     expect(container).not.toHaveTextContent("Policy period");
     expect(container).not.toHaveTextContent("Premium");
     expect(container).not.toHaveTextContent("Not found yet");
-    expect(screen.getByRole("link", { name: /Decide on open details/ })).toHaveAttribute("href", "/covers/review?holding=h1");
+    expect(screen.getByRole("link", { name: "Decide now" })).toHaveAttribute("href", "/covers/review?holding=h1");
   });
   it("home: next step asks to pick the plan while the insurer is pending", async () => {
     stub([holding("insurer_pending")]);
     render(<RealHome />);
-    await screen.findByText("Next step");
-    expect(screen.getByRole("link", { name: /Pick your plan/ })).toHaveAttribute("href", "/covers/add?resume=1");
+    await screen.findByTestId("home-next");
+    expect(screen.getByText("Pick your plan")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Choose your plan" })).toHaveAttribute("href", "/covers/add?resume=1");
   });
   it("policies: no repeated 'Your policies' h2; the page title is the h1 and the count stands in", async () => {
     stub([holding("ready")]);

@@ -93,10 +93,10 @@ const citationText = (c: Citation): string => {
 
 // Every text node wraps (overflow-wrap anywhere, min-width 0): a long quote must never push the page wider than a 375px screen.
 const wrap = { overflowWrap: "anywhere", minWidth: 0 } as const;
-const lineBox = { display: "flex", flexDirection: "column", gap: 6, padding: "12px 14px", borderRadius: "var(--r-md)", border: "1px solid var(--line)", background: "var(--sheet)", font: "400 14px/1.45 var(--font-sans)", color: "var(--ink)", ...wrap } as const;
-const badge = { alignSelf: "flex-start", maxWidth: "100%", padding: "2px 8px", borderRadius: "var(--r-md)", background: "var(--mist)", font: "600 12px var(--font-sans)", color: "var(--graphite)", ...wrap } as const;
-const quoteBox = { margin: 0, paddingLeft: 10, borderLeft: "2px solid var(--line)", font: "italic 400 13px/1.4 var(--font-sans)", color: "var(--graphite)", ...wrap } as const;
-const citeText = { margin: 0, font: "400 12px/1.4 var(--font-sans)", color: "var(--graphite)", ...wrap } as const;
+const lineBox = { display: "flex", flexDirection: "column", gap: 6, padding: "12px 14px", borderRadius: "var(--r-md)", border: "1px solid var(--line)", background: "var(--sheet)", font: "500 16px/1.45 var(--font-sans)", color: "var(--ink)", ...wrap } as const;
+const badge = { alignSelf: "flex-start", maxWidth: "100%", padding: "2px 8px", borderRadius: "var(--r-md)", background: "var(--mist)", font: "600 16px var(--font-sans)", color: "var(--graphite)", ...wrap } as const;
+const quoteBox = { margin: 0, paddingLeft: 10, borderLeft: "2px solid var(--line)", font: "italic 500 16px/1.4 var(--font-sans)", color: "var(--graphite)", ...wrap } as const;
+const citeText = { margin: 0, font: "500 16px/1.4 var(--font-sans)", color: "var(--graphite)", ...wrap } as const;
 
 /** One fact line: the statement, its tier label, the quote the reading rests on, and where it came from. */
 export function MemoryLineView({ item }: { item: string }) {
