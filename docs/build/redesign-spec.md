@@ -845,7 +845,7 @@ Persona served: a 25 to 35 year old tech worker on a laptop. Every number is rea
 
 | File | Change |
 |---|---|
-| `src/styles/app-theme.css` | Add, inside the app scope only: `.kv-app h1, .kv-app h2, .kv-app h3 { font-weight: 500; }` and `.kv-app p { font-weight: 500; }`. Nothing else. |
+| `src/styles/app-theme.css` | Add, inside the app scope only: `.kv-app h1 { font-weight: 500; }`. Nothing else (a wider rule would outrank module classes that set 600). |
 | App-only CSS modules (R5a.3 list) | Weight literals 300, 400 and `normal` become 500. |
 | `src/components/cover-real/MemoryDocument.tsx` | Inline `fontSize` values under 16 become 16; inline `fontWeight` under 500 becomes 500. Nothing else. |
 | `src/components/cover-real/RealHome.tsx`, `RealHome.module.css` | Home fits (R5a.4). |
@@ -862,7 +862,7 @@ In every `*.module.css` under these folders: `src/components/{access,agent,chat,
 - `font: 300 ` and `font: 400 ` become `font: 500 `;
 - `font-weight: 300`, `font-weight: 400` and `font-weight: normal` become `font-weight: 500`.
 
-Nothing else in those files changes. The shared `type.module.css` title is covered by the new `.kv-app h1, .kv-app h2, .kv-app h3 { font-weight: 500; }` rule in `app-theme.css`, plus `.kv-app p { font-weight: 500; }` for its description line.
+Nothing else in those files changes. The shared `type.module.css` page title (always an `h1`) is covered by the new `.kv-app h1 { font-weight: 500; }` rule in `app-theme.css`.
 
 ### R5a.4 Home
 
