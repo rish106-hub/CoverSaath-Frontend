@@ -1,7 +1,7 @@
 
 ## R5b Home and policy page match the approved canvas
 
-Scope: Home and the policy page are rebuilt to the layout the owner approved on the canvas (Version 6), using only data the product really has. This section (kept in its own file from here on; earlier sections are in `docs/build/redesign-spec.md`) replaces R3d.2, R3d.3, R3e.3, R5a.4 and R5a.6. The My policies list (R5a.5) does not change. The judge is the browser harness plus the unit suite.
+Scope: Home and the policy page are rebuilt to the layout the owner approved on the canvas (Version 6), using only data the product really has. This section (kept in its own file from here on; earlier sections are in `docs/build/redesign-spec.md`) replaces R3d.2, R3d.3, R3e.3, R5a.4 and R5a.6. The My policies list keeps its R5a.5 look and gains the fit rules of R5b.7. The judge is the browser harness plus the unit suite.
 
 Visual source (read before building; prototype code, copy no markup or copy that this section does not pin): `design/canvas-v6/screens-w.js` (the last `reg("home"` and `reg("policy"` registrations win), `design/canvas-v6/flat.css` (classes `.halves`, `.statp`, `.big0`, `.pcard`, `.pcard.next`, `.kv3`, `.rowt`), and the screenshots `design/canvas-v6/shots/home.png` and `design/canvas-v6/shots/policy.png`.
 
@@ -17,14 +17,16 @@ Not shown, because the product has no data for it: the "4 in 100" statistic, the
 | `src/components/shell/HomeGreeting.tsx` | New optional prop `size?: "page" \| "line"` (default `"page"`, today's look). With `"line"` the `h1` uses a new class: Source Sans, 22px, weight 500, no top margin. Logic unchanged. |
 | `src/components/shell/HomeGreeting.module.css` | New. The `.line` class. |
 | `src/components/cover-real/RealHome.tsx`, `RealHome.module.css` | Rewritten (R5b.2). |
-| `src/components/cover-real/RealPolicyDetail.tsx`, `policies.module.css` | Detail rewritten (R5b.3). List styles untouched. |
+| `src/components/cover-real/RealPolicyDetail.tsx`, `policies.module.css` | Detail rewritten (R5b.3). |
+| `src/components/cover-real/RealPolicies.tsx` | Fit rules only (R5b.7). |
+| `src/components/cover-real/use-fit.ts` | New. `useFit` (R5b.7). |
 | `e2e/real-calm.ts` | New. `expectCalm`, `expectNothingCutOff`, `SIZES` and the screenshot helper move here unchanged from `e2e/real-screens.spec.ts`, which imports them. |
 | `playwright.real.config.ts` | `testMatch` becomes `/real-.*\.spec\.ts$/`. |
 | `playwright.config.ts` | `testIgnore` becomes `/real-.*\.spec\.ts$/`. |
 | `e2e/real-screens.spec.ts`, `e2e/real-account.ts` | Tests follow the new markup (R5b.4). No rule changes. |
 | `tests/components/kv-home.test.tsx`, `kv-policies.test.tsx`, `t3-home.test.tsx`, `tests/adapters/real-policy.test.tsx`, `tests/components/real-policy-detail.test.tsx`, `wording-cutover.test.tsx`, `tests/app/routes.test.tsx`, other unit tests that fail only because of a change pinned here | Updated to the pinned markup. Titles are kept unless this section renames them. No test file is deleted. |
 
-Not edited: `parts.tsx`, `MemoryDocument.tsx`, `PassageSearch.tsx`, `use-policies.ts`, `RealPolicies.tsx`, adapters, `src/components/ui/*`, shared type and global styles, landing files, `package.json`.
+Not edited: `parts.tsx`, `MemoryDocument.tsx`, `PassageSearch.tsx`, `use-policies.ts`, adapters, `src/components/ui/*`, shared type and global styles, landing files, `package.json`.
 
 ### R5b.2 Home
 
@@ -75,17 +77,31 @@ Heights: under `@media (max-height: 860px)` the name is 36px, card padding 20px,
 ### R5b.4 Harness
 
 - `e2e/real-calm.ts` holds the helpers; their bodies are moved, not changed.
+- Tests 2, 5, 8, 12 and 13 fail before this task on measured rules; all of them pass after it.
 - Test 1 keeps its title and also expects `home-renewal` and two `home-policy` cards for the default two-policy account.
 - Test 6 is renamed `policy page shows the header card and switches fact groups`: it expects the `h1` product name, three headline cells, the first group tab selected, and a switch to `Waiting`.
 - Test 8 is renamed `policy page is calm on every tab at every laptop size`.
 - New test 18: `home with one policy shows the policy, ask and next-step cards`.
-- Every other title is unchanged. All 18 tests pass, the measuring ones included: this task owns the fixes for Home and the policy page. A measuring failure on the My policies list or the wizard that already failed before this task is reported, not fixed here.
+- Every other title is unchanged. All 18 tests pass, the measuring ones included: this task owns the fixes for Home, the list and the policy page.
 
 ### R5b.5 Unit tests
 
 - `kv-home.test.tsx`: titles 5 and 6 (`the policies card links to My policies and lists at most two titles`, `a third policy shows and 1 more`) are replaced by `each of the first two policies is a card that links to its page` and `a third policy shows and 1 more on the second card`; titles 7 and 8 keep their names and assert the renewal panel (`home-renewal`): the date for found, `No renewal date yet` for missing; a new title 13 `the next-step button text follows where it leads`. Still no skipped test.
 - `kv-policies.test.tsx`: `detail starts on At a glance with the stage note, pending note and headlines` becomes `detail shows the notices and the header card with three headlines`; `a group with nine facts pages at six` stays; a new title `a fact row shows its label, value and where it was read`.
 - Other files: only what the pinned markup breaks.
+
+### R5b.7 Nothing is ever cut off (measured by the harness)
+
+The harness found content cut off at 1366x650, at 1280x560 and with long names. These rules apply to Home, the list and the policy page.
+
+1. Text is never hidden by a fixed-height box. A box that cannot hold its content either gets fewer items (rule 2), scrolls inside itself (rule 4) or lets the page scroll (rule 5).
+2. `use-fit.ts` exports `useFit(ref: RefObject<HTMLElement | null>, unit: number, min: number, max: number): number`: it measures the element's height with a `ResizeObserver` and returns `clamp(floor(height / unit), min, max)`; before the first measure, and when the height is 0 (as under jsdom), it returns `max`. No dependency is added.
+   - My policies: the grid's rows come from `useFit(gridRef, 204, 1, 2)`; the page size is `rows * 2` (so 4 on a normal laptop, 2 on a short one). `PAGE_SIZE = 4` stays as the maximum. The pager follows the page size.
+   - Policy page: rows per page come from `useFit(panelRef, 58, 2, 6)`; `FACT_PAGE = 6` stays as the maximum.
+3. Names that can be long (policy title and insurer on a Home policy card, on a list card and in the renewal panel) are one line with an ellipsis: `white-space: nowrap; overflow: hidden; text-overflow: ellipsis`, and the element carries `data-truncate` and `title` set to the full text. The policy page's `h1` wraps instead (up to its natural height) and is never truncated.
+4. Policy page group panels have `overflow-y: auto`: a long value wraps in full inside its row, and if the rows then need more room than the panel has, the panel scrolls inside itself. The page itself still does not scroll.
+5. Under `@media (max-height: 639px)` every screen root takes its natural height, so the page scrolls instead of cutting anything.
+6. Under `@media (max-height: 720px)`: Home's sentence and big figure are 36px, the next-step line 22px, card padding 16px, gaps 12px; the policy page's name is 28px and its header card padding 16px; list card padding 16px. No font under 16px, no weight under 500.
 
 ### R5b.6 Out of scope
 
