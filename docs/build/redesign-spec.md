@@ -766,3 +766,60 @@ Every title in the four listed files is kept and must pass. Allowed edits: a que
 ### R3e.7 Out of scope
 
 Insurer logos. Compare, stress test, hospitals, review screens. Restyling `parts.tsx`, `MemoryDocument`, `PassageSearch`. Adapters. New dependencies.
+
+## R4a Real-account screens in the browser (test harness)
+
+Scope: a Playwright harness that renders the real-account screens (the ones a signed-in person sees) on the mock dev server by answering the browser's own `/api/app/*` calls with synthetic data. It proves in a real browser what unit tests cannot: nothing scrolls, no small or thin text, the laptop gate works. No product code changes.
+
+Persona served: the owner and reviewers, who judge the product by what the screen looks like for a real account, and the end user (a 25 to 35 year old tech worker on a laptop) who must never scroll or squint.
+
+### R4a.1 Files
+
+| File | Change |
+|---|---|
+| `playwright.config.ts` | Port from `process.env.KV_E2E_PORT` (default `3201`) in `baseURL`, the server command and `url`; `reuseExistingServer` is `false` when `KV_E2E_PORT` is set, `true` otherwise. Nothing else changes. |
+| `e2e/real-account.ts` | New. `export async function asRealAccount(page: Page, opts?: { policies?: 1 | 2 | 5 }): Promise<{ unhandled: string[] }>`. |
+| `e2e/real-screens.spec.ts` | New (R4a.3). |
+
+Not edited: everything under `src/`, `tests/`, other `e2e/` files, `package.json`.
+
+### R4a.2 `asRealAccount`
+
+- Registers `page.route("**/api/app/**", ...)` before any navigation and fulfils each request the real screens make with JSON that passes the same zod contract the browser adapter parses (`src/adapters/covers-contract.ts`, `src/adapters/documents-contract.ts`, `src/adapters/scenarios.ts`, `src/adapters/payments.ts`, and the session shape read by `src/components/shell/useMe.ts`). Shapes are copied from those files, never guessed.
+- The session answer makes `me.source` equal `"backend"`, so `DemoGate` shows the real screens. The owner is `Asha Rao`.
+- Holdings: `opts.policies` (default 2) holdings with ids `h1`, `h2`, ... Holding `h1`: insurer `Example Insurer`, product `Example Health Plan 01`, stage ready, a confirmed sum insured of 500000 rupees, a policy period, a premium, and at least nine facts spread over the groups Limits, Waiting and Exclusions (so one group pages), one of them `renewal_date`, plus two not-found keys. Other holdings: a different product name each, ready, sum insured only.
+- Any `/api/app/*` request with no fixture is fulfilled with status 404 and body `{"code":"NOT_FOUND"}` and its method and path are pushed to the returned `unhandled` array.
+- Synthetic data only: no real person, policy number, insurer document or key. No request may reach `/api/v1`.
+
+### R4a.3 `e2e/real-screens.spec.ts`
+
+Sign-in for every test: the existing beta-access steps used at the top of `e2e/journey.spec.ts` (name, email, `Get access`, wait for `/welcome`), then `asRealAccount(page)` routes are already in place before the first navigation.
+
+A helper `expectCalm(page)` asserts, in the page:
+- `document.documentElement.scrollHeight <= window.innerHeight + 1`;
+- the `main` element's `scrollHeight <= clientHeight + 1`;
+- no visible element that directly holds text has a computed `font-size` under 16px;
+- no such element has a computed `font-weight` under 500.
+Elements inside `[data-panel="terms"]` are skipped for the scroll rule only.
+
+Tests (titles):
+
+1. `home shows the cover sentence and one next step for a real account`
+2. `home is calm at 1440x900 and 1280x800`
+3. `my policies shows one card per policy and no pager for two`
+4. `five policies page at four`
+5. `my policies is calm at 1440x900 and 1280x800`
+6. `policy detail opens on At a glance and switches to a fact group`
+7. `a group of nine facts pages at eight`
+8. `policy detail is calm at 1440x900 and 1280x800`
+9. `the wizard is calm on every step at 1440x900`
+10. `under 1024px wide the laptop gate shows and the app is hidden`
+11. `no call reaches the backend API and no app call is unhandled`
+
+Each test that visits a screen saves a full-viewport screenshot to `test-results/real/<screen>-<width>.png`.
+
+A test that fails because the product breaks a rule (for example Home scrolls at 1280x800) is a finding, not a harness bug: the builder does not change product code or weaken the assertion; it reports the failing test, the measured numbers and the screenshot path.
+
+### R4a.4 Out of scope
+
+Any change under `src/`. Other screens (compare, stress test, hospitals, Ask, family, money, settings). Visual snapshot comparison. CI wiring. New dependencies.
