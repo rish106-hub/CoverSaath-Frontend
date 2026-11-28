@@ -1,6 +1,6 @@
 # R3c evals — Payment flow (no screen): failure reasons, late settlement, pay sequence
 
-> Base for every diff check in this file is commit `77a4933`, not origin/main. Allowed changed paths are the five in R3c.1 only.
+> Base for every diff check in this file is commit `a7313cd`, not origin/main. Allowed changed paths are the five in R3c.1 only.
 
 Run all commands from the worktree root (`.claude/worktrees/flat-redesign`). Source of truth: `docs/build/redesign-spec.md`, "Rules" and "R3c Payment flow (no screen)". A check is PASS only if the stated expectation holds; any other result is FAIL. Written from the spec, not from the builder's code. No database, no paid API, no network: tests use fake deps and a fake `window.Razorpay`. Do not print `.env*`.
 
@@ -8,9 +8,9 @@ Vitest named checks: PASS needs exit 0 and output matching `1 passed` (a zero-ma
 
 ## A. Scope
 
-R3c-01. Exactly the five files changed — cmd: `{ git diff --name-only 77a4933; git ls-files --others --exclude-standard; } | sort -u | grep . | diff - <(printf '%s\n' src/adapters/types.ts src/components/covers/pay-flow.ts src/lib/razorpay.ts tests/components/pay-flow.test.ts tests/lib/razorpay.test.ts)` — expect: exit 0, no output — PASS if the set of changed (tracked or untracked) paths equals the five R3c.1 rows, all five present, nothing else. Run under bash or zsh.
+R3c-01. Exactly the five files changed — cmd: `{ git diff --name-only a7313cd; git ls-files --others --exclude-standard; } | sort -u | grep . | diff - <(printf '%s\n' src/adapters/types.ts src/components/covers/pay-flow.ts src/lib/razorpay.ts tests/components/pay-flow.test.ts tests/lib/razorpay.test.ts)` — expect: exit 0, no output — PASS if the set of changed (tracked or untracked) paths equals the five R3c.1 rows, all five present, nothing else. Run under bash or zsh.
 
-R3c-02. Frozen files untouched — cmd: `test -z "$(git diff 77a4933 --stat -- src/components/covers/AddCoverView.tsx src/adapters/documents-contract.ts src/adapters/payments.ts src/app/api/app/payments package.json package-lock.json src/styles/tokens.css src/app/page.tsx src/components/landing)"; test $? -eq 0 && test -z "$(git status --porcelain -- src/app/api/app/payments src/components/landing package.json package-lock.json)"` — expect: exit 0 — PASS if none of AddCoverView, `ERROR_TEXT` file, payments adapter, payments BFF routes, package.json, package-lock.json, tokens.css, landing page and landing components differ from `77a4933` (no new dependency). If `documents-contract.ts` lives elsewhere, FAIL and report the path.
+R3c-02. Frozen files untouched — cmd: `test -z "$(git diff a7313cd --stat -- src/components/covers/AddCoverView.tsx src/adapters/documents-contract.ts src/adapters/payments.ts src/app/api/app/payments package.json package-lock.json src/styles/tokens.css src/app/page.tsx src/components/landing)"; test $? -eq 0 && test -z "$(git status --porcelain -- src/app/api/app/payments src/components/landing package.json package-lock.json)"` — expect: exit 0 — PASS if none of AddCoverView, `ERROR_TEXT` file, payments adapter, payments BFF routes, package.json, package-lock.json, tokens.css, landing page and landing components differ from `a7313cd` (no new dependency). If `documents-contract.ts` lives elsewhere, FAIL and report the path.
 
 ## B. AdapterError
 
@@ -48,4 +48,4 @@ R3c-14. Failure paths, named — cmd: `npx vitest run tests/lib/razorpay.test.ts
 
 R3c-15. verify gates — cmd: `npm run typecheck && out=$(npm run lint 2>&1); rc=$?; echo "$out" | tail -20; test $rc -eq 0 && test -z "$(echo "$out" | grep -E '^/.*\.(ts|tsx)$' | grep -v 'src/app/layout.tsx')" && npx vitest run` — expect: exit 0 — PASS if typecheck exits 0, lint exits 0 with no file listed other than `src/app/layout.tsx` (its one existing warning is allowed, no new warning or error), and the whole unit suite passes with zero failures (mock adapters, no database).
 
-R3c-16. no secret added — cmd: `git diff 77a4933 | grep -E '^\+' | grep -iE 'secret|password|api_key|rzp_(live|test)_[A-Za-z0-9]+|key_secret'` — expect: exit 1, no output — PASS if nothing new matches (the diff also holds no `console.log` of a payment error: `git diff 77a4933 | grep -E '^\+.*console\.'` returns nothing).
+R3c-16. no secret added — cmd: `git diff a7313cd | grep -E '^\+' | grep -iE 'secret|password|api_key|rzp_(live|test)_[A-Za-z0-9]+|key_secret'` — expect: exit 1, no output — PASS if nothing new matches (the diff also holds no `console.log` of a payment error: `git diff a7313cd | grep -E '^\+.*console\.'` returns nothing).
