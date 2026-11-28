@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { adapters, type DocumentItem, type Household } from "@/adapters";
 import { GROUPS, PAGES } from "@/lib/ia";
 import { useAgent } from "@/components/agent/AgentProvider";
-import { useTheme } from "@/components/theme";
+import { useNavAudience } from "@/components/shell/EmptyState";
 import styles from "./palette.module.css";
 
 /** No list in the palette grows past this many rows. */
@@ -16,7 +16,7 @@ const MAX_ROWS = 100;
 export function CommandPalette() {
   const { paletteOpen, setPaletteOpen, open, submit } = useAgent();
   const router = useRouter();
-  const { toggle } = useTheme();
+  const audience = useNavAudience();
   const [people, setPeople] = useState<Household["members"]>([]);
   const [docs, setDocs] = useState<DocumentItem[]>([]);
   const [query, setQuery] = useState("");
@@ -32,7 +32,7 @@ export function CommandPalette() {
   if (!paletteOpen) return null;
   const go = (href: string) => { setPaletteOpen(false); setQuery(""); router.push(href); };
   const ask = (text: string) => { setPaletteOpen(false); setQuery(""); open(document.querySelector<HTMLElement>("[data-ask-trigger]"), { mode: "text" }); if (text) submit(text); };
-  const nav = PAGES.filter((p) => !p.route.includes("["));
+  const nav = PAGES.filter((p) => !p.route.includes("[") && (audience === "demo" || !p.demoOnly));
 
   return (
     <div className={styles.scrim} onClick={() => setPaletteOpen(false)}>
@@ -70,7 +70,6 @@ export function CommandPalette() {
             <Command.Group heading="Actions">
               <Command.Item value="action add document policy" onSelect={() => go("/covers/add")}>Add a document</Command.Item>
               <Command.Item value="action emergency" onSelect={() => go("/emergency")}>Emergency</Command.Item>
-              <Command.Item value="action switch theme dark light" onSelect={() => { setPaletteOpen(false); toggle(); }}>Switch light and dark</Command.Item>
             </Command.Group>
           </Command.List>
         </Command>

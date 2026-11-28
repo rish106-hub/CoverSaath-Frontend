@@ -1,6 +1,7 @@
 export { AppShell } from "./AppShell";
 export { PageHeader } from "./PageHeader";
 export { AppSidebar } from "./AppSidebar";
+export { ViewportGate } from "./ViewportGate";
 export { AppSidebar as HomeSidebar } from "./AppSidebar";
 export { PagePlaceholder } from "./PagePlaceholder";
 export { UserChip } from "./UserChip";

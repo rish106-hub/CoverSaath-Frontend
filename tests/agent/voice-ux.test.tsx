@@ -22,23 +22,15 @@ afterEach(() => { cleanup(); delete (window as unknown as { webkitSpeechRecognit
 
 const shell = () => render(<ThemeProvider><AppShell pathname={pathname}><p>body</p></AppShell></ThemeProvider>);
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-const dock = () => document.querySelector<HTMLElement>("[data-ask-trigger]") as HTMLElement;
+// The Ask dock is gone from the shell (R2); the header mic is the button that opens the Ask Knowvia panel.
+const dock = () => screen.getByRole("button", { name: "Talk to Knowvia" });
 function installVoice() {
   class Rec { lang = ""; interimResults = false; continuous = false; onresult: unknown = null; onend: (() => void) | null = null; onerror: unknown = null; start() {} stop() { this.onend?.(); } abort() {} }
   (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = Rec;
 }
 const css = (f: string) => readFileSync(path.resolve(__dirname, "../../src/components/agent", f), "utf8");
 
-describe("dock", () => {
-  it("is a labelled voice button with a mic and a sound wave", async () => {
-    shell(); await flush();
-    const d = dock();
-    expect(d.tagName).toBe("BUTTON");
-    expect(d.textContent).toContain("Talk to Knowvia");
-    expect(screen.getAllByRole("button", { name: "Talk to Knowvia" })).toContain(d);
-    expect(d.querySelector("svg")).not.toBeNull();
-    expect(d.querySelector("[class*=wave]")).not.toBeNull();
-  });
+describe("dock styles", () => {
   it("stops the wave and the breathing ring under reduced motion", () => {
     const c = css("agent.module.css");
     expect(c).toMatch(/prefers-reduced-motion: reduce\)[^\n]*\.wave i[^}]*animation: none/);
@@ -48,11 +40,11 @@ describe("dock", () => {
 });
 
 describe("header mic", () => {
-  it("sits in the top bar beside the theme button and opens voice mode", async () => {
+  it("sits in the top bar beside the search button and opens voice mode", async () => {
     installVoice();
     shell(); await flush();
-    const mic = screen.getAllByRole("button", { name: "Talk to Knowvia" }).find((b) => b !== dock() && !b.closest("[role=dialog]")) as HTMLElement;
-    expect(mic.parentElement).toBe(screen.getByRole("button", { name: "Switch to dark theme" }).parentElement);
+    const mic = dock();
+    expect(mic.parentElement).toBe(screen.getByRole("button", { name: /Search or jump to/ }).parentElement);
     fireEvent.click(mic);
     const dialog = await screen.findByRole("dialog", { name: "Ask Knowvia" });
     expect(dialog.getAttribute("data-view")).toBe("voice");

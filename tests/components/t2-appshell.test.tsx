@@ -7,9 +7,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), push: 
 vi.mock("@/components/shell/useMe", () => ({ useMe: () => ({ state: { status: "loading" }, retry: vi.fn() }), invalidateMe: vi.fn() }));
 vi.mock("@/components/shell/AppSidebar", () => ({ AppSidebar: () => null }));
 vi.mock("@/components/shell/PageHeader", () => ({ PageHeader: () => null }));
-vi.mock("@/components/shell/TrialNotice", () => ({ TrialNotice: () => null }));
-vi.mock("@/components/theme", () => ({ ThemeButton: () => null }));
-vi.mock("@/components/agent", () => ({ AgentProvider: ({ children }: { children: unknown }) => <>{children as never}</>, AgentLayer: () => null, HeaderMic: () => null }));
+vi.mock("@/components/agent", () => ({ AgentProvider: ({ children }: { children: unknown }) => <>{children as never}</>, AgentLayer: () => null, HeaderMic: () => null, AskBar: () => null, useAgent: () => ({ setPaletteOpen: vi.fn() }) }));
 
 import { AppShell } from "@/components/shell/AppShell";
 

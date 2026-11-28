@@ -10,7 +10,10 @@ describe("touch targets and mobile layout (#84)", () => {
     expect(tokens).toMatch(/@media \(pointer: coarse\) \{\s*:root \{ --btn-h-sm: 44px; \}/);
   });
   it("gives sidebar links, header icon buttons, dismiss and tool chips 44px on coarse pointers", () => {
-    expect(read("src/components/shell/AppSidebar.module.css")).toMatch(/pointer: coarse\) \{[^}]*\.item, \.on \{ min-height: 44px; \}[^}]*\.emergency \{ min-height: 44px; \}/);
+    // The rail is laptop-only (R2) and its links are 46px high on every pointer, so no coarse-pointer override is needed.
+    const rail = read("src/components/shell/AppSidebar.module.css");
+    expect(rail).toMatch(/\.item, \.on \{[^}]*height: 46px/);
+    expect(rail).toMatch(/\.emergency, \.settings \{[^}]*height: 46px/);
     expect(read("src/components/agent/agent.module.css")).toMatch(/pointer: coarse\) \{ \.headMic \{ width: 44px; height: 44px; \}/);
     expect(read("src/components/theme/ThemeButton.module.css")).toMatch(/pointer: coarse\) \{ \.btn \{ width: 44px; height: 44px; \}/);
     expect(read("src/components/shell/TrialNotice.module.css")).toMatch(/pointer: coarse\) \{ \.x \{[^}]*min-height: 44px/);

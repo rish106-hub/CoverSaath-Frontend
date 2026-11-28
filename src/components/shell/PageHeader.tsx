@@ -1,46 +1,26 @@
 "use client";
 
-import { BrandMark } from "@/components/brand/BrandMark";
 import Link from "next/link";
-import { groupById, groupHome, navHref, pagesIn, pageFor, type GroupId } from "@/lib/ia";
-import { useNavAudience } from "./EmptyState";
+import { railFor } from "@/lib/ia";
 import styles from "./PageHeader.module.css";
 
-/** Header at the top of every app page except /home (board Compare: .phead). */
+/** Sub-tabs of the current rail place (for example Compare under My policies). Renders nothing for places without tabs and for pages outside the rail. */
 export function PageHeader({ pathname }: { pathname: string }) {
-  const page = pageFor(pathname);
-  const audience = useNavAudience();
-  const groupId: GroupId | null = page?.group ?? null;
-  const group = groupId ? groupById(groupId) : null;
-  const tabs = groupId ? pagesIn(groupId, audience) : [];
+  const place = railFor(pathname);
+  if (!place || place.tabs.length === 0) return null;
+  const clean = pathname.replace(/\/+$/, "");
+  // Policy detail paths sit under "All policies"; add-a-policy paths match no tab, so none is current there.
+  const current = clean.startsWith("/policies/") ? "/policies" : clean;
   return (
-    <header className={styles.phead}>
-      <div className={styles.prow}>
-        <nav className={styles.crumbs} aria-label="Breadcrumb" data-testid="page-breadcrumb">
-          <BrandMark size={20} compact />
-          {group ? (
-            <>
-              <span aria-hidden>/</span>
-              <span className={styles.dot} style={{ background: group.color }} aria-hidden />
-              <Link href={groupHome(group, audience)}>{group.label}</Link>
-            </>
-          ) : null}
-          <span aria-hidden>/</span>
-          <b aria-current="page">{page?.tab ?? "Knowvia"}</b>
-        </nav>
-      </div>
-      {group ? (
-        <nav className={styles.ptabs} aria-label={group.label} data-testid="page-subtabs">
-          {tabs.map((t) => {
-            const on = t.tab === page?.tab;
-            return (
-              <Link key={t.route} href={navHref(t, audience)} className={on ? styles.tabOn : undefined} style={on ? { borderColor: group.color } : undefined} aria-current={on ? "page" : undefined}>
-                {t.tab}
-              </Link>
-            );
-          })}
-        </nav>
-      ) : null}
-    </header>
+    <nav className={styles.tabs} aria-label={place.label} data-testid="page-subtabs">
+      {place.tabs.map((t) => {
+        const on = t.route === current;
+        return (
+          <Link key={t.route} href={t.route} className={on ? styles.on : styles.tab} aria-current={on ? "page" : undefined}>
+            {t.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

@@ -39,8 +39,8 @@ describe("shell nav by account kind", () => {
     render(<AppSidebar pathname="/policies" />);
     await act(async () => {});
     const h = hrefs();
-    for (const x of ["/assistant", "/cards", "/desk", "/review", "/emergency"]) expect(h).toContain(x);
-    expect(screen.getByRole("button", { name: "Help" })).toBeInTheDocument();
+    // The rail is the same five places for every audience; only the Emergency target differs by audience.
+    for (const x of ["/home", "/policies", "/chat", "/family", "/money", "/covers/add", "/settings", "/emergency"]) expect(h).toContain(x);
     expect(screen.getByText("Emergency").closest("a")).toHaveAttribute("href", "/emergency");
   });
 });

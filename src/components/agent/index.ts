@@ -5,3 +5,4 @@ export { AskStrip } from "./AskStrip";
 export { AskPanel } from "./AskPanel";
 export { ShortcutsOverlay } from "./ShortcutsOverlay";
 export { HeaderMic } from "./HeaderMic";
+export { AskBar } from "./AskBar";

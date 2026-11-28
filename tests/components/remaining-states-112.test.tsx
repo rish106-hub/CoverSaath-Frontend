@@ -73,7 +73,7 @@ describe("home when the backend is down (row 27)", () => {
   it("keeps the h1 greeting and renders the notice below as an h2", () => {
     const { container } = render(<HomeGreeting />);
     const h1 = container.querySelector("h1");
-    const h2 = screen.getByRole("heading", { level: 2, name: /Can’t reach Knowvia/ });
+    const h2 = screen.getByRole("heading", { level: 2, name: /Knowvia is not answering/ });
     expect(h1?.textContent).toMatch(/^Good (morning|afternoon|evening)\.$/);
     expect(container.querySelectorAll("h3").length).toBe(0);
     expect(h1!.compareDocumentPosition(h2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

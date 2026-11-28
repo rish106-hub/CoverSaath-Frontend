@@ -246,3 +246,30 @@ export function activeTab(pathname: string): string | undefined {
 export function groupOf(pathname: string): GroupId | "none" {
   return pageFor(pathname)?.group ?? "none";
 }
+
+/** The five places of the side rail. Added next to GROUPS and PAGES, which stay as they are for voice navigation, return paths and page context. */
+export type RailId = "home" | "policies" | "ask" | "family" | "money";
+export type RailPlace = { id: RailId; label: string; href: string; tabs: { route: string; label: string }[] };
+export const RAIL: readonly RailPlace[] = [
+  { id: "home", label: "Home", href: "/home", tabs: [] },
+  { id: "policies", label: "My policies", href: "/policies", tabs: [
+    { route: "/policies", label: "All policies" }, { route: "/compare", label: "Compare" },
+    { route: "/stress-test", label: "Stress test" }, { route: "/hospitals", label: "Hospitals" } ] },
+  { id: "ask", label: "Ask", href: "/chat", tabs: [] },
+  { id: "family", label: "Family", href: "/family", tabs: [
+    { route: "/family", label: "People" }, { route: "/family/memory", label: "Cover memory" },
+    { route: "/covers/declarations", label: "Health details" } ] },
+  { id: "money", label: "Money", href: "/money", tabs: [
+    { route: "/money", label: "Premiums" }, { route: "/tools", label: "Calculators" } ] },
+];
+
+/** The rail place a pathname belongs to, or undefined for pages outside the rail (Emergency, Settings, Profile, unknown paths). */
+export function railFor(pathname: string): RailPlace | undefined {
+  const clean = pathname.replace(/\/+$/, "");
+  if (!clean) return undefined;
+  const direct = RAIL.find((p) => p.href === clean || p.tabs.some((t) => t.route === clean));
+  if (direct) return direct;
+  // /covers/declarations is a Family tab (matched above); every other add-a-policy or policy detail path belongs to My policies.
+  if (clean.startsWith("/policies/") || clean.startsWith("/covers/")) return RAIL.find((p) => p.id === "policies");
+  return undefined;
+}

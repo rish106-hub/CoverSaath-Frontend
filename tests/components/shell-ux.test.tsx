@@ -16,33 +16,25 @@ vi.mock("next/navigation", () => ({
 afterEach(() => { cleanup(); document.documentElement.setAttribute("data-theme", "light"); });
 
 const shell = () => render(<ThemeProvider><AppShell pathname="/compare"><p>body</p></AppShell></ThemeProvider>);
-const dockBtn = () => document.querySelector<HTMLElement>("[data-ask-trigger]") as HTMLElement;
+// The Ask dock is gone from the shell (R2); the header mic is the button that opens the Ask Knowvia panel.
+const dockBtn = () => screen.getByRole("button", { name: "Talk to Knowvia" });
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 
 describe("sidebar rail and brand", () => {
-  it("shows the K mark link inside the sidebar and every nav link has a tooltip label", async () => {
+  it("shows the K mark link inside the sidebar and the five rail places", async () => {
     const { container } = shell();
     await flush();
     const side = container.querySelector("aside") as HTMLElement;
     const brand = within(side).getByRole("link", { name: "Knowvia home" });
     expect(brand.querySelector("img")?.getAttribute("src")).toBe("/brand/knowvia-mark.svg");
     const links = within(within(side).getByRole("navigation", { name: "Knowvia sections" })).getAllByRole("link");
-    expect(links.length).toBeGreaterThan(5);
-    for (const l of links) {
-      expect(l.getAttribute("data-tip")).toBeTruthy();
-      expect(l.textContent?.trim()).toBe(l.getAttribute("data-tip"));
-    }
+    expect(links.map((l) => l.textContent)).toEqual(["Home", "My policies", "Ask", "Family", "Money"]);
   });
 
-  it("keeps the theme control out of the sidebar and in the top bar", async () => {
-    const { container } = shell();
+  it("keeps the theme control out of the shell", async () => {
+    shell();
     await flush();
-    const side = container.querySelector("aside") as HTMLElement;
-    expect(within(side).queryByRole("button", { name: /theme/i })).toBeNull();
-    const btn = screen.getByRole("button", { name: "Switch to dark theme" });
-    fireEvent.click(btn);
-    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
-    expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /theme/i })).toBeNull();
   });
 });
 
@@ -145,7 +137,7 @@ describe("Ask Knowvia panel, voice first", () => {
 describe("Ask Knowvia panel, entry points", () => {
   afterEach(() => { removeVoice(); cleanup(); });
 
-  it("without speech support the dock opens straight into chat with a short note", async () => {
+  it("without speech support the header mic opens straight into chat with a short note", async () => {
     shell();
     await flush();
     fireEvent.click(dockBtn());
