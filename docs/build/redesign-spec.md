@@ -357,3 +357,326 @@ The file carries the comment `// FOR LEGAL REVIEW: price and payment wording.` a
 ### R3c.6 Out of scope
 
 Any screen or CSS. `AddCoverView.tsx`. `ERROR_TEXT` and its `PAYMENT_SIGNATURE_INVALID` line (owner decision pending on its wording). BFF routes, backend, webhook. Hiding UPI Collect. New dependencies.
+
+## R3b Add-a-policy wizard
+
+Scope: `/covers/add` becomes a one-screen-per-step wizard with no side rail, top bar or ask bar. The route, its URL, `?resume=1`, the upload sequence in `add-cover-flow.ts` and every backend call stay as they are. Canvas reference: `design/canvas-v6/screens-w.js`.
+
+Persona served: a 25 to 35 year old tech worker adding a first or second health policy from a PDF on a laptop. They see one question per screen, one main action, plain words while the file is read, and a way to fix every failure. They never see an error code or backend text.
+
+### R3b.1 Files
+
+| File | Change |
+|---|---|
+| `src/components/shell/AppShell.tsx` | Bare mode for `/covers/add` (R3b.2). |
+| `src/components/shell/AppShell.module.css` | `.bare` rule (R3b.2). |
+| `src/components/covers/AddCoverView.tsx` | Rewritten as the wizard. Export name and props unchanged. |
+| `src/components/covers/wizard-copy.ts` | New. Step labels, stage copy, `screenOf`, `guideFor`. No JSX. |
+| `src/components/covers/PeopleStep.tsx` | New. The "Who is in your family?" screen. |
+| `src/components/covers/wizard.module.css` | New. All wizard styles. |
+| `tests/components/kv-wizard.test.tsx` | New (R3b.9). |
+| `tests/components/add-cover-view.test.tsx`, `add-cover-resume.test.tsx`, `consent-upload-states.test.tsx` | Selectors and copy updated per R3b.10. Every `it` title is kept. |
+| `e2e/add-cover.ts`, `e2e/journey.spec.ts` | Only the lines that tick the consent checkbox, press "Continue" on consent, press "Choose the schedule PDF", or expect the three done links, updated to the new names. Playwright is not run in this task. |
+
+Not edited: `add-cover-flow.ts`, `pay-flow.ts`, `lib/razorpay.ts`, `adapters/*`, `documents-contract.ts`, `covers.module.css`, `CoverReviewView.tsx`, `DeclarationsView.tsx`, `src/lib/ia.ts`, any file under `src/app/`.
+
+### R3b.2 Bare shell
+
+In `AppShell`, after `pathname` is computed: `const bare = pathname === "/covers/add";`. The signed-out redirect effect is unchanged and runs in both modes. When `bare` is true the component returns:
+
+```tsx
+<AgentProvider>
+  <div className={styles.bare} data-shell="bare">
+    <main id="main-content" tabIndex={-1}>{children}</main>
+  </div>
+  <div className={styles.gateWrap}><ViewportGate /></div>
+</AgentProvider>
+```
+
+No `AppSidebar`, `TopBar`, `AskBar`, `AgentLayer` or skip link in bare mode. CSS: `.bare { height: 100dvh; overflow: hidden; }` and, inside the existing `@media (max-width: 1023px)` block, `.bare { display: none; }`. Every other path renders exactly as before.
+
+### R3b.3 Screens
+
+`wizard-copy.ts` exports:
+
+```ts
+export const WIZARD_STEPS = ["Find your policy", "Reading it", "Your people", "Your cover"] as const;
+export type WizardScreen = "loading" | "load-failed" | "consent" | "pay" | "find" | "reading" | "guide" | "plan" | "plan-retry" | "people" | "cover";
+export type ScreenInput = {
+  consent: boolean | null; loadFailed: boolean; done: boolean; peopleDone: boolean; hasCandidates: boolean;
+  slotStatus: "empty" | "working" | "waiting" | "failed" | "done"; slotCode: string | null; mustPay: boolean; hasHolding: boolean;
+};
+export function screenOf(i: ScreenInput): WizardScreen
+export function stepOf(screen: WizardScreen): 1 | 2 | 3 | 4
+```
+
+`screenOf` returns the first match, in this order:
+
+1. `consent === null && !loadFailed` : `loading`
+2. `consent === null && loadFailed` : `load-failed`
+3. `done && peopleDone` : `cover`
+4. `done` : `people`
+5. `hasCandidates` : `plan`
+6. `consent === false` : `consent`
+7. `slotStatus` is `working` or `waiting` : `reading`
+8. `slotStatus === "failed"` and `slotCode` is neither `PAYMENT_REQUIRED` nor `CONSENT_REQUIRED` : `guide`
+9. `mustPay` : `pay`
+10. `slotStatus === "done" && hasHolding` : `plan-retry`
+11. otherwise : `find`
+
+`stepOf`: `loading`, `load-failed`, `consent`, `pay`, `find` give 1; `reading`, `guide`, `plan`, `plan-retry` give 2; `people` gives 3; `cover` gives 4.
+
+`AddCoverView` renders exactly one screen, the one `screenOf` returns. `mustPay` keeps today's formula (`!resumed && ((slots !== null && slots.enabled && !slots.canAdd) || schedule.code === "PAYMENT_REQUIRED")`).
+
+### R3b.4 Frame (every screen)
+
+Root: `<div className={s.frame} data-screen={screen}>` with three rows, `height: 100dvh`, `grid-template-rows: 72px minmax(0, 1fr) 88px`, background `var(--paper)`, no scroll (`overflow: hidden`).
+
+- Top row: left `BrandMark` (size 28) and the word "Knowvia"; centre `<ol aria-label="Steps">` with the four `WIZARD_STEPS`, each `<li>` showing its number and label, the current one with `aria-current="step"`, earlier ones with `data-done="true"`; right `<Link href="/home">Close</Link>` styled as an outline button.
+- Middle row: one centred column, `max-width: 760px`, content vertically centred, `gap: 20px`. The screen heading is the only `<h1>`: Newsreader, 44px, line-height 1.1, weight 500. All other text is 18px weight 500 or 16px weight 600. Nothing under 16px, no weight under 500.
+- Bottom row: `padding: 0 40px`, secondary action on the left, main action on the right (`justify-content: space-between`). A screen with one action puts it on the right.
+
+Buttons are the shared `Button` (R1). Main actions use `variant="primary" size="lg"`; secondary use `variant="outline" size="lg"`. Links that look like buttons use `.linkPrimary` and `.linkOutline` in `wizard.module.css`, matching the `lg` button box (height, radius, weight, colours). Colours come from the app theme tokens only; no hex values, shadows, gradients or blur in `wizard.module.css`. Motion: only `transition` on `opacity`, `transform`, `border-color`, `background-color` using `var(--t-in)`, `var(--t-out)`, `var(--t-press)`; no `@keyframes` except one `kvWizardPulse` opacity pulse for the active reading row, which is switched off under `@media (prefers-reduced-motion: reduce)`.
+
+### R3b.5 Screen content
+
+`{MB}` is `MAX_UPLOAD_BYTES / 1024 / 1024`. `{price}` is `(slots.pricePaise / 100).toLocaleString("en-IN")`.
+
+**loading**: `<div role="status" aria-label="Loading your upload page"><PageSkeleton height={160} /></div>` (as today). No heading, empty bottom row.
+
+**load-failed**: `<ErrorBox code={loadFailure} onRetry={retryLoad} />` (as today).
+
+**consent** (keep the comment `// FOR LEGAL REVIEW: the wording below is not final.` above it):
+- h1: `Can Knowvia read your policy?`
+- A three-item list: `Keep it in your account, in encrypted storage.` / `Check it for harmful content.` / `Read its text and pull out the cover details, such as sum insured and waiting periods.`
+- A link `Privacy` to `/privacy`.
+- Main action: `Yes, read my policy` (busy label `Saving`). It calls `uploads.grantConsent(consentKey.current)` as today. No checkbox.
+- After a successful grant, when `schedule.code === "CONSENT_REQUIRED"` and `schedule.file` is set, the held file is sent again at once through today's `retrySchedule` path (same slot, same request key). With no held file the screen becomes `find`.
+
+**pay** (keep the comment `// FOR LEGAL REVIEW: price and payment wording.`; root of the middle column carries `data-testid="pay-card"`):
+- h1: `Add another policy for Rs {price}.`
+- Text: `Your first policy is free. Each one after that is Rs {price}, paid once.`
+- State is a `PayState` from `pay-flow.ts`, starting `{ kind: "idle" }`. The main action runs `runPay(realPayDeps(), setPay)`.
+- Main action label by state: `idle` `Pay Rs {price}`; `opening` busy with `payCopy(state)`; `confirming` busy with `payCopy(state)`; `stopped` with `canPayAgain` true `Pay Rs {price}`; `stopped` with a proof `Check again`, which runs `confirmPay(realPayDeps(), proof, setPay)`; `stopped` with `canPayAgain` false and no proof: no main action.
+- `stopped`: `<InlineStatus kind="error">{payCopy(state)}</InlineStatus>` above the bottom row. Code `UNAUTHENTICATED` adds a `Sign in` link to `/signin`.
+- `paid`: call `setSlots(state.slots)`. If `schedule.file` is set and `schedule.code === "PAYMENT_REQUIRED"`, send the held file at once (today's path in `pay()`, same request key). Otherwise reset the slot to `emptySlot()` when its code was `PAYMENT_REQUIRED`. The next screen (`find` or `reading`) shows `<InlineStatus kind="ok">Paid. You can add your policy now.</InlineStatus>` until a file is chosen or the reading ends.
+- The old `pay()` function, `payWithRazorpay` import and "Opening payment..." label are removed from `AddCoverView.tsx`.
+
+**find**:
+- h1: `Drop your policy PDF here.`
+- Text: `PDF, up to {MB} MB. The schedule page is enough: who is covered, the sum insured and the dates.`
+- `<label>` `Type of policy` with the native `<select data-testid="policy-type">` (same options, same `disabled={typeLocked || schedule.status !== "empty"}`, default `personal_health`).
+- The whole middle column is the drop target (today's `onDragOver`, `onDragLeave`, `onDrop`, `data-over`).
+- Hidden file input unchanged: `aria-label="Policy schedule PDF"`, `data-testid="schedule-input"`, `accept="application/pdf,.pdf"`.
+- Main action: `Choose PDF`, `data-slot="policy_schedule"`, disabled while busy or when no type is chosen. It opens the file input.
+
+**reading** (`<div role="status" aria-live="polite" data-state="working" data-stage={stage}>`):
+- h1: the current stage's heading from `STAGE_COPY`.
+- `<Bar value={percent} label="Reading your policy" />` with the current stage's percent.
+- An ordered list of all five stages, each row its `label`, with `data-step` `done`, `active` or `todo` (as today), a green `Signal` dot on done rows and ` (in progress)` in a visually hidden span on the active row.
+- `STAGE_COPY` in `wizard-copy.ts`, keyed by stage:
+
+| Stage | label | h1 | percent |
+|---|---|---|---|
+| `sending` | `Sending your PDF` | `Sending your PDF.` | 15 |
+| `checking` | `Safety check` | `Checking the file is safe.` | 35 |
+| `reading` | `Reading the pages` | `Reading the pages.` | 55 |
+| `details` | `Pulling out cover details` | `Pulling out your cover details.` | 75 |
+| `matching` | `Finding your plan` | `Finding your plan.` | 90 |
+
+- The percent comes only from the stage. No timer changes it.
+- When `schedule.status === "waiting"`: the text `Still working on it. A long policy can take a minute or two.` and a secondary action `Check again` (disabled while busy) that runs today's `checkAgain`. In addition the page checks by itself: while the screen is `reading`, the status is `waiting` and nothing is busy, a `setTimeout` of `POLL_MS = 5000` runs `checkAgain`; at most `POLL_MAX = 36` automatic checks per document; the timer is cleared on unmount and whenever the status leaves `waiting`. `POLL_MS` and `POLL_MAX` are exported from `wizard-copy.ts`.
+- No main action. No Back.
+
+**guide** (`<div role="alert" data-state="failed">`):
+- `guideFor(code: string): { title: string; fix: string; action: "another" | "retry" | "policies" | "signin" | "later" }` from `wizard-copy.ts`. `{MB}` is filled by the caller.
+
+| Codes | title | fix | action |
+|---|---|---|---|
+| `PDF_PROTECTED` | `This PDF has a password on it.` | `Open it, choose Print, then Save as PDF. Add the new copy.` | another |
+| `PDF_ACTIVE_CONTENT`, `PDF_TOO_COMPLEX` | `This PDF needs a clean copy.` | `Open it, choose Print, then Save as PDF. Add the new copy.` | another |
+| `FILE_TYPE_INVALID` | `That file is not a PDF.` | `Download the policy as a PDF from your insurer's email or app.` | another |
+| `FILE_TOO_LARGE` | `That PDF is too big.` | `Add only the schedule pages: who is covered, the sum insured and the dates.` | another |
+| `PDF_TOO_LONG` | `That PDF has too many pages.` | `Add only the schedule pages: who is covered, the sum insured and the dates.` | another |
+| `FILE_EMPTY`, `PDF_UNREADABLE` | `We could not open this PDF.` | `Download a fresh copy from your insurer and add it.` | another |
+| `DOCUMENT_REJECTED`, `POLICY_TYPE_INVALID` | `We could not accept this file.` | `Add another copy of the policy.` | another |
+| `HOLDING_CREATE_FAILED`, `READING_FAILED` | `We could not read this one.` | `Add it again, or use the copy from your insurer's email.` | another |
+| `DUPLICATE_DOCUMENT`, `HOLDING_DOCUMENT_HAS_HOLDING` | `This policy is already added.` | `Open it from My policies.` | policies |
+| `READING_UNAVAILABLE`, `UPLOAD_UNAVAILABLE`, `HOLDINGS_DISABLED` | `Reading is paused right now.` | `Your file is saved. Come back in a little while.` | later |
+| `UNAUTHENTICATED` | `Please sign in again.` | `Then add your policy.` | signin |
+| any other code | `That did not go through.` | `Check your connection and try again.` | retry |
+
+- h1: `title`. Text: `fix`. A line with the file name (`slot.file?.name`) when there is one.
+- Actions: `another`: main `Choose another PDF` (opens the file input). `retry`: main `Try again` (today's `retrySchedule`) when `canRetry(schedule)` is true, and secondary `Choose another PDF`; when `canRetry` is false, main `Choose another PDF` only. `policies`: main link `Open my policies` to `/policies`. `signin`: main link `Sign in` to `/signin`. `later`: main link `Go to Home` to `/home`.
+- The code itself and `errorText` are never rendered on this screen.
+
+**plan**:
+- h1: `Which plan is this?`
+- With a top guess and the search closed: `We think this is {insurer} – {product}.` Otherwise `Tell us which plan this is.`
+- Guesses: the first 3 candidates only (`cands.candidates.slice(0, 3)`), as radio rows inside `role="radiogroup" aria-label="Plan choices"`, product name bold and insurer name beside it (as today).
+- No guesses: `We could not tell from the first pages. Search for it below.`
+- Secondary action: `Something else` / `Back to our guesses` (today's toggle and `aria-expanded`).
+- Search (open, or no guesses): field `Insurer or plan name` (maxLength 100, Enter searches), outline button `Search`, results capped at 4 (`slice(0, 4)`) in `role="radiogroup" aria-label="Search results"`, empty result text `Nothing matched. Try fewer words.` Plan names only; never a registry number.
+- Main action: `Yes, it is {pick.label}`; with nothing picked, disabled with label `Choose a plan`; while confirming, busy with label `Checking your insurer's terms`. It runs today's `confirm()` (same request-key rule).
+- Other failures on this screen (`error` state from search or confirm): `<InlineStatus kind="error">{errorText(error)}</InlineStatus>`; code `UNAUTHENTICATED` adds a `Sign in` link.
+
+**plan-retry**: h1 `Finding your plan.`, `<InlineStatus kind="error">{errorText(error)}</InlineStatus>` when `error` is set, main action `Try again` running `loadCandidates(holdingId)`; code `UNAUTHENTICATED` shows a `Sign in` link instead of the button.
+
+**people** (`PeopleStep`, props `{ onDone: () => void }`):
+- h1: `Who is in your family?`
+- On mount: `adapters.members.list()`. Rows show people who are neither `isOwner` nor `isYou`: name, and relation when set. At most 4 rows; more than 4 adds the line `and {n} more`.
+- List failed: `<InlineStatus kind="error">We could not load your family. Add people later from Family.</InlineStatus>`; the form and actions still work.
+- Form: `Field` `Name` (text input, maxLength 80) and `Field` `Relation` (native select: `Spouse`, `Son`, `Daughter`, `Father`, `Mother`, `Other`; value equals the label; default `Spouse`). Outline button `Add person` (busy label `Adding`), disabled when the trimmed name is empty. It calls `adapters.members.add({ name: name.trim(), relation })`, appends the result to the list and clears the name. Failure: `<InlineStatus kind="error">We could not save that. Try again.</InlineStatus>`, the typed name is kept.
+- Actions: secondary `Skip for now`, main `Continue`. Both call `onDone`. Nothing is linked to the policy (the backend has household members only).
+
+**cover**:
+- h1: `{pick.label} is in.`
+- `<div role="status">` with the text `Your cover is saved.`
+- Main link `Open my policy` to `/policies/{holdingId}`; secondary links `See what we found` to `/covers/review?holding={holdingId}` and `Add health details` to `/covers/declarations?holding={holdingId}` (ids URL-encoded as today).
+
+### R3b.6 Behaviour that must not change
+
+- First load: `uploads.list()` sets consent, the locked policy type, and resumes a schedule still being read (not `DELETING`, not `QUARANTINED`, no holding yet), ahead of the pay screen.
+- `?resume=1`: the open holding with no plan is picked up, its candidates load, no payment is asked.
+- `payments.slots()` on mount; a failed read is ignored.
+- A failed first read never shows the consent screen.
+- `CONSENT_REQUIRED` from an upload shows the consent screen again.
+- Request keys: one per slot, reused on retry; the confirm key changes only after `INVALID_INPUT`, `HOLDING_PRODUCT_UNSUPPORTED` or `POLICY_PROFILE_VERSION_CONFLICT`.
+- Insurer and plan names only. No UIN or registry number on any screen.
+- `runSchedule`, `checkSchedule`, `canRetry`, `emptySlot`, `pickFile` are used as they are.
+
+### R3b.7 Removed from this page
+
+`PageTitle`, `SectionHeading`, `covers.module.css` classes, the `k-btn` classes, the consent checkbox and its extra sentences, `{file}: added.`, the line `{file}: {errorText(code)}`.
+
+### R3b.8 No scroll
+
+At 1440x900 and 1280x800 no screen needs scrolling: guesses capped at 3, search results at 4, family rows at 4. `.frame` and `.bare` do not scroll.
+
+### R3b.9 New tests: `tests/components/kv-wizard.test.tsx`
+
+Titles:
+
+1. `screenOf follows the pinned order for every screen`
+2. `stepOf maps every screen to its step`
+3. `guideFor returns the pinned title, fix and action for every listed code`
+4. `guideFor falls back to the retry guidance for an unknown code`
+5. `the frame shows four steps and marks the current one`
+6. `consent has one button and no checkbox, and granting moves to find`
+7. `a held file is sent again after consent is granted`
+8. `reading shows the stage heading, the five rows and a bar at the stage percent`
+9. `a waiting document is checked again by itself and the timer stops on unmount`
+10. `a password-protected PDF shows guidance with Choose another PDF and no code`
+11. `a network failure shows Try again and Choose another PDF`
+12. `guesses are capped at three and search results at four`
+13. `pay shows the price in the heading and the button`
+14. `a stopped payment shows its reason and Pay again`
+15. `an unconfirmed payment offers Check again and no Pay button`
+16. `after paying, the held file goes up without choosing it again`
+17. `people lists the family, adds a person and keeps the name on failure`
+18. `Skip for now and Continue both reach the cover screen`
+19. `cover names the plan and links to the policy, the findings and health details`
+20. `AppShell in bare mode has no rail, top bar or ask bar on /covers/add`
+21. `AppShell keeps the rail on every other path`
+22. `no screen renders an error code`
+
+### R3b.10 Existing tests: what changes
+
+All twelve `it` titles in `add-cover-view.test.tsx` (4), `add-cover-resume.test.tsx` (4) and `consent-upload-states.test.tsx` (4) are kept and must pass. Only these replacements are made, plus an `adapters.members` mock (`list` resolving `[]`, `add` resolving a record) where the test reaches the people screen:
+
+| Old | New |
+|---|---|
+| tick the checkbox, press `Continue` | press `Yes, read my policy` |
+| heading `Your policy schedule` | heading `Drop your policy PDF here.` |
+| button `Choose the schedule PDF` | button `Choose PDF` |
+| wait for `schedule.pdf: added.` | wait for heading `Which plan is this?` |
+| alert text `schedule.pdf: We could not read this document. Add it again` | alert contains `We could not read this one.` |
+| after confirm, find link `Open my policy` | press `Skip for now`, then find link `Open my policy` |
+
+### R3b.11 Out of scope
+
+Gmail and DigiLocker sources. Names read from the policy. Linking a person to a policy. Picking a reading when documents disagree. Insurer logos. `CoverReviewView`, `DeclarationsView`. Running Playwright. Any backend, BFF or adapter change. New dependencies.
+
+## R3d Home
+
+Scope: `/home` for a real account. Two equal halves that fit one laptop screen: on the left the greeting, the cover read as one sentence and the one next step; on the right three equal cards. Canvas reference: `design/canvas-v6/screens-z.js`. Data and loading logic (`usePolicies`, `nextStepOf`, `useMe`) are unchanged.
+
+Persona served: a 25 to 35 year old tech worker with one or two health policies. Opening Home answers three things at a glance: how much cover, what is coming up, what to do next. One main action. No small captions.
+
+### R3d.1 Files
+
+| File | Change |
+|---|---|
+| `src/components/cover-real/RealHome.tsx` | Rewritten body for the `ready` state (R3d.3). Loading, error and empty branches keep their logic. |
+| `src/components/cover-real/RealHome.module.css` | Rewritten (R3d.2). |
+| `src/components/shell/HomeGreeting.tsx` | The date line (`Kicker`) is removed. Nothing else changes. |
+| `tests/components/kv-home.test.tsx` | New (R3d.5). |
+| `tests/components/t3-home.test.tsx`, `tests/components/t12-numbers-first.test.tsx`, `tests/adapters/real-policy.test.tsx`, `tests/components/remaining-states-112.test.tsx`, `tests/components/t2-greeting-chip.test.tsx` | Only assertions that name a removed element are updated or deleted (R3d.6). |
+
+Not edited: `src/app/(app)/home/page.tsx`, `parts.tsx`, `use-policies.ts`, adapters, `src/components/ui/*`, `src/components/cover/HomeView.tsx` (mock-only view).
+
+### R3d.2 Layout
+
+`RealHome.module.css`:
+
+- `.home`: `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex: 1; min-height: 0;`
+- `.left`: one `Card`, `display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 32px;`
+- `.right`: `display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 24px;` holding three `Card`s, each `padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;`
+- `.sentence`: Newsreader, 44px, line-height 1.1, weight 500. `.value` (card values): Newsreader, 32px, weight 500. `.label` (card labels): 18px, weight 600. All other text 18px weight 500. Nothing under 16px, no weight under 500.
+- Tokens only: no hex colours, shadows, gradients or blur. No `@keyframes`.
+
+### R3d.3 Content (`ready` state)
+
+`policies`, `first`, `next`, `policyHref`, `sumInsured` and `renewal` are computed exactly as today. `<CreationIssues issues={issues} onRetry={reload} />` stays above the grid.
+
+Left card, top to bottom:
+
+1. `<h2 className={sentence}>`:
+   - one policy with a found sum insured: `You have {sumInsured.value} of health cover.` with the value inside `<span data-testid="home-cover">` coloured `var(--harbour)`.
+   - one policy without it: `Your policy is on Knowvia.`
+   - two or more policies: `You have {n} policies on Knowvia.` with `{n}` inside `<span data-testid="home-cover">`. Values of different policies are never added together.
+2. Next step block: `<p className={label}>{next.label}</p>`, `<p>{next.detail}</p>`, and the page's one primary action: a link to `next.href` styled as the primary `lg` button with an arrow, text `{next.label}`, `data-testid="home-next"`. Link styles live in `RealHome.module.css` (`.cta`), matching the `Button` primary `lg` box.
+
+Right column, three cards in this order:
+
+1. Policies: `Card as="a" href="/policies"`. Label `Policies`. Value `{policies.length}`. Below, the titles of the first two policies (`p.title`), one per line; with more than two, a last line `and {n - 2} more`.
+2. Next renewal: `Card as="a" href={policyHref}`. Label `Next renewal`. With `renewal`: value `{renewal.value}` and `<Signal kind="ok">On your policy</Signal>`. Without: value `Not in your policy` and `<Signal kind="warn">Add it from your policy page</Signal>`.
+3. Ask: `Card` (a `div`). Label `Ask about your cover`. Two links, each to `/chat?q={encodeURIComponent(prompt)}` with the prompt as its text, styled as outline buttons: `What are my waiting periods?` and `What does my policy not cover?`.
+
+Removed from Home: `SectionHeading`, `BentoGrid`, `Tile`, `MissingTile`, `SoonTile`, `AskCard`, the "Cover per person" tile, the heading "Your cover at a glance".
+
+### R3d.4 Other states
+
+- `loading`: `<Loading what="your cover" />` (as today).
+- `error`: `<ErrorBox code={state.code} onRetry={reload} />` (as today).
+- `empty` with creation issues: as today.
+- `empty`: `<EmptyState title="Add your first policy" body="Knowvia reads it and shows what it found here." cta="Add a policy" href="/covers/add" />` (as today).
+
+### R3d.5 New tests: `tests/components/kv-home.test.tsx`
+
+Titles:
+
+1. `one policy with a sum insured reads as one sentence`
+2. `one policy without a sum insured says the policy is on Knowvia`
+3. `two policies show the count and never add values together`
+4. `the next step is the only primary action and links to the next step`
+5. `the policies card links to My policies and lists at most two titles`
+6. `a third policy shows and 1 more`
+7. `renewal found shows the date with a green signal`
+8. `renewal missing shows Not in your policy with a yellow signal`
+9. `ask has two prompts that link to chat with the question`
+10. `home has no Soon tile and no Cover per person`
+11. `loading, error and empty states are unchanged`
+12. `the greeting has no date line`
+
+### R3d.6 Existing tests
+
+- `t3-home.test.tsx`: tests about tile rows, the soon tile and the ask card markup are replaced by the equivalent assertion on the new markup where one exists (`ask card has two prompts`, `no policy cards on Home`, `single primary CTA` keep their titles); the rest are deleted and listed in the report with one reason each.
+- `t12-numbers-first.test.tsx`: `RealHome tiles: captions only on Next step` is deleted (no tiles). `FactItem` tests untouched.
+- `tests/adapters/real-policy.test.tsx`: `RealHome` assertions that query a removed tile label are rewritten against the new markup; every other test in the file is untouched and must pass.
+- `remaining-states-112.test.tsx`, `t2-greeting-chip.test.tsx`: only an assertion on the date line, if present, is removed.
+- `tests/styles/touch-targets-84.test.ts` must still pass unchanged (`className="k-no-fade"` stays in `HomeGreeting.tsx`).
+
+### R3d.7 Out of scope
+
+Insurer logos. Any statistic about the population. Cover per person. Days-to-renewal arithmetic. `/chat` reading `?q=`. Mock `HomeView`. New dependencies.
