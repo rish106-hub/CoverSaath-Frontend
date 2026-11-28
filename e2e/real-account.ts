@@ -81,6 +81,17 @@ const MEMORY_MARKDOWN = [
   '- Pre-existing disease wait 36 months (read from your document, not verified) Quote: "Pre-existing diseases after 36 months." [policy_schedule, p.7]',
 ].join("\n");
 
+// Network hospitals of a pincode: 560099 has none; any other pincode has twelve, every third one without cashless. With `long` the first one
+// has a 90-character name and address (to catch text cut off inside a row).
+const hospitalList = (pincode: string, long: boolean) => pincode === "560099" ? [] : Array.from({ length: 12 }, (_, i) => {
+  const n = i + 1;
+  const first = long && n === 1;
+  return {
+    id: `hosp-${n}`, name: first ? `Example Hospital 1 ${"Multi Speciality Care ".repeat(4)}`.slice(0, 90) : `Example Hospital ${n}`,
+    address: first ? `${n} Example Main Road, ${"Synthetic Layout Block ".repeat(4)}`.slice(0, 90) : `${n} Example Road`, city: "Bengaluru", pincode, cashless: n % 3 !== 0,
+  };
+});
+
 const WIZARD_HOLDING_ID = "h-new";
 const WIZARD_DOCUMENT_ID = "doc-new";
 
@@ -127,7 +138,7 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
   const docView = (steps: Record<string, string>, busy: boolean) => ({ id: WIZARD_DOCUMENT_ID, kind: "policy_schedule", sizeBytes: 1024, uploadedAt: null, steps, note: null, busy });
 
   type Answer = { status?: number; json: unknown };
-  const answer = (method: string, path: string): Answer | null => {
+  const answer = (method: string, path: string, query: URLSearchParams = new URLSearchParams()): Answer | null => {
     const data = (d: unknown): Answer => ({ json: { ok: true, data: d } });
     const get = method === "GET";
     if (get && path === "/api/app/me") return { json: { householdId: "hh-example-01", householdName: "Rao household", owner: { id: "u-asha", displayName: "Asha Rao", email: "asha.rao@example.com" }, source: "backend" } };
@@ -166,6 +177,7 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
       if (get && what === "conflicts") return data({ holdingId: id, status: holdingStatus, conflicts: id === "h1" && long ? conflictViews() : [] });
       if (get && what === "memory-document") return data({ holdingId: id, markdown: MEMORY_MARKDOWN });
       if (get && what === "documents") return data({ holdingId: id, documents: [{ documentId: `doc-${id}`, kind: "policy_schedule", factsState: "included" }] });
+      if (get && what === "hospitals") return data({ hospitals: hospitalList(query.get("pincode") ?? "", long) });
       if (get && what === "passages") return data({ passages: [], insurerPassages: [] });
       if (get && what === "candidates") return data({ holdingId: id, profileVersion: 0, candidates: [{ candidateId: "c1", insurerName: "Example Insurer", productName: "Example Health Plan 01", rank: 1 }, { candidateId: "c2", insurerName: "Example Insurer", productName: "Example Family Floater 02", rank: 2 }] });
       if (method === "POST" && what === "confirm") { wizard.confirmed = true; return data({ holdingId: id, status: "ready", profileVersion: 1, replay: false }); }
@@ -193,7 +205,7 @@ export async function asRealAccount(page: Page, opts: RealAccountOptions = {}): 
   await page.route("**/api/app/**", async (route: Route) => {
     const req = route.request();
     const u = new URL(req.url());
-    const hit = answer(req.method(), u.pathname);
+    const hit = answer(req.method(), u.pathname, u.searchParams);
     if (hit) {
       await route.fulfill({ status: hit.status ?? 200, contentType: "application/json", body: JSON.stringify(hit.json) });
       return;
