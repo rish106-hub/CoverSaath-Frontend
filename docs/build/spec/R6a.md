@@ -44,7 +44,7 @@ Not edited: `Landing.tsx`, `landing.module.css`, `Tour.tsx` (now unused; removal
 
 Both CSS files: theme tokens only (no hex colours), no shadows, gradients, blur or `@keyframes`; sizes in px; no font size under 16px; no font weight under 500.
 
-- `.punch`: Newsreader (`var(--font-serif)`), 72px, line-height 1.02, weight 500, colour `var(--ink)`, `letter-spacing: -0.02em`, max-width 9ch. Under `@media (max-height: 760px)`: 52px.
+- `.punch`: Newsreader (`var(--font-serif)`), 72px, line-height 1.02, weight 500, colour `var(--ink)`, `letter-spacing: -0.02em`, `text-wrap: balance` (two lines). Under `@media (max-height: 760px)`: 52px.
 - Fields: label 16px weight 600 above the input; input height 56px, 1.5px border `var(--field-border)`, radius 14px, background `var(--sheet)`, 18px weight 500; focus: 2px outline `var(--harbour)`.
 - Google and other provider buttons: height 56px, full width, 1.5px border `var(--ink)`, radius 14px, background `var(--sheet)`, 18px weight 600, logo 24px.
 - Submit (`Sign in`, `Send code`, `Verify`, links styled as buttons): height 56px, full width, radius 14px, background `var(--tide)`, colour `var(--on-harbour)`, 18px weight 600; hover background `var(--harbour)`; press `transform: scale(0.985)` over 90ms; disabled opacity 0.6.

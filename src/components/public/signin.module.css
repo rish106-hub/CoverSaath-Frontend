@@ -3,7 +3,7 @@
 .left { padding: 40px 64px; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .middle { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 460px; width: 100%; min-height: 0; }
 .form { width: 100%; display: flex; flex-direction: column; gap: 16px; }
-.punch { margin: 0 0 20px; max-width: 9ch; font: 500 72px/1.02 var(--font-serif); letter-spacing: -0.02em; color: var(--ink); }
+.punch { margin: 0 0 20px; text-wrap: balance; font: 500 72px/1.02 var(--font-serif); letter-spacing: -0.02em; color: var(--ink); }
 .h1 { margin: 0; font: 500 44px/1.05 var(--font-serif); letter-spacing: -0.02em; color: var(--ink); }
 .sub { margin: 0; color: var(--ink); font: 500 18px/1.45 var(--font-sans); }
 .sub a, .link { color: var(--harbour); background: none; border: 0; padding: 0; font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
