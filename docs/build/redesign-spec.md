@@ -933,3 +933,65 @@ A source-level test (reads the files with `node:fs`) plus render tests. Titles:
 ### R3s.3 Out of scope
 
 Deleting `SoonBento`, `SoonTile`, `SoonButton` or `Kicker` themselves. `ToolsPage` Soon buttons (handled with the calculators screen). Any layout or copy change beyond the pinned text. Demo-only views.
+
+## R4b Harness: cut-off text, long names, smaller laptops, pay states
+
+Scope: extend the browser harness (R4a) so it catches what it missed: content cut off inside a card, long names and values, a 13-inch laptop's shorter viewport, and the pay screen, which has never been rendered in a browser. No product code changes; what the product breaks is reported as findings.
+
+Persona served: the owner and reviewers judging real-account screens, and the end user on any common laptop (down to a 1366x768 screen, about 650px of page height) who must see every word without scrolling or squinting.
+
+### R4b.1 Files
+
+| File | Change |
+|---|---|
+| `e2e/real-account.ts` | `opts` gains `long?: boolean`, `canAdd?: boolean` (default `true`) and `verify?: "ok" \| "down"` (default `"ok"`). Fixtures for the payment order and verify calls. |
+| `e2e/real-screens.spec.ts` | `expectCalm` gains the two cut-off rules; three viewport sizes; new and renamed tests (R4b.4). |
+
+Not edited: everything under `src/` and `tests/`, both Playwright configs, other `e2e/` files, `package.json`.
+
+### R4b.2 `expectCalm` additions
+
+Existing four rules stay as they are. Two rules are added, checked for every visible element that directly holds text (the same set the font rules use), inside `main`:
+
+1. Not cut off by a container: the element's bounding box has width and height above 1px and lies inside (1px tolerance) the bounding box of every ancestor, up to `main`, whose computed `overflow-x` or `overflow-y` is `hidden` or `clip`.
+2. Not cut off by itself: an element whose own computed overflow is `hidden` or `clip` has `scrollHeight <= clientHeight + 1` and `scrollWidth <= clientWidth + 1`.
+
+The existing exemptions stay (screen-reader-only boxes of 1px or less; `[data-panel="terms"]` for the scroll rule only). No new exemption is added. A failure message names the rule, the element's text (first 40 characters) and the measured numbers.
+
+A second helper `expectNothingCutOff(page)` runs only the two new rules and the two font rules (not the scroll rules).
+
+### R4b.3 Sizes and fixtures
+
+- `SIZES`: 1440x900, 1280x800 and 1366x650. Every "calm" test runs at all three.
+- Short viewport: at 1280x560 the page may scroll, so those tests use `expectNothingCutOff`.
+- `long: true`: holding `h1` has product name `Example Comprehensive Family Health Protection Plan Platinum 2026`, insurer `Example General Insurance Company Limited`, stage needing review with three open conflicts (so three details need a decision), and one Limits fact whose value is a 120-character sentence. Shapes still pass the zod contracts.
+- `canAdd: false`: the payment-slots answer has `enabled: true`, `canAdd: false`, `pricePaise: 19900`, so the wizard shows the pay screen. The order call answers a synthetic order (`orderId` starting `order_e2e`, `keyId` `rzp_test_e2e`). The verify call answers the paid slots (`canAdd: true`) for `verify: "ok"` and status 502 with `{"code":"BACKEND_UNREACHABLE","retryable":true}` for `verify: "down"`; with `"down"` the slots answer stays `canAdd: false`.
+- The Razorpay window is replaced before any page script runs (`page.addInitScript`) by a fake `window.Razorpay` whose `open()` either calls `handler` with three synthetic ids or calls `modal.ondismiss`, chosen per test. No request leaves for the real checkout script; any that does is aborted and recorded as before.
+
+### R4b.4 Tests (all titles after this task)
+
+1. `home shows the cover sentence and one next step for a real account`
+2. `home is calm at every laptop size`
+3. `my policies shows one card per policy and no pager for two`
+4. `five policies page at four`
+5. `my policies is calm at every laptop size`
+6. `policy detail opens on At a glance and switches to a fact group`
+7. `a group of nine facts pages at six`
+8. `policy detail is calm on every tab at every laptop size`
+9. `the wizard is calm on every step at every laptop size`
+10. `under 1024px wide the laptop gate shows and the app is hidden`
+11. `no call reaches the backend API and no app call is unhandled`
+12. `long names and three open details stay inside their cards on home, list and detail`
+13. `below 640px tall nothing is cut off on home, list and detail`
+14. `the pay screen shows the price and is calm at every laptop size`
+15. `closing the payment window shows the reason and offers Pay again`
+16. `a confirmed payment moves on with the paid notice`
+17. `an unconfirmed payment offers Check again and no Pay button`
+
+Screenshots keep going to `test-results/real/<screen>-<width>x<height>.png` with `animations: "disabled"`.
+
+Tests 1, 3, 4, 6, 7, 10, 11, 15, 16 and 17 check behaviour and must pass. Tests 2, 5, 8, 9, 12, 13 and 14 measure the product: a failure on a measured rule is a finding to report (rule, element text, numbers, screenshot path), never fixed in `src/` and never hidden by weakening a rule or adding an exemption.
+
+### R4b.5 Out of scope
+
+Any change under `src/`. Other screens. Visual snapshot comparison. CI wiring. New dependencies.
