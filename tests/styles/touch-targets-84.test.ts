@@ -27,8 +27,8 @@ describe("touch targets and mobile layout (#84)", () => {
     expect(read("src/styles/globals.css")).toMatch(/\.k-content > \.k-no-fade \{ animation: none; \}/);
     expect(read("src/components/shell/HomeGreeting.tsx")).toMatch(/className="k-no-fade"/);
   });
-  it("stacks sign-in tiles under 560px and moves the welcome padding to a module", () => {
-    expect(read("src/components/public/signin.module.css")).toMatch(/max-width: 559px\) \{ \.whys \{ grid-template-columns: 1fr; \}/);
+  it("drops the sign-in photograph to one column under 900px and moves the welcome padding to a module", () => {
+    expect(read("src/components/public/signin.module.css")).toMatch(/max-width: 900px\) \{[\s\S]*grid-template-columns: minmax\(0, 1fr\)[\s\S]*\.photo \{ display: none; \}/);
     expect(read("src/app/welcome/page.tsx")).not.toMatch(/padding: "72px 48px"/);
     expect(read("src/app/welcome/welcome.module.css")).toMatch(/padding: 32px 16px/);
   });
