@@ -16,7 +16,7 @@ describe("trial sign-in at the session cap", () => {
     const [nameBox, emailBox] = screen.getAllByRole("textbox");
     fireEvent.change(nameBox!, { target: { value: "Meera Rao" } });
     fireEvent.change(emailBox!, { target: { value: "meera.rao@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Get access" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Too many sign-ins right now/);
   });
 });

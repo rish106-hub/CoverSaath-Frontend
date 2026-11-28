@@ -32,7 +32,7 @@ function nameFromEmail(email: string): string {
   return (out || "there").slice(0, 80);
 }
 
-/** Beta access card on the landing page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
+/** Name and email sign-in on the opening page. Submit goes through AccessAdapter (the BFF in dev, the mock in tests). */
 export function AccessCard() {
   const router = useRouter();
   const returnTo = useReturnPath();
@@ -149,7 +149,7 @@ export function AccessCard() {
         <div className={styles.done}>
           <span className={styles.tick} aria-hidden>✓</span>
           <div className={styles.doneT}>You’re in, {state.name}.</div>
-          <div className={styles.doneD}>Access is open on this device. First step: add one policy. It takes about a minute.</div>
+          <div className={styles.doneD}>Next, add your policy.</div>
           <Link href={dest} className={styles.cta}>Open Knowvia</Link>
         </div>
       </div>
@@ -160,15 +160,13 @@ export function AccessCard() {
     return (
       <div className={styles.card} role="status" aria-live="polite">
         <div className={styles.done}>
-          <div className={styles.doneT}>Getting you in…</div>
-          <div className={styles.doneD}>Opening your Knowvia beta.</div>
+          <div className={styles.doneT}>Signing you in…</div>
         </div>
       </div>
     );
   }
   return (
-    <form className={styles.card} onSubmit={onSubmit} noValidate aria-label="Get access">
-      <div className={styles.title}>Get access in 10 seconds</div>
+    <form className={styles.card} onSubmit={onSubmit} noValidate aria-label="Sign in">
       {usingBackend && googleSignIn ? (
         <>
       <a className={styles.ghost} href={returnTo ? `/api/app/auth/google?next=${encodeURIComponent(returnTo)}` : "/api/app/auth/google"}>
@@ -201,13 +199,8 @@ export function AccessCard() {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
         </label>
       ) : null}
-      <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Getting you in…" : "Get access"}</button>
+      <button type="submit" className={styles.btn} disabled={busy}>{busy ? "Signing you in…" : "Sign in"}</button>
       {state.kind === "error" ? <p className={styles.err} role="alert">{state.message}</p> : urlMessage ? <p className={styles.err} role="alert">{urlMessage}</p> : null}
-      {usingBackend ? (
-        // DRAFT - FOR LEGAL REVIEW: trial and data-keeping wording.
-        <p className={styles.trialNote}>Trial: starts fresh each visit.{googleSignIn ? " Use Google to keep your data." : ""}</p>
-      ) : null}
-      <div className={styles.note}><Link href="/privacy">Privacy</Link></div>
     </form>
   );
 }

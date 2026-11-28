@@ -2,33 +2,21 @@
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type KeyboardEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useReturnPath } from "@/lib/use-return-path";
-import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adapters, usingBackend } from "@/adapters";
 import { AccessCard } from "@/components/access/AccessCard";
-import { useTicker } from "@/lib/use-ticker";
 import { useSingleFlight } from "@/lib/use-single-flight";
 import { invalidateMe } from "@/components/shell/useMe";
 import { BrandLogo } from "@/components/logos";
-import { ThemeToggle } from "@/components/theme";
-import { AUTH_CARDS, AUTH_FILTERS, AUTH_HEADS, AUTH_WHYS, type AuthCard } from "@/data/mock";
 import { OTP_LENGTH, applyOtpInput, digitsOnly, otpComplete } from "./otp";
-import tones from "./tones.module.css";
 import styles from "./signin.module.css";
 
 type Step = "start" | "otp" | "mail" | "done";
-const JOURNEY = ["Sign in", "Add policy", "Reading", "Home"];
+// The opening promise; five words at most so it stays one glance on a laptop.
+const PUNCH_LINE = "Health cover, finally clear.";
 const DOWN = "Can’t reach Knowvia right now. Try again in a moment.";
-
-const WIDE_QUERY = "(min-width: 1101px)";
-const subscribeWide = (cb: () => void) => {
-  if (typeof window.matchMedia !== "function") return () => undefined;
-  const m = window.matchMedia(WIDE_QUERY);
-  m.addEventListener("change", cb);
-  return () => m.removeEventListener("change", cb);
-};
-const readWide = () => typeof window.matchMedia === "function" && window.matchMedia(WIDE_QUERY).matches;
 
 export function SignIn() {
   const [step, setStep] = useState<Step>("start");
@@ -38,8 +26,6 @@ export function SignIn() {
   const [error, setError] = useState("");
   const { run: once, busy, alive } = useSingleFlight();
   const returnTo = useReturnPath();
-  // The showcase pane is hidden by CSS at 1100px and below. Not mounting it there keeps its card lanes, ticker and animations off phones (it was most of the main-thread work on /signin).
-  const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const demoRequested = useSyncExternalStore(() => () => {}, () => process.env.NEXT_PUBLIC_ADAPTERS === "mock" && new URLSearchParams(window.location.search).get("demo") === "1", () => false);
 
   function run(fn: () => Promise<{ ok: boolean; message?: string }>, next: Step) {
@@ -67,30 +53,15 @@ export function SignIn() {
     return run(() => adapters.auth.sendEmailLink(email.trim()), "mail");
   }
 
-  const at = step === "done" ? 1 : 0;
   return (
-    <div className={styles.page}>
+    <div className={`kv-app ${styles.page}`}>
       <main className={styles.left}>
         <BrandMark href="/" size={32} />
-        <ol className={styles.journey} style={{ listStyle: "none", padding: 0, marginBottom: 0 }} aria-label="Your first minutes">
-          {JOURNEY.map((t, k) => (
-            <li key={t} className={styles.jstep}>
-              <span className={styles.jbar} style={{ background: k < at ? "var(--harbour)" : k === at ? "var(--sea-glass)" : "var(--line)" }} />
-              <span className={styles.jlab}>
-                <span className={styles.jn} style={{ background: k <= at ? "var(--harbour)" : "var(--line)", color: k <= at ? "var(--on-harbour)" : "var(--graphite)" }}>{k < at ? "✓" : k + 1}</span>
-                {t}
-              </span>
-            </li>
-          ))}
-        </ol>
-
+        <div className={styles.middle}>
         {step === "start" && usingBackend ? (
-          // The backend has no login, OTP or social routes yet; beta access is the only real way in.
+          // The backend has no login, OTP or social routes yet; name and email access is the only real way in.
           <div className={styles.form}>
-            <div>
-              <h1 className={styles.h1}>Welcome to Knowvia</h1>
-              <p className={styles.sub}>Private beta. Get access to start.</p>
-            </div>
+            <h1 className={styles.punch}>{PUNCH_LINE}</h1>
             <AccessCard />
             {demoRequested ? <DemoCard returnTo={returnTo} /> : null}
           </div>
@@ -98,10 +69,7 @@ export function SignIn() {
 
         {step === "start" && !usingBackend ? (
           <form className={styles.form} onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
-            <div>
-              <h1 className={styles.h1}>Welcome to Knowvia</h1>
-              <p className={styles.sub}>Sign in or create an account.</p>
-            </div>
+            <h1 className={styles.punch}>{PUNCH_LINE}</h1>
             <button type="button" className={styles.prov} disabled={busy} onClick={() => run(() => adapters.auth.signInWithProvider("google"), "done")}><BrandLogo id="google" size={24} />Continue with Google</button>
             <button type="button" className={styles.prov} disabled={busy} onClick={() => run(() => adapters.auth.signInWithProvider("apple"), "done")}><BrandLogo id="apple" size={24} />Continue with Apple</button>
             <div className={styles.or} aria-hidden><span />or<span /></div>
@@ -153,15 +121,15 @@ export function SignIn() {
           </div>
         ) : null}
 
-        <div className={styles.whys}>
-          {AUTH_WHYS.map((w) => (
-            <div key={w.t} className={styles.why}><span className={styles.whyI} aria-hidden>{w.i}</span><span className={styles.whyT}>{w.t}</span></div>
-          ))}
         </div>
-        <div className={styles.terms}>By continuing you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.</div>
+        <div className={styles.footer}>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
+        </div>
       </main>
-      {wide ? <ShowcasePanel /> : null}
-      <div className={styles.themeSlot}><ThemeToggle /></div>
+      <div className={styles.photo} aria-hidden="true">
+        <Image src="/opening/family.jpg" alt="" fill priority sizes="50vw" className={styles.photoImg} />
+      </div>
     </div>
   );
 }
@@ -247,66 +215,5 @@ function OtpBoxes({ busy, error, onComplete }: { busy: boolean; error: string; o
       {error ? <p className={styles.err} role="alert">{error}</p> : null}
       <button type="button" className={styles.cta} disabled={busy || !otpComplete(boxes)} onClick={() => onComplete(boxes.join(""))}>Verify</button>
     </>
-  );
-}
-
-function ShowcasePanel() {
-  const [h, setH] = useState(0);
-  const [filter, setFilter] = useState<string>("all");
-  const [pick, setPick] = useState<AuthCard | null>(null);
-
-  const [paused, setPaused] = useState(false);
-  const reduce = useReducedMotion();
-  // Low-capacity devices count as reduced motion here, so the lanes stop with the ticker and the control is hidden (CSS alone only sees the media query).
-  // WCAG 2.2.2: the lanes and the headline rotation run on their own for more than 5s, so visitors get a visible pause control (hover alone excludes keyboard and touch).
-  useTicker(() => setH((x) => (x + 1) % AUTH_HEADS.length), 3200, !reduce && !paused);
-
-  const pool = filter === "all" ? AUTH_CARDS : AUTH_CARDS.filter((c) => c.tag === filter).concat(AUTH_CARDS.filter((c) => c.tag !== filter)).slice(0, 9);
-  const lane = (off: number) => { const a = pool.filter((_, k) => k % 3 === off); return a.concat(a); };
-  const [a, b] = AUTH_HEADS[h]!;
-  return (
-    <div className={styles.right}>
-      <div className={styles.rtop}>
-        <span className={styles.rlab}>What you’ll see in a minute</span>
-        <div className={styles.rctl}>
-          {reduce ? null : (
-            <button type="button" className={styles.pause} aria-pressed={paused} onClick={() => setPaused((x) => !x)}>{paused ? "Play animation" : "Pause animation"}</button>
-          )}
-          <div className={styles.heads}>
-            {AUTH_HEADS.map((x, k) => (
-              <button key={x[0]} type="button" className={styles.headBtn} aria-label={x[0]} aria-current={k === h ? "true" : undefined} onClick={() => setH(k)}>
-                <span className={`${styles.headDot} ${k === h ? styles.headDotOn : ""}`} />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className={styles.headline} key={h}>{a}<em>{b}</em></div>
-      <div className={styles.filters}>
-        {AUTH_FILTERS.map(([id, label]) => (
-          <button key={id} type="button" className={`${styles.filter} ${filter === id ? styles.filterOn : ""}`} onClick={() => { setFilter(id); setPick(null); }} aria-pressed={filter === id}>{label}</button>
-        ))}
-      </div>
-      <div className={`${styles.lanes} ${paused || reduce ? styles.lanesPaused : ""}`}>
-        {[0, 1, 2].map((off) => (
-          <div key={`${filter}-${off}`} className={`${styles.lane} ${off === 1 ? styles.down : styles.up}`}>
-            {lane(off).map((c, k) => (
-              <button key={`${c.k}-${k}`} type="button" className={`${styles.ic} ${tones[c.tone]} ${pick?.k === c.k ? styles.icOn : ""}`} onClick={() => setPick(c)} aria-hidden={k >= lane(off).length / 2 ? true : undefined} tabIndex={k >= lane(off).length / 2 ? -1 : undefined}>
-                <span className={styles.icK}>{c.k}</span>
-                <span className={styles.icV}>{c.v}</span>
-                <span className={styles.icD}>{c.d}</span>
-                <span className={styles.icBar}><i style={{ width: `${c.bar}%` }} /></span>
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
-      {pick ? (
-        <div className={styles.pick} role="status">
-          <div style={{ flex: 1 }}><div className={styles.pickK}>{pick.k} · {pick.ref}</div><div className={styles.pickM}>{pick.more}</div></div>
-          <button type="button" className={styles.pickX} onClick={() => setPick(null)}>Close</button>
-        </div>
-      ) : null}
-    </div>
   );
 }

@@ -1,7 +1,7 @@
-import { Landing } from "@/components/public/Landing";
+import { SignIn } from "@/components/public/SignIn";
 
-export const metadata = { title: "Beta access" };
+export const metadata = { title: "Knowvia" };
 
 export default function Page() {
-  return <Landing />;
+  return <SignIn />;
 }

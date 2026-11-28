@@ -63,7 +63,7 @@ describe("waitlist link", () => {
     render(<AccessCard />);
     fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Meera Rao" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "meera.rao@company.com" } });
-    await act(async () => { fireEvent.submit(screen.getByRole("form", { name: "Get access" })); });
+    await act(async () => { fireEvent.submit(screen.getByRole("form", { name: "Sign in" })); });
     expect(screen.getByText(/You.re in, Meera/)).toBeTruthy();
     await act(async () => { await new Promise((r) => setTimeout(r, 800)); });
     expect(push).toHaveBeenCalledWith("/welcome");
@@ -86,7 +86,7 @@ describe("click-spam safety", () => {
     fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Asha Rao" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "asha@example.com" } });
     await act(async () => {
-      const form = screen.getByRole("form", { name: "Get access" });
+      const form = screen.getByRole("form", { name: "Sign in" });
       for (let i = 0; i < 20; i++) fireEvent.submit(form);
     });
     expect(spy).toHaveBeenCalledTimes(1);
