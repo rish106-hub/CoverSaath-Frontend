@@ -167,11 +167,10 @@ const SUMMARY: HoldingView["summary"] = {
 };
 
 describe("screens", () => {
-  it("home shows the sum insured tile; detail shows insurer, product and honest headlines", async () => {
+  it("home shows the sum insured in the cover sentence; detail shows insurer, product and honest headlines", async () => {
     stub([{ ...holding("ready"), summary: SUMMARY }]);
     const home = render(<RealHome />);
-    const sumTile = (await screen.findByText("Sum insured")).closest("a");
-    expect(sumTile).toHaveTextContent("Rs 5,00,000");
+    expect(await screen.findByTestId("home-cover")).toHaveTextContent("Rs 5,00,000");
     home.unmount();
     render(<RealPolicyDetail id="h1" />);
     expect(await screen.findByText("Example Health Plan 01")).toBeInTheDocument();
@@ -301,12 +300,11 @@ describe("screens", () => {
 
 describe("real home and list visual structure (#105)", () => {
   const headingLevels = (root: HTMLElement) => Array.from(root.querySelectorAll("h1,h2,h3,h4")).map((h) => `${h.tagName.toLowerCase()}:${h.textContent}`);
-  it("home: one h2 section holds the tiles, and only real headline values are shown", async () => {
+  it("home: one h2 holds the cover sentence, and only real headline values are shown", async () => {
     stub([{ ...holding("ready"), summary: SUMMARY }]);
     const { container } = render(<RealHome />);
-    const sumTile = (await screen.findByText("Sum insured")).closest("a");
-    expect(headingLevels(container)).toEqual(["h2:Your cover at a glance"]);
-    expect(sumTile).toHaveTextContent("Rs 5,00,000");
+    expect(await screen.findByTestId("home-cover")).toHaveTextContent("Rs 5,00,000");
+    expect(headingLevels(container)).toEqual(["h2:You have Rs 5,00,000 of health cover."]);
     // Conflicting period and unknown premium are not a number to headline: left out, not faked. The conflict goes to the next-step tile.
     expect(container).not.toHaveTextContent("Policy period");
     expect(container).not.toHaveTextContent("Premium");
@@ -316,7 +314,7 @@ describe("real home and list visual structure (#105)", () => {
   it("home: next step asks to pick the plan while the insurer is pending", async () => {
     stub([holding("insurer_pending")]);
     render(<RealHome />);
-    await screen.findByText("Next step");
+    await screen.findByTestId("home-next");
     expect(screen.getByRole("link", { name: /Pick your plan/ })).toHaveAttribute("href", "/covers/add?resume=1");
   });
   it("policies: no repeated 'Your policies' h2; the page title is the h1 and the count stands in", async () => {

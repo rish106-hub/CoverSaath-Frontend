@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Home rebuild (T3): six equal tiles in two rows, no policy cards. Real-account Home rendered against stubbed backend reads.
+// Home rebuild (T3, reshaped by R3d): cover sentence, one next step and three right cards, no policy cards. Real-account Home rendered against stubbed backend reads.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { backendCovers } from "@/adapters/covers";
@@ -31,23 +31,21 @@ const fixtureB = () => stub([OTHER]);
 const tileOf = (label: string) => screen.getByText(label).closest("a, div") as HTMLElement;
 
 describe("Home tiles (T3)", () => {
-  it("row 1 labels in order", async () => {
+  it("right card labels in order", async () => {
     fixtureA();
     render(<RealHome />);
     const a = await screen.findByText("Policies");
-    const b = screen.getByText("Sum insured");
-    const c = screen.getByText("Next renewal");
+    const b = screen.getByText("Next renewal");
+    const c = screen.getAllByText("Ask about your cover").at(-1)!;
     expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(b.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("row 1 shows values", async () => {
+  it("right cards show values", async () => {
     fixtureA();
     render(<RealHome />);
     await screen.findByText("Policies");
     expect(tileOf("Policies")).toHaveTextContent("2");
-    expect(tileOf("Sum insured").textContent).toMatch(/Rs \d/);
-    expect(tileOf("Sum insured")).toHaveTextContent("10,00,000");
     expect(tileOf("Next renewal").textContent).toContain("2027");
   });
 
@@ -57,13 +55,6 @@ describe("Home tiles (T3)", () => {
     await screen.findByText("Policies");
     expect(tileOf("Next renewal")).toHaveTextContent("Not in your policy");
     expect(container.textContent).not.toMatch(/Invalid Date|undefined|null/);
-  });
-
-  it("cover per person is disabled soon tile", async () => {
-    fixtureA();
-    render(<RealHome />);
-    await screen.findByText("Policies");
-    expect(screen.getByText("Cover per person").closest('[aria-disabled="true"]')).not.toBeNull();
   });
 
   it("ask card has two prompts", async () => {
@@ -91,18 +82,6 @@ describe("Home tiles (T3)", () => {
     const { container } = render(<RealHome />);
     await screen.findByText("Policies");
     expect(container.querySelectorAll('[data-variant="primary"], .btn-primary, button[class*="primary"]').length).toBeLessThanOrEqual(1);
-    expect(screen.getByText("Next step").closest("a")).toHaveAttribute("href");
-  });
-
-  it("row 1 has 3 tiles; row 2 has 3 children and no split", async () => {
-    fixtureA();
-    const { container } = render(<RealHome />);
-    await screen.findByText("Policies");
-    const grids = container.querySelectorAll<HTMLElement>('[class*="grid"]');
-    expect(grids).toHaveLength(2);
-    expect(grids[0].children).toHaveLength(3);
-    expect(grids[1].children).toHaveLength(3);
-    expect(grids[1].className).not.toMatch(/split/);
-    expect(grids[1].className).toMatch(/cols3/);
+    expect(screen.getByTestId("home-next").closest("a")).toHaveAttribute("href");
   });
 });

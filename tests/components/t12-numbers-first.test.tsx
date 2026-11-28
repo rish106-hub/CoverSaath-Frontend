@@ -1,11 +1,8 @@
 // @vitest-environment jsdom
-// T12 numbers-first: the removed filler stays removed. Covers FactItem (citation only, status hidden for unverified readings)
-// and the Home tiles (captions only on Next step).
+// T12 numbers-first: the removed filler stays removed. Covers FactItem (citation only, status hidden for unverified readings).
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { backendCovers } from "@/adapters/covers";
 import type { FactLine } from "@/adapters/real-policy";
-import { RealHome } from "@/components/cover-real/RealHome";
 import { FactItem } from "@/components/cover-real/parts";
 
 afterEach(() => {
@@ -42,28 +39,5 @@ describe("FactItem", () => {
       expect(els[0].textContent).toBe(`Text for ${status}`);
       r.unmount();
     }
-  });
-});
-
-describe("RealHome tiles", () => {
-  it("RealHome tiles: captions only on Next step", async () => {
-    vi.spyOn(backendCovers, "holdingsView").mockResolvedValue({
-      holdings: [{
-        id: "h1", documentId: "d1", kind: "policy_wording", status: "ready",
-        summary: { insurerName: "Example Insurer", productName: "Example Health Plan 01", sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" }, policyPeriod: null, premium: null },
-      }],
-      creationIssues: [],
-    });
-    vi.spyOn(backendCovers, "facts").mockResolvedValue({ holdingId: "h1", status: "ready", facts: [], unknownKeys: [] });
-    vi.spyOn(backendCovers, "conflicts").mockResolvedValue({ holdingId: "h1", status: "ready", conflicts: [] });
-    render(<RealHome />);
-    const tile = async (label: string) => (await screen.findByText(label)).closest("a, div[aria-disabled]") as HTMLElement;
-    expect(await tile("Policies")).toHaveTextContent(/^Policies1$/);
-    expect(await tile("Sum insured")).toHaveTextContent(/^Sum insuredRs 5,00,000$/);
-    expect((await tile("Next step")).textContent).toContain("Ask about your cover");
-    expect((await tile("Next step")).textContent).toContain("Questions answered from your policy");
-    expect(await tile("Cover per person")).toHaveTextContent(/^Cover per person/);
-    expect((await tile("Cover per person")).textContent).not.toContain("See who is covered");
-    expect(screen.queryByText("on your account")).toBeNull();
   });
 });

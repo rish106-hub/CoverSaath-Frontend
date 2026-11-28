@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageTitle, Kicker } from "@/components/type";
+import { PageTitle } from "@/components/type";
 import { ShimmerBlock } from "@/components/ui/Skeleton";
 import { BackendDown } from "./BackendDown";
 import { useMe } from "./useMe";
@@ -27,7 +27,6 @@ export function HomeGreeting() {
   const first = state.status === "ready" ? state.me.owner.displayName.split(" ")[0] : null;
   return (
     <div className="k-no-fade">
-      <Kicker>{today || " "}</Kicker>
       {/* While loading, no greeting text at all: the name-less greeting would be swapped for the named one a moment later. */}
       <PageTitle>
         {state.status === "loading" || !settled ? (
