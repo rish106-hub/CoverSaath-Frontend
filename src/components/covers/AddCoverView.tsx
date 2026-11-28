@@ -10,13 +10,15 @@ import type { CandidateView, Candidates } from "@/adapters/covers-contract";
 import { PageSkeleton } from "@/components/shell/ErrorPanel";
 import { ErrorBox } from "@/components/cover-real/parts";
 import { BrandMark } from "@/components/brand/BrandMark";
-import { Bar, Button, Field, InlineStatus, Signal } from "@/components/ui";
+import { Bar, Button, Card, Field, InlineStatus, Signal } from "@/components/ui";
 import { codeOf } from "./use-holdings";
 import { canRetry, checkSchedule, emptySlot, pickFile, runSchedule, type Slot } from "./add-cover-flow";
 import { payments, type PolicySlots } from "@/adapters/payments";
 import { confirmPay, payCopy, realPayDeps, runPay, type PayState } from "./pay-flow";
 import { POLL_MAX, POLL_MS, STAGE_COPY, STAGE_ORDER, WIZARD_STEPS, guideFor, screenOf, stepOf, type ReadingStage } from "./wizard-copy";
 import { PeopleStep } from "./PeopleStep";
+import { WizardArt } from "./WizardArt";
+import { toPolicyView, type HeadlineLine } from "@/adapters/real-policy";
 import s from "./wizard.module.css";
 
 const MB = MAX_UPLOAD_BYTES / 1024 / 1024;
@@ -259,6 +261,19 @@ export function AddCoverView() {
   });
   const step = stepOf(screen);
 
+  // The result screen shows the headline values that were read. One call on arrival; a failed call or a missing holding shows no cards.
+  const [coverFacts, setCoverFacts] = useState<HeadlineLine[]>([]);
+  useEffect(() => {
+    if (screen !== "cover" || holdingId === null) return;
+    let live = true;
+    adapters.covers.holdingsView().then((view) => {
+      const holding = view.holdings.find((hd) => hd.id === holdingId);
+      if (!live || !holding) return;
+      setCoverFacts(toPolicyView(holding, null).headlines.filter((line) => line.tone === "read" || line.tone === "confirmed").slice(0, 3));
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [screen, holdingId]);
+
   // While a document is still being read, look again every POLL_MS on its own; stop on unmount, when the status changes, or after POLL_MAX tries.
   useEffect(() => {
     if (screen !== "reading" || schedule.status !== "waiting" || busy) return;
@@ -277,6 +292,9 @@ export function AddCoverView() {
   const signInLink = <Link className={s.link} href="/signin">Sign in</Link>;
   const errorLine = error ? <InlineStatus kind="error">{errorText(error)} {error === "UNAUTHENTICATED" ? signInLink : null}</InlineStatus> : null;
   const heading = (text: string) => <h1 className={s.h1}>{text}</h1>;
+
+  // The picture on the left of the two-column screens; the people screen draws its own in PeopleStep.
+  const artKind = screen === "consent" || screen === "find" || screen === "reading" ? "doc" : screen === "pay" ? "pay" : null;
 
   let content: ReactNode = null;
   let secondary: ReactNode = null;
@@ -345,8 +363,9 @@ export function AddCoverView() {
       const at = STAGE_ORDER.indexOf(stage);
       content = (
         <div className={s.stack} role="status" aria-live="polite" data-state="working" data-stage={stage}>
+          <p className={s.percent}>{STAGE_COPY[stage].percent}%</p>
           {heading(STAGE_COPY[stage].h1)}
-          <Bar value={STAGE_COPY[stage].percent / 100} label="Reading your policy" />
+          <div className={s.bar10}><Bar value={STAGE_COPY[stage].percent / 100} label="Reading your policy" /></div>
           <ol className={s.stages}>
             {STAGE_ORDER.map((key, i) => {
               const state = i < at ? "done" : i === at ? "active" : "todo";
@@ -369,8 +388,21 @@ export function AddCoverView() {
       const guide = guideFor(schedule.code ?? "");
       content = (
         <div className={s.stack} role="alert" data-state="failed">
+          <div className={s.pillRow}><Signal kind="warn" variant="pill">One quick fix</Signal></div>
           {heading(guide.title)}
-          <p className={s.lead}>{guide.fix}</p>
+          {guide.steps.length > 0 ? (
+            <ol className={s.fixCards}>
+              {guide.steps.slice(0, 3).map((fixStep, i) => (
+                <li key={fixStep.title}>
+                  <Card>
+                    <span className={s.fixNum} aria-hidden="true">{i + 1}</span>
+                    <p className={s.fixTitle}>{fixStep.title}</p>
+                    <p className={s.fixText}>{fixStep.text}</p>
+                  </Card>
+                </li>
+              ))}
+            </ol>
+          ) : <p className={s.lead}>{guide.fix}</p>}
           {schedule.file ? <p className={s.note}>{schedule.file.name}</p> : null}
         </div>
       );
@@ -459,7 +491,20 @@ export function AddCoverView() {
       const id = encodeURIComponent(holdingId ?? "");
       content = (
         <>
+          <div className={s.pillRow}><Signal kind="ok">Added</Signal></div>
           {heading(`${pick?.label ?? ""} is in.`)}
+          {coverFacts.length > 0 ? (
+            <ul className={s.facts} data-testid="cover-facts">
+              {coverFacts.map((line) => (
+                <li key={line.key}>
+                  <Card>
+                    <p className={s.factLabel}>{line.label}</p>
+                    <p className={s.factValue}>{line.value}</p>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <div role="status"><p className={s.lead}>Your cover is saved.</p></div>
         </>
       );
@@ -483,8 +528,16 @@ export function AddCoverView() {
         <ol className={s.steps} aria-label="Steps">
           {WIZARD_STEPS.map((name, i) => (
             <li key={name} className={s.step} aria-current={i + 1 === step ? "step" : undefined} data-done={i + 1 < step ? "true" : undefined}>
-              <span className={s.stepNum}>{i + 1}</span>
+              <span className={s.stepNum}>
+                {i + 1 < step ? (
+                  <>
+                    <svg className={s.stepTick} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M4 10.5l4 4 8-9" /></svg>
+                    <span className={s.srOnly}>{i + 1}</span>
+                  </>
+                ) : i + 1}
+              </span>
               {name}
+              {i < WIZARD_STEPS.length - 1 ? <span className={s.stepLine} data-reached={i + 1 < step ? "true" : undefined} aria-hidden="true" /> : null}
             </li>
           ))}
         </ol>
@@ -495,13 +548,20 @@ export function AddCoverView() {
       ) : (
         <>
           <div
-            className={screen === "find" ? `${s.middle} ${s.drop}` : s.middle}
-            data-over={screen === "find" ? over : undefined}
+            className={s.middle}
             onDragOver={screen === "find" ? (e) => { e.preventDefault(); setOver(true); } : undefined}
             onDragLeave={screen === "find" ? () => setOver(false) : undefined}
             onDrop={screen === "find" ? (e) => { e.preventDefault(); setOver(false); void takeSchedule(e.dataTransfer.files[0]); } : undefined}
           >
-            {content}
+            {artKind ? (
+              <div className={s.split}>
+                <WizardArt kind={artKind} />
+                {/* Only the right column is drawn as the dashed drop area on the find screen; a file dropped anywhere on the row is still taken. */}
+                <div className={screen === "find" ? `${s.splitRight} ${s.drop}` : s.splitRight} data-over={screen === "find" ? over : undefined}>
+                  {content}
+                </div>
+              </div>
+            ) : content}
           </div>
           <div className={s.bottom}>
             <div>{secondary}</div>
