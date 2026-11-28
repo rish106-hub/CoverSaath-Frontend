@@ -183,3 +183,177 @@ Every test file that imports a changed module is run and brought in line with th
 ### R2.10 Out of scope for R2
 
 Screens inside `<main>`, the add-a-policy wizard layout, sign-in, welcome, the landing page, `ThemeProvider` itself, `SettingsView`, deleting `AskDock`, `TrialNotice` or `DemoBadge` files, Playwright specs, dependencies.
+
+## R3c Payment flow (no screen)
+
+Scope: the money path behind "Pay Rs 199", with no screen in it. The wizard (R3b) renders from the interface pinned here. Price, order creation and signature checks stay on the backend; nothing here decides that a payment succeeded.
+
+Persona served: a 25 to 35 year old tech worker adding a second policy, paying Rs 199 by card or UPI QR on a laptop. They must never be asked to pay twice for one policy and must never see provider text.
+
+### R3c.1 Files
+
+| File | Change |
+|---|---|
+| `src/adapters/types.ts` | `AdapterError` gets an optional third constructor parameter. |
+| `src/lib/razorpay.ts` | Closed failure-reason set, late settlement, no provider text kept. |
+| `src/components/covers/pay-flow.ts` | New. The pay sequence and its copy. |
+| `tests/lib/razorpay.test.ts` | New. |
+| `tests/components/pay-flow.test.ts` | New. |
+
+No other file changes. `AddCoverView.tsx`, `documents-contract.ts` (`ERROR_TEXT`), `adapters/payments.ts` and the BFF routes under `src/app/api/app/payments/` are not edited.
+
+### R3c.2 `AdapterError`
+
+```ts
+export class AdapterError extends Error {
+  constructor(public code: string, public retryable = false, public reason: string | null = null) {
+    super(code);
+    this.name = "AdapterError";
+  }
+}
+```
+
+`reason` is only ever a member of a closed set chosen by our code. It never holds text from a provider or the backend.
+
+### R3c.3 `src/lib/razorpay.ts`
+
+Exports added:
+
+```ts
+export const PAY_FAIL_REASONS = ["declined", "insufficient_funds", "timed_out", "authentication", "bank_unavailable", "other"] as const;
+export type PayFailReason = (typeof PAY_FAIL_REASONS)[number];
+export function reasonOf(raw: unknown): PayFailReason
+```
+
+`reasonOf` takes the value passed to the `payment.failed` callback. It reads `raw.error.reason` only when that is a string, lower-cases it, and returns the first match in this order:
+
+| Contains | Result |
+|---|---|
+| `insufficient` | `insufficient_funds` |
+| `timed_out`, `timeout` or `expired` | `timed_out` |
+| `otp`, `pin`, `auth` or `3ds` | `authentication` |
+| `declin`, `risk`, `blocked` or `not_allowed` | `declined` |
+| `bank`, `gateway`, `server` or `technical` | `bank_unavailable` |
+| anything else, missing, or not a string | `other` |
+
+`error.description`, `error.code`, `error.source`, `error.step` and `error.metadata` are never read, stored, logged or returned.
+
+Settlement rule in `payWithRazorpay` (signature unchanged: `(order, prefill?) => Promise<PaymentProof>`):
+
+- `payment.failed` does not settle the promise. It stores `lastReason = reasonOf(r)` and nothing else. The Razorpay window stays open and the person can retry inside it.
+- `handler` resolves with the three ids (as today) and marks settled.
+- `modal.ondismiss`, when not settled: rejects with `new AdapterError("PAYMENT_FAILED", true, lastReason)` if a failure was stored, otherwise `new AdapterError("PAYMENT_CANCELLED")`.
+- A `handler` call after one or more `payment.failed` calls resolves normally (failed then paid in the same window).
+- The options object passed to Razorpay keeps today's keys and adds `retry: { enabled: true }`. `description` stays "Add another policy". No other option is added.
+- Script loading (`load()`) is unchanged.
+
+### R3c.4 `src/components/covers/pay-flow.ts`
+
+```ts
+import type { PaymentOrder, PaymentProof, PolicySlots } from "@/adapters/payments";
+import type { PayFailReason } from "@/lib/razorpay";
+
+export type PayDeps = {
+  order(): Promise<PaymentOrder>;
+  open(order: PaymentOrder): Promise<PaymentProof>;
+  verify(proof: PaymentProof): Promise<PolicySlots>;
+  slots(): Promise<PolicySlots>;
+  /** Waits this many milliseconds. Tests pass a no-op. */
+  wait(ms: number): Promise<void>;
+};
+
+export type PayState =
+  | { kind: "idle" }
+  | { kind: "opening" }
+  | { kind: "confirming" }
+  | { kind: "paid"; slots: PolicySlots }
+  | { kind: "stopped"; code: string; reason: PayFailReason | null; canPayAgain: boolean; proof: PaymentProof | null };
+
+export const VERIFY_TRIES = 3;
+export const VERIFY_WAIT_MS = 2000;
+export const SLOT_TRIES = 3;
+export const SLOT_WAIT_MS = 3000;
+
+export function realPayDeps(): PayDeps
+export async function runPay(deps: PayDeps, onState: (s: PayState) => void): Promise<PayState>
+export async function confirmPay(deps: PayDeps, proof: PaymentProof, onState: (s: PayState) => void): Promise<PayState>
+export function payCopy(state: PayState): string
+```
+
+`realPayDeps()` returns `{ order: payments.order, open: (o) => payWithRazorpay(o), verify: payments.verify, slots: payments.slots, wait: (ms) => new Promise((r) => setTimeout(r, ms)) }`.
+
+Neither function throws. Each returns the last state it passed to `onState`.
+
+`runPay`:
+
+1. `onState({ kind: "opening" })`. Call `deps.order()`.
+   - Rejects with code `POLICY_SLOT_AVAILABLE`: call `deps.slots()`; if it resolves with `canAdd === true` the result is `{ kind: "paid", slots }`. If it rejects or `canAdd` is false the result is `stopped` with code `POLICY_SLOT_AVAILABLE`, `canPayAgain: true`, `proof: null`.
+   - Rejects with any other code: `stopped`, that code, `reason: null`, `proof: null`, `canPayAgain` false for `PAYMENTS_DISABLED`, `PAYMENTS_NOT_CONFIGURED` and `UNAUTHENTICATED`, true otherwise.
+2. Call `deps.open(order)`. A rejection gives `stopped` with the error's code, `reason` (the error's `reason` when it is a member of `PAY_FAIL_REASONS`, else null), `proof: null`, `canPayAgain: true`.
+3. With a proof in hand, return `confirmPay(deps, proof, onState)`.
+
+`confirmPay`:
+
+1. `onState({ kind: "confirming" })`.
+2. Call `deps.verify(proof)` up to `VERIFY_TRIES` times. Resolve: result `{ kind: "paid", slots }`. A rejection whose error has `retryable === true`, or whose code is `BACKEND_UNREACHABLE`, `BACKEND_TIMEOUT` or `BACKEND_BUSY`: `await deps.wait(VERIFY_WAIT_MS)` and try again while tries remain. Any other rejection stops the verify loop at once. Remember the last code.
+3. Verify did not resolve: call `deps.slots()` up to `SLOT_TRIES` times, with `await deps.wait(SLOT_WAIT_MS)` before the second and third call. The first resolve with `canAdd === true` gives `{ kind: "paid", slots }` (the backend confirmed it another way). A rejection counts as a try.
+4. Still not paid: `stopped` with `code: "PAYMENT_UNCONFIRMED"`, `reason: null`, `canPayAgain: false`, `proof` (the same proof, so "Check again" can call `confirmPay` with it). If the last verify code was `UNAUTHENTICATED`, the code is `UNAUTHENTICATED` instead, still with `canPayAgain: false` and the proof.
+
+Once a proof exists, no state ever has `canPayAgain: true`.
+
+Non-error codes are read with `e instanceof AdapterError ? e.code : "BACKEND_UNREACHABLE"`.
+
+`payCopy(state)` returns exactly:
+
+| State | Text |
+|---|---|
+| `idle` | `""` |
+| `opening` | `Opening the payment window` |
+| `confirming` | `Confirming your payment` |
+| `paid` | `Paid. You can add your policy now.` |
+| `stopped`, `PAYMENT_CANCELLED` | `You closed the payment window. Nothing was paid.` |
+| `stopped`, `PAYMENT_FAILED`, reason `declined` | `Your bank declined this payment. Try another card or UPI.` |
+| `stopped`, `PAYMENT_FAILED`, reason `insufficient_funds` | `There was not enough balance. Try another card or UPI.` |
+| `stopped`, `PAYMENT_FAILED`, reason `timed_out` | `The payment timed out. Try again.` |
+| `stopped`, `PAYMENT_FAILED`, reason `authentication` | `Your bank could not verify you. Check the OTP or PIN and try again.` |
+| `stopped`, `PAYMENT_FAILED`, reason `bank_unavailable` | `Your bank did not answer. Try again in a minute.` |
+| `stopped`, `PAYMENT_FAILED`, reason `other` or null | `The payment did not go through. Try again.` |
+| `stopped`, `PAYMENT_UNCONFIRMED` | `We are still confirming your payment. This can take a minute. Do not pay again.` |
+| `stopped`, `PAYMENTS_DISABLED` or `PAYMENTS_NOT_CONFIGURED` | `Adding another policy is not open yet.` |
+| `stopped`, `UNAUTHENTICATED` | `Please sign in again.` |
+| `stopped`, any other code | `We could not open the payment window. Try again.` |
+
+The file carries the comment `// FOR LEGAL REVIEW: price and payment wording.` above the copy.
+
+### R3c.5 Tests
+
+`tests/lib/razorpay.test.ts` (window.Razorpay replaced by a fake constructor that records options and exposes the callbacks), titles:
+
+1. `reasonOf maps each known family and falls back to other`
+2. `reasonOf ignores description, code and non-string reasons`
+3. `resolves with the three ids when the handler fires`
+4. `a failure does not settle; closing the window after it rejects PAYMENT_FAILED with the reason`
+5. `a failure followed by a success in the same window resolves with the proof`
+6. `closing the window with no failure rejects PAYMENT_CANCELLED`
+7. `the rejected error carries no provider text`
+8. `passes retry enabled and the order fields to Razorpay`
+
+`tests/components/pay-flow.test.ts` (fake deps, `wait` a no-op spy), titles:
+
+1. `happy path goes opening, confirming, paid`
+2. `order refused with PAYMENTS_DISABLED stops and cannot pay again`
+3. `order refused with POLICY_SLOT_AVAILABLE re-reads slots and reports paid`
+4. `a closed window stops with PAYMENT_CANCELLED and can pay again`
+5. `a failed payment keeps its reason and can pay again`
+6. `verify retries a retryable failure and then reports paid`
+7. `verify failing three times falls back to slots and reports paid when a slot is free`
+8. `verify and slots both failing stops as PAYMENT_UNCONFIRMED, keeps the proof and cannot pay again`
+9. `a non-retryable verify refusal skips further verify tries and still re-reads slots`
+10. `confirmPay with a kept proof can reach paid without opening the window again`
+11. `no state after a proof exists has canPayAgain true`
+12. `payCopy returns the pinned text for every row`
+13. `runPay and confirmPay never throw`
+
+### R3c.6 Out of scope
+
+Any screen or CSS. `AddCoverView.tsx`. `ERROR_TEXT` and its `PAYMENT_SIGNATURE_INVALID` line (owner decision pending on its wording). BFF routes, backend, webhook. Hiding UPI Collect. New dependencies.
