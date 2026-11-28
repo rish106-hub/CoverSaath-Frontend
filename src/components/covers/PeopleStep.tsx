@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { adapters } from "@/adapters";
 import type { MemberRecord } from "@/adapters/scenarios";
 import { Button, Field, InlineStatus } from "@/components/ui";
+import { WizardArt } from "./WizardArt";
 import s from "./wizard.module.css";
 
 const RELATIONS = ["Spouse", "Son", "Daughter", "Father", "Mother", "Other"] as const;
@@ -52,28 +53,33 @@ export function PeopleStep({ onDone }: { onDone: () => void }) {
   return (
     <>
       <div className={s.middle}>
-        <h1 className={s.h1}>Who is in your family?</h1>
-        {listFailed ? <InlineStatus kind="error">We could not load your family. Add people later from Family.</InlineStatus> : null}
-        {others.length > 0 ? (
-          <ul className={s.people}>
-            {others.slice(0, 4).map((m) => (
-              <li key={m.id} className={s.person}><b>{m.name}</b>{m.relation ? <span>{m.relation}</span> : null}</li>
-            ))}
-          </ul>
-        ) : null}
-        {others.length > SHOWN_ROWS ? <p className={s.note}>and {others.length - SHOWN_ROWS} more</p> : null}
-        <div className={s.formRow}>
-          <Field label="Name">
-            <input type="text" value={name} maxLength={80} autoComplete="off" onChange={(e) => setName(e.target.value)} />
-          </Field>
-          <Field label="Relation">
-            <select value={relation} onChange={(e) => setRelation(e.target.value)}>
-              {RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </Field>
-          <Button variant="outline" size="lg" state={adding ? "busy" : "idle"} busyLabel="Adding" disabled={!name.trim()} onClick={() => void addPerson()}>Add person</Button>
+        <div className={s.split}>
+          <WizardArt kind="family" />
+          <div className={s.splitRight}>
+            <h1 className={s.h1}>Who is in your family?</h1>
+            {listFailed ? <InlineStatus kind="error">We could not load your family. Add people later from Family.</InlineStatus> : null}
+            {others.length > 0 ? (
+              <ul className={s.people}>
+                {others.slice(0, 4).map((m) => (
+                  <li key={m.id} className={s.person}><b>{m.name}</b>{m.relation ? <span>{m.relation}</span> : null}</li>
+                ))}
+              </ul>
+            ) : null}
+            {others.length > SHOWN_ROWS ? <p className={s.note}>and {others.length - SHOWN_ROWS} more</p> : null}
+            <div className={s.formRow}>
+              <Field label="Name">
+                <input type="text" value={name} maxLength={80} autoComplete="off" onChange={(e) => setName(e.target.value)} />
+              </Field>
+              <Field label="Relation">
+                <select value={relation} onChange={(e) => setRelation(e.target.value)}>
+                  {RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </Field>
+              <Button variant="outline" size="lg" state={adding ? "busy" : "idle"} busyLabel="Adding" disabled={!name.trim()} onClick={() => void addPerson()}>Add person</Button>
+            </div>
+            {addFailed ? <InlineStatus kind="error">We could not save that. Try again.</InlineStatus> : null}
+          </div>
         </div>
-        {addFailed ? <InlineStatus kind="error">We could not save that. Try again.</InlineStatus> : null}
       </div>
       <div className={s.bottom}>
         <Button variant="outline" size="lg" onClick={onDone}>Skip for now</Button>

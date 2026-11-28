@@ -63,33 +63,52 @@ export const POLL_MS = 5000;
 export const POLL_MAX = 36;
 
 export type GuideAction = "another" | "retry" | "policies" | "signin" | "later";
-export type Guide = { title: string; fix: string; action: GuideAction };
+export type GuideStep = { title: string; text: string };
+/** `steps` are the numbered fix cards; empty for a code with no hands-on fix, and then the screen shows the `fix` line instead. */
+export type Guide = { title: string; fix: string; action: GuideAction; steps: GuideStep[] };
 
 const CLEAN_COPY = "Open it, choose Print, then Save as PDF. Add the new copy.";
 const SCHEDULE_ONLY = "Add only the schedule pages: who is covered, the sum insured and the dates.";
 
+const READS_STRAIGHT_AWAY = "Knowvia reads it straight away.";
+const PASSWORD_STEPS: GuideStep[] = [
+  { title: "Open the PDF", text: "Type the password. It is often your date of birth or policy number." },
+  { title: "Print, then Save as PDF", text: "This makes a new copy with no lock." },
+  { title: "Add the new copy here", text: READS_STRAIGHT_AWAY },
+];
+const CLEAN_COPY_STEPS: GuideStep[] = [
+  { title: "Open the PDF", text: "Any PDF viewer or your browser works." },
+  { title: "Print, then Save as PDF", text: "This makes a clean copy." },
+  { title: "Add the new copy here", text: READS_STRAIGHT_AWAY },
+];
+const SMALLER_COPY_STEPS: GuideStep[] = [
+  { title: "Open the PDF", text: "Find the schedule: who is covered, the sum insured and the dates." },
+  { title: "Print only those pages", text: "Choose Save as PDF as the printer." },
+  { title: "Add the smaller copy here", text: READS_STRAIGHT_AWAY },
+];
+
 const GUIDES: Record<string, Guide> = {
-  PDF_PROTECTED: { title: "This PDF has a password on it.", fix: CLEAN_COPY, action: "another" },
-  PDF_ACTIVE_CONTENT: { title: "This PDF needs a clean copy.", fix: CLEAN_COPY, action: "another" },
-  PDF_TOO_COMPLEX: { title: "This PDF needs a clean copy.", fix: CLEAN_COPY, action: "another" },
-  FILE_TYPE_INVALID: { title: "That file is not a PDF.", fix: "Download the policy as a PDF from your insurer's email or app.", action: "another" },
-  FILE_TOO_LARGE: { title: "That PDF is too big.", fix: SCHEDULE_ONLY, action: "another" },
-  PDF_TOO_LONG: { title: "That PDF has too many pages.", fix: SCHEDULE_ONLY, action: "another" },
-  FILE_EMPTY: { title: "We could not open this PDF.", fix: "Download a fresh copy from your insurer and add it.", action: "another" },
-  PDF_UNREADABLE: { title: "We could not open this PDF.", fix: "Download a fresh copy from your insurer and add it.", action: "another" },
-  DOCUMENT_REJECTED: { title: "We could not accept this file.", fix: "Add another copy of the policy.", action: "another" },
-  POLICY_TYPE_INVALID: { title: "We could not accept this file.", fix: "Add another copy of the policy.", action: "another" },
-  HOLDING_CREATE_FAILED: { title: "We could not read this one.", fix: "Add it again, or use the copy from your insurer's email.", action: "another" },
-  READING_FAILED: { title: "We could not read this one.", fix: "Add it again, or use the copy from your insurer's email.", action: "another" },
-  DUPLICATE_DOCUMENT: { title: "This policy is already added.", fix: "Open it from My policies.", action: "policies" },
-  HOLDING_DOCUMENT_HAS_HOLDING: { title: "This policy is already added.", fix: "Open it from My policies.", action: "policies" },
-  READING_UNAVAILABLE: { title: "Reading is paused right now.", fix: "Your file is saved. Come back in a little while.", action: "later" },
-  UPLOAD_UNAVAILABLE: { title: "Reading is paused right now.", fix: "Your file is saved. Come back in a little while.", action: "later" },
-  HOLDINGS_DISABLED: { title: "Reading is paused right now.", fix: "Your file is saved. Come back in a little while.", action: "later" },
-  UNAUTHENTICATED: { title: "Please sign in again.", fix: "Then add your policy.", action: "signin" },
+  PDF_PROTECTED: { title: "This PDF has a password on it.", fix: CLEAN_COPY, action: "another", steps: PASSWORD_STEPS },
+  PDF_ACTIVE_CONTENT: { title: "This PDF needs a clean copy.", fix: CLEAN_COPY, action: "another", steps: CLEAN_COPY_STEPS },
+  PDF_TOO_COMPLEX: { title: "This PDF needs a clean copy.", fix: CLEAN_COPY, action: "another", steps: CLEAN_COPY_STEPS },
+  FILE_TYPE_INVALID: { title: "That file is not a PDF.", fix: "Download the policy as a PDF from your insurer's email or app.", action: "another", steps: [] },
+  FILE_TOO_LARGE: { title: "That PDF is too big.", fix: SCHEDULE_ONLY, action: "another", steps: SMALLER_COPY_STEPS },
+  PDF_TOO_LONG: { title: "That PDF has too many pages.", fix: SCHEDULE_ONLY, action: "another", steps: SMALLER_COPY_STEPS },
+  FILE_EMPTY: { title: "We could not open this PDF.", fix: "Download a fresh copy from your insurer and add it.", action: "another", steps: [] },
+  PDF_UNREADABLE: { title: "We could not open this PDF.", fix: "Download a fresh copy from your insurer and add it.", action: "another", steps: [] },
+  DOCUMENT_REJECTED: { title: "We could not accept this file.", fix: "Add another copy of the policy.", action: "another", steps: [] },
+  POLICY_TYPE_INVALID: { title: "We could not accept this file.", fix: "Add another copy of the policy.", action: "another", steps: [] },
+  HOLDING_CREATE_FAILED: { title: "We could not read this one.", fix: "Add it again, or use the copy from your insurer's email.", action: "another", steps: [] },
+  READING_FAILED: { title: "We could not read this one.", fix: "Add it again, or use the copy from your insurer's email.", action: "another", steps: [] },
+  DUPLICATE_DOCUMENT: { title: "This policy is already added.", fix: "Open it from My policies.", action: "policies", steps: [] },
+  HOLDING_DOCUMENT_HAS_HOLDING: { title: "This policy is already added.", fix: "Open it from My policies.", action: "policies", steps: [] },
+  READING_UNAVAILABLE: { title: "Reading is paused right now.", fix: "Your file is saved. Come back in a little while.", action: "later", steps: [] },
+  UPLOAD_UNAVAILABLE: { title: "Reading is paused right now.", fix: "Your file is saved. Come back in a little while.", action: "later", steps: [] },
+  HOLDINGS_DISABLED: { title: "Reading is paused right now.", fix: "Your file is saved. Come back in a little while.", action: "later", steps: [] },
+  UNAUTHENTICATED: { title: "Please sign in again.", fix: "Then add your policy.", action: "signin", steps: [] },
 };
 
-const RETRY_GUIDE: Guide = { title: "That did not go through.", fix: "Check your connection and try again.", action: "retry" };
+const RETRY_GUIDE: Guide = { title: "That did not go through.", fix: "Check your connection and try again.", action: "retry", steps: [] };
 
 /** What to tell the person for a failed upload, and the one way out. Unknown codes get the retry guidance; the code itself is never shown. */
 export function guideFor(code: string): Guide {

@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
   membersList: vi.fn(),
   membersAdd: vi.fn(),
   holdings: [] as unknown[],
+  holdingsFail: false,
   me: { state: { status: "ready", me: { source: "mock" } } as unknown },
   payDeps: { order: vi.fn(), open: vi.fn(), verify: vi.fn(), slots: vi.fn(), wait: vi.fn() },
 }));
@@ -41,7 +42,7 @@ vi.mock("@/adapters/covers", async (orig) => {
 vi.mock("@/adapters", () => ({
   adapters: {
     covers: {
-      holdingsView: () => Promise.resolve({ holdings: h.holdings, creationIssues: [] }),
+      holdingsView: () => (h.holdingsFail ? Promise.reject(new Error("boom")) : Promise.resolve({ holdings: h.holdings, creationIssues: [] })),
       uploadDocument: (...a: unknown[]) => h.upload(...a),
       resumeDocument: (...a: unknown[]) => h.resume(...a),
       holdingFor: (...a: unknown[]) => h.holdingFor(...a),
@@ -83,6 +84,7 @@ const heading = (name: string) => screen.findByRole("heading", { level: 1, name 
 beforeEach(() => {
   for (const fn of [h.listUploads, h.grant, h.slotsRead, h.upload, h.resume, h.holdingFor, h.candidates, h.confirm, h.products, h.membersList, h.membersAdd, ...Object.values(h.payDeps)]) fn.mockReset();
   h.holdings = [];
+  h.holdingsFail = false;
   h.me.state = { status: "ready", me: { source: "mock" } };
   h.listUploads.mockResolvedValue({ consent: true, documents: [], largeUpload: false, policyType: null });
   h.grant.mockResolvedValue(undefined);
@@ -151,24 +153,40 @@ describe("add-a-policy wizard", () => {
   it("guideFor returns the pinned title, fix and action for every listed code", () => {
     const clean = "Open it, choose Print, then Save as PDF. Add the new copy.";
     const scheduleOnly = "Add only the schedule pages: who is covered, the sum insured and the dates.";
-    const rows: [string[], string, string, string][] = [
-      [["PDF_PROTECTED"], "This PDF has a password on it.", clean, "another"],
-      [["PDF_ACTIVE_CONTENT", "PDF_TOO_COMPLEX"], "This PDF needs a clean copy.", clean, "another"],
-      [["FILE_TYPE_INVALID"], "That file is not a PDF.", "Download the policy as a PDF from your insurer's email or app.", "another"],
-      [["FILE_TOO_LARGE"], "That PDF is too big.", scheduleOnly, "another"],
-      [["PDF_TOO_LONG"], "That PDF has too many pages.", scheduleOnly, "another"],
-      [["FILE_EMPTY", "PDF_UNREADABLE"], "We could not open this PDF.", "Download a fresh copy from your insurer and add it.", "another"],
-      [["DOCUMENT_REJECTED", "POLICY_TYPE_INVALID"], "We could not accept this file.", "Add another copy of the policy.", "another"],
-      [["HOLDING_CREATE_FAILED", "READING_FAILED"], "We could not read this one.", "Add it again, or use the copy from your insurer's email.", "another"],
-      [["DUPLICATE_DOCUMENT", "HOLDING_DOCUMENT_HAS_HOLDING"], "This policy is already added.", "Open it from My policies.", "policies"],
-      [["READING_UNAVAILABLE", "UPLOAD_UNAVAILABLE", "HOLDINGS_DISABLED"], "Reading is paused right now.", "Your file is saved. Come back in a little while.", "later"],
-      [["UNAUTHENTICATED"], "Please sign in again.", "Then add your policy.", "signin"],
+    const straight = "Knowvia reads it straight away.";
+    const password = [
+      { title: "Open the PDF", text: "Type the password. It is often your date of birth or policy number." },
+      { title: "Print, then Save as PDF", text: "This makes a new copy with no lock." },
+      { title: "Add the new copy here", text: straight },
     ];
-    for (const [codes, title, fix, action] of rows) for (const code of codes) expect(guideFor(code), code).toEqual({ title, fix, action });
+    const cleanSteps = [
+      { title: "Open the PDF", text: "Any PDF viewer or your browser works." },
+      { title: "Print, then Save as PDF", text: "This makes a clean copy." },
+      { title: "Add the new copy here", text: straight },
+    ];
+    const smaller = [
+      { title: "Open the PDF", text: "Find the schedule: who is covered, the sum insured and the dates." },
+      { title: "Print only those pages", text: "Choose Save as PDF as the printer." },
+      { title: "Add the smaller copy here", text: straight },
+    ];
+    const rows: [string[], string, string, string, { title: string; text: string }[]][] = [
+      [["PDF_PROTECTED"], "This PDF has a password on it.", clean, "another", password],
+      [["PDF_ACTIVE_CONTENT", "PDF_TOO_COMPLEX"], "This PDF needs a clean copy.", clean, "another", cleanSteps],
+      [["FILE_TYPE_INVALID"], "That file is not a PDF.", "Download the policy as a PDF from your insurer's email or app.", "another", []],
+      [["FILE_TOO_LARGE"], "That PDF is too big.", scheduleOnly, "another", smaller],
+      [["PDF_TOO_LONG"], "That PDF has too many pages.", scheduleOnly, "another", smaller],
+      [["FILE_EMPTY", "PDF_UNREADABLE"], "We could not open this PDF.", "Download a fresh copy from your insurer and add it.", "another", []],
+      [["DOCUMENT_REJECTED", "POLICY_TYPE_INVALID"], "We could not accept this file.", "Add another copy of the policy.", "another", []],
+      [["HOLDING_CREATE_FAILED", "READING_FAILED"], "We could not read this one.", "Add it again, or use the copy from your insurer's email.", "another", []],
+      [["DUPLICATE_DOCUMENT", "HOLDING_DOCUMENT_HAS_HOLDING"], "This policy is already added.", "Open it from My policies.", "policies", []],
+      [["READING_UNAVAILABLE", "UPLOAD_UNAVAILABLE", "HOLDINGS_DISABLED"], "Reading is paused right now.", "Your file is saved. Come back in a little while.", "later", []],
+      [["UNAUTHENTICATED"], "Please sign in again.", "Then add your policy.", "signin", []],
+    ];
+    for (const [codes, title, fix, action, steps] of rows) for (const code of codes) expect(guideFor(code), code).toEqual({ title, fix, action, steps });
   });
 
   it("guideFor falls back to the retry guidance for an unknown code", () => {
-    const retry = { title: "That did not go through.", fix: "Check your connection and try again.", action: "retry" };
+    const retry = { title: "That did not go through.", fix: "Check your connection and try again.", action: "retry", steps: [] };
     expect(guideFor("BACKEND_UNREACHABLE")).toEqual(retry);
     expect(guideFor("")).toEqual(retry);
     expect(guideFor("toString")).toEqual(retry);
@@ -254,7 +272,8 @@ describe("add-a-policy wizard", () => {
     chooseFile("locked.pdf");
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByRole("heading", { level: 1, name: "This PDF has a password on it." })).toBeInTheDocument();
-    expect(alert.textContent).toContain("Open it, choose Print, then Save as PDF. Add the new copy.");
+    // The numbered fix cards replace the one-line fix when a guide has steps (R5c.4).
+    expect(alert.textContent).toContain("Print, then Save as PDF");
     expect(alert.textContent).toContain("locked.pdf");
     expect(screen.getByRole("button", { name: "Choose another PDF" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
@@ -374,6 +393,138 @@ describe("add-a-policy wizard", () => {
     expect(screen.getByRole("link", { name: "See what we found" }).getAttribute("href")).toBe("/covers/review?holding=holding-1");
     expect(screen.getByRole("link", { name: "Add health details" }).getAttribute("href")).toBe("/covers/declarations?holding=holding-1");
     expect(within(screen.getByRole("list", { name: "Steps" })).getAllByRole("listitem")[3].getAttribute("aria-current")).toBe("step");
+  });
+
+  const HEADLINE_HOLDING = {
+    id: "holding-1", documentId: "doc-1", kind: "policy_schedule", status: "ready",
+    summary: {
+      insurerName: "Example Insurer", productName: "Plan 1",
+      sumInsured: { factKey: "sum_insured", value: { amountMinor: 50000000, currency: "INR" }, status: "extracted_unverified" },
+      policyPeriod: { factKey: "policy_period", value: { startIso: "2026-04-01", endIso: "2027-03-31", days: 365 }, status: "user_confirmed" },
+      premium: { factKey: "premium_total", value: null, status: "unknown" },
+    },
+  };
+  async function toCover() {
+    await toPeople();
+    fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+    await heading("Example Insurer – Plan 1 is in.");
+  }
+
+  it("the step bar draws a line between steps and ticks the done ones", async () => {
+    const { container } = render(<AddCoverView />);
+    await heading("Drop your policy PDF here.");
+    expect(container.querySelectorAll('[aria-label="Steps"] li > [data-reached]')).toHaveLength(0);
+    expect(container.querySelectorAll('[aria-label="Steps"] svg')).toHaveLength(0);
+    cleanup();
+    await toPeople();
+    const steps = within(screen.getByRole("list", { name: "Steps" })).getAllByRole("listitem");
+    expect(steps.map((li) => li.getAttribute("data-done"))).toEqual(["true", "true", null, null]);
+    expect(steps[0].querySelector("svg")).not.toBeNull();
+    expect(steps[2].querySelector("svg")).toBeNull();
+    // A line follows each of the first three steps; the ones before the current step are marked reached.
+    expect(steps.map((li) => li.querySelector("[data-reached]") !== null)).toEqual([true, true, false, false]);
+    expect(steps.map((li) => li.querySelector('[data-reached="true"]') !== null)).toEqual([true, true, false, false]);
+    expect(steps[2].getAttribute("aria-current")).toBe("step");
+  });
+
+  it("find, reading, consent and pay show the document or payment illustration", async () => {
+    const art = (container: HTMLElement) => Array.from(container.querySelectorAll("svg[data-art]")).map((el) => [el.getAttribute("data-art"), el.getAttribute("aria-hidden"), el.querySelector("animate") === null]);
+    let view = render(<AddCoverView />);
+    await heading("Drop your policy PDF here.");
+    expect(art(view.container)).toEqual([["doc", "true", true]]);
+    cleanup();
+    h.listUploads.mockResolvedValue({ consent: false, documents: [], largeUpload: false, policyType: null });
+    view = render(<AddCoverView />);
+    await heading("Can Knowvia read your policy?");
+    expect(art(view.container)).toEqual([["doc", "true", true]]);
+    cleanup();
+    h.listUploads.mockResolvedValue({ consent: true, documents: [], largeUpload: false, policyType: null });
+    h.slotsRead.mockResolvedValue(FULL);
+    view = render(<AddCoverView />);
+    await heading("Add another policy for Rs 199.");
+    expect(art(view.container)).toEqual([["pay", "true", true]]);
+    cleanup();
+    h.slotsRead.mockResolvedValue(FREE);
+    h.upload.mockImplementation((_file: File, _key: string, _kind: string, _type: string, onStage: (s: string) => void) => { onStage("checking"); return new Promise(() => undefined); });
+    view = render(<AddCoverView />);
+    await screen.findByTestId("schedule-input");
+    chooseFile();
+    await heading(STAGE_COPY.checking.h1);
+    expect(art(view.container)).toEqual([["doc", "true", true]]);
+    cleanup();
+    h.upload.mockResolvedValue({ documentId: "doc-1" });
+    await toPeople();
+    expect(Array.from(document.querySelectorAll("svg[data-art]")).map((el) => el.getAttribute("data-art"))).toEqual(["family"]);
+  });
+
+  it("reading shows the stage percent above the heading", async () => {
+    h.upload.mockImplementation((_file: File, _key: string, _kind: string, _type: string, onStage: (s: string) => void) => { onStage("details"); return new Promise(() => undefined); });
+    render(<AddCoverView />);
+    await screen.findByTestId("schedule-input");
+    chooseFile();
+    const title = await heading(STAGE_COPY.details.h1);
+    const percent = screen.getByText(`${STAGE_COPY.details.percent}%`);
+    expect(percent.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("a password-protected PDF shows three numbered fix cards", async () => {
+    h.upload.mockRejectedValue(new AdapterError("PDF_PROTECTED"));
+    render(<AddCoverView />);
+    await screen.findByTestId("schedule-input");
+    chooseFile("locked.pdf");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("One quick fix")).toBeInTheDocument();
+    const cards = within(alert).getAllByRole("listitem");
+    expect(cards.map((li) => li.textContent)).toEqual([
+      "1Open the PDFType the password. It is often your date of birth or policy number.",
+      "2Print, then Save as PDFThis makes a new copy with no lock.",
+      "3Add the new copy hereKnowvia reads it straight away.",
+    ]);
+    expect(within(alert).queryByText("Open it, choose Print, then Save as PDF. Add the new copy.")).toBeNull();
+  });
+
+  it("a too-large PDF shows the page-picking fix cards", async () => {
+    h.upload.mockRejectedValue(new AdapterError("FILE_TOO_LARGE"));
+    render(<AddCoverView />);
+    await screen.findByTestId("schedule-input");
+    chooseFile("big.pdf");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByRole("heading", { level: 1, name: "That PDF is too big." })).toBeInTheDocument();
+    expect(within(alert).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "1Open the PDFFind the schedule: who is covered, the sum insured and the dates.",
+      "2Print only those pagesChoose Save as PDF as the printer.",
+      "3Add the smaller copy hereKnowvia reads it straight away.",
+    ]);
+  });
+
+  it("a guide without steps still shows its fix line", async () => {
+    h.upload.mockRejectedValue(new AdapterError("FILE_TYPE_INVALID"));
+    render(<AddCoverView />);
+    await screen.findByTestId("schedule-input");
+    chooseFile("notes.txt");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("One quick fix")).toBeInTheDocument();
+    expect(within(alert).getByText("Download the policy as a PDF from your insurer's email or app.")).toBeInTheDocument();
+    expect(within(alert).queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("the result screen shows the headline values that were read", async () => {
+    h.holdings = [HEADLINE_HOLDING];
+    await toCover();
+    expect(screen.getByText("Added")).toBeInTheDocument();
+    const facts = await screen.findByTestId("cover-facts");
+    // Only values that were read or confirmed show: the premium is unknown, so it has no card.
+    expect(within(facts).getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Sum insuredRs 5,00,000", "Policy period1 Apr 2026 to 31 Mar 2027"]);
+    expect(screen.getByRole("status").textContent).toBe("Your cover is saved.");
+  });
+
+  it("the result screen shows no cards when the read fails", async () => {
+    h.holdings = [HEADLINE_HOLDING];
+    h.holdingsFail = true;
+    await toCover();
+    expect(screen.getByText("Added")).toBeInTheDocument();
+    expect(screen.queryByTestId("cover-facts")).toBeNull();
+    expect(screen.getByRole("link", { name: "Open my policy" }).getAttribute("href")).toBe("/policies/holding-1");
   });
 
   it("AppShell in bare mode has no rail, top bar or ask bar on /covers/add", async () => {
